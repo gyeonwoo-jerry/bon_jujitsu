@@ -8,6 +8,7 @@ import bon.bon_jujitsu.dto.update.ReviewUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.ReviewService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -32,9 +35,10 @@ public class ReviewController {
   @PostMapping("/reviews")
   public ResponseEntity<Status> createReview(
       @AuthenticationUserId Long userId,
-      @Valid @RequestBody ReviewRequest request
+      @RequestPart("request") @Valid ReviewRequest request,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    reviewService.createReview(userId, request);
+    reviewService.createReview(userId, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "리뷰등록 완료"));
@@ -66,11 +70,12 @@ public class ReviewController {
   public ResponseEntity<Status> updateReview(
       @AuthenticationUserId Long userId,
       @PathVariable("reviewId") Long reviewId,
-      @Valid @RequestBody ReviewUpdate request
+      @RequestPart("update") @Valid ReviewUpdate request,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(reviewService.updateReview(userId, reviewId, request));
+        .body(reviewService.updateReview(userId, reviewId, request, images));
   }
 
   @DeleteMapping("/reviews/{reviewId}")

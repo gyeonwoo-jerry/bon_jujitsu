@@ -67,5 +67,6 @@ public class Board extends Timestamped {
 
   public void softDelte() {
     this.isDeleted = true;
+    this.images.forEach(BoardImage::softDelete);
   }
 }

@@ -14,12 +14,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Where(clause = "is_deleted = false")
 @Table(name = "board_image")
 public class BoardImage extends Timestamped {
   @Id
@@ -32,4 +34,12 @@ public class BoardImage extends Timestamped {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "board_id")
   private Board board;
+
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean isDeleted = false;
+
+  public void softDelete() {
+    this.isDeleted = true;
+  }
 }

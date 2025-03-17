@@ -10,6 +10,7 @@ import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
 import bon.bon_jujitsu.dto.update.ReviewUpdate;
+import bon.bon_jujitsu.repository.CartRepository;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.ReviewRepository;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -38,8 +40,9 @@ public class ReviewService {
   private final ItemRepository itemRepository;
   private final ReviewRepository reviewRepository;
   private final OrderRepository orderRepository;
+  private final ReviewImageService reviewImageService;
 
-  public void createReview(Long id, ReviewRequest request) {
+  public void createReview(Long id, ReviewRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     Item item = itemRepository.findById(request.itemId()).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
@@ -72,6 +75,8 @@ public class ReviewService {
         .build();
 
     reviewRepository.save(review);
+
+    reviewImageService.uploadImage(review, images);
   }
 
   @Transactional(readOnly = true)
@@ -163,7 +168,7 @@ public class ReviewService {
     return PageResponse.success(reviewResponses, HttpStatus.OK, "리뷰 조회 성공");
   }
 
-  public Status updateReview(Long id, Long reviewId, @Valid ReviewUpdate request) {
+  public Status updateReview(Long id, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
     Review review = reviewRepository.findById(reviewId).orElseThrow(()->new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
     // 사용자 검증
@@ -177,6 +182,8 @@ public class ReviewService {
     }
 
     review.updateReview(request.content(), request.star());
+
+    reviewImageService.updateImages(review, images);
 
     return Status.builder()
         .status(HttpStatus.OK.value())

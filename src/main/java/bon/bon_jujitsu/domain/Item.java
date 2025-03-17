@@ -86,5 +86,6 @@ public class Item extends Timestamped {
 
   public void softDelete() {
     this.isDeleted = true;
+    this.images.forEach(ItemImage::softDelete);
   }
 }
