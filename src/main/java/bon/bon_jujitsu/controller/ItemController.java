@@ -7,6 +7,7 @@ import bon.bon_jujitsu.dto.response.ItemResponse;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.ItmeService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -30,9 +33,10 @@ public class ItemController {
   @PostMapping("/items")
   public ResponseEntity<Status> createItem(
       @AuthenticationUserId Long id,
-      @Valid @RequestBody ItemRequest request
+      @RequestPart("request") @Valid ItemRequest request,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    itmeService.createItem(id, request);
+    itmeService.createItem(id, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "상품등록 완료"));
@@ -60,12 +64,13 @@ public class ItemController {
   @PatchMapping("/items/{itemId}")
   public ResponseEntity<Status> updateItem(
       @AuthenticationUserId Long id,
-      @Valid @RequestBody ItemResponse request,
-      @PathVariable("itemId") Long itemId
+      @RequestPart("request") @Valid ItemResponse request,
+      @PathVariable("itemId") Long itemId,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(itmeService.updateItem(id,request,itemId));
+        .body(itmeService.updateItem(id,request,itemId, images));
   }
 
   @DeleteMapping("/items/{itemId}")

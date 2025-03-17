@@ -55,6 +55,9 @@ public class Item extends Timestamped {
   @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Review> reviews = new ArrayList<>();
 
+  @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ItemImage> images = new ArrayList<>();
+
   public void updateItem(String name, String size, String content, int price, int sale, int amount) {
     if (name != null && !name.isBlank()) {
       this.name = name;

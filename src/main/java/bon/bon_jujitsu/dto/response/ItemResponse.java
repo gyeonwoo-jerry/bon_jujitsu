@@ -1,6 +1,8 @@
 package bon.bon_jujitsu.dto.response;
 
+import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Item;
+import bon.bon_jujitsu.domain.ItemImage;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +21,7 @@ public record ItemResponse(
     int sale,
     int amount,
     List<ReviewResponse> reviews,
+    List<String> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
@@ -37,6 +40,7 @@ public record ItemResponse(
             .stream()
             .map(review -> new ReviewResponse(review, new ArrayList<>())) // childReviews 추가
             .collect(Collectors.toList()))
+        .images(item.getImages().stream().map(ItemImage::getImagePath).toList())
         .createdAt(item.getCreatedAt())
         .modifiedAt(item.getModifiedAt())
         .build();

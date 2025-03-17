@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Item;
+import bon.bon_jujitsu.domain.ItemImage;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.response.ItemResponse;
@@ -12,6 +13,7 @@ import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +31,9 @@ public class ItmeService {
 
   private final UserRepository userRepository;
   private final ItemRepository itemRepository;
+  private final ItemImageService itemImageService;
 
-  public void createItem(Long id, ItemRequest request) {
+  public void createItem(Long id, ItemRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
@@ -46,6 +50,8 @@ public class ItmeService {
         .build();
 
     itemRepository.save(item);
+
+    itemImageService.uploadImage(item, images);
   }
 
   @Transactional(readOnly = true)
@@ -67,6 +73,7 @@ public class ItmeService {
             .stream()
             .map(review -> new ReviewResponse(review, new ArrayList<>())) // 변경된 부분
             .collect(Collectors.toList()),
+        item.getImages().stream().map(ItemImage::getImagePath).toList(),
         item.getCreatedAt(),
         item.getModifiedAt()
     ));
@@ -84,7 +91,7 @@ public class ItmeService {
     return itemResponse;
   }
 
-  public Status updateItem(Long id, ItemResponse request, Long itemId) {
+  public Status updateItem(Long id, ItemResponse request, Long itemId, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
@@ -101,6 +108,8 @@ public class ItmeService {
         request.sale(),
         request.amount()
     );
+
+    itemImageService.updateImages(item, images);
 
     return Status.builder()
         .status(HttpStatus.OK.value())
