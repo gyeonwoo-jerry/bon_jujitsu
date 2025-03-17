@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
+import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -9,15 +10,18 @@ import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BoardRequest;
 import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.update.BoardUpdate;
+import bon.bon_jujitsu.repository.BoardImageRepository;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +31,9 @@ public class BoardService {
   private final BoardRepository boardRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
+  private final BoardImageService boardImageService;
 
-  public void createBoard(Long id, BoardRequest request) {
+  public void createBoard(Long id, BoardRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
@@ -42,6 +47,8 @@ public class BoardService {
         .build();
 
     boardRepository.save(board);
+
+    boardImageService.uploadImage(board, images);
   }
 
   @Transactional(readOnly = true)
@@ -56,6 +63,7 @@ public class BoardService {
         board.getContent(),
         board.getBranch().getRegion(),
         board.getUser().getName(),
+        board.getImages().stream().map(BoardImage::getImagePath).toList(),
         board.getCreatedAt(),
         board.getModifiedAt()
     ));
@@ -72,12 +80,14 @@ public class BoardService {
   }
 
 
-  public Status updateBoard(BoardUpdate request, Long id, Long boardId) {
+  public Status updateBoard(BoardUpdate request, Long id, Long boardId, List<MultipartFile> images) {
     userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
     board.updateBoard(request);
+
+    boardImageService.updateImages(board, images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("게시글 수정 완료").build();
   }

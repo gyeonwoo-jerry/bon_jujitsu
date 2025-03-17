@@ -10,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,8 +20,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "item_image")
-public class ItemImage extends Timestamped {
+@Table(name = "board_image")
+public class BoardImage extends Timestamped {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -31,6 +30,6 @@ public class ItemImage extends Timestamped {
   private String imagePath;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "item_id")
-  private Item item;
+  @JoinColumn(name = "board_id")
+  private Board board;
 }
