@@ -4,6 +4,7 @@ import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.Order;
 import bon.bon_jujitsu.domain.OrderItem;
+import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -51,6 +52,11 @@ public class ReviewService {
     // 구매 이력 확인 및 주문 찾기
     Order order = orderRepository.findLatestByUserAndItemId(user.getId(), item.getId())
         .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
+
+    // 상품을 받은사람 체크
+    if (order.getOrderStatus() != OrderStatus.COMPLETED) {
+      throw new IllegalArgumentException("주문이 완료된 경우에만 리뷰를 작성할 수 있습니다.");
+    }
 
     // 부모 리뷰 확인
     Review parentReview = null;
