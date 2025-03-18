@@ -2,6 +2,7 @@ package bon.bon_jujitsu.dummy;
 
 import bon.bon_jujitsu.config.PasswordEncoder;
 import bon.bon_jujitsu.domain.Board;
+import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.Cart;
 import bon.bon_jujitsu.domain.CartItem;
@@ -16,6 +17,7 @@ import bon.bon_jujitsu.domain.ReviewImage;
 import bon.bon_jujitsu.domain.Stripe;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
+import bon.bon_jujitsu.repository.BoardImageRepository;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.CartItemRepository;
@@ -59,7 +61,7 @@ public class DummyDataLoader implements CommandLineRunner {
   private final ReviewRepository reviewRepository;
   private final ReviewImageRepository reviewImageRepository;
   private final BoardRepository boardRepository;
-  private final BoardImageService boardImageService;
+  private final BoardImageRepository boardImageRepository;
   private final Faker faker = new Faker();
   private final Random random = new Random();
 
@@ -79,6 +81,14 @@ public class DummyDataLoader implements CommandLineRunner {
 
     // 5. 주문 데이터 생성
     createOrderData();
+
+    // 6. 리뷰 데이터 생성
+    createReviewData();
+
+    // 7. 게시판 데이터 생성
+    createBoardData();
+
+
   }
 
   private void createBranchData() {
@@ -547,18 +557,25 @@ public class DummyDataLoader implements CommandLineRunner {
           .user(user)
           .build();
 
-      boardRepository.save(board);
+      Board savedBoard = boardRepository.save(board);
 
-      List<String> imagePaths = new ArrayList<>();
-      int imageCount = random.nextInt(3) + 1;
-      for (int j = 0; j < imageCount; j++) {
-        String baseUrl = imageBaseUrls[random.nextInt(imageBaseUrls.length)];
-        String extension = extensions[random.nextInt(extensions.length)];
-        String uuid = UUID.randomUUID().toString();
-        imagePaths.add(baseUrl + uuid + extension);
+      // 30% 확률로 1~3개의 이미지 추가
+      if (random.nextDouble() < 0.3) {
+        int imageCount = random.nextInt(3) + 1;
+        for (int j = 0; j < imageCount; j++) {
+          String baseUrl = imageBaseUrls[random.nextInt(imageBaseUrls.length)];
+          String extension = extensions[random.nextInt(extensions.length)];
+          String uuid = UUID.randomUUID().toString();
+          String imagePath = baseUrl + uuid + extension;
+
+          BoardImage boardImage = BoardImage.builder()
+              .board(savedBoard)
+              .imagePath(imagePath)
+              .build();
+
+          boardImageRepository.save(boardImage);
+        }
       }
-
-      boardImageService.uploadImage(board, imagePaths);
     }
 
     log.info("✅ 20개의 더미 게시글 데이터가 생성되었습니다!");

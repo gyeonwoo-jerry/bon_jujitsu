@@ -53,6 +53,9 @@ public class Notice extends Timestamped {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<NoticeImage> images = new ArrayList<>();
+
   public void updateNotice(NoticeUpdate noticeUpdate) {
     noticeUpdate.title().ifPresent(title -> {
       if (!title.isBlank()) this.title = title;

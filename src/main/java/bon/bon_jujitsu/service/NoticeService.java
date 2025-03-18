@@ -1,7 +1,9 @@
 package bon.bon_jujitsu.service;
 
+import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.Notice;
+import bon.bon_jujitsu.domain.NoticeImage;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -12,12 +14,14 @@ import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -27,8 +31,9 @@ public class NoticeService {
   private final NoticeRepository noticeRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
+  private final NoticeImageService noticeImageService;
 
-  public void createNotice(Long id, NoticeRequest request) {
+  public void createNotice(Long id, NoticeRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
@@ -47,6 +52,8 @@ public class NoticeService {
         .build();
 
     noticeRepository.save(notice);
+
+    noticeImageService.uploadImage(notice, images);
   }
 
   @Transactional(readOnly = true)
@@ -61,6 +68,7 @@ public class NoticeService {
         notices.getContent(),
         notices.getBranch().getRegion(),
         notices.getUser().getName(),
+        notices.getImages().stream().map(NoticeImage::getImagePath).toList(),
         notices.getCreatedAt(),
         notices.getModifiedAt()
     ));
@@ -76,7 +84,7 @@ public class NoticeService {
   }
 
 
-  public Status updateNotice(NoticeUpdate update, Long id, Long noticeId) {
+  public Status updateNotice(NoticeUpdate update, Long id, Long noticeId, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -86,6 +94,8 @@ public class NoticeService {
     }
 
     notice.updateNotice(update);
+
+    noticeImageService.updateImages(notice, images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("공지사항 수정 완료").build();
   }

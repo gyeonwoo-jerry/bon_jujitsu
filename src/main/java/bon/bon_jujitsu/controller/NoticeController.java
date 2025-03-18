@@ -8,6 +8,7 @@ import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.NoticeService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -31,9 +34,10 @@ public class NoticeController {
   @PostMapping("/notice")
   public ResponseEntity<Status> createNotice(
       @AuthenticationUserId Long id,
-      @Valid @RequestBody NoticeRequest request
+      @Valid @RequestPart("request") NoticeRequest request,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    noticeService.createNotice(id, request);
+    noticeService.createNotice(id, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));
@@ -60,13 +64,14 @@ public class NoticeController {
 
   @PatchMapping("/notice/{noticeId}")
   public ResponseEntity<Status> updateNotice(
-      @Valid @RequestBody NoticeUpdate update,
+      @Valid @RequestPart("update") NoticeUpdate update,
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId
+      @PathVariable("noticeId") Long noticeId,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.updateNotice(update, id, noticeId));
+        .body(noticeService.updateNotice(update, id, noticeId, images));
   }
 
   @DeleteMapping("/notice/{noticeId}")
