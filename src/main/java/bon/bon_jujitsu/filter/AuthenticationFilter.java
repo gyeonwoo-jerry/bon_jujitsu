@@ -34,6 +34,7 @@ public class AuthenticationFilter implements Filter {
         requestUri.contains("/api/users/login") ||
         requestUri.matches("/api/admin/\\d+") ||
         requestUri.contains("/v3/api-docs") ||
+        requestUri.contains("/swagger-ui") ||
         requestUri.contains("/swagger-resources")) {
       System.out.println("Skipping authentication for: " + requestUri);
       chain.doFilter(request, response);
