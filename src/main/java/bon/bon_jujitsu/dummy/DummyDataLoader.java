@@ -6,8 +6,12 @@ import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.Cart;
 import bon.bon_jujitsu.domain.CartItem;
+import bon.bon_jujitsu.domain.Comment;
+import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemImage;
+import bon.bon_jujitsu.domain.Notice;
+import bon.bon_jujitsu.domain.NoticeImage;
 import bon.bon_jujitsu.domain.Order;
 import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
@@ -22,8 +26,11 @@ import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.CartItemRepository;
 import bon.bon_jujitsu.repository.CartRepository;
+import bon.bon_jujitsu.repository.CommentRepository;
 import bon.bon_jujitsu.repository.ItemImageRepository;
 import bon.bon_jujitsu.repository.ItemRepository;
+import bon.bon_jujitsu.repository.NoticeImageRepository;
+import bon.bon_jujitsu.repository.NoticeRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.ReviewImageRepository;
 import bon.bon_jujitsu.repository.ReviewRepository;
@@ -62,6 +69,9 @@ public class DummyDataLoader implements CommandLineRunner {
   private final ReviewImageRepository reviewImageRepository;
   private final BoardRepository boardRepository;
   private final BoardImageRepository boardImageRepository;
+  private final NoticeRepository noticeRepository;
+  private final NoticeImageRepository noticeImageRepository;
+  private final CommentRepository commentRepository;
   private final Faker faker = new Faker();
   private final Random random = new Random();
 
@@ -88,7 +98,11 @@ public class DummyDataLoader implements CommandLineRunner {
     // 7. 게시판 데이터 생성
     createBoardData();
 
+    // 8. 공지사항 데이터 생성
+    createNoticeData();
 
+    // 9. 댓글 데이터 생성
+    createCommentData();
   }
 
   private void createBranchData() {
@@ -486,10 +500,7 @@ public class DummyDataLoader implements CommandLineRunner {
     }
 
     // 관리자 사용자 찾기 (관리자 답글 용)
-    User admin = userRepository.findByUserRole(UserRole.ADMIN)
-        .stream()
-        .findFirst()
-        .orElse(null);
+    User admin = userRepository.findFirstByUserRole(UserRole.ADMIN).orElse(null);
 
     // 리뷰에 대한 답글 생성
     if (createReplies && admin != null) {
@@ -579,6 +590,173 @@ public class DummyDataLoader implements CommandLineRunner {
     }
 
     log.info("✅ 20개의 더미 게시글 데이터가 생성되었습니다!");
+  }
+
+  public void createNoticeData() {
+    if (noticeRepository.count() > 0) {
+      log.info("✅ 이미 공지사항 데이터가 존재하므로 더미 데이터를 생성하지 않습니다.");
+      return;
+    }
+
+    log.info("🚀 더미 공지사항 데이터 생성 시작!");
+
+    List<User> owners = userRepository.findByUserRole(UserRole.OWNER);
+    List<Branch> branches = branchRepository.findAll();
+    if (owners.isEmpty() || branches.isEmpty()) {
+      log.warn("❌ OWNER 권한을 가진 사용자 또는 지부 데이터가 부족하여 공지사항을 생성할 수 없습니다.");
+      return;
+    }
+
+    String[] titles = {
+        "공지사항 - 새로운 수업 일정 안내",
+        "센터 운영 시간 변경 안내",
+        "회원 대상 특별 이벤트 공지",
+        "긴급 공지 - 시설 점검 안내",
+        "새로운 강사 소개 및 수업 개설"
+    };
+
+    String[] contents = {
+        "안녕하세요, 회원 여러분! 이번 주부터 새로운 수업 일정이 적용됩니다. 변경된 스케줄을 확인해주세요!",
+        "운영 시간 변경 안내드립니다. 주말 운영 시간이 변경되었으니 참고 부탁드립니다.",
+        "회원 여러분을 위한 특별 이벤트를 진행합니다! 많은 참여 바랍니다!",
+        "시설 점검으로 인해 일부 프로그램이 일시 중단됩니다. 불편을 드려 죄송합니다.",
+        "새로운 강사님이 오셨습니다! 새롭게 개설된 수업에 많은 관심 부탁드립니다."
+    };
+
+    String[] imageBaseUrls = {
+        "https://example.com/images/notices/",
+        "https://cdn.example.com/notice_images/",
+        "https://storage.example.net/notices/"
+    };
+    String[] extensions = {".jpg", ".png", ".webp"};
+
+    for (int i = 0; i < 10; i++) {
+      User owner = owners.get(random.nextInt(owners.size()));
+      Branch branch = owner.getBranch();
+
+      Notice notice = Notice.builder()
+          .title(titles[random.nextInt(titles.length)])
+          .content(contents[random.nextInt(contents.length)])
+          .branch(branch)
+          .user(owner)
+          .build();
+
+      Notice savedNotice = noticeRepository.save(notice);
+
+      // 30% 확률로 1~3개의 이미지 추가
+      if (random.nextDouble() < 0.3) {
+        int imageCount = random.nextInt(3) + 1;
+        for (int j = 0; j < imageCount; j++) {
+          String baseUrl = imageBaseUrls[random.nextInt(imageBaseUrls.length)];
+          String extension = extensions[random.nextInt(extensions.length)];
+          String uuid = UUID.randomUUID().toString();
+          String imagePath = baseUrl + uuid + extension;
+
+          NoticeImage noticeImage = NoticeImage.builder()
+              .notice(savedNotice)
+              .imagePath(imagePath)
+              .build();
+
+          noticeImageRepository.save(noticeImage);
+        }
+      }
+    }
+
+    log.info("✅ 10개의 더미 공지사항 데이터가 생성되었습니다!");
+  }
+
+  public void createCommentData() {
+    if (commentRepository.count() > 0) {
+      log.info("✅ 이미 댓글 데이터가 존재하므로 더미 데이터를 생성하지 않습니다.");
+      return;
+    }
+
+    log.info("🚀 더미 댓글 데이터 생성 시작!");
+
+    List<User> users = userRepository.findAll();
+    List<Board> boards = boardRepository.findAll();
+    List<Notice> notices = noticeRepository.findAll();
+
+    if (users.isEmpty() || (boards.isEmpty() && notices.isEmpty())) {
+      log.warn("❌ 사용자 또는 대상(게시글/공지사항) 데이터가 부족하여 댓글을 생성할 수 없습니다.");
+      return;
+    }
+
+    Random random = new Random();
+    String[] commentsContent = {
+        "좋은 정보 감사합니다!", "정말 유용한 글이네요!", "잘 보고 갑니다!", "이 부분이 궁금한데요?",
+        "더 자세한 설명이 필요해요.", "이거 정말 유용하네요!", "좋은 글이에요!", "다음에도 좋은 글 부탁드려요!"
+    };
+
+    // 댓글 저장을 위한 맵 (부모 댓글 ID를 저장하여 대댓글 생성에 사용)
+    Map<Long, Comment> parentComments = new HashMap<>();
+
+    // 각 게시글과 공지사항에 대해 3~5개 댓글 생성
+    for (Board board : boards) {
+      createCommentsForTarget(users, commentsContent, board.getId(), CommentType.BOARD, parentComments, random);
+    }
+
+    for (Notice notice : notices) {
+      createCommentsForTarget(users, commentsContent, notice.getId(), CommentType.NOTICE, parentComments, random);
+    }
+
+    // 대댓글 생성 (전체 부모 댓글 중 50%에 대해 랜덤하게 대댓글 추가)
+    createReplies(users, commentsContent, parentComments, random);
+
+    log.info("✅ 더미 댓글 데이터가 성공적으로 생성되었습니다!");
+  }
+
+  /**
+   * 특정 대상(게시글 또는 공지사항)에 대해 랜덤한 댓글을 생성
+   */
+  private void createCommentsForTarget(List<User> users, String[] commentsContent, Long targetId, CommentType type,
+      Map<Long, Comment> parentComments, Random random) {
+    int commentCount = random.nextInt(3) + 3; // 3~5개 생성
+    for (int i = 0; i < commentCount; i++) {
+      User user = users.get(random.nextInt(users.size()));
+      String content = commentsContent[random.nextInt(commentsContent.length)];
+
+      Comment comment = Comment.builder()
+          .content(content)
+          .depth(0)
+          .user(user)
+          .commentType(type)
+          .targetId(targetId)
+          .build();
+
+      Comment savedComment = commentRepository.save(comment);
+      parentComments.put(savedComment.getId(), savedComment); // 부모 댓글로 저장
+    }
+  }
+
+  /**
+   * 대댓글을 생성 (부모 댓글의 50%를 랜덤 선택하여 대댓글 작성)
+   */
+  private void createReplies(List<User> users, String[] commentsContent, Map<Long, Comment> parentComments, Random random) {
+    List<Comment> parentList = new ArrayList<>(parentComments.values());
+
+    for (Comment parent : parentList) {
+      if (random.nextDouble() < 0.5) { // 50% 확률로 대댓글 생성
+        User user = users.get(random.nextInt(users.size()));
+        String content = commentsContent[random.nextInt(commentsContent.length)];
+
+        Comment reply = Comment.builder()
+            .content(content)
+            .depth(parent.getDepth() + 1)
+            .parentComment(parent)
+            .user(user)
+            .commentType(parent.getCommentType())
+            .targetId(parent.getTargetId())
+            .build();
+
+        Comment savedReply = commentRepository.save(reply);
+
+        // 추가적인 대댓글 (depth < 3) 가능하도록 저장
+        if (savedReply.getDepth() < 3) {
+          parentComments.put(savedReply.getId(), savedReply);
+        }
+      }
+    }
   }
 }
 
