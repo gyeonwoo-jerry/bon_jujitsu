@@ -32,6 +32,7 @@ import org.hibernate.annotations.Where;
 @Table(name = "users")
 @Builder
 public class User extends Timestamped {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -74,7 +75,7 @@ public class User extends Timestamped {
   private boolean isDeleted = false;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "branch_id",nullable = false)
+  @JoinColumn(name = "branch_id", nullable = false)
   private Branch branch;
 
   @Builder.Default
@@ -87,35 +88,51 @@ public class User extends Timestamped {
 
   public void updateProfile(ProfileUpdateRequest request) {
     request.name().ifPresent(value -> {
-      if (!value.isBlank()) this.name = value;
+      if (!value.isBlank()) {
+        this.name = value;
+      }
     });
 
     request.nickname().ifPresent(value -> {
-      if (!value.isBlank()) this.nickname = value;
+      if (!value.isBlank()) {
+        this.nickname = value;
+      }
     });
 
     request.email().ifPresent(value -> {
-      if (!value.isBlank()) this.email = value;
+      if (!value.isBlank()) {
+        this.email = value;
+      }
     });
 
     request.phoneNum().ifPresent(value -> {
-      if (!value.isBlank()) this.phoneNum = value;
+      if (!value.isBlank()) {
+        this.phoneNum = value;
+      }
     });
 
     request.address().ifPresent(value -> {
-      if (!value.isBlank()) this.address = value;
+      if (!value.isBlank()) {
+        this.address = value;
+      }
     });
 
     request.birthday().ifPresent(value -> {
-      if (!value.isBlank()) this.birthday = value;
+      if (!value.isBlank()) {
+        this.birthday = value;
+      }
     });
 
     request.gender().ifPresent(value -> {
-      if (!value.isBlank()) this.gender = value;
+      if (!value.isBlank()) {
+        this.gender = value;
+      }
     });
 
     request.level().ifPresent(value -> {
-      if (value > 0) this.level = value;
+      if (value > 0) {
+        this.level = value;
+      }
     });
 
     request.stripe().ifPresent(value -> this.stripe = value);

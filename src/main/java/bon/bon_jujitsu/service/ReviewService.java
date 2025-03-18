@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.Order;
+import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -47,12 +48,9 @@ public class ReviewService {
 
     Item item = itemRepository.findById(request.itemId()).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 구매 이력 확인
-    boolean hasPurchased = existsByUserAndItem(user, item);
-
-    if (!hasPurchased) {
-      throw new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다.");
-    }
+    // 구매 이력 확인 및 주문 찾기
+    Order order = orderRepository.findLatestByUserAndItemId(user.getId(), item.getId())
+        .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
 
     // 부모 리뷰 확인
     Review parentReview = null;
@@ -72,6 +70,7 @@ public class ReviewService {
         .depth(parentReview != null ? parentReview.getDepth() + 1 : 0)
         .user(user)
         .item(item)
+        .order(order)
         .build();
 
     reviewRepository.save(review);
@@ -84,7 +83,7 @@ public class ReviewService {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     // 페이지네이션된 리뷰 조회
-    Page<Review> reviews = reviewRepository.findAllByItemOrderByCreatedAtDesc(itemId, pageRequest);
+    Page<Review> reviews = reviewRepository.findAllByItem_IdOrderByCreatedAtDesc(itemId, pageRequest);
 
     // Review → ReviewResponse 변환
     List<ReviewResponse> reviewResponses = reviews.getContent().stream()
@@ -127,6 +126,8 @@ public class ReviewService {
 
     return roots;
   }
+
+  @Transactional(readOnly = true)
   public PageResponse<ReviewResponse> getMyReviews(Long id, PageRequest pageRequest) {
     userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
@@ -201,18 +202,5 @@ public class ReviewService {
     }
 
     review.softDelete();
-  }
-
-  public boolean existsByUserAndItem(User user, Item item) {
-    List<Order> userOrders = orderRepository.findAllByUser(user);
-
-    for (Order order : userOrders) {
-      for (CartItem cartItem : order.getCartItems()) {
-        if (cartItem.getItem().getId().equals(item.getId())) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }

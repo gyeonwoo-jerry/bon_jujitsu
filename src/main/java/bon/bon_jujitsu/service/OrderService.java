@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Cart;
 import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Order;
+import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -37,9 +38,9 @@ public class OrderService {
   private final CartRepository cartRepository;
 
   public void createOrder(Long id, OrderRequest request) {
-    User orderUser = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User orderUser = userRepository.findById(id).orElseThrow(()->
+        new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    // cartItemIds가 null이 아닌지 확인 후 조회
     List<Long> cartItemIds = Optional.ofNullable(request.cartItemIds())
         .filter(list -> !list.isEmpty())
         .orElseThrow(() -> new IllegalArgumentException("장바구니에 최소 한 개의 상품이 있어야 합니다."));
@@ -71,11 +72,20 @@ public class OrderService {
         .payType(request.payType())
         .build();
 
-    cartItems.forEach(cartItem -> cartItem.setOrder(order));
-    order.getCartItems().addAll(cartItems);
+    // CartItem -> OrderItem으로만 변환하고, CartItem은 Order와 연결하지 않음
+    for (CartItem cartItem : cartItems) {
+      OrderItem orderItem = OrderItem.builder()
+          .quantity(cartItem.getQuantity())
+          .price(cartItem.getPrice())
+          .item(cartItem.getItem())
+          .build();
+
+      order.addOrderItem(orderItem);  // 여기서 양방향 관계 설정
+    }
 
     orderRepository.save(order);
 
+    // 카트에서 아이템 제거
     Cart cart = cartRepository.findByUser(orderUser)
         .orElseThrow(() -> new IllegalArgumentException("장바구니가 존재하지 않습니다."));
 

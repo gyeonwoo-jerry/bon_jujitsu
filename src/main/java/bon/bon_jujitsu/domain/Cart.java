@@ -37,6 +37,7 @@ public class Cart extends Timestamped {
   @JoinColumn(name = "user_id")
   private User user;
 
+  @Builder.Default
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<CartItem> cartItems = new ArrayList<>();
 

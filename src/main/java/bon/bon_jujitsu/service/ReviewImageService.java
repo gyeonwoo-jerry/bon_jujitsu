@@ -1,9 +1,8 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.ReviewImage;
+import bon.bon_jujitsu.repository.ReviewImageRepository;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

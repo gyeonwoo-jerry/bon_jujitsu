@@ -1,4 +1,4 @@
-package bon.bon_jujitsu.service;
+package bon.bon_jujitsu.repository;
 
 import bon.bon_jujitsu.domain.ReviewImage;
 import java.util.List;

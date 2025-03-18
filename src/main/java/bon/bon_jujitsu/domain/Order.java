@@ -72,11 +72,22 @@ public class Order extends Timestamped {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<OrderItem> orderItems = new ArrayList<>();
+
   @Builder.Default
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<CartItem> cartItems = new ArrayList<>();
 
   public void UpdateOrderStatus(OrderStatus orderStatus) {
     this.orderStatus = orderStatus;
+  }
+
+  public void addOrderItem(OrderItem orderItem) {
+    if (this.orderItems == null) {
+      this.orderItems = new ArrayList<>();
+    }
+    this.orderItems.add(orderItem);
+    orderItem.changeOrder(this);
   }
 }
