@@ -37,11 +37,11 @@ public class UserService {
   private final JwtUtil jwtUtil;
 
   public void signup(SignupRequest req) {
-    String nickname = req.nickname();
+    String memberId = req.memberId();
     String password = passwordEncoder.encode(req.password());
 
     //회원 중복 확인
-    Optional<User> checkUser = userRepository.findByNickname(nickname);
+    Optional<User> checkUser = userRepository.findByMemberId(memberId);
     if (checkUser.isPresent()) {
       throw new IllegalArgumentException("중복된 사용자가 존재합니다.");
     }
@@ -72,7 +72,7 @@ public class UserService {
     // 유저를 빌더로 저장
     User user = User.builder()
         .name(req.name())
-        .nickname(req.nickname())
+        .memberId(req.memberId())
         .password(password)
         .email(req.email())
         .phoneNum(phoneNum)
@@ -88,7 +88,7 @@ public class UserService {
   }
 
   public String login(LoginRequest req) {
-    User user = userRepository.findByNickname(req.nickname()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+    User user = userRepository.findByMemberId(req.memberId()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
     if (!passwordEncoder.matches(req.password(), user.getPassword())) {
       throw new IllegalArgumentException("유효하지 않는 비밀번호 입니다.");

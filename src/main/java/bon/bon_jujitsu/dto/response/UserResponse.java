@@ -10,7 +10,7 @@ import lombok.Builder;
 public record UserResponse(
     Long id,
     String name,
-    String nickname,
+    String memberId,
     String password,
     String email,
     String phoneNum,
@@ -29,7 +29,7 @@ public record UserResponse(
     return UserResponse.builder()
         .id(user.getId())
         .name(user.getName())
-        .nickname(user.getNickname())
+        .memberId(user.getMemberId())
         .password(user.getPassword())
         .email(user.getEmail())
         .phoneNum(user.getPhoneNum())

@@ -10,7 +10,7 @@ public record SignupRequest (
     @NotBlank(message = "이름을 입력해주세요.")
     String name,
     @NotBlank(message = "아이디를 입력해주세요.")
-    String nickname,
+    String memberId,
     @NotBlank(message = "비밀번호를 입력해 주세요")
     String password,
     @Email(message = "이메일 형식에 맞게 작성해주세요.")

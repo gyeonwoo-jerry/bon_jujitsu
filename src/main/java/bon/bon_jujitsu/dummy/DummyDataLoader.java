@@ -51,10 +51,12 @@ import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class DummyDataLoader implements CommandLineRunner {
 
   private final UserRepository userRepository;
@@ -140,7 +142,7 @@ public class DummyDataLoader implements CommandLineRunner {
     // 관리자 계정 생성 (상품 등록을 위해 필요)
     User admin = User.builder()
         .name("관리자")
-        .nickname("admin")
+        .memberId("admin")
         .password(passwordEncoder.encode("admin123"))
         .email("admin@example.com")
         .phoneNum("010-1234-5678")
@@ -159,7 +161,7 @@ public class DummyDataLoader implements CommandLineRunner {
     for (int i = 0; i < 10; i++) {
       User user = User.builder()
           .name(faker.name().fullName())
-          .nickname(faker.name().username())
+          .memberId(faker.name().username())
           .password(passwordEncoder.encode("password123"))
           .email(faker.internet().emailAddress())
           .phoneNum(faker.phoneNumber().cellPhone())

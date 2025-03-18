@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public record ProfileUpdateRequest(
     Optional<String> name,
-    Optional<String> nickname,
+    Optional<String> memberId,
     Optional<String> password,
     Optional<String> email,
     Optional<String> phoneNum,

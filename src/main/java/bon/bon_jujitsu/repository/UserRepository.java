@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Optional<User> findByPhoneNum(String phoneNum);
 
-  Optional<User> findByNickname(String nickname);
+  Optional<User> findByMemberId(String nickname);
 
   Page<User> findAllByIsDeletedFalse(Pageable pageable);
 

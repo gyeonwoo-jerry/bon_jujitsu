@@ -41,7 +41,7 @@ public class User extends Timestamped {
   private String name;
 
   @Column(unique = true, nullable = false)
-  private String nickname;
+  private String memberId;
 
   @Column(nullable = false)
   private String password;
@@ -93,9 +93,9 @@ public class User extends Timestamped {
       }
     });
 
-    request.nickname().ifPresent(value -> {
+    request.memberId().ifPresent(value -> {
       if (!value.isBlank()) {
-        this.nickname = value;
+        this.memberId = value;
       }
     });
 
