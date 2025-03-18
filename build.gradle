@@ -47,10 +47,14 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // MySQL Connector
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // faker
+    implementation 'net.datafaker:datafaker:2.0.2'
 
     providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' //
 
