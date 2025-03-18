@@ -55,8 +55,8 @@ public class OrderService {
         .mapToInt(CartItem::getQuantity)
         .sum();
 
-    int totalPrice = cartItems.stream()
-        .mapToInt(cartItem -> cartItem.getPrice() * cartItem.getQuantity())
+    double totalPrice = cartItems.stream()
+        .mapToDouble(cartItem -> cartItem.getPrice() * cartItem.getQuantity())
         .sum();
 
     Order order = Order.builder()

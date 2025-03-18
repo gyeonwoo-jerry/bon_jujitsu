@@ -90,4 +90,9 @@ public class Order extends Timestamped {
     this.orderItems.add(orderItem);
     orderItem.changeOrder(this);
   }
+
+  public void updateTotalInfo(int totalPrice, int totalCount) {
+    this.totalPrice = totalPrice;
+    this.totalCount = totalCount;
+  }
 }

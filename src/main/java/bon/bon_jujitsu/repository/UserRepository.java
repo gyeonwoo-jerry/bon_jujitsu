@@ -1,6 +1,8 @@
 package bon.bon_jujitsu.repository;
 
 import bon.bon_jujitsu.domain.User;
+import bon.bon_jujitsu.domain.UserRole;
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,4 +27,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Page<User> findAllByBranch_RegionAndIsDeletedFalse(String region, Pageable pageable);
 
+  Collection<User> findByUserRole(UserRole userRole);
 }
