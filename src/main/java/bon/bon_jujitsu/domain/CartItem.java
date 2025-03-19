@@ -31,10 +31,6 @@ public class CartItem {
   @JoinColumn(name = "item_id")
   private Item item;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "order_id")
-  private Order order;
-
   private int quantity;
 
   private int price;
@@ -60,9 +56,5 @@ public class CartItem {
   // 가격 업데이트
   public void updatePrice(int newPrice) {
     this.price = newPrice;
-  }
-
-  public void setOrder(Order order) {
-    this.order = order;
   }
 }

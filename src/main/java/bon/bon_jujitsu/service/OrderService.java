@@ -7,7 +7,7 @@ import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
-import bon.bon_jujitsu.dto.CartItemDto;
+import bon.bon_jujitsu.dto.OrderItemDto;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.OrderRequest;
@@ -114,8 +114,8 @@ public class OrderService {
         order.getPayType(),
         order.getOrderStatus(),
         order.getUser().getId(),
-        order.getCartItems().stream()
-            .map(CartItemDto::new)
+        order.getOrderItems().stream()
+            .map(OrderItemDto::new)
             .collect(Collectors.toList()),
         order.getCreatedAt(),
         order.getModifiedAt()
@@ -149,8 +149,8 @@ public class OrderService {
         order.getPayType(),
         order.getOrderStatus(),
         order.getUser().getId(),
-        order.getCartItems().stream()
-            .map(CartItemDto::new)
+        order.getOrderItems().stream()
+            .map(OrderItemDto::new)
             .collect(Collectors.toList()),
         order.getCreatedAt(),
         order.getModifiedAt()
@@ -256,7 +256,7 @@ public class OrderService {
   }
 
   public Status returnOrder(Long orderId, Long id) {
-    User user = userRepository.findById(id)
+    userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Order order = orderRepository.findById(orderId)

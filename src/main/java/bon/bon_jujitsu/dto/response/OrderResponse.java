@@ -2,7 +2,7 @@ package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.PayType;
-import bon.bon_jujitsu.dto.CartItemDto;
+import bon.bon_jujitsu.dto.OrderItemDto;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,7 +19,7 @@ public record OrderResponse(
     PayType payType,
     OrderStatus orderStatus,
     Long userId,
-    List<CartItemDto> cartItems,
+    List<OrderItemDto> cartItems,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
