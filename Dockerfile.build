@@ -31,7 +31,7 @@ WORKDIR /app
 COPY . .
 
 # Gradle 빌드 실행 (스프링 프로파일은 빌드 시 Jenkins에서 넘겨받도록 설정)
-RUN gradle build -Dspring.profiles.active=${SPRING_PROFILE} --no-daemon
+CMD gradle build -Dspring.profiles.active=${SPRING_PROFILE} --no-daemon
 
 # 빌드 완료 후 WAR 파일 위치 확인
 RUN ls -l /app/build/libs/
