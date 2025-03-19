@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        SPRING_PROFILE = 'prod'  // 환경 변수를 Jenkins에서 설정 (예: prod)
+        SPRING_PROFILE = 'dev'  // 환경 변수를 Jenkins에서 설정 (예: prod)
     }
 
     stages {
