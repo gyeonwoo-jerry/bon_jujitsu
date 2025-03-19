@@ -23,12 +23,15 @@ pipeline {
                         # 컨테이너 생성
                         docker create --name temp-gradle-container gradle-build
                         
-                        # 빌드 디렉토리 삭제
-                        rm -rf build-output
+                        # 빌드 디렉토리 삭제 및 출력 디렉토리 생성
+                        rm -rf build-output || true
                         mkdir -p build-output
                         
-                        # WAR 파일 복사
+                        # WAR 파일이 생성될 정확한 경로를 확인하여 복사
                         docker cp temp-gradle-container:/app/build/libs/*.war build-output/
+                        
+                        # WAR 파일이 실제로 존재하는지 확인
+                        docker exec temp-gradle-container ls /app/build/libs/
                         
                         # 컨테이너 제거
                         docker rm temp-gradle-container

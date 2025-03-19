@@ -27,4 +27,4 @@ WORKDIR /app
 COPY . .
 
 # Gradle 빌드 실행 (프로덕션 모드)
-RUN ${GRADLE_HOME}/gradle-${GRADLE_VERSION}/bin/gradle build -Dspring.profiles.active=dev --no-daemon
+RUN ${GRADLE_HOME}/gradle-${GRADLE_VERSION}/bin/gradle build -Dspring.profiles.active=${SPRING_PROFILE} --no-daemon
