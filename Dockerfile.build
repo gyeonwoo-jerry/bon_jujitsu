@@ -34,4 +34,4 @@ COPY . .
 CMD gradle build -Dspring.profiles.active=${SPRING_PROFILE} --no-daemon
 
 # 빌드 완료 후 WAR 파일 위치 확인
-RUN ls -l /app/build/libs/
+# RUN ls -l /app/build/libs/
