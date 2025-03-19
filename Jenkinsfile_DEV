@@ -16,20 +16,20 @@ pipeline {
             steps {
                 script {
                     // Dockerfile을 사용하여 빌드 이미지 생성
-                    sh "docker build --build-arg SPRING_PROFILE=${SPRING_PROFILE} -t gradle-build -f Dockerfile.build ."
-
-                    // 빌드 디렉토리 생성
-                    rm -rf build-output 
-                    mkdir -p build-output
-
-                    // 임시 컨테이너 생성하여 WAR 파일 복사
+                    sh 'docker build -t gradle-build -f Dockerfile.build .'
+                    
+                    // 임시 컨테이너 생성하여 WAR 파일 추출
                     sh '''
                         # 컨테이너 생성
                         docker create --name temp-gradle-container gradle-build
-
+                        
+                        # 빌드 디렉토리 삭제
+                        rm -rf build-output
+                        mkdir -p build-output
+                        
                         # WAR 파일 복사
                         docker cp temp-gradle-container:/app/build/libs/*.war build-output/
-
+                        
                         # 컨테이너 제거
                         docker rm temp-gradle-container
                         docker rmi gradle-build
