@@ -34,8 +34,8 @@ pipeline {
                         docker exec temp-gradle-container ls /app/build/libs/
                         
                         # 컨테이너 제거
-                        docker rm temp-gradle-container
-                        docker rmi gradle-build
+                        #docker rm temp-gradle-container
+                        #docker rmi gradle-build
                     '''
                 }
             }
@@ -49,11 +49,11 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            // 빌드 완료 후 정리
-            sh 'docker rm temp-gradle-container || true'
-            sh 'docker rmi gradle-build || true'
-        }
-    }
+    // post {
+    //     always {
+    //         // 빌드 완료 후 정리
+    //         sh 'docker rm temp-gradle-container || true'
+    //         sh 'docker rmi gradle-build || true'
+    //     }
+    // }
 }
