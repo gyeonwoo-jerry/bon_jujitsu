@@ -30,12 +30,23 @@ public class AuthenticationFilter implements Filter {
     System.out.println("Request URI: " + requestUri);
 
     // 인증이 필요 없는 경로는 건너뛰기
-    if (requestUri.contains("/api/users/signup") ||
+    if ( 
+        requestUri.contains("/api/users/signup") ||
         requestUri.contains("/api/users/login") ||
         requestUri.matches("/api/admin/\\d+") ||
         requestUri.contains("/v3/api-docs") ||
         requestUri.contains("/swagger-ui") ||
-        requestUri.contains("/swagger-resources")) {
+        requestUri.contains("/swagger-resources") ||
+        requestUri.startsWith("/static") || // 정적 리소스 경로 예외 처리
+        requestUri.startsWith("/images") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/asset-manifest.json") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/favicon.ico") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/manifest.json") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/logo192.png") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/logo512.png") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/robots.txt") || // 정적 리소스 경로 예외 처리
+        requestUri.equals("/") // 루트 경로 예외 처리
+        ) {
       System.out.println("Skipping authentication for: " + requestUri);
       chain.doFilter(request, response);
       return;

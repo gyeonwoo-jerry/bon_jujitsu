@@ -73,3 +73,47 @@ dependencies {
     }
 }
 
+def frontendDir = "$projectDir/src/main/frontend"
+
+sourceSets {
+	main {
+		resources { srcDirs = ["$projectDir/src/main/resources"]
+		}
+	}
+}
+
+processResources { dependsOn "copyReactBuildFiles" }
+
+task installReact(type: Exec) {
+	workingDir "$frontendDir"
+	inputs.dir "$frontendDir"
+	group = BasePlugin.BUILD_GROUP
+	if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+		commandLine "npm.cmd", "audit", "fix"
+		commandLine 'npm.cmd', 'install' }
+	else {
+		commandLine "npm", "audit", "fix" commandLine 'npm', 'install'
+	}
+}
+
+task buildReact(type: Exec) {
+	dependsOn "installReact"
+	workingDir "$frontendDir"
+	inputs.dir "$frontendDir"
+	group = BasePlugin.BUILD_GROUP
+    	// -Dspring.profiles.active 값 가져오기 (기본값: "dev")
+	def profile = System.getProperty("spring.profiles.active", "dev")
+
+	// OS에 따른 명령어 설정
+	if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+		commandLine "cmd", "/c", "set NODE_ENV=${profile} && npm run build"
+	} else {
+		commandLine "sh", "-c", "NODE_ENV=${profile} npm run build"
+	}
+}
+
+task copyReactBuildFiles(type: Copy) {
+	dependsOn "buildReact"
+	from "$frontendDir/build"
+	into "$projectDir/src/main/resources/static"
+}
