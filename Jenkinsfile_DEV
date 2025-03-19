@@ -46,11 +46,11 @@ pipeline {
         }
     }
     
-    post {
-        always {
-            // 빌드 완료 후 정리
-        //    sh 'docker rm temp-gradle-container || true'
-        //    sh 'docker rmi gradle-build || true'
-        }
-    }
+    // post {
+    //     always {
+    //         // 빌드 완료 후 정리
+    //         sh 'docker rm temp-gradle-container || true'
+    //         sh 'docker rmi gradle-build || true'
+    //     }
+    // }
 }
