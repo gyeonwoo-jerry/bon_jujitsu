@@ -11,6 +11,9 @@ RUN curl -L https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-b
     ln -s /opt/gradle-${GRADLE_VERSION} ${GRADLE_HOME} && \
     rm gradle.zip
 
+# Gradle을 PATH에 추가
+ENV PATH="${GRADLE_HOME}/bin:${PATH}"
+
 # Node.js 설치
 ENV NODE_VERSION=16.x
 RUN apt-get update && apt-get install -y curl
@@ -24,4 +27,4 @@ WORKDIR /app
 COPY . .
 
 # Gradle 빌드 실행 (프로덕션 모드)
-RUN ${GRADLE_HOME}/bin/gradle build -Dspring.profiles.active=prod --no-daemon
+RUN gradle build -Dspring.profiles.active=prod --no-daemon
