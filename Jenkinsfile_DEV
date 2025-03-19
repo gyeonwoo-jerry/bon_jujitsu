@@ -31,8 +31,8 @@ pipeline {
                         docker cp temp-gradle-container:/app/build/libs/*.war build-output/
                         
                         # 컨테이너 제거
-                        docker rm temp-gradle-container
-                        docker rmi gradle-build
+                        # docker rm temp-gradle-container
+                        # docker rmi gradle-build
                     '''
                 }
             }
