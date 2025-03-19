@@ -19,7 +19,7 @@ pipeline {
                     sh "docker build --build-arg SPRING_PROFILE=${SPRING_PROFILE} -t gradle-build -f Dockerfile.build ."
 
                     // 빌드 디렉토리 생성
-                    rm -rf build-output || true
+                    rm -rf build-output
                     mkdir -p build-output
 
                     // 임시 컨테이너 생성하여 WAR 파일 복사
