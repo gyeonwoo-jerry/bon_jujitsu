@@ -9,16 +9,14 @@ ENV GRADLE_HOME=/opt/gradle
 # Gradle 설치
 RUN curl -L https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle.zip && \
     mkdir -p ${GRADLE_HOME} && \
-    unzip -d /opt gradle.zip && \
-    ln -s /opt/gradle-${GRADLE_VERSION} ${GRADLE_HOME} && \
+    unzip -d ${GRADLE_HOME} gradle.zip && \
     rm gradle.zip
 
 # Gradle 설치 확인
-RUN ls -l ${GRADLE_HOME}/bin && ${GRADLE_HOME}/bin/gradle -v  # Gradle이 정상적으로 설치되었는지 확인
+RUN ls -l ${GRADLE_HOME}/gradle-${GRADLE_VERSION}/bin && ${GRADLE_HOME}/gradle-${GRADLE_VERSION}/bin/gradle -v  # Gradle이 정상적으로 설치되었는지 확인
 
 # Node.js 설치
 ENV NODE_VERSION=20.x
-RUN apt-get update && apt-get install -y curl
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - && \
     apt-get install -y nodejs
 
@@ -29,4 +27,4 @@ WORKDIR /app
 COPY . .
 
 # Gradle 빌드 실행 (프로덕션 모드)
-RUN ${GRADLE_HOME}/bin/gradle build -Dspring.profiles.active=dev --no-daemon
+RUN ${GRADLE_HOME}/gradle-${GRADLE_VERSION}/bin/gradle build -Dspring.profiles.active=dev --no-daemon
