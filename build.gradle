@@ -103,13 +103,22 @@ task buildReact(type: Exec) {
 	group = BasePlugin.BUILD_GROUP
     	// -Dspring.profiles.active 값 가져오기 (기본값: "dev")
 	def profile = System.getProperty("spring.profiles.active", "dev")
-
 	// OS에 따른 명령어 설정
-	if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
-		commandLine "cmd", "/c", "set NODE_ENV=${profile} && npm run build"
-	} else {
-		commandLine "sh", "-c", "NODE_ENV=${profile} npm run build"
-	}
+    // OS에 따른 명령어 설정
+    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+        if (profile == "prod") {
+            commandLine "cmd", "/c", "set NODE_ENV=production && npm run build:prod"
+        } else {
+            commandLine "cmd", "/c", "set NODE_ENV=development && npm run build:dev"
+        }
+    } else {
+        if (profile == "prod") {
+            commandLine "sh", "-c", "NODE_ENV=production npm run build:prod"
+        } else {
+            commandLine "sh", "-c", "NODE_ENV=development npm run build:dev"
+        }
+    }
+    
 }
 
 task copyReactBuildFiles(type: Copy) {
