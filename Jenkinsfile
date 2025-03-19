@@ -1,8 +1,8 @@
 pipeline {
     agent any
-    
+
     environment {
-        SPRING_PROFILE = 'prod'  // 환경 변수를 Jenkins에서 설정 (예: prod)
+        SPRING_PROFILE = 'prod'  // 여기에 원하는 프로파일을 설정
     }
 
     stages {
@@ -11,25 +11,25 @@ pipeline {
                 checkout scm
             }
         }
-        
+
         stage('Build with Docker') {
             steps {
                 script {
                     // Dockerfile을 사용하여 빌드 이미지 생성
                     sh "docker build --build-arg SPRING_PROFILE=${SPRING_PROFILE} -t gradle-build -f Dockerfile.build ."
-                    
-                    // 임시 컨테이너 생성하여 WAR 파일 추출
+
+                    // 빌드 디렉토리 생성
+                    rm -rf build-output || true
+                    mkdir -p build-output
+
+                    // 임시 컨테이너 생성하여 WAR 파일 복사
                     sh '''
                         # 컨테이너 생성
                         docker create --name temp-gradle-container gradle-build
-                        
-                        # 빌드 디렉토리 생성
-                        rm -rf build-output || true
-                        mkdir -p build-output
-                        
+
                         # WAR 파일 복사
                         docker cp temp-gradle-container:/app/build/libs/*.war build-output/
-                        
+
                         # 컨테이너 제거
                         docker rm temp-gradle-container
                         docker rmi gradle-build
@@ -37,7 +37,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Archive WAR') {
             steps {
                 // WAR 파일 아카이브
@@ -45,7 +45,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         always {
             // 빌드 완료 후 정리
