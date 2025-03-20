@@ -1,6 +1,6 @@
 // src/config/index.js
 const dev = {
-  apiUrl: "http://localhost:58080",
+  apiUrl: "http://211.110.44.79:58080",
 };
 
 const prod = {
