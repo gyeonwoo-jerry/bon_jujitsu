@@ -28,7 +28,7 @@ pipeline {
                         mkdir -p build-output
                         
                         # WAR 파일이 생성될 정확한 경로를 확인하여 복사
-                        docker cp temp-gradle-container:/app/build/libs/*.war build-output/
+                        docker cp temp-gradle-container:/app/build/libs/bon_jujitsu-0.0.1-SNAPSHOT.war build-output/
                         
                         # WAR 파일이 실제로 존재하는지 확인
                         docker exec temp-gradle-container ls /app/build/libs/
