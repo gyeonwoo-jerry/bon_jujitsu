@@ -26,6 +26,9 @@ WORKDIR /app
 # 소스 코드 복사
 COPY . .
 
+# 빌드 타임 변수 정의
+ARG SPRING_PROFILE
+
 # Gradle 빌드 실행 전에 SPRING_PROFILE 값 출력
 RUN echo "Spring Profile: ${SPRING_PROFILE}"
 
