@@ -9,6 +9,8 @@ function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    console.log("Spring Profile:", process.env.SPRING_PROFILE); // SPRING_PROFILE 출력
     // 로그인 처리 로직
     console.log("Submitted Username:", username);
     console.log("Submitted Password:", password);
