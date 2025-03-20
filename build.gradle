@@ -113,16 +113,15 @@ task buildReact(type: Exec) {
         }
     } else {
         if (profile == "prod") {
-            commandLine "sh", "-c", "NODE_ENV=production npm run build:prod"
+            commandLine "sh", "-c", "SPRING_PROFILE=prod NODE_ENV=production npm run build:prod"
         } else {
-            commandLine "sh", "-c", "NODE_ENV=development npm run build:dev"
+            commandLine "sh", "-c", "SPRING_PROFILE=dev NODE_ENV=development npm run build:dev"
         }
     }
 
         // 표준 출력과 오류 출력을 확인할 수 있도록 설정
     standardOutput = System.out
     errorOutput = System.err
-    ignoreExitValue = true  // 명령이 실패해도 계속 진행하도록 설정
     
 }
 
