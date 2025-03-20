@@ -53,7 +53,7 @@ pipeline {
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
-                            configName: 'ezylab-server',  // Jenkins에서 설정한 SSH 서버 이름
+                            configName: 'ezylab_server',  // Jenkins에서 설정한 SSH 서버 이름
                             transfers: [
                                 sshTransfer(
                                     sourceFiles: 'build-output/*.war',  // 전송할 파일
@@ -70,10 +70,12 @@ pipeline {
     }
 
     post {
-        always {
-            // 빌드 완료 후 정리
+        success {
             sh 'docker rm temp-gradle-container || true'
             sh 'docker rmi gradle-build || true'
+        }
+        failure {
+            echo "Build failed, keeping container for debugging."
         }
     }
 }
