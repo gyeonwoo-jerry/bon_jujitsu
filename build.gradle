@@ -115,7 +115,7 @@ task buildReact(type: Exec) {
         if (profile == "prod") {
             commandLine "sh", "-c", "NODE_ENV=production REACT_APP_SPRING_PROFILE=prod npm run build:prod"
         } else {
-            commandLine "sh", "-c", "npm run build:dev"
+            commandLine "sh", "-c", "NODE_ENV=development REACT_APP_SPRING_PROFILE=dev npm run build:dev"
         }
     }
 
