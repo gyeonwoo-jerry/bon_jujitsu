@@ -107,15 +107,15 @@ task buildReact(type: Exec) {
     // OS에 따른 명령어 설정
     if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
         if (profile == "prod") {
-            commandLine "cmd", "/c", "set NODE_ENV=production && npm run build:prod"
+            commandLine "cmd", "/c", "set NODE_ENV=production && set REACT_APP_SPRING_PROFILE=prod && npm run build:prod"
         } else {
-            commandLine "cmd", "/c", "set NODE_ENV=development && npm run build:dev"
+            commandLine "cmd", "/c", "set NODE_ENV=development && set REACT_APP_SPRING_PROFILE=dev && npm run build:dev"
         }
     } else {
         if (profile == "prod") {
-            commandLine "sh", "-c", "SPRING_PROFILE=prod NODE_ENV=production npm run build:prod"
+            commandLine "sh", "-c", "REACT_APP_SPRING_PROFILE=prod NODE_ENV=production npm run build:prod"
         } else {
-            commandLine "sh", "-c", "SPRING_PROFILE=dev NODE_ENV=development npm run build:dev"
+            commandLine "sh", "-c", "REACT_APP_SPRING_PROFILE=dev NODE_ENV=development npm run build:dev"
         }
     }
 
