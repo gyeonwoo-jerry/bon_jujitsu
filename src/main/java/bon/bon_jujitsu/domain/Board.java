@@ -52,6 +52,7 @@ public class Board extends Timestamped {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @Builder.Default
   @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BoardImage> images = new ArrayList<>();
 

@@ -91,7 +91,7 @@ public class UserService {
     User user = userRepository.findByMemberId(req.memberId()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
     if (!passwordEncoder.matches(req.password(), user.getPassword())) {
-      throw new IllegalArgumentException("유효하지 않는 비밀번호 입니다.");
+      throw new IllegalArgumentException("아이디나 비밀번호를 정확하게 입력해주세요 .");
     }
 
     String token = jwtUtil.createToken(user.getId());

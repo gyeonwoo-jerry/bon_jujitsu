@@ -49,6 +49,7 @@ public class Comment extends Timestamped {
   @JoinColumn(name = "parent_comment_id")
   private Comment parentComment;
 
+  @Builder.Default
   @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Comment> childComments = new ArrayList<>();
 

@@ -64,6 +64,7 @@ public class Review extends Timestamped {
   @JoinColumn(name = "item_id", nullable = false)
   private Item item;
 
+  @Builder.Default
   @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ReviewImage> images = new ArrayList<>();
 

@@ -52,9 +52,11 @@ public class Item extends Timestamped {
   @Column(nullable = false)
   private boolean isDeleted = false;
 
+  @Builder.Default
   @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Review> reviews = new ArrayList<>();
 
+  @Builder.Default
   @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ItemImage> images = new ArrayList<>();
 
