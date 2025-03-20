@@ -47,13 +47,33 @@ pipeline {
                 archiveArtifacts artifacts: 'build-output/*.war', fingerprint: true
             }
         }
+
+        stage('Deploy to Remote Server') {
+            steps {
+                sshPublisher(
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: 'ezylab-server',  // Jenkins에서 설정한 SSH 서버 이름
+                            transfers: [
+                                sshTransfer(
+                                    sourceFiles: 'build-output/*.war',  // 전송할 파일
+                                    remoteDirectory: 'bon_dev/build', // 원격 서버 저장 경로
+                                    removePrefix: 'build-output', // 원격 경로에서 'build-output' 제거
+                                    execCommand: '/app/bon_dev/bin/ci_restart.sh' // 배포 후 서비스 재시작 (옵션)
+                                )
+                            ]
+                        )
+                    ]
+                )
+            }
+        }
     }
 
-    // post {
-    //     always {
-    //         // 빌드 완료 후 정리
-    //         sh 'docker rm temp-gradle-container || true'
-    //         sh 'docker rmi gradle-build || true'
-    //     }
-    // }
+    post {
+        always {
+            // 빌드 완료 후 정리
+            sh 'docker rm temp-gradle-container || true'
+            sh 'docker rmi gradle-build || true'
+        }
+    }
 }
