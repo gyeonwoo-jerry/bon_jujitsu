@@ -8,7 +8,7 @@ const prod = {
 };
 
 const local = {
-  apiUrl: "http://localhost:8080",
+  apiUrl: "http://211.110.44.79:58080",
 };
 
 const config =

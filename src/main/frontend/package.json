@@ -20,7 +20,6 @@
   },
   "scripts": {
     "start": "cross-env NODE_ENV=local react-scripts start",
-    "start:log": "cross-env NODE_ENV=local && echo $NODE_ENV && cross-env NODE_ENV=local react-scripts start",
     "build:dev": "cross-env NODE_ENV=development && react-scripts build",
     "build:prod": "cross-env NODE_ENV=production && react-scripts build",
     "test": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts test",

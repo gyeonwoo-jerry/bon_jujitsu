@@ -10,10 +10,6 @@ function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("NODE_ENV :", process.env.NODE_ENV); // 출력된 값 확인
-    console.log("Spring Profile:", process.env.REACT_APP_SPRING_PROFILE); // `REACT_APP_SPRING_PROFILE`으로 접근
-    console.log("Spring REACT_APP_API_URL:", process.env.REACT_APP_API_URL); // `REACT_APP_SPRING_PROFILE`으로 접근
-
     try {
       const response = await API.post("/users/login", {
         memberId: username,
