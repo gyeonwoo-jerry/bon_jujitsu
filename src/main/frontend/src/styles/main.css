@@ -3,6 +3,10 @@
 v2.0 | 20110126
 License: none (public domain)
 */
+:root {
+    --black-color: #1f1f1f;
+    --white-color: #fff;
+  }
 
 @import url('../assets/fonts/pretendard.css');
     
@@ -41,7 +45,7 @@ button:focus { outline: 0; border:0; padding: 0; }
 button::-moz-focus-inner {border:0; } /*--- for Firefox ---*/
 html {/*-ms-text-size-adjust:100%;-moz-text-size-adjust:100%;-webkit-text-size-adjust:100%;*/font-size:1.25em; } /*--- optional base font size ---*/
 * { box-sizing: border-box; vertical-align: top; }
-html, body {  min-height: 100%; height: 100%; font-family: 'Pretendard', sans-serif; background-color: #fff; color: #25252a; }
+html, body {  min-height: 100%; height: 100%; font-family: 'Pretendard', sans-serif; background-color: var(--white-color);; color: #25252a; }
 /* clears the ‘X’ from Internet Explorer */
 input[type=search]::-ms-clear { display: none; width : 0; height: 0; }
 input[type=search]::-ms-reveal { display: none; width : 0; height: 0; }
@@ -78,12 +82,12 @@ body {
 
 nav.main_nav {
     position: relative;
-    background-color: #ffffff;
+    background-color: var(--white-color);
     height: 95px;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 5;
+    z-index: 10;
 }
 nav.main_nav.fixed {
     position: fixed;
@@ -110,7 +114,7 @@ nav.main_nav ul li {
 nav.main_nav ul li a {
     display: block;
     padding: 10px 20px;
-    color: #333;
+    color: var(--black-color);
     text-decoration: none;
     font-size: 18px;
 } 
@@ -147,15 +151,69 @@ nav.main_nav ul li.logo img {
     cursor: pointer;
     padding: 7px 20px;
     border-radius: 20px;
-    border: 1px solid #333;
+    border: 1px solid var(--black-color);
 }
 
 .login_btn:hover {
     transition: all 0.3s ease;
-    background-color: #333;
-    color: #fff;
+    background-color: var(--black-color);
+    color: var(--white-color);
 }
 
 .login_form {
     display: none;
 }
+
+
+section.news {
+    background-color: var(--white-color);
+    padding: 120px 100px;
+}
+
+section.news .inner { }
+
+section.news .news_title {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    color: var(--black-color);
+}   
+
+section.news .news_title .sub_tit {
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.28px;
+}   
+
+section.news .news_title .tit {
+    font-size: 54px;
+    font-weight: 900;
+    letter-spacing: -0.54px;
+}      
+
+section.news .news_content {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--black-color);
+}
+
+section.news .news_content .news_list {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}   
+
+section.news .news_content .news_list .news_item {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}      
+
+section.news .news_content .news_list .news_item .news_item_title {
+    display: flex;
+    align-items: center;
+    
+}
+
+
+
