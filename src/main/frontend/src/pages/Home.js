@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+
 import ImageSlider from '../components/ImageSlider';
 
 
@@ -18,9 +18,9 @@ function Home() {
               <li className='news_item'>
                 <div className='news_item_title'>
                   <div className='news_item_title_tit'>당산 본관</div>
-                  <Link to='/news'>
-                    <div className='news_item_title_more'>더보기</div>
-                  </Link>
+
+                    <a className='news_item_title_more'>더보기</a>
+                  
                 </div>
                 <div className='news_item_content'>
                   1. 4월 세미나 (룰/기술)
