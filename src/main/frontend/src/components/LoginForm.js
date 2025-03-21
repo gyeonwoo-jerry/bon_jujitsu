@@ -10,6 +10,7 @@ function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log("로그인 성공:", username);
     try {
       const response = await API.post("/users/login", {
         memberId: username,
@@ -19,6 +20,8 @@ function LoginForm() {
       // 로그인 성공 후 처리 (예: 토큰 저장, 리다이렉트 등)
       localStorage.setItem("token", response.data.token);
       window.location.href = "/";
+      // 우아
+
     } catch (error) {
       console.error("로그인 실패:", error);
     }
