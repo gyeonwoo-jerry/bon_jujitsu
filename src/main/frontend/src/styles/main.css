@@ -170,7 +170,7 @@ section.news {
     padding: 120px 100px;
 }
 
-section.news .inner { }
+/*section.news .inner { }*/
 
 section.news .news_title {
     display: flex;
