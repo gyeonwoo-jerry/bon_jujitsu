@@ -26,8 +26,7 @@ function BranchList() {
                     <li key={branch.id}>
                         <h2>{branch.region}</h2>
                         <p>{branch.address}</p>
-                        <p>Created At: {new Date(branch.createdAt).toLocaleDateString()}</p>
-                        <p>Modified At: {new Date(branch.modifiedAT).toLocaleDateString()}</p>
+                        
                     </li>
                 ))}
             </ul>

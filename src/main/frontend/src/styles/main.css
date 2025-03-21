@@ -192,6 +192,7 @@ section.news .news_title .tit {
 }      
 
 section.news .news_content {
+    margin-top: 84px;
     font-size: 16px;
     font-weight: 400;
     color: var(--black-color);
@@ -199,21 +200,73 @@ section.news .news_content {
 
 section.news .news_content .news_list {
     display: flex;
-    flex-direction: column;
     align-items: start;
+    justify-content: start;
+    gap: 34px;
 }   
 
 section.news .news_content .news_list .news_item {
+    transition: all 0.3s ease;
+    max-width: calc(25% - 10px);
     display: flex;
     flex-direction: column;
     align-items: start;
-}      
+    padding: 44px 30px 44px;
+    background-color: var(--white-color);
+    border-radius: 30px;
+    border: 1px solid #e6e6e6;
+}
+section.news .news_content .news_list .news_item:hover {
+    transform: translateY(-30px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--white-color);
+}
 
 section.news .news_content .news_list .news_item .news_item_title {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 0 20px;
+    margin-bottom: 20px;
     
+
 }
 
+section.news .news_content .news_list .news_item .news_item_title .news_item_title_tit {
+    padding: 12px 25px;
+    border-radius: 26.5px;
+    border: solid 1px #727272;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: -0.24px;
+    color: var(--black-color);  
+}
 
+section.news .news_content .news_list .news_item .news_item_title .news_item_title_more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fe6c2e;
+    border-radius: 50%;
+    width: 54px;
+    height: 54px;
+    border: none;
+    cursor: pointer;
+}
 
+section.news .news_content .news_list .news_item .news_item_title .news_item_title_more img {
+    width: 15px;
+    height: 15px;
+}
+
+section.news .news_content .news_list .news_item .news_item_content {
+    font-size: 15px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.77;
+    letter-spacing: -0.15px;
+    text-align: left;
+    color: var(--black-color);
+}
