@@ -7,7 +7,7 @@ function BranchList() {
 
     useEffect(() => {
         // API를 통해 모든 branch 데이터를 가져옵니다.
-        API.post('/branch/all?page=1&size=10')
+        API.get('/branch/all?page=1&size=10')
             .then(response => {
                 if (response.status === 200) {
                     setBranches(response.data.data); // 데이터 배열을 상태로 설정합니다.
