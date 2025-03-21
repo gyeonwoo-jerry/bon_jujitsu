@@ -77,13 +77,22 @@ body {
 }
 
 nav.main_nav {
-    background-color: #ffffff;
     position: relative;
+    background-color: #ffffff;
     height: 95px;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 5;
+}
+nav.main_nav.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 95px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 nav.main_nav ul {

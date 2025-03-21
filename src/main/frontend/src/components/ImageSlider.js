@@ -1,8 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/ImageSlider.css';
+import { Link } from 'react-router-dom';
 
 function ImageSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const [isFixed, setIsFixed] = useState(false);
+
+  useEffect(() => {
+      const handleScroll = () => {
+          if (window.scrollY > 100) {
+              setIsFixed(true);
+          } else {
+              setIsFixed(false);
+          }
+      };
+
+      window.addEventListener('scroll', handleScroll);
+
+      // Cleanup function to remove the event listener
+      return () => {
+          window.removeEventListener('scroll', handleScroll);
+      };
+  }, []);
   
   const images = [
     '',  // 이미지가 없을 때
@@ -29,7 +49,46 @@ function ImageSlider() {
   }, [nextSlide]);  // nextSlide를 의존성 배열에 추가
 
   return (
-    <div className="slider-container">
+    <div className={`slider-container ${isFixed ? 'fixed' : ''}`}>
+      <div className="inner_ment">
+        <div className="title">
+          <div className="title_bold">BON jiu-jitsu</div>
+          <div className="title_light">academy</div>
+        </div>
+        <div className="ment">
+          <div className="ment_text">
+            본주짓수는 히카르도 델라히바 선생님께
+            블랙벨트로 인정을 받은 이정우 대표가 한국에 설립한 단체입니다.
+            본주짓수는 국내에 브라질리언 주짓수를 발전시키는 데 이바지하였으며,
+            국내 다양한 단체와 동반 성장, 인재 양성 등 지역 사회적 책임과
+            성장을 함께 추구하고 있습니다.
+          </div>
+        </div>
+        <div className="ment_button">
+          <Link to="/academy">
+            더 보기 +
+          </Link>
+        </div>
+        <div className="network_button">
+          <Link to="/branches">
+            <div className='left_side'>
+              <img src='../images/icon_bon.png' alt="network_button" />
+              <div className='tit'>
+                <div className='sub_tit'>
+                  BON NETWORK
+                </div>
+                <div className='main_tit'>
+                  본 주짓수 네트워크
+                </div>
+                
+              </div>
+            </div>
+            <div className='trangle'></div>
+          </Link>
+        </div>
+
+      </div>
+    
       <button className="slider-button prev" onClick={prevSlide}>
         &#10094;
       </button>

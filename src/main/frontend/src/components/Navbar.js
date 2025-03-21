@@ -1,8 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import LoginForm from './LoginForm'; 
 
 function Navbar() {
+  const [isFixed, setIsFixed] = useState(false);
+
+  useEffect(() => {
+      const handleScroll = () => {
+          if (window.scrollY > 100) {
+              setIsFixed(true);
+          } else {
+              setIsFixed(false);
+          }
+      };
+
+      window.addEventListener('scroll', handleScroll);
+
+      // Cleanup function to remove the event listener
+      return () => {
+          window.removeEventListener('scroll', handleScroll);
+      };
+  }, []);
+
   const [showLoginForm, setShowLoginForm] = useState(false);
 
   const toggleLoginForm = () => {
@@ -10,7 +29,7 @@ function Navbar() {
   };
 
   return (
-    <nav className='main_nav'>
+    <nav className={`main_nav ${isFixed ? 'fixed' : ''}`}>
       <ul>
         <li><Link to="/">홈</Link></li>
         <li><Link to="/academy">아카데미</Link></li>

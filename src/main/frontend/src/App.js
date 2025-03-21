@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Navbar from './components/Navbar'; 
+import Footer from './components/Footer'; 
 import Academy from './pages/academy';
 import Brunches from './pages/brunches';
 import Comunity from './pages/comunity';
@@ -30,6 +31,7 @@ function App() {
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/join" element={<Join />} />
         </Routes>
+        <Footer />
       </div>
     </BrowserRouter>
   );

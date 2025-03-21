@@ -1,10 +1,20 @@
-.slider-container {
+:root {
+  --black-color: #1f1f1f;
+  --white-color: #fff;
+}
+
+.slider-container { 
   position: relative;
   width: calc(100% - 100px);
   height: calc(100vh - 140px);
   border-radius: 60px;
   overflow: hidden;
   margin: 0 auto;
+  text-transform: uppercase;
+  font-family: Pretendard;
+}
+.slider-container.fixed {
+  margin-top: 100px;
 }
 
 .slider-image {
@@ -42,6 +52,7 @@
   transform: translate(-50%, -50%);
   z-index: 2;  /* 항상 최상위에 표시될 이미지의 z-index 설정 */
   pointer-events: none;  /* 클릭 이벤트가 아래 요소에 전달되도록 설정 */
+  height: 101%;
 }
 .overlay-image2 {
   position: absolute;
@@ -69,12 +80,12 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  z-index: 4;
+  z-index: 7;
 }
 
 .slider-button:hover {
   transition: all 0.3s ease;
-  color: #333;
+  color: var(--black-color);
   background: rgba(255, 255, 255, 0.7);
 }
 
@@ -110,5 +121,133 @@
 }
 
 .dot.active {
-  background: white;
+  background: var(--white-color);
 } 
+
+
+.slider-container .inner_ment {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  padding: 100px 70px 70px;
+  text-align: left;
+}
+.slider-container .inner_ment .title {
+  font-size: 40px;
+  font-weight: bold;
+  color: var(--black-color);
+  
+  
+} 
+.slider-container .inner_ment .title .title_bold {
+  font-size: 88px;
+  font-weight: 900;
+}       
+.slider-container .inner_ment .title .title_light {
+  font-size: 88px;
+  font-weight: 100;
+}       
+.slider-container .inner_ment .ment {
+  margin-top: 34px;
+  width: 100%;
+  max-width: 500px;
+  font-weight: bold;
+  color: var(--black-color);
+} 
+.slider-container .inner_ment .ment .ment_text {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.89;
+}        
+.slider-container .inner_ment .ment_button {
+  margin-top: 44px;
+}
+.slider-container .inner_ment .ment_button a {
+  display: inline-flex;
+  font-size: 18px;
+  font-weight: normal;
+  color: var(--white-color);
+  padding: 19px 96px 18px;
+  border-radius: 29px;
+  background-color: #fe6c2e;
+}
+.slider-container .inner_ment .ment_button a:hover {
+  transition: all 0.3s ease;
+  background-color: var(--black-color);
+}
+
+.slider-container .inner_ment .network_button {
+  position: absolute;
+  bottom: 70px;
+  left: 70px;
+} 
+.slider-container .inner_ment .network_button a {
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 360px;
+  padding: 23px 30px;
+  border-radius: 20px;
+  box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.16);
+  background-color: #fff;
+  gap: 65px;
+}
+.slider-container .inner_ment .network_button a:hover {
+  transition: all 0.3s ease;
+  transform: scale(0.98);
+  box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.3);
+}
+.slider-container .inner_ment .network_button a .left_side {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 15px;
+  flex: 0 0 auto;
+}
+  
+.slider-container .inner_ment .network_button a .tit {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 0 0 auto;
+}
+.slider-container .inner_ment .network_button a .tit .sub_tit {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--black-color);
+}
+.slider-container .inner_ment .network_button a .tit .main_tit {
+  font-size: 21px;
+  font-weight: bold;
+
+  color: var(--black-color);
+}
+.slider-container .inner_ment .network_button a .trangle {
+  width: 26px;
+  height: 16px;
+  border-top: 8px solid transparent;
+  border-left: 13px solid var(--black-color);
+  border-right: 13px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
