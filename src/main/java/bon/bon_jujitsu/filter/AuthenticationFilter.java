@@ -26,28 +26,36 @@ public class AuthenticationFilter implements Filter {
 
     final String authorizationHeader = req.getHeader(HttpHeaders.AUTHORIZATION);
     final String requestUri = req.getRequestURI();
+    final String httpMethod = req.getMethod(); // HTTP 메서드 확인
 
-    System.out.println("Request URI: " + requestUri);
+    System.out.println("Request URI: " + requestUri + ", Method: " + httpMethod);
 
-    // 인증이 필요 없는 경로는 건너뛰기
-    if ( 
+    // 인증이 필요 없는 경로 설정
+    if (
         requestUri.contains("/api/users/signup") ||
-        requestUri.contains("/api/users/login") ||
-        requestUri.matches("/api/admin/\\d+") ||
-        requestUri.contains("/v3/api-docs") ||
-        requestUri.contains("/swagger-ui") ||
-        requestUri.contains("/swagger-resources") ||
-        requestUri.startsWith("/static") || // 정적 리소스 경로 예외 처리
-        requestUri.startsWith("/images") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/asset-manifest.json") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/favicon.ico") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/manifest.json") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/logo192.png") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/logo512.png") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/robots.txt") || // 정적 리소스 경로 예외 처리
-        requestUri.equals("/") // 루트 경로 예외 처리
-        ) {
-      System.out.println("Skipping authentication for: " + requestUri);
+            requestUri.contains("/api/users/login") ||
+            requestUri.matches("/api/admin/\\d+") ||
+            requestUri.contains("/v3/api-docs") ||
+            requestUri.contains("/swagger-ui") ||
+            requestUri.contains("/swagger-resources") ||
+            requestUri.startsWith("/static") ||
+            requestUri.startsWith("/images") ||
+            requestUri.equals("/asset-manifest.json") ||
+            requestUri.equals("/favicon.ico") ||
+            requestUri.equals("/manifest.json") ||
+            requestUri.equals("/logo192.png") ||
+            requestUri.equals("/logo512.png") ||
+            requestUri.equals("/robots.txt") ||
+            requestUri.equals("/") ||
+            (requestUri.startsWith("/api/board") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/board 예외 처리 추가
+            (requestUri.startsWith("/api/branch") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/branch 예외 처리 추가
+            (requestUri.startsWith("/api/notice") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/notice 예외 처리 추가
+            (requestUri.startsWith("/api/news") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/notice 예외 처리 추가
+            (requestUri.startsWith("/api/skill") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/skill 예외 처리 추가
+            (requestUri.startsWith("/api/sponsor") && "GET".equalsIgnoreCase(httpMethod)) //  GET /api/sponsor 예외 처리 추가
+
+    ) {
+      System.out.println("Skipping authentication for: " + requestUri + ", Method: " + httpMethod);
       chain.doFilter(request, response);
       return;
     }

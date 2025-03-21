@@ -90,7 +90,7 @@ public class NoticeService {
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("공지사항은 관장만 작성할 수 있습니다.");
+      throw new IllegalArgumentException("공지사항은 관장만 수정 할 수 있습니다.");
     }
 
     notice.updateNotice(update);
@@ -106,7 +106,7 @@ public class NoticeService {
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("공지사항은 관장만 작성할 수 있습니다.");
+      throw new IllegalArgumentException("공지사항은 관장만 삭제 할 수 있습니다.");
     }
 
     notice.softDelte();

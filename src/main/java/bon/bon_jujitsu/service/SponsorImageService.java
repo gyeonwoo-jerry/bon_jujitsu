@@ -1,8 +1,8 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Notice;
-import bon.bon_jujitsu.domain.NoticeImage;
-import bon.bon_jujitsu.repository.NoticeImageRepository;
+import bon.bon_jujitsu.domain.Sponsor;
+import bon.bon_jujitsu.domain.SponsorImage;
+import bon.bon_jujitsu.repository.SponsorImageRepository;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,11 +17,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class NoticeImageService {
+public class SponsorImageService {
 
-  private final NoticeImageRepository noticeImageRepository;
+  private final SponsorImageRepository sponsorImageRepository;
 
-  public void uploadImage(Notice notice, List<MultipartFile> images) {
+  public void uploadImage(Sponsor sponsor, List<MultipartFile> images) {
     if (images == null || images.isEmpty()) {
       return;
     }
@@ -32,12 +32,12 @@ public class NoticeImageService {
       for (MultipartFile image : images) {
         String dbFilePath = saveImage(image, uploads);
 
-        NoticeImage noticeImage = NoticeImage.builder()
-            .notice(notice)
+        SponsorImage sponsorImage = SponsorImage.builder()
+            .sponsor(sponsor)
             .imagePath(dbFilePath)
             .build();
 
-        noticeImageRepository.save(noticeImage);
+        sponsorImageRepository.save(sponsorImage);
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -58,24 +58,24 @@ public class NoticeImageService {
     return dbFilepath;
   }
 
-  public void updateImages(Notice notice, List<MultipartFile> newImages) {
+  public void updateImages(Sponsor sponsor, List<MultipartFile> newImages) {
 
     if (newImages == null || newImages.isEmpty()) {
       return;
     }
     // 1. 기존 이미지 조회
-    List<NoticeImage> existingImages = noticeImageRepository.findByNoticeId(notice.getId());
+    List<SponsorImage> existingImages = sponsorImageRepository.findBySponsorId(sponsor.getId());
 
     // 2. 기존 이미지 파일 삭제 및 엔티티 삭제
-    for (NoticeImage existingImage : existingImages) {
+    for (SponsorImage existingImage : existingImages) {
       // 물리적 파일 삭제
       deletePhysicalFile(existingImage.getImagePath());
       // 엔티티 삭제
-      noticeImageRepository.delete(existingImage);
+      sponsorImageRepository.delete(existingImage);
     }
 
     // 3. 새로운 이미지 업로드
-    uploadImage(notice, newImages);
+    uploadImage(sponsor, newImages);
   }
 
   private void deletePhysicalFile(String dbFilePath) {
@@ -88,5 +88,4 @@ public class NoticeImageService {
       e.printStackTrace();
     }
   }
-
 }

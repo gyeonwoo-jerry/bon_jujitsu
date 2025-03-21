@@ -2,11 +2,12 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
-import bon.bon_jujitsu.dto.request.NoticeRequest;
+import bon.bon_jujitsu.dto.request.SkillRequest;
 import bon.bon_jujitsu.dto.response.NoticeResponse;
-import bon.bon_jujitsu.dto.update.NoticeUpdate;
+import bon.bon_jujitsu.dto.response.SkillResponse;
+import bon.bon_jujitsu.dto.update.SkillUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
-import bon.bon_jujitsu.service.NoticeService;
+import bon.bon_jujitsu.service.SkillService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,59 +27,60 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class NoticeController {
+public class SkillController {
 
-  private final NoticeService noticeService;
+  private final SkillService skillService;
 
-  @PostMapping("/notice")
-  public ResponseEntity<Status> createNotice(
+  @PostMapping("/skill")
+  public ResponseEntity<Status> createSkill(
       @AuthenticationUserId Long id,
-      @Valid @RequestPart("request") NoticeRequest request,
+      @Valid @RequestPart("request") SkillRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    noticeService.createNotice(id, request, images);
+    skillService.createNotice(id, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));
+        .body(Status.createStatusDto(HttpStatus.CREATED, "기술게시판 생성 완료"));
   }
 
-  @GetMapping("/notice")
-  public ResponseEntity<PageResponse<NoticeResponse>> getNotices (
+  @GetMapping("/skill")
+  public ResponseEntity<PageResponse<SkillResponse>> getSkills (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.getNotices(page, size));
+        .body(skillService.getSkills(page, size));
   }
 
-  @GetMapping("/notice/{noticeId}")
-  public ResponseEntity<NoticeResponse> getNotice(
-      @PathVariable("noticeId") Long noticeId
+  @GetMapping("/skill/{skillId}")
+  public ResponseEntity<SkillResponse> getskill(
+      @PathVariable("skillId") Long skillId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.getNotice(noticeId));
+        .body(skillService.getskill(skillId));
   }
 
-  @PatchMapping("/notice/{noticeId}")
-  public ResponseEntity<Status> updateNotice(
-      @Valid @RequestPart("update") NoticeUpdate update,
+  @PatchMapping("/skill/{skillId}")
+  public ResponseEntity<Status> updateSkill(
+      @Valid @RequestPart("update") SkillUpdate update,
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId,
+      @PathVariable("skillId") Long skillId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.updateNotice(update, id, noticeId, images));
+        .body(skillService.updateSkill(update, id, skillId, images));
   }
 
-  @DeleteMapping("/notice/{noticeId}")
+  @DeleteMapping("/skill/{skillId}")
   private ResponseEntity<Status> deleteNotice(
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId
+      @PathVariable("skillId") Long skillId
   ) {
-    noticeService.deleteNotice(id, noticeId);
+    skillService.deleteSkill(id, skillId);
     return ResponseEntity.noContent().build();
   }
 }
+

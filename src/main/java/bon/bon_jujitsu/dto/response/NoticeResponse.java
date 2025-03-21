@@ -1,6 +1,5 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Notice;
 import bon.bon_jujitsu.domain.NoticeImage;
 import java.time.LocalDateTime;

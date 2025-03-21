@@ -3,10 +3,13 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.NoticeRequest;
+import bon.bon_jujitsu.dto.request.SponsorRequest;
 import bon.bon_jujitsu.dto.response.NoticeResponse;
+import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.NoticeUpdate;
+import bon.bon_jujitsu.dto.update.SponsorUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
-import bon.bon_jujitsu.service.NoticeService;
+import bon.bon_jujitsu.service.SponsorService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,59 +29,59 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class NoticeController {
+public class SponsorController {
 
-  private final NoticeService noticeService;
+  private final SponsorService sponsorService;
 
-  @PostMapping("/notice")
-  public ResponseEntity<Status> createNotice(
+  @PostMapping("/sponsor")
+  public ResponseEntity<Status> createSponsor(
       @AuthenticationUserId Long id,
-      @Valid @RequestPart("request") NoticeRequest request,
+      @Valid @RequestPart("request") SponsorRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    noticeService.createNotice(id, request, images);
+    sponsorService.createSponsor(id, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));
+        .body(Status.createStatusDto(HttpStatus.CREATED, "스폰서 생성 완료"));
   }
 
-  @GetMapping("/notice")
-  public ResponseEntity<PageResponse<NoticeResponse>> getNotices (
+  @GetMapping("/sponsor")
+  public ResponseEntity<PageResponse<SponsorResponse>> getSponsors (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.getNotices(page, size));
+        .body(sponsorService.getNotices(page, size));
   }
 
-  @GetMapping("/notice/{noticeId}")
-  public ResponseEntity<NoticeResponse> getNotice(
-      @PathVariable("noticeId") Long noticeId
+  @GetMapping("/sponsor/{sponsorId}")
+  public ResponseEntity<SponsorResponse> getSponsor(
+      @PathVariable("sponsorId") Long sponsorId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.getNotice(noticeId));
+        .body(sponsorService.getSponsor(sponsorId));
   }
 
-  @PatchMapping("/notice/{noticeId}")
-  public ResponseEntity<Status> updateNotice(
-      @Valid @RequestPart("update") NoticeUpdate update,
+  @PatchMapping("/sponsor/{sponsorId}")
+  public ResponseEntity<Status> updateSponsor(
+      @Valid @RequestPart("update") SponsorUpdate update,
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId,
+      @PathVariable("sponsorId") Long sponsorId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.updateNotice(update, id, noticeId, images));
+        .body(sponsorService.updateSponsor(update, id, sponsorId, images));
   }
 
-  @DeleteMapping("/notice/{noticeId}")
-  private ResponseEntity<Status> deleteNotice(
+  @DeleteMapping("/sponsor/{sponsorId}")
+  private ResponseEntity<Status> deleteSponsor(
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId
+      @PathVariable("sponsorId") Long sponsorId
   ) {
-    noticeService.deleteNotice(id, noticeId);
+    sponsorService.deleteSponsor(id, sponsorId);
     return ResponseEntity.noContent().build();
   }
 }

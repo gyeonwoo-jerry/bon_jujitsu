@@ -2,11 +2,14 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
-import bon.bon_jujitsu.dto.request.NoticeRequest;
-import bon.bon_jujitsu.dto.response.NoticeResponse;
-import bon.bon_jujitsu.dto.update.NoticeUpdate;
+import bon.bon_jujitsu.dto.request.BoardRequest;
+import bon.bon_jujitsu.dto.request.NewsRequest;
+import bon.bon_jujitsu.dto.response.BoardResponse;
+import bon.bon_jujitsu.dto.response.NewsResponse;
+import bon.bon_jujitsu.dto.update.BoardUpdate;
+import bon.bon_jujitsu.dto.update.NewsUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
-import bon.bon_jujitsu.service.NoticeService;
+import bon.bon_jujitsu.service.NewsService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,59 +29,59 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class NoticeController {
+public class NewsController {
 
-  private final NoticeService noticeService;
+  private final NewsService newsService;
 
-  @PostMapping("/notice")
-  public ResponseEntity<Status> createNotice(
+  @PostMapping("/news")
+  public ResponseEntity<Status> createNews(
       @AuthenticationUserId Long id,
-      @Valid @RequestPart("request") NoticeRequest request,
+      @RequestPart("request") @Valid NewsRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    noticeService.createNotice(id, request, images);
+    newsService.createNews(id, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));
+        .body(Status.createStatusDto(HttpStatus.CREATED, "뉴스 생성 완료"));
   }
 
-  @GetMapping("/notice")
-  public ResponseEntity<PageResponse<NoticeResponse>> getNotices (
+  @GetMapping("/news")
+  public ResponseEntity<PageResponse<NewsResponse>> getAllNews (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.getNotices(page, size));
+        .body(newsService.getAllNews(page, size));
   }
 
-  @GetMapping("/notice/{noticeId}")
-  public ResponseEntity<NoticeResponse> getNotice(
-      @PathVariable("noticeId") Long noticeId
+  @GetMapping("/news/{newsId}")
+  public ResponseEntity<NewsResponse> getNews(
+      @PathVariable("newsId") Long newsId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.getNotice(noticeId));
+        .body(newsService.getBoard(newsId));
   }
 
-  @PatchMapping("/notice/{noticeId}")
-  public ResponseEntity<Status> updateNotice(
-      @Valid @RequestPart("update") NoticeUpdate update,
+  @PatchMapping("/news/{newsId}")
+  public ResponseEntity<Status> updateNews(
+      @RequestPart("update") @Valid NewsUpdate update,
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId,
+      @PathVariable("newsId") Long newsId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.updateNotice(update, id, noticeId, images));
+        .body(newsService.updateNews(update, id, newsId, images));
   }
 
-  @DeleteMapping("/notice/{noticeId}")
-  private ResponseEntity<Status> deleteNotice(
+  @DeleteMapping("/news/{newsId}")
+  public ResponseEntity<Status> deleteNews(
       @AuthenticationUserId Long id,
-      @PathVariable("noticeId") Long noticeId
+      @PathVariable("newsId") Long newsId
   ) {
-    noticeService.deleteNotice(id, noticeId);
+    newsService.deleteNews(id, newsId);
     return ResponseEntity.noContent().build();
   }
 }
