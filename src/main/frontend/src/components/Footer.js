@@ -1,6 +1,7 @@
 import React from 'react';
 import '../styles/Footer.css'; // 스타일을 위한 CSS 파일을 import합니다.
 import { Link } from 'react-router-dom';
+import GoToTopButton from './GoToTopButton';
 
 function Footer() {
     const currentYear = new Date().getFullYear();
@@ -37,7 +38,7 @@ function Footer() {
                         <a href="#cafe"><img src="/images/icon-cafe.png" alt="cafe" /></a>
                     </div>
                     <div className='copyright'>©2006-{currentYear} BON JIU-JITSU. All rights reserved.</div>
-                    <a className='gototop' href="#gototop"><img src='/images/icon-top-wt.png' alt='gototop'/></a>
+                    <GoToTopButton />
                 </div>
             </div>
         </footer>

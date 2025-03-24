@@ -12,7 +12,8 @@ import News from './pages/news';
 import Qna from './pages/qna';
 import Sponsor from './pages/sponsor';
 import Join from './pages/join';
-import './styles/main.css';   
+import './styles/main.css';
+import './styles/response.css';
 
 function App() {
   return (

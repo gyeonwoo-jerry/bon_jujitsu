@@ -80,10 +80,22 @@
 }
 
 .branchList_container .inner ul li.branch_item .branch_item_title .branch_item_title_tit {
+    background-color: var(--white-color);
+    z-index: 1;
+    padding-right: 20px;
+}
+
+.branchList_container .inner ul li.branch_item .branch_item_title .branch_item_title_tit .gym_name {
     font-size: 24px;
     font-weight: bold;
     letter-spacing: -0.24px;
     color: var(--black-color);  
+}
+
+.branchList_container .inner ul li.branch_item .branch_item_title .branch_item_title_tit .gym_area {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--black-color);
     background-color: var(--white-color);
     z-index: 1;
     padding-right: 20px;
@@ -173,4 +185,9 @@
     object-fit: contain;
     object-position: center;
     display: block;
+}
+
+.branchList_container .inner ul li.branch_item .branch_info .owner_name {
+    font-size: 18px;
+    font-weight: 600;
 }

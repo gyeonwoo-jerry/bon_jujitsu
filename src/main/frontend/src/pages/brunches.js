@@ -5,8 +5,9 @@ import SubHeader from '../components/SubHeader';
 function Brunches() {
   const [pageName, setPageName] = useState('');
   useEffect(() => {
-    // 페이지명을 저장 (예: "브랜치 페이지")
-    setPageName('지부 소개');
+    const title = '지부 소개';
+    setPageName(title);
+    document.title = title;
   }, []);
 
   return (
