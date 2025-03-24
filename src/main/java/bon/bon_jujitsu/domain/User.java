@@ -63,6 +63,16 @@ public class User extends Timestamped {
 
   private int level;
 
+  private String sns1;
+
+  private String sns2;
+
+  private String sns3;
+
+  private String sns4;
+
+  private String sns5;
+
   @Enumerated(EnumType.STRING)
   private Stripe stripe;
 
@@ -136,6 +146,16 @@ public class User extends Timestamped {
     });
 
     request.stripe().ifPresent(value -> this.stripe = value);
+
+    request.sns1().ifPresent(value -> {this.sns1 = value;});
+
+    request.sns2().ifPresent(value -> {this.sns2 = value;});
+
+    request.sns3().ifPresent(value -> {this.sns3 = value;});
+
+    request.sns4().ifPresent(value -> {this.sns4 = value;});
+
+    request.sns5().ifPresent(value -> {this.sns5 = value;});
   }
 
   public void changePassword(String newPassword) {

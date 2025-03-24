@@ -81,6 +81,11 @@ public class UserService {
         .gender(req.gender())
         .branch(branch)
         .level(req.level())
+        .sns1(req.sns1())
+        .sns2(req.sns2())
+        .sns3(req.sns3())
+        .sns4(req.sns4())
+        .sns5(req.sns5())
         .stripe(req.stripe())
         .userRole(UserRole.USER)
         .build();

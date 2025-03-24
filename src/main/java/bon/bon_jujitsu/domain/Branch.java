@@ -2,18 +2,16 @@ package bon.bon_jujitsu.domain;
 
 import bon.bon_jujitsu.common.Timestamped;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Where;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Builder
 @Entity
@@ -33,9 +31,15 @@ public class Branch extends Timestamped {
   @Column(unique = true, nullable = false)
   private String address;
 
+  @Column(unique = true, nullable = false)
+  private String area;
+
   @Builder.Default
   @Column(nullable = false)
   private boolean isDeleted = false;
+
+  @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<User> users = new ArrayList<>();
 
   public void updateBranch(BranchUpdate branchUpdate) {
     branchUpdate.region().ifPresent(region -> {
@@ -44,6 +48,10 @@ public class Branch extends Timestamped {
 
     branchUpdate.address().ifPresent(address -> {
       if (!address.isBlank()) this.address = address;
+    });
+
+    branchUpdate.area().ifPresent(area -> {
+      if (!area.isBlank()) this.area = area;
     });
   }
 

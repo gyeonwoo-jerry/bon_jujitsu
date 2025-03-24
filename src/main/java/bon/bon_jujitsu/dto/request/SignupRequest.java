@@ -28,6 +28,11 @@ public record SignupRequest (
     Long branchId,
     @Min(1)
     int level,
-    Stripe stripe
+    Stripe stripe,
+    String sns1,
+    String sns2,
+    String sns3,
+    String sns4,
+    String sns5
 ){
 }

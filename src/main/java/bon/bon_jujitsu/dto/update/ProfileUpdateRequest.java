@@ -15,5 +15,10 @@ public record ProfileUpdateRequest(
     Optional<String> gender,
     Optional<Long> branchId,
     Optional<@Min(1) Integer> level,
-    Optional<Stripe> stripe
+    Optional<Stripe> stripe,
+    Optional<String> sns1,
+    Optional<String> sns2,
+    Optional<String> sns3,
+    Optional<String> sns4,
+    Optional<String> sns5
 ) {}

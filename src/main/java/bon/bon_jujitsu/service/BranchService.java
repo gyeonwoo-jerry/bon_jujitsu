@@ -35,6 +35,7 @@ public class BranchService {
     Branch branch = Branch.builder()
         .region(request.region())
         .address(request.address())
+        .area(request.area())
         .build();
 
     branchRepository.save(branch);
@@ -43,17 +44,31 @@ public class BranchService {
   public BranchResponse getBranch(Long branchId) {
     Branch branch = branchRepository.findById(branchId).orElseThrow(()->new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
-    BranchResponse branchResponse = BranchResponse.from(branch);
+    User owner = branch.getUsers().stream()
+            .filter(user -> UserRole.OWNER.equals(user.getUserRole()))
+            .findFirst()
+            .orElse(null);
+
+    BranchResponse branchResponse = BranchResponse.from(branch, owner);
     return branchResponse;
   }
 
 
   public PageResponse<BranchResponse> getAllBranch(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page - 1, size);
 
     Page<Branch> branches = branchRepository.findAll(pageRequest);
 
-    Page<BranchResponse> branchResponses = branches.map(BranchResponse::from);
+    Page<BranchResponse> branchResponses = branches.map(branch -> {
+      // 각 지부마다 OWNER 찾기
+      User owner = branch.getUsers().stream()
+              .filter(user -> UserRole.OWNER.equals(user.getUserRole()))
+              .findFirst()
+              .orElse(null);
+
+      // OWNER 정보를 포함한 응답 생성
+      return BranchResponse.from(branch, owner);
+    });
 
     return PageResponse.success(branchResponses, HttpStatus.OK, "모든 지부 조회 완료");
   }
