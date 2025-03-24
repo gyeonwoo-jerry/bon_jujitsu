@@ -3,6 +3,3 @@ spring:
     name: Bon
   profiles:
     active: dev
-  mvc:
-    pathmatch:
-      matching-strategy: ant-path-matcher
