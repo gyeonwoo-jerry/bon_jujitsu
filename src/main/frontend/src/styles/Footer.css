@@ -1,10 +1,7 @@
-:root {
-    --black-color: #1f1f1f;
-    --white-color: #fff;
-}
+
 .footer {
     background-color: transparent;
-    padding: 30px;
+    padding: 80px 30px 30px;
     font-family: Pretendard;
 }
 .footer .footer_container {

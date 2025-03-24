@@ -1,5 +1,5 @@
 import React from 'react';
-import './Footer.css'; // 스타일을 위한 CSS 파일을 import합니다.
+import '../styles/Footer.css'; // 스타일을 위한 CSS 파일을 import합니다.
 import { Link } from 'react-router-dom';
 
 function Footer() {
