@@ -6,6 +6,7 @@ import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BranchRequest;
+import bon.bon_jujitsu.dto.response.BranchDetailResponse;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
@@ -41,7 +42,7 @@ public class BranchService {
     branchRepository.save(branch);
   }
 
-  public BranchResponse getBranch(Long branchId) {
+  public BranchDetailResponse getBranch(Long branchId) {
     Branch branch = branchRepository.findById(branchId).orElseThrow(()->new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
     User owner = branch.getUsers().stream()
@@ -49,7 +50,7 @@ public class BranchService {
             .findFirst()
             .orElse(null);
 
-    BranchResponse branchResponse = BranchResponse.from(branch, owner);
+    BranchDetailResponse branchResponse = BranchDetailResponse.from(branch, owner);
     return branchResponse;
   }
 

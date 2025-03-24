@@ -11,7 +11,6 @@ public record UserResponse(
     Long id,
     String name,
     String memberId,
-    String password,
     String email,
     String phoneNum,
     String address,
@@ -30,7 +29,6 @@ public record UserResponse(
         .id(user.getId())
         .name(user.getName())
         .memberId(user.getMemberId())
-        .password(user.getPassword())
         .email(user.getEmail())
         .phoneNum(user.getPhoneNum())
         .address(user.getAddress())

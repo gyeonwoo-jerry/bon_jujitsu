@@ -3,6 +3,7 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BranchRequest;
+import bon.bon_jujitsu.dto.response.BranchDetailResponse;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -40,7 +41,7 @@ public class BranchController {
   }
 
   @GetMapping("/branch/{branchId}")
-  public ResponseEntity<BranchResponse> getBranch(
+  public ResponseEntity<BranchDetailResponse> getBranch(
       @PathVariable("branchId") Long branchId
   ) {
     return ResponseEntity
