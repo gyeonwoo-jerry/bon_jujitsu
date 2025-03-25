@@ -2,22 +2,7 @@ spring:
   application:
     name: Bon
   profiles:
-    active: local
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://211.110.44.79:3306/bon_dev
-    username: itadmin
-    password: gthkds!83!
-  jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
-    properties:
-      hibernate:
-        show-sql: true
-        format-sql: true
-    hibernate:
-      ddl-auto: update
-    logging:
-      level:
-        org.hibernate.SQL: debug
-        org.springframework.web: DEBUG
-        org.springframework.boot: DEBUG
+    active: dev
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
