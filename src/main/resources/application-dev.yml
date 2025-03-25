@@ -20,6 +20,9 @@ spring:
         org.hibernate.SQL: debug
         org.springframework.web: DEBUG
         org.springframework.boot: DEBUG
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
 
   servlet:
     multipart:
