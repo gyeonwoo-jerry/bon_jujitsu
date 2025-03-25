@@ -31,7 +31,7 @@ public class BoardImageService {
     }
 
     try {
-      String uploads = filepath;
+      String uploads = filepath+"board/";
 
       for (MultipartFile image : images) {
         String dbFilePath = saveImage(image, uploads);
