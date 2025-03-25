@@ -1,11 +1,10 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.BranchImage;
 import bon.bon_jujitsu.repository.BranchImageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +21,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BranchImageService {
 
+    @Value("${filepath}")
+    private String filepath;
+
     private final BranchImageRepository branchImageRepository;
 
     public void uploadImage(Branch branch, List<MultipartFile> images) {
@@ -30,7 +32,7 @@ public class BranchImageService {
         }
 
         try {
-            String uploads = "src/main/resources/images/";
+            String uploads = filepath+"branch/";
 
             for (MultipartFile image : images) {
                 String dbFilePath = saveImage(image, uploads);
@@ -52,7 +54,7 @@ public class BranchImageService {
 
         String filePath = uploads + fileName;
 
-        String dbFilepath = "/uploads/images/" + fileName;
+        String dbFilepath = filepath + fileName;
 
         Path path = Paths.get(filePath);
         Files.createDirectories(path.getParent());
@@ -84,7 +86,7 @@ public class BranchImageService {
     private void deletePhysicalFile(String dbFilePath) {
         try {
             // DB에 저장된 경로로부터 실제 파일 경로 계산
-            String actualFilePath = "src/main/resources" + dbFilePath.replace("/uploads", "");
+            String actualFilePath = dbFilePath;
             Path path = Paths.get(actualFilePath);
             Files.deleteIfExists(path);
         } catch (IOException e) {

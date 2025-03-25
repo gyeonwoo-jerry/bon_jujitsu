@@ -33,11 +33,11 @@ public class SkillController {
 
   @PostMapping("/skill")
   public ResponseEntity<Status> createSkill(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SkillRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    skillService.createNotice(id, request, images);
+    skillService.createNotice(userId, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "기술게시판 생성 완료"));
@@ -65,21 +65,21 @@ public class SkillController {
   @PatchMapping("/skill/{skillId}")
   public ResponseEntity<Status> updateSkill(
       @Valid @RequestPart("update") SkillUpdate update,
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(skillService.updateSkill(update, id, skillId, images));
+        .body(skillService.updateSkill(update, userId, skillId, images));
   }
 
   @DeleteMapping("/skill/{skillId}")
   private ResponseEntity<Status> deleteNotice(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId
   ) {
-    skillService.deleteSkill(id, skillId);
+    skillService.deleteSkill(userId, skillId);
     return ResponseEntity.noContent().build();
   }
 }

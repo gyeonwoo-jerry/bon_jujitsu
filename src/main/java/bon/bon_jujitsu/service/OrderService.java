@@ -37,8 +37,8 @@ public class OrderService {
   private final CartItemRepository cartItemRepository;
   private final CartRepository cartRepository;
 
-  public void createOrder(Long id, OrderRequest request) {
-    User orderUser = userRepository.findById(id).orElseThrow(()->
+  public void createOrder(Long userId, OrderRequest request) {
+    User orderUser = userRepository.findById(userId).orElseThrow(()->
         new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     List<Long> cartItemIds = Optional.ofNullable(request.cartItemIds())
@@ -159,8 +159,8 @@ public class OrderService {
     return PageResponse.success(waitingOrders, HttpStatus.OK, "주문 조회 성공");
   }
 
-  public Status updateOrderByAdmin(OrderUpdate request, Long id) {
-    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateOrderByAdmin(OrderUpdate request, Long userId) {
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
@@ -234,12 +234,12 @@ public class OrderService {
         .build();
   }
 
-  public Status cancelOrder(Long orderId, Long id) {
-    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status cancelOrder(Long orderId, Long userId) {
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN && !order.getUser().getId().equals(id)) {
+    if (user.getUserRole() != UserRole.ADMIN && !order.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("본인의 주문만 취소할 수 있습니다.");
     }
 
@@ -255,15 +255,15 @@ public class OrderService {
         .build();
   }
 
-  public Status returnOrder(Long orderId, Long id) {
-    userRepository.findById(id)
+  public Status returnOrder(Long orderId, Long userId) {
+    userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
 
     // 본인 주문인지 확인
-    if (!order.getUser().getId().equals(id)) {
+    if (!order.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("본인의 주문만 반품 신청할 수 있습니다.");
     }
 

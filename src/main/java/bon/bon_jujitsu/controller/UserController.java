@@ -39,25 +39,25 @@ public class UserController {
   }
 
   @GetMapping("/profile")
-  public ResponseEntity<UserResponse> getProfile(@AuthenticationUserId Long id) {
-    UserResponse response = usersService.getProfile(id);
+  public ResponseEntity<UserResponse> getProfile(@AuthenticationUserId Long userId) {
+    UserResponse response = usersService.getProfile(userId);
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 
   @PatchMapping("/profile")
   public ResponseEntity<Void> updateProfile(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid ProfileUpdateRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-    usersService.updateProfile(id, request, images);
+    usersService.updateProfile(userId, request, images);
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   @DeleteMapping("/me")
   public ResponseEntity<Void> deleteProfile(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestBody @Valid ProfileDeleteRequest request) {
-    usersService.deleteUser(id, request);
+    usersService.deleteUser(userId, request);
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 }

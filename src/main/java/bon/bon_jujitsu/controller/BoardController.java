@@ -32,12 +32,12 @@ public class BoardController {
 
   @PostMapping("/board/{branchId}")
   public ResponseEntity<Status> createBoard(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid BoardRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images,
       @PathVariable("branchId") Long branchId
   ) {
-    boardService.createBoard(id, request, images, branchId);
+    boardService.createBoard(userId, request, images, branchId);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "게시글 생성 완료"));
@@ -65,21 +65,21 @@ public class BoardController {
   @PatchMapping("/board/{boardId}")
   public ResponseEntity<Status> updateBoard(
       @RequestPart("update") @Valid BoardUpdate update,
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("boardId") Long boardId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(boardService.updateBoard(update, id, boardId, images));
+        .body(boardService.updateBoard(update, userId, boardId, images));
   }
 
   @DeleteMapping("/board/{boardId}")
   public ResponseEntity<Status> deleteBoard(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("boardId") Long boardId
   ) {
-    boardService.deleteBoard(id, boardId);
+    boardService.deleteBoard(userId, boardId);
     return ResponseEntity.noContent().build();
   }
 }

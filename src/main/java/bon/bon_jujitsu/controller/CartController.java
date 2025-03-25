@@ -28,10 +28,10 @@ public class CartController {
 
   @PostMapping
   public ResponseEntity<Status> createCart(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @Valid @RequestBody CartRequest request
   ) {
-    cartService.createCart(id, request);
+    cartService.createCart(userId, request);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "카트생성 완료"));

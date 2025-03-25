@@ -32,11 +32,11 @@ public class ItemController {
 
   @PostMapping("/items")
   public ResponseEntity<Status> createItem(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid ItemRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    itmeService.createItem(id, request, images);
+    itmeService.createItem(userId, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "상품등록 완료"));
@@ -63,22 +63,22 @@ public class ItemController {
 
   @PatchMapping("/items/{itemId}")
   public ResponseEntity<Status> updateItem(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid ItemResponse request,
       @PathVariable("itemId") Long itemId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(itmeService.updateItem(id,request,itemId, images));
+        .body(itmeService.updateItem(userId,request,itemId, images));
   }
 
   @DeleteMapping("/items/{itemId}")
   public ResponseEntity<Void> deleteItem(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("itemId") Long itemId
   ) {
-    itmeService.deleteItem(id, itemId);
+    itmeService.deleteItem(userId, itemId);
     return ResponseEntity.noContent().build();
   }
 }

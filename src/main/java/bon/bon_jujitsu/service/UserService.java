@@ -112,9 +112,9 @@ public class UserService {
     return token;
   }
 
-  public Status assignOwnerRole(Long adminId, Long userId) {
-    User targetUser = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
-    User admin = userRepository.findById(adminId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+  public Status assignOwnerRole(Long adminUserId, Long targetUserId) {
+    User targetUser = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+    User admin = userRepository.findById(adminUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
     if(admin.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
@@ -189,8 +189,8 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public ListResponse<UserResponse> getMyUsers(Long id, int page, int size) {
-    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
+  public ListResponse<UserResponse> getMyUsers(Long userId, int page, int size) {
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
 
     if(page < 1 || size < 1) {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
@@ -217,16 +217,16 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public UserResponse getProfile(Long id) {
-    User profile = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+  public UserResponse getProfile(Long userId) {
+    User profile = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     UserResponse userResponse = UserResponse.fromEntity(profile);
     return userResponse;
   }
 
-  public void updateProfile(Long id, ProfileUpdateRequest request, List<MultipartFile> images) {
+  public void updateProfile(Long userId, ProfileUpdateRequest request, List<MultipartFile> images) {
 
-    User profile = userRepository.findById(id)
+    User profile = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     profile.updateProfile(request);
@@ -247,8 +247,8 @@ public class UserService {
     userImageService.updateImages(profile, images);
   }
 
-  public void deleteUser(Long id, ProfileDeleteRequest request) {
-    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+  public void deleteUser(Long userId, ProfileDeleteRequest request) {
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     if(!passwordEncoder.matches(request.password(), user.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -257,8 +257,8 @@ public class UserService {
     user.softDelete();
   }
 
-  public Status assignAdmin(Long userId) {
-    User user = userRepository.findByIdAndIsDeletedFalse(userId)
+  public Status assignAdmin(Long targetUserId) {
+    User user = userRepository.findByIdAndIsDeletedFalse(targetUserId)
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
     if (user.getUserRole() == UserRole.ADMIN) {
@@ -276,8 +276,8 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public ListResponse<UserResponse> getPendingUsers(Long id, int page, int size) {
-    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
+  public ListResponse<UserResponse> getPendingUsers(Long userId, int page, int size) {
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
 
     if(page < 1 || size < 1) {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
@@ -303,9 +303,9 @@ public class UserService {
     );
   }
 
-  public Status assignUser(Long ownerId, Long userId) {
-    User user = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
-    User owner = userRepository.findById(ownerId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+  public Status assignUser(Long ownerUserId, Long targetUserId) {
+    User user = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+    User owner = userRepository.findById(ownerUserId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
     if(owner.getUserRole() != UserRole.OWNER) {
       throw new IllegalArgumentException("관장 권한이 없습니다.");

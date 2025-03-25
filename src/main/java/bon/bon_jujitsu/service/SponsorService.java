@@ -32,8 +32,8 @@ public class SponsorService {
   private final BranchRepository branchRepository;
   private final SponsorImageService sponsorImageService;
 
-  public void createSponsor(Long id, SponsorRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
@@ -83,8 +83,8 @@ public class SponsorService {
   }
 
 
-  public Status updateSponsor(SponsorUpdate update, Long id, Long sponsorId, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
@@ -100,8 +100,8 @@ public class SponsorService {
   }
 
 
-  public void deleteSponsor(Long id, Long sponsorId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteSponsor(Long userId, Long sponsorId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 

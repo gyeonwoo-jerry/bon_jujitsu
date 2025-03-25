@@ -32,8 +32,8 @@ public class SkillService {
   private final UserRepository userRepository;
   private final SKillImageService sKillImageService;
 
-  public void createNotice(Long id, SkillRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createNotice(Long userId, SkillRequest request, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
@@ -81,8 +81,8 @@ public class SkillService {
     return skillResponse;
   }
 
-  public Status updateSkill(SkillUpdate update, Long id, Long skillId, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateSkill(SkillUpdate update, Long userId, Long skillId, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 
@@ -98,8 +98,8 @@ public class SkillService {
   }
 
 
-  public void deleteSkill(Long id, Long skillId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteSkill(Long userId, Long skillId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 

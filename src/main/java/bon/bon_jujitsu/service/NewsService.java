@@ -35,14 +35,14 @@ public class NewsService {
   private final BranchRepository branchRepository;
   private final NewsImageService newsImageService;
 
-  public void createNews(Long id, NewsRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createNews(Long userId, NewsRequest request, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
+    branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("뉴스는 관장만 작성할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 작성할 수 있습니다.");
     }
 
     News news = News.builder()
@@ -83,13 +83,13 @@ public class NewsService {
     return newsResponse;
   }
 
-  public Status updateNews(NewsUpdate update, Long id, Long newsId, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("뉴스는 관장만 수정 할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 수정 할 수 있습니다.");
     }
 
     news.updateNews(update);
@@ -100,13 +100,13 @@ public class NewsService {
   }
 
 
-  public void deleteNews(Long id, Long newsId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteNews(Long userId, Long newsId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("뉴스는 관장만 삭제 할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 삭제 할 수 있습니다.");
     }
 
     news.softDelte();

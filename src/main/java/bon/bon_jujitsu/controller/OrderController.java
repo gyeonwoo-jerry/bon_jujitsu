@@ -29,10 +29,10 @@ public class OrderController {
 
   @PostMapping("/orders")
   public ResponseEntity<Status> createOrder(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @Valid @RequestBody OrderRequest request
   ) {
-    orderService.createOrder(id, request);
+    orderService.createOrder(userId, request);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "주문성공"));
@@ -63,30 +63,30 @@ public class OrderController {
   @PatchMapping("/orders/admin")
   public ResponseEntity<Status> updateOrderByAdmin (
       @Valid @RequestBody OrderUpdate request,
-      @AuthenticationUserId Long id
+      @AuthenticationUserId Long userId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(orderService.updateOrderByAdmin(request, id));
+        .body(orderService.updateOrderByAdmin(request, userId));
   }
 
   @PatchMapping("/orders/cancel/{orderId}")
   public ResponseEntity<Status> cancelOrder (
       @PathVariable("orderId") Long orderId,
-      @AuthenticationUserId Long id
+      @AuthenticationUserId Long userId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(orderService.cancelOrder(orderId, id));
+        .body(orderService.cancelOrder(orderId, userId));
   }
 
   @PatchMapping("/orders/return/{orderId}")
   public ResponseEntity<Status> returnOrder (
       @PathVariable("orderId") Long orderId,
-      @AuthenticationUserId Long id
+      @AuthenticationUserId Long userId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(orderService.returnOrder(orderId, id));
+        .body(orderService.returnOrder(orderId, userId));
   }
 }

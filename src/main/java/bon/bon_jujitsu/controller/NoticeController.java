@@ -32,12 +32,12 @@ public class NoticeController {
 
   @PostMapping("/notice/{branchId}")
   public ResponseEntity<Status> createNotice(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") NoticeRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images,
       @PathVariable("branchId") Long branchId
   ) {
-    noticeService.createNotice(id, request, images, branchId);
+    noticeService.createNotice(userId, request, images, branchId);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));
@@ -65,21 +65,21 @@ public class NoticeController {
   @PatchMapping("/notice/{noticeId}")
   public ResponseEntity<Status> updateNotice(
       @Valid @RequestPart("update") NoticeUpdate update,
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("noticeId") Long noticeId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(noticeService.updateNotice(update, id, noticeId, images));
+        .body(noticeService.updateNotice(update, userId, noticeId, images));
   }
 
   @DeleteMapping("/notice/{noticeId}")
   private ResponseEntity<Status> deleteNotice(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("noticeId") Long noticeId
   ) {
-    noticeService.deleteNotice(id, noticeId);
+    noticeService.deleteNotice(userId, noticeId);
     return ResponseEntity.noContent().build();
   }
 }

@@ -33,10 +33,10 @@ public class CommentController {
 
   @PostMapping("/comment")
   public ResponseEntity<Status> createComment(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @Valid @RequestBody CommentRequest request
   ) {
-    commentService.createComment(id, request);
+    commentService.createComment(userId, request);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED,"댓글 등록 완료"));
@@ -53,21 +53,21 @@ public class CommentController {
 
   @PatchMapping("/comment/{commentId}")
   public ResponseEntity<Status> updateComment(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("commentId") Long commentId,
       @Valid @RequestBody CommentUpdate request
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(commentService.updateComment(id, commentId, request));
+        .body(commentService.updateComment(userId, commentId, request));
   }
 
   @DeleteMapping("/comment/{commentId}")
   private ResponseEntity<Void> deleteComment(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("commentId") Long commentId
   ) {
-    commentService.deleteComment(id, commentId);
+    commentService.deleteComment(userId, commentId);
     return ResponseEntity.noContent().build();
   }
 }

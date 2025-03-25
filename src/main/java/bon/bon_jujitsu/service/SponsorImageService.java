@@ -3,21 +3,26 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Sponsor;
 import bon.bon_jujitsu.domain.SponsorImage;
 import bon.bon_jujitsu.repository.SponsorImageRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class SponsorImageService {
+
+  @Value("${filepath}")
+  private String filepath;
 
   private final SponsorImageRepository sponsorImageRepository;
 
@@ -27,7 +32,7 @@ public class SponsorImageService {
     }
 
     try {
-      String uploads = "src/main/resources/images/";
+      String uploads = filepath+"sponsor/";
 
       for (MultipartFile image : images) {
         String dbFilePath = saveImage(image, uploads);
@@ -49,7 +54,7 @@ public class SponsorImageService {
 
     String filePath = uploads + fileName;
 
-    String dbFilepath = "/uploads/images/" + fileName;
+    String dbFilepath = filepath + fileName;
 
     Path path = Paths.get(filePath);
     Files.createDirectories(path.getParent());
@@ -81,7 +86,7 @@ public class SponsorImageService {
   private void deletePhysicalFile(String dbFilePath) {
     try {
       // DB에 저장된 경로로부터 실제 파일 경로 계산
-      String actualFilePath = "src/main/resources" + dbFilePath.replace("/uploads", "");
+      String actualFilePath = dbFilePath;
       Path path = Paths.get(actualFilePath);
       Files.deleteIfExists(path);
     } catch (IOException e) {

@@ -35,11 +35,11 @@ public class NewsController {
 
   @PostMapping("/news")
   public ResponseEntity<Status> createNews(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid NewsRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    newsService.createNews(id, request, images);
+    newsService.createNews(userId, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "뉴스 생성 완료"));
@@ -67,21 +67,21 @@ public class NewsController {
   @PatchMapping("/news/{newsId}")
   public ResponseEntity<Status> updateNews(
       @RequestPart("update") @Valid NewsUpdate update,
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("newsId") Long newsId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(newsService.updateNews(update, id, newsId, images));
+        .body(newsService.updateNews(update, userId, newsId, images));
   }
 
   @DeleteMapping("/news/{newsId}")
   public ResponseEntity<Status> deleteNews(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("newsId") Long newsId
   ) {
-    newsService.deleteNews(id, newsId);
+    newsService.deleteNews(userId, newsId);
     return ResponseEntity.noContent().build();
   }
 }

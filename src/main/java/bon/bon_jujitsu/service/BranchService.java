@@ -29,8 +29,8 @@ public class BranchService {
   private final UserRepository userRepository;
   private final BranchImageService branchImageService;
 
-  public void createBranch(Long id, BranchRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createBranch(Long userId, BranchRequest request, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관장님, 관리자만 지부 등록이 가능합니다.");
@@ -80,8 +80,8 @@ public class BranchService {
   }
 
 
-  public Status updateBranch(Long id, BranchUpdate update, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()
         -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
@@ -94,8 +94,8 @@ public class BranchService {
   }
 
 
-  public void deleteBranch(Long id) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteBranch(Long userId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관장님, 관리자만 지부 정보 삭제가 가능합니다.");

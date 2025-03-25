@@ -44,8 +44,8 @@ public class ReviewService {
   private final OrderRepository orderRepository;
   private final ReviewImageService reviewImageService;
 
-  public void createReview(Long id, ReviewRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+  public void createReview(Long userId, ReviewRequest request, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     Item item = itemRepository.findById(request.itemId()).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
@@ -134,11 +134,11 @@ public class ReviewService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ReviewResponse> getMyReviews(Long id, PageRequest pageRequest) {
-    userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+  public PageResponse<ReviewResponse> getMyReviews(Long userId, PageRequest pageRequest) {
+    userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
     // 1. 부모 리뷰만 조회 (depth = 0인 리뷰)
-    Page<Review> parentReviews = reviewRepository.findAllByUserIdAndDepth(id, 0, pageRequest);
+    Page<Review> parentReviews = reviewRepository.findAllByUserIdAndDepth(userId, 0, pageRequest);
 
     // 2. 해당 유저의 모든 부모 리뷰 ID 목록을 추출
     List<Long> parentReviewIds = parentReviews.getContent().stream()
@@ -175,11 +175,11 @@ public class ReviewService {
     return PageResponse.success(reviewResponses, HttpStatus.OK, "리뷰 조회 성공");
   }
 
-  public Status updateReview(Long id, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
+  public Status updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
     Review review = reviewRepository.findById(reviewId).orElseThrow(()->new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
     // 사용자 검증
-    if(!id.equals(review.getUser().getId())) {
+    if(!userId.equals(review.getUser().getId())) {
       throw new IllegalArgumentException("리뷰를 수정할 권한이 없습니다.");
     }
 

@@ -33,8 +33,8 @@ public class ItmeService {
   private final ItemRepository itemRepository;
   private final ItemImageService itemImageService;
 
-  public void createItem(Long id, ItemRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createItem(Long userId, ItemRequest request, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관리자만 상품등록이 가능합니다.");
@@ -91,8 +91,8 @@ public class ItmeService {
     return itemResponse;
   }
 
-  public Status updateItem(Long id, ItemResponse request, Long itemId, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateItem(Long userId, ItemResponse request, Long itemId, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관리자만 상품수정이 가능합니다.");
@@ -117,8 +117,8 @@ public class ItmeService {
         .build();
   }
 
-  public void deleteItem(Long id, Long itemId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteItem(Long userId, Long itemId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관리자만 상품삭제가 가능합니다.");

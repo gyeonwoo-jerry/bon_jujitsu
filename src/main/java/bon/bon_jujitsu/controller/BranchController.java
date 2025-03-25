@@ -25,11 +25,11 @@ public class BranchController {
 
   @PostMapping("/branch")
   public ResponseEntity<Status> createBranch(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid BranchRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    branchService.createBranch(id, request, images);
+    branchService.createBranch(userId, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "지부 생성 완료"));
@@ -56,20 +56,20 @@ public class BranchController {
 
   @PatchMapping("/branch")
   public ResponseEntity<Status> updateBranch(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestPart("update") @Valid BranchUpdate update,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(branchService.updateBranch(id, update, images));
+        .body(branchService.updateBranch(userId, update, images));
   }
 
   @DeleteMapping("/branch")
   public ResponseEntity<Status> deleteBranch(
-      @AuthenticationUserId Long id
+      @AuthenticationUserId Long userId
   ) {
-    branchService.deleteBranch(id);
+    branchService.deleteBranch(userId);
     return ResponseEntity.noContent().build();
   }
 }

@@ -33,8 +33,8 @@ public class NoticeService {
   private final UserRepository userRepository;
   private final NoticeImageService noticeImageService;
 
-  public void createNotice(Long id, NoticeRequest request, List<MultipartFile> images, Long branchId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> images, Long branchId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch userBranch = user.getBranch();
     if (userBranch == null) {
@@ -94,8 +94,8 @@ public class NoticeService {
   }
 
 
-  public Status updateNotice(NoticeUpdate update, Long id, Long noticeId, List<MultipartFile> images) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
@@ -103,7 +103,7 @@ public class NoticeService {
       throw new IllegalArgumentException("공지사항은 관장만 수정 할 수 있습니다.");
     }
 
-    if (!notice.getUser().getId().equals(id)) {
+    if (!notice.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("지부 해당 관장만 공지사항을 수정 할 수 있습니다.");
     }
 
@@ -114,8 +114,8 @@ public class NoticeService {
     return Status.builder().status(HttpStatus.OK.value()).message("공지사항 수정 완료").build();
   }
 
-  public void deleteNotice(Long id, Long noticeId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteNotice(Long userId, Long noticeId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 

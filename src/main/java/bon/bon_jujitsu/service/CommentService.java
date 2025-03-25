@@ -103,11 +103,11 @@ public class CommentService {
     return roots;
   }
 
-  public Status updateComment(Long id, Long commentId, CommentUpdate request) {
+  public Status updateComment(Long userId, Long commentId, CommentUpdate request) {
     Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
     // 사용자 검증
-    if(!id.equals(comment.getUser().getId())) {
+    if(!userId.equals(comment.getUser().getId())) {
       throw new IllegalArgumentException("댓글을 수정할 권한이 없습니다.");
     }
 
@@ -124,11 +124,11 @@ public class CommentService {
         .build();
   }
 
-  public void deleteComment(Long id, Long commentId) {
+  public void deleteComment(Long userId, Long commentId) {
     Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
     // 사용자 검증
-    if(!id.equals(comment.getUser().getId())) {
+    if(!userId.equals(comment.getUser().getId())) {
       throw new IllegalArgumentException("댓글을 삭제할 권한이 없습니다.");
     }
 

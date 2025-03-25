@@ -30,8 +30,8 @@ public class CartService {
   private final ItemRepository itemRepository;
   private final CartItemRepository cartItemRepository;
 
-  public void createCart(Long id, CartRequest request) {
-    User user = userRepository.findById(id)
+  public void createCart(Long userId, CartRequest request) {
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Item item = itemRepository.findById(request.itemId())

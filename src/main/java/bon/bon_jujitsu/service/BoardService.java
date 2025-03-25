@@ -33,8 +33,8 @@ public class BoardService {
   private final UserRepository userRepository;
   private final BoardImageService boardImageService;
 
-  public void createBoard(Long id, BoardRequest request, List<MultipartFile> images, Long branchId) {
-    User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void createBoard(Long userId, BoardRequest request, List<MultipartFile> images, Long branchId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(branchId).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
@@ -84,12 +84,12 @@ public class BoardService {
   }
 
 
-  public Status updateBoard(BoardUpdate request, Long id, Long boardId, List<MultipartFile> images) {
-    userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public Status updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images) {
+    userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (!board.getUser().getId().equals(id)) {
+    if (!board.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
     }
 
@@ -100,8 +100,8 @@ public class BoardService {
     return Status.builder().status(HttpStatus.OK.value()).message("게시글 수정 완료").build();
   }
 
-  public void deleteBoard(Long id, Long boardId) {
-    userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  public void deleteBoard(Long userId, Long boardId) {
+    userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 

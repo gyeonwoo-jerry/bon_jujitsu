@@ -19,30 +19,30 @@ public class OwnerController {
 
   @GetMapping("/users")
   public ResponseEntity<ListResponse<UserResponse>> getMyUsers(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size
   ) {
-    ListResponse<UserResponse> response = userService.getMyUsers(id, page, size);
+    ListResponse<UserResponse> response = userService.getMyUsers(userId, page, size);
     return ResponseEntity.ok(response);
   }
 
   @GetMapping("/users/pending")
   public ResponseEntity<ListResponse<UserResponse>> getPendingUsers(
-          @AuthenticationUserId Long id,
+          @AuthenticationUserId Long userId,
           @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "10") int size
   ) {
-    ListResponse<UserResponse> response = userService.getPendingUsers(id, page, size);
+    ListResponse<UserResponse> response = userService.getPendingUsers(userId, page, size);
     return ResponseEntity.ok(response);
   }
 
   @PatchMapping("/assign-user/{userId}")
   public ResponseEntity<Status> assignUser(
-          @AuthenticationUserId Long ownerId,
-          @PathVariable Long userId
+          @AuthenticationUserId Long ownerUserId,
+          @PathVariable Long targetUserId
   ) {
-    Status response = userService.assignUser(ownerId, userId);
+    Status response = userService.assignUser(ownerUserId, targetUserId);
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 }

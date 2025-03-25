@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional
 public class ReviewImageService {
 
+  @Value("${filepath}")
+  private String filepath;
+
   private final ReviewImageRepository reviewImageRepository;
 
   public void uploadImage(Review review, List<MultipartFile> images) {
@@ -27,7 +31,7 @@ public class ReviewImageService {
     }
 
     try {
-      String uploads = "src/main/resources/images/";
+      String uploads = filepath+"review/";
 
       for (MultipartFile image : images) {
         String dbFilePath = saveImage(image, uploads);
@@ -49,7 +53,7 @@ public class ReviewImageService {
 
     String filePath = uploads + fileName;
 
-    String dbFilepath = "/uploads/images/" + fileName;
+    String dbFilepath = filepath + fileName;
 
     Path path = Paths.get(filePath);
     Files.createDirectories(path.getParent());
@@ -81,7 +85,7 @@ public class ReviewImageService {
   private void deletePhysicalFile(String dbFilePath) {
     try {
       // DB에 저장된 경로로부터 실제 파일 경로 계산
-      String actualFilePath = "src/main/resources" + dbFilePath.replace("/uploads", "");
+      String actualFilePath = dbFilePath;
       Path path = Paths.get(actualFilePath);
       Files.deleteIfExists(path);
     } catch (IOException e) {

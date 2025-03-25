@@ -35,11 +35,11 @@ public class SponsorController {
 
   @PostMapping("/sponsor")
   public ResponseEntity<Status> createSponsor(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SponsorRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    sponsorService.createSponsor(id, request, images);
+    sponsorService.createSponsor(userId, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "스폰서 생성 완료"));
@@ -67,21 +67,21 @@ public class SponsorController {
   @PatchMapping("/sponsor/{sponsorId}")
   public ResponseEntity<Status> updateSponsor(
       @Valid @RequestPart("update") SponsorUpdate update,
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("sponsorId") Long sponsorId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(sponsorService.updateSponsor(update, id, sponsorId, images));
+        .body(sponsorService.updateSponsor(update, userId, sponsorId, images));
   }
 
   @DeleteMapping("/sponsor/{sponsorId}")
   private ResponseEntity<Status> deleteSponsor(
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @PathVariable("sponsorId") Long sponsorId
   ) {
-    sponsorService.deleteSponsor(id, sponsorId);
+    sponsorService.deleteSponsor(userId, sponsorId);
     return ResponseEntity.noContent().build();
   }
 }
