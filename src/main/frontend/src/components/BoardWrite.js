@@ -178,7 +178,7 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
         //     title: formData.title,
         //     content: formData.content,
         //   },
-        //   images: base64Images,
+        //   images: base64Images, // Base64 문자열을 백엔드가 처리할 수 있는지 확인 필요
         // };
 
         console.log("뉴스 등록 요청 데이터:", newsFormData);
