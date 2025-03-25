@@ -23,8 +23,10 @@ public class AdminController {
   private final UserService userService;
 
   @PostMapping("/assign-owner/{userId}")
-  public ResponseEntity<Status> assignOwner(@PathVariable Long userId) {
-    Status response = userService.assignOwnerRole(userId);
+  public ResponseEntity<Status> assignOwner(
+          @AuthenticationUserId Long adminId,
+          @PathVariable Long userId) {
+    Status response = userService.assignOwnerRole(adminId, userId);
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 

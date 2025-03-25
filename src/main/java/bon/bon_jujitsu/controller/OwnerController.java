@@ -1,15 +1,14 @@
 package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ListResponse;
+import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/owners")
@@ -28,4 +27,22 @@ public class OwnerController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping("/users/pending")
+  public ResponseEntity<ListResponse<UserResponse>> getPendingUsers(
+          @AuthenticationUserId Long id,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size
+  ) {
+    ListResponse<UserResponse> response = userService.getPendingUsers(id, page, size);
+    return ResponseEntity.ok(response);
+  }
+
+  @PatchMapping("/assign-user/{userId}")
+  public ResponseEntity<Status> assignUser(
+          @AuthenticationUserId Long ownerId,
+          @PathVariable Long userId
+  ) {
+    Status response = userService.assignUser(ownerId, userId);
+    return ResponseEntity.status(HttpStatus.OK).body(response);
+  }
 }

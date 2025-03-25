@@ -89,7 +89,7 @@ public class UserService {
         .sns4(req.sns4())
         .sns5(req.sns5())
         .stripe(req.stripe())
-        .userRole(UserRole.USER)
+        .userRole(UserRole.PENDING)
         .build();
     userRepository.save(user);
 
@@ -98,6 +98,10 @@ public class UserService {
 
   public String login(LoginRequest req) {
     User user = userRepository.findByMemberId(req.memberId()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("회원가입 승인 대기 중입니다. 승인 완료 후 로그인할 수 있습니다.");
+    }
 
     if (!passwordEncoder.matches(req.password(), user.getPassword())) {
       throw new IllegalArgumentException("아이디나 비밀번호를 정확하게 입력해주세요 .");
@@ -108,16 +112,21 @@ public class UserService {
     return token;
   }
 
-  public Status assignOwnerRole(Long userId) {
-    User user = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+  public Status assignOwnerRole(Long adminId, Long userId) {
+    User targetUser = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+    User admin = userRepository.findById(adminId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-    if (user.getUserRole() == UserRole.OWNER) {
+    if(admin.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("관리자 권한이 없습니다.");
+    }
+
+    if (targetUser.getUserRole() == UserRole.OWNER) {
       throw new IllegalArgumentException("이미 관장(OWNER)으로 등록된 회원입니다.");
     }
 
-    user.setUserRole(UserRole.OWNER);
+    targetUser.setUserRole(UserRole.OWNER);
 
-    userRepository.save(user);
+    userRepository.save(targetUser);
 
     return Status.builder()
         .status(HttpStatus.CREATED.value())
@@ -193,7 +202,8 @@ public class UserService {
 
     PageRequest pageRequest = PageRequest.of(page -1, size);
 
-    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalse(user.getBranch().getRegion(), pageRequest);
+    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndRoleNot(
+            user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
 
     List<UserResponse> userResponses = userPage.getContent().stream()
         .map(UserResponse::fromEntity)
@@ -263,5 +273,57 @@ public class UserService {
         .status(HttpStatus.CREATED.value())
         .message("관리자로 등록되었습니다.")
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public ListResponse<UserResponse> getPendingUsers(Long id, int page, int size) {
+    User user = userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
+
+    if(page < 1 || size < 1) {
+      throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
+    }
+
+    if (user.getUserRole() != UserRole.OWNER) {
+      throw new IllegalArgumentException("관장 권한이 없습니다.");
+    }
+
+    PageRequest pageRequest = PageRequest.of(page -1, size);
+
+    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndRole(
+            user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
+
+    List<UserResponse> userResponses = userPage.getContent().stream()
+            .map(UserResponse::fromEntity)
+            .collect(Collectors.toList());
+
+    return ListResponse.success(
+            userResponses,
+            HttpStatus.OK,
+            "회원 조회 성공"
+    );
+  }
+
+  public Status assignUser(Long ownerId, Long userId) {
+    User user = userRepository.findByIdAndIsDeletedFalse(userId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+    User owner = userRepository.findById(ownerId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    if(owner.getUserRole() != UserRole.OWNER) {
+      throw new IllegalArgumentException("관장 권한이 없습니다.");
+    }
+
+    if (!owner.getBranch().equals(user.getBranch())) {
+      throw new IllegalArgumentException("해당 지부의 회원만 승인 할 수 있습니다.");
+    }
+
+    if (user.getUserRole() == UserRole.USER) {
+      throw new IllegalArgumentException("이미 유저(USER)으로 등록된 회원입니다.");
+    }
+
+    user.setUserRole(UserRole.USER);
+
+    return Status.builder()
+            .status(HttpStatus.CREATED.value())
+            .message("회원으로 등록되었습니다.")
+            .build();
   }
 }
