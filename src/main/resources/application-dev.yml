@@ -15,11 +15,7 @@ spring:
         format-sql: true
     hibernate:
       ddl-auto: update
-    logging:
-      level:
-        org.hibernate.SQL: debug
-        org.springframework.web: DEBUG
-        org.springframework.boot: DEBUG
+
   web:
     resources:
       static-locations:
@@ -33,5 +29,11 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
+logging:
+  level:
+    root: DEBUG # 전체 애플리케이션 기본 로그 레벨
+    org.springframework: WARN # 스프링 관련 로그 경고(WARN) 이상만 출력
+    bon.bon_jujitsu: DEBUG # 특정 패키지(bon.bon_jujitsu) 로그 디버그(DEBUG) 모드 활성화
 
 filepath: /uploads/images/

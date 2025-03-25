@@ -18,15 +18,13 @@ function LoginForm() {
       });
       console.log("로그인 성공:", response.data);
       // 로그인 성공 후 처리 (예: 토큰 저장, 리다이렉트 등)
-      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("token", response.data);
       window.location.href = "/";
       // 우아
-
     } catch (error) {
       console.error("로그인 실패:", error);
     }
   };
-
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -86,9 +84,7 @@ function LoginForm() {
         <div className="join_btn">
           <Link to="/join">회원가입</Link>
         </div>
-
       </div>
-      
     </div>
   );
 }

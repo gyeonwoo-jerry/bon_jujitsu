@@ -16,7 +16,10 @@ API.interceptors.request.use(
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+    config.headers["Content-Type"] =
+      config.headers["Content-Type"] || "application/json";
 
+    console.log("Axios Request Headers:", config.headers); // 디버깅용 로그
     return config;
   },
   (error) => {
