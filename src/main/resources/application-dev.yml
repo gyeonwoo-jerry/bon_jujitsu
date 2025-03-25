@@ -32,8 +32,11 @@ spring:
 
 logging:
   level:
-    root: DEBUG # 전체 애플리케이션 기본 로그 레벨
+    root: INFO # 전체 애플리케이션 기본 로그 레벨
     org.springframework: WARN # 스프링 관련 로그 경고(WARN) 이상만 출력
     bon.bon_jujitsu: DEBUG # 특정 패키지(bon.bon_jujitsu) 로그 디버그(DEBUG) 모드 활성화
+    org.springframework.web: DEBUG # Spring Web 로그 디버그(DEBUG) 모드 활성화
+    org.springframework.jdbc: DEBUG # Spring JDBC 로그 디버그(DEBUG) 모드 활성화
+    org.springframework.transaction: DEBUG # Spring 트랜잭션 로그 디버그(DEBUG) 모드 활성화
 
 filepath: /uploads/images/
