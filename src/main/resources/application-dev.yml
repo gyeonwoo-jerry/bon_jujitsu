@@ -20,6 +20,9 @@ spring:
         org.hibernate.SQL: debug
         org.springframework.web: DEBUG
         org.springframework.boot: DEBUG
+  web:
+    resources:
+      static-locations: file:///uploads/images/
 
   servlet:
     multipart:

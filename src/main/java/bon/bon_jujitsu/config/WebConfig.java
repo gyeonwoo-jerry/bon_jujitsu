@@ -33,22 +33,6 @@ public class WebConfig implements WebMvcConfigurer {
                     }
                 });
     }
-    // @Override
-    // public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    //     // static 리소스 처리
-    //     registry.addResourceHandler("/static/**")
-    //             .addResourceLocations("classpath:/static/");
-    // }
     
-    // @Override
-    // public void addViewControllers(ViewControllerRegistry registry) {
-    //     // /api 경로는 제외하고, /index.html 또는 다른 경로는 모두 index.html로 포워딩
-    //     registry.addViewController("/{x:^(?!api$|static$|index.html).*}")
-    //            .setViewName("forward:/index.html");
-    
-    //     // ** 경로에 대해서도 같은 방식으로 처리
-    //     registry.addViewController("/**/{x:^(?!api$|static$|index.html).*}")
-    //            .setViewName("forward:/index.html");
-    // }
 }
 
