@@ -21,10 +21,3 @@ spring:
         org.hibernate.SQL: debug
         org.springframework.web: DEBUG
         org.springframework.boot: DEBUG
-
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-
-filepath: D:\temp\
