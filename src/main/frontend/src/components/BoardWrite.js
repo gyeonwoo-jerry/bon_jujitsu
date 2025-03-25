@@ -167,7 +167,7 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
         // 백엔드 API 서버 URL 직접 지정 (CORS 이슈가 있을 수 있음)
         // 개발환경 프록시 설정 확인 필요
 
-        response = await API.post(`${apiEndpoint}?id=${userId}`, newsData, {
+        response = await API.post(`${apiEndpoint}`, newsData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
