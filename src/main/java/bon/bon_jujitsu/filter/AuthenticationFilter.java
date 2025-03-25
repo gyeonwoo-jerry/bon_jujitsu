@@ -13,7 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
-
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements Filter {
@@ -26,7 +27,8 @@ public class AuthenticationFilter implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    HttpServletRequest req = (HttpServletRequest) request;
+    HttpServletRequest req = (HttpServletRequest) request;    
+    HttpServletResponse res = (HttpServletResponse) response;
 
     final String authorizationHeader = req.getHeader(HttpHeaders.AUTHORIZATION);
     final String requestUri = req.getRequestURI();
@@ -52,6 +54,18 @@ public class AuthenticationFilter implements Filter {
             requestUri.equals("/logo512.png") ||
             requestUri.equals("/robots.txt") ||
             requestUri.equals("/") ||
+            requestUri.startsWith("/academy") ||
+            requestUri.startsWith("/branches") ||
+            requestUri.startsWith("/branches/:id") ||
+            requestUri.startsWith("/comunity") ||
+            requestUri.startsWith("/store") ||
+            requestUri.startsWith("/skill") ||
+            requestUri.startsWith("/news") ||
+            requestUri.startsWith("/newsDetail/:id") || 
+            requestUri.startsWith("/newsWrite") ||
+            requestUri.startsWith("/qna") ||
+            requestUri.startsWith("/sponsor") ||
+            requestUri.startsWith("/join") ||
             (requestUri.startsWith("/api/board") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/board 예외 처리 추가
             (requestUri.startsWith("/api/branch") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/branch 예외 처리 추가
             (requestUri.startsWith("/api/notice") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/notice 예외 처리 추가
@@ -81,8 +95,16 @@ public class AuthenticationFilter implements Filter {
     if (jwtUtil.isTokenExpired(token)) {
       throw new IllegalArgumentException("토큰이 만료되었습니다.");
     }
-
-    chain.doFilter(request, response);
+    try {
+      // 기존 인증 로직
+      chain.doFilter(request, response);
+    } catch (IllegalArgumentException e) {
+        res.setStatus(HttpStatus.UNAUTHORIZED.value());
+        res.setContentType("application/json");
+        res.getWriter().write(
+            "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
+        );
+    }
   }
 }
 
