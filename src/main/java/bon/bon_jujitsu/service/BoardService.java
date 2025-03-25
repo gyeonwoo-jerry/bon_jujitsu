@@ -33,11 +33,15 @@ public class BoardService {
   private final UserRepository userRepository;
   private final BoardImageService boardImageService;
 
-  public void createBoard(Long id, BoardRequest request, List<MultipartFile> images) {
+  public void createBoard(Long id, BoardRequest request, List<MultipartFile> images, Long branchId) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
+    Branch branch = branchRepository.findById(branchId).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
+
+    if (!user.getBranch().equals(branch)) {
+      throw new IllegalArgumentException("해당 체육관의 회원만 게시글을 작성할 수 있습니다.");
+    }
 
     Board board = Board.builder()
         .title(request.title())

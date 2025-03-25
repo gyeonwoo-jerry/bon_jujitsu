@@ -11,7 +11,6 @@ public record NewsResponse(
     Long id,
     String title,
     String content,
-    String region,
     String name,
     List<String> images,
     LocalDateTime createdAt,
@@ -23,7 +22,6 @@ public record NewsResponse(
         .id(news.getId())
         .title(news.getTitle())
         .content(news.getContent())
-        .region(news.getBranch().getRegion())
         .name(news.getUser().getName())
         .images(news.getImages().stream().map(NewsImage::getImagePath).toList())
         .createdAt(news.getCreatedAt())

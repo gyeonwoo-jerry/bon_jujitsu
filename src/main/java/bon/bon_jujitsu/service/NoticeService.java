@@ -33,10 +33,15 @@ public class NoticeService {
   private final UserRepository userRepository;
   private final NoticeImageService noticeImageService;
 
-  public void createNotice(Long id, NoticeRequest request, List<MultipartFile> images) {
+  public void createNotice(Long id, NoticeRequest request, List<MultipartFile> images, Long branchId) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
+    Branch userBranch = user.getBranch();
+    if (userBranch == null) {
+      throw new IllegalArgumentException("사용자에게 등록된 체육관이 없습니다.");
+    }
+
+    Branch requestBranch  = branchRepository.findById(branchId).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
     // 공지사항은 OWNER만 작성 가능
@@ -44,10 +49,15 @@ public class NoticeService {
       throw new IllegalArgumentException("공지사항은 관장만 작성할 수 있습니다.");
     }
 
+    // 관장의 체육관과 요청된 체육관(branchId)이 같은지 확인
+    if (!userBranch.getId().equals(requestBranch.getId())) {
+      throw new IllegalArgumentException("해당 체육관의 공지사항을 작성할 권한이 없습니다.");
+    }
+
     Notice notice = Notice.builder()
         .title(request.title())
         .content(request.content())
-        .branch(branch)
+        .branch(requestBranch )
         .user(user)
         .build();
 

@@ -30,13 +30,14 @@ public class NoticeController {
 
   private final NoticeService noticeService;
 
-  @PostMapping("/notice")
+  @PostMapping("/notice/{branchId}")
   public ResponseEntity<Status> createNotice(
       @AuthenticationUserId Long id,
       @Valid @RequestPart("request") NoticeRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @PathVariable("branchId") Long branchId
   ) {
-    noticeService.createNotice(id, request, images);
+    noticeService.createNotice(id, request, images, branchId);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));

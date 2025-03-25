@@ -30,13 +30,14 @@ public class BoardController {
 
   private final BoardService boardService;
 
-  @PostMapping("/board")
+  @PostMapping("/board/{branchId}")
   public ResponseEntity<Status> createBoard(
       @AuthenticationUserId Long id,
       @RequestPart("request") @Valid BoardRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @PathVariable("branchId") Long branchId
   ) {
-    boardService.createBoard(id, request, images);
+    boardService.createBoard(id, request, images, branchId);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "게시글 생성 완료"));

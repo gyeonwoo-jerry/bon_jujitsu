@@ -48,7 +48,6 @@ public class NewsService {
     News news = News.builder()
         .title(request.title())
         .content(request.content())
-        .branch(branch)
         .user(user)
         .build();
 
@@ -67,7 +66,6 @@ public class NewsService {
         news.getId(),
         news.getTitle(),
         news.getContent(),
-        news.getBranch().getRegion(),
         news.getUser().getName(),
         news.getImages().stream().map(NewsImage::getImagePath).toList(),
         news.getCreatedAt(),

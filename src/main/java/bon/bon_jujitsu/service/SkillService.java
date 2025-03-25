@@ -46,7 +46,6 @@ public class SkillService {
     Skill skill = Skill.builder()
         .title(request.title())
         .content(request.content())
-        .branch(branch)
         .user(user)
         .build();
 
@@ -65,7 +64,6 @@ public class SkillService {
         skills.getId(),
         skills.getTitle(),
         skills.getContent(),
-        skills.getBranch().getRegion(),
         skills.getUser().getName(),
         skills.getImages().stream().map(SkillImage::getImagePath).toList(),
         skills.getCreatedAt(),

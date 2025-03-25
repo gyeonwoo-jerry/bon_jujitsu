@@ -26,7 +26,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Page<User> findAllByIsDeletedTrue(PageRequest pageRequest);
 
-  Page<User> findAllByBranch_RegionAndIsDeletedFalseAndRoleNot(
+  Page<User> findAllByBranch_RegionAndIsDeletedFalseAndUserRoleNot(
           String region, UserRole role, Pageable pageable
   );
 
@@ -34,5 +34,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   List<User> findByUserRole(UserRole userRole);
 
-  Page<User> findAllByBranch_RegionAndIsDeletedFalseAndRole(String region, UserRole userRole, PageRequest pageRequest);
+  Page<User> findAllByBranch_RegionAndIsDeletedFalseAndUserRole(String region, UserRole userRole, PageRequest pageRequest);
 }

@@ -11,7 +11,6 @@ public record SkillResponse(
     Long id,
     String title,
     String content,
-    String region,
     String name,
     List<String> images,
     LocalDateTime createdAt,
@@ -23,7 +22,6 @@ public record SkillResponse(
         .id(skill.getId())
         .title(skill.getTitle())
         .content(skill.getContent())
-        .region(skill.getBranch().getRegion())
         .name(skill.getUser().getName())
         .images(skill.getImages().stream().map(SkillImage::getImagePath).toList())
         .createdAt(skill.getCreatedAt())

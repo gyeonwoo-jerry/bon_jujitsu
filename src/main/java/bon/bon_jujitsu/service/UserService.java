@@ -202,7 +202,7 @@ public class UserService {
 
     PageRequest pageRequest = PageRequest.of(page -1, size);
 
-    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndRoleNot(
+    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRoleNot(
             user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
 
     List<UserResponse> userResponses = userPage.getContent().stream()
@@ -289,7 +289,7 @@ public class UserService {
 
     PageRequest pageRequest = PageRequest.of(page -1, size);
 
-    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndRole(
+    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRole(
             user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
 
     List<UserResponse> userResponses = userPage.getContent().stream()
