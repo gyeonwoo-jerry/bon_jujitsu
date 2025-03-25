@@ -154,20 +154,39 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
 
       // 뉴스 API는 다른 형식으로 데이터 전송
       if (apiEndpoint === "/news") {
-        const newsData = {
-          request: {
-            title: formData.title,
-            content: formData.content,
-          },
-          images: base64Images,
-        };
+        const newsFormData = new FormData();
 
-        console.log("뉴스 등록 요청 데이터:", newsData);
+        // JSON 데이터를 Blob으로 변환하여 추가
+        const jsonBlob = new Blob(
+          [
+            JSON.stringify({
+              title: formData.title,
+              content: formData.content,
+            }),
+          ],
+          { type: "application/json" }
+        );
+        newsFormData.append("request", jsonBlob);
+
+        if (base64Images.length > 0) {
+          base64Images.forEach((image, index) => {
+            newsFormData.append(`images[${index}]`, image);
+          });
+        }
+        // const newsData = {
+        //   request: {
+        //     title: formData.title,
+        //     content: formData.content,
+        //   },
+        //   images: base64Images,
+        // };
+
+        console.log("뉴스 등록 요청 데이터:", newsFormData);
 
         // 백엔드 API 서버 URL 직접 지정 (CORS 이슈가 있을 수 있음)
         // 개발환경 프록시 설정 확인 필요
 
-        response = await API.post(`${apiEndpoint}`, newsData, {
+        response = await API.post(`${apiEndpoint}`, newsFormData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
