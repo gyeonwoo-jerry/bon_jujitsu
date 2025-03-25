@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';  
 import { useLocation } from 'react-router-dom';
 import NewsDetail from '../components/BoardDetail';
+import SubHeader from '../components/SubHeader';
 
 function NewsDetailPage() {
   const [pageName, setPageName] = useState('');
@@ -16,6 +17,7 @@ function NewsDetailPage() {
 
   return (
     <div className="newsDetail">
+      <SubHeader pageName={pageName} />
       <NewsDetail apiEndpoint={apiEndpoint} />
     </div>
   );

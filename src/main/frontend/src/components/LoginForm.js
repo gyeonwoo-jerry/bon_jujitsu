@@ -27,6 +27,7 @@ function LoginForm() {
     }
   };
 
+
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
     console.log("Username:", e.target.value); // 콘솔에 아이디 값 출력
@@ -39,45 +40,55 @@ function LoginForm() {
 
   return (
     <div className="login-form">
-      <h2>로그인</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="login_form_input">
-          <label
-            htmlFor="username"
-            style={{ display: username ? "none" : "block" }}
-          >
-            아이디
-          </label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={handleUsernameChange}
-            required
-          />
-        </div>
-        <div className="login_form_input">
-          <label
-            htmlFor="password"
-            style={{ display: password ? "none" : "block" }}
-          >
-            비밀번호
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={handlePasswordChange}
-            required
-          />
-        </div>
-        <button type="submit" className="login_form_button">
-          로그인
-        </button>
-      </form>
-      <div className="join_btn">
-        <Link to="/join">회원가입</Link>
+      <div className="loginleft">
+        <img src="/images/bon_login@3x.png" alt="login_image" />
       </div>
+      <div className="loginright">
+        <div className="login_title">
+          <h2>로그인</h2>
+          <p>아이디와 비밀번호를 입력해주세요.</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="login_form_input">
+            <label
+              htmlFor="username"
+              style={{ display: username ? "none" : "block" }}
+            >
+              아이디
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={handleUsernameChange}
+              required
+            />
+          </div>
+          <div className="login_form_input">
+            <label
+              htmlFor="password"
+              style={{ display: password ? "none" : "block" }}
+            >
+              비밀번호
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={handlePasswordChange}
+              required
+            />
+          </div>
+          <button type="submit" className="login_form_button">
+            로그인
+          </button>
+        </form>
+        <div className="join_btn">
+          <Link to="/join">회원가입</Link>
+        </div>
+
+      </div>
+      
     </div>
   );
 }

@@ -1,29 +1,61 @@
 .login-form {
+    font-family: 'Pretendard';
     position: absolute;
-    top: 60px;
+    top: 80px;
     right: 100px;
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
-    background-color: #fff;
-    padding: 20px;
-    width: 400px;
+    background-color: var(--white-color);
+    width: 100%;
+    max-width: 700px;
     height: 400px;
     display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
+    background-color: var(--white-color);
+    overflow: hidden;
+}
+
+.loginleft {
+    width: 50%;
+    height: 100%;
+    background-color: var(--white-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} 
+
+.loginleft img {
+    width: 100%;
+    height: auto;
+}
+
+.loginright {
+    width: 50%;
+    height: 100%;
+    background-color: var(--white-color); 
+    display: flex; 
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 30px;
-    background-color: #fff;
+    padding: 34px;
+
 }
 
+.login_title h2 {
+  
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center; 
+  margin-bottom: 10px;
+}
 
-.login-form h2 {
+.login_title p {
   text-align: center;
   margin-bottom: 20px;
-}
-
-.login-form div {
-  margin-bottom: 15px;
+  font-size: 14px;
+  color: #a7a7a7;
+  font-weight: 300;
 }
 
 .login-form label {
