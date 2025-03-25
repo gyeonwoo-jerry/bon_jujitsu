@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../utils/api';
-import axios from 'axios'; // axios 직접 import
 import '../styles/boardWrite.css';
 
 function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
@@ -169,8 +168,8 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
                 const API_BASE_URL = 'http://211.110.44.79:58080/api'; // 백엔드 서버 URL
                 console.log('요청 URL:', `${API_BASE_URL}${apiEndpoint}?id=${userId}`);
                 
-                // API.post 대신 axios 직접 사용
-                response = await axios.post(`${API_BASE_URL}${apiEndpoint}?id=${userId}`, newsData, {
+
+                response = await API.post(`${API_BASE_URL}${apiEndpoint}?id=${userId}`, newsData, {
                     headers: {
                         'Content-Type': 'application/json'
                     }
