@@ -1,9 +1,10 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.Stripe;
-import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
+import bon.bon_jujitsu.domain.*;
+
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.Builder;
 
 @Builder
@@ -20,6 +21,7 @@ public record UserResponse(
     int level,
     Stripe stripe,
     UserRole userRole,
+    List<String> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
@@ -38,6 +40,7 @@ public record UserResponse(
         .level(user.getLevel())
         .stripe(user.getStripe())
         .userRole(user.getUserRole())
+        .images(user.getImages().stream().map(UserImage::getImagePath).toList())
         .createdAt(user.getCreatedAt())
         .modifiedAT(user.getModifiedAt())
         .build();

@@ -41,6 +41,11 @@ public class Branch extends Timestamped {
   @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<User> users = new ArrayList<>();
 
+  @Builder.Default
+  @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<BranchImage> images = new ArrayList<>();
+
+
   public void updateBranch(BranchUpdate branchUpdate) {
     branchUpdate.region().ifPresent(region -> {
       if (!region.isBlank()) this.region = region;

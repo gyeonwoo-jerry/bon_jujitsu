@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -35,8 +36,9 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final BranchRepository branchRepository;
   private final JwtUtil jwtUtil;
+  private final UserImageService userImageService;
 
-  public void signup(SignupRequest req) {
+  public void signup(SignupRequest req, List<MultipartFile> images) {
     String memberId = req.memberId();
     String password = passwordEncoder.encode(req.password());
 
@@ -90,6 +92,8 @@ public class UserService {
         .userRole(UserRole.USER)
         .build();
     userRepository.save(user);
+
+    userImageService.uploadImage(user, images);
   }
 
   public String login(LoginRequest req) {
@@ -210,7 +214,7 @@ public class UserService {
     return userResponse;
   }
 
-  public void updateProfile(Long id, ProfileUpdateRequest request) {
+  public void updateProfile(Long id, ProfileUpdateRequest request, List<MultipartFile> images) {
 
     User profile = userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
@@ -229,6 +233,8 @@ public class UserService {
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지사입니다."));
       profile.setBranch(newBranch);
     });
+
+    userImageService.updateImages(profile, images);
   }
 
   public void deleteUser(Long id, ProfileDeleteRequest request) {

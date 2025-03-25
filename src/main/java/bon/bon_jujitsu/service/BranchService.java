@@ -6,7 +6,6 @@ import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BranchRequest;
-import bon.bon_jujitsu.dto.response.BranchDetailResponse;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
@@ -17,6 +16,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +27,9 @@ public class BranchService {
 
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
+  private final BranchImageService branchImageService;
 
-  public void createBranch(Long id, BranchRequest request) {
+  public void createBranch(Long id, BranchRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
@@ -40,9 +43,11 @@ public class BranchService {
         .build();
 
     branchRepository.save(branch);
+
+    branchImageService.uploadImage(branch, images);
   }
 
-  public BranchDetailResponse getBranch(Long branchId) {
+  public BranchResponse getBranch(Long branchId) {
     Branch branch = branchRepository.findById(branchId).orElseThrow(()->new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
     User owner = branch.getUsers().stream()
@@ -50,7 +55,7 @@ public class BranchService {
             .findFirst()
             .orElse(null);
 
-    BranchDetailResponse branchResponse = BranchDetailResponse.from(branch, owner);
+    BranchResponse branchResponse = BranchResponse.from(branch, owner);
     return branchResponse;
   }
 
@@ -75,13 +80,15 @@ public class BranchService {
   }
 
 
-  public Status updateBranch(Long id, BranchUpdate update) {
+  public Status updateBranch(Long id, BranchUpdate update, List<MultipartFile> images) {
     User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()
         -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
     branch.updateBranch(update);
+
+    branchImageService.updateImages(branch, images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("지부 정보 수정완료").build();
   }

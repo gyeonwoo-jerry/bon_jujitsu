@@ -1,15 +1,18 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.BranchImage;
 import bon.bon_jujitsu.domain.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record BranchResponse (
         Long id,
         String region,
         String address,
         String area,
+        List<String> images,
         LocalDateTime createdAt,
         LocalDateTime modifiedAT,
         OwnerInfo owner
@@ -41,6 +44,7 @@ public record BranchResponse (
             branch.getRegion(),
             branch.getAddress(),
             branch.getArea(),
+            branch.getImages().stream().map(BranchImage::getImagePath).toList(),
             branch.getCreatedAt(),
             branch.getModifiedAt(),
             ownerInfo

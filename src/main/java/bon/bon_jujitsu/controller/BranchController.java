@@ -3,7 +3,6 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BranchRequest;
-import bon.bon_jujitsu.dto.response.BranchDetailResponse;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -12,15 +11,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -32,16 +26,17 @@ public class BranchController {
   @PostMapping("/branch")
   public ResponseEntity<Status> createBranch(
       @AuthenticationUserId Long id,
-      @Valid @RequestBody BranchRequest request
+      @RequestPart("request") @Valid BranchRequest request,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    branchService.createBranch(id, request);
+    branchService.createBranch(id, request, images);
     return ResponseEntity
         .status(HttpStatus.CREATED)
         .body(Status.createStatusDto(HttpStatus.CREATED, "지부 생성 완료"));
   }
 
   @GetMapping("/branch/{branchId}")
-  public ResponseEntity<BranchDetailResponse> getBranch(
+  public ResponseEntity<BranchResponse> getBranch(
       @PathVariable("branchId") Long branchId
   ) {
     return ResponseEntity
@@ -62,11 +57,12 @@ public class BranchController {
   @PatchMapping("/branch")
   public ResponseEntity<Status> updateBranch(
       @AuthenticationUserId Long id,
-      @Valid @RequestBody BranchUpdate update
+      @RequestPart("update") @Valid BranchUpdate update,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(branchService.updateBranch(id, update));
+        .body(branchService.updateBranch(id, update, images));
   }
 
   @DeleteMapping("/branch")
