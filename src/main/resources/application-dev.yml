@@ -20,8 +20,6 @@ spring:
         org.hibernate.SQL: debug
         org.springframework.web: DEBUG
         org.springframework.boot: DEBUG
-  mvc:
-    static-path-pattern: /uploads/images/**
   web:
     resources:
       static-locations:
