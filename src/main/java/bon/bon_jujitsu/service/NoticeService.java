@@ -103,6 +103,10 @@ public class NoticeService {
       throw new IllegalArgumentException("공지사항은 관장만 수정 할 수 있습니다.");
     }
 
+    if (!notice.getUser().getId().equals(id)) {
+      throw new IllegalArgumentException("지부 해당 관장만 공지사항을 수정 할 수 있습니다.");
+    }
+
     notice.updateNotice(update);
 
     noticeImageService.updateImages(notice, images);

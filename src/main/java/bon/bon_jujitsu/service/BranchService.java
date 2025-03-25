@@ -63,7 +63,7 @@ public class BranchService {
   public PageResponse<BranchResponse> getAllBranch(int page, int size) {
     PageRequest pageRequest = PageRequest.of(page - 1, size);
 
-    Page<Branch> branches = branchRepository.findAll(pageRequest);
+    Page<Branch> branches = branchRepository.findAllWithOwner(pageRequest);
 
     Page<BranchResponse> branchResponses = branches.map(branch -> {
       // 각 지부마다 OWNER 찾기

@@ -89,6 +89,10 @@ public class BoardService {
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
+    if (!board.getUser().getId().equals(id)) {
+      throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
+    }
+
     board.updateBoard(request);
 
     boardImageService.updateImages(board, images);
