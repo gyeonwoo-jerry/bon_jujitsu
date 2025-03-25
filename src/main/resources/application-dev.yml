@@ -24,7 +24,12 @@ spring:
     static-path-pattern: /uploads/images/**
   web:
     resources:
-      static-locations: file:///uploads/images/
+      static-locations:
+        - classpath:/static/
+        - classpath:/public/
+        - classpath:/resources/
+        - classpath:/META-INF/resources/
+        - file:///uploads/images/
 
   servlet:
     multipart:
