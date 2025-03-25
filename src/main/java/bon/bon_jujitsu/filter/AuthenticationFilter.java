@@ -12,10 +12,14 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements Filter {
+
+  @Value("${spring.profiles.active}")
+  private String activeProfile;  // 현재 활성화된 프로파일을 가져옵니다.
 
   private final JwtUtil jwtUtil;
 
@@ -29,6 +33,7 @@ public class AuthenticationFilter implements Filter {
     final String httpMethod = req.getMethod(); // HTTP 메서드 확인
 
     System.out.println("Request URI: " + requestUri + ", Method: " + httpMethod);
+    boolean isDevelopment = "dev".equalsIgnoreCase(activeProfile);  // 프로파일이 'dev'일 때 true
 
     // 인증이 필요 없는 경로 설정
     if (
@@ -47,13 +52,12 @@ public class AuthenticationFilter implements Filter {
             requestUri.equals("/logo512.png") ||
             requestUri.equals("/robots.txt") ||
             requestUri.equals("/") ||
-            (requestUri.startsWith("/api/board") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/board 예외 처리 추가
-            (requestUri.startsWith("/api/branch") ) || //  GET /api/branch 예외 처리 추가
-            (requestUri.startsWith("/api/notice") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/notice 예외 처리 추가
-            (requestUri.startsWith("/api/news") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/notice 예외 처리 추가
-            (requestUri.startsWith("/api/skill") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/skill 예외 처리 추가
-            (requestUri.startsWith("/api/sponsor") && "GET".equalsIgnoreCase(httpMethod)) //  GET /api/sponsor 예외 처리 추가
-
+            (requestUri.startsWith("/api/board") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/board 예외 처리 추가
+            (requestUri.startsWith("/api/branch") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/branch 예외 처리 추가
+            (requestUri.startsWith("/api/notice") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/notice 예외 처리 추가
+            (requestUri.startsWith("/api/news") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/notice 예외 처리 추가
+            (requestUri.startsWith("/api/skill") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/skill 예외 처리 추가
+            (requestUri.startsWith("/api/sponsor") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) //  GET /api/sponsor 예외 처리 추가
     ) {
       System.out.println("Skipping authentication for: " + requestUri + ", Method: " + httpMethod);
       chain.doFilter(request, response);
