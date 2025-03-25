@@ -23,12 +23,12 @@ public class WebConfig implements WebMvcConfigurer {
     //             .addResourceLocations("classpath:/static/");
     // }
 
-    @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/{x:^(?!api$).*$}")
-               .setViewName("forward:/index.html");
-        registry.addViewController("/**/{x:^(?!api$).*$}")
-               .setViewName("forward:/index.html");
-    }
+    // @Override
+    // public void addViewControllers(ViewControllerRegistry registry) {
+    //     registry.addViewController("/{x:^(?!api$).*$}")
+    //            .setViewName("forward:/index.html");
+    //     registry.addViewController("/**/{x:^(?!api$).*$}")
+    //            .setViewName("forward:/index.html");
+    // }
 }
 
