@@ -4,11 +4,13 @@ import Home from './pages/Home';
 import Navbar from './components/Navbar'; 
 import Footer from './components/Footer'; 
 import Academy from './pages/academy';
-import Brunches from './pages/brunches';
+import Branches from './pages/branches';
+import BranchesDetail from './pages/branchesDetail';
 import Comunity from './pages/comunity';
 import Store from './pages/store';
 import Skill from './pages/skill';
 import News from './pages/news';
+import NewsDetail from './pages/newsDetail';
 import Qna from './pages/qna';
 import Sponsor from './pages/sponsor';
 import Join from './pages/join';
@@ -23,11 +25,13 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/academy" element={<Academy />} />
-          <Route path="/brunches" element={<Brunches />} />
+          <Route path="/branches" element={<Branches />} />
+          <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
+          <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
           <Route path="/qna" element={<Qna />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/join" element={<Join />} />

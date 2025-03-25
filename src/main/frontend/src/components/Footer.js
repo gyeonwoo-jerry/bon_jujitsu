@@ -21,7 +21,7 @@ function Footer() {
                         <ul className="footer-menu">
                             <li><Link to="/">홈</Link></li>
                             <li><Link to="/academy">아카데미</Link></li>
-                            <li><Link to="/brunches">지부소개</Link></li>
+                            <li><Link to="/branches">지부소개</Link></li>
                             <li><Link to="/store">스토어</Link></li>
                             <li><Link to="/skill">기술</Link></li>
                             <li><Link to="/news">뉴스</Link></li>
