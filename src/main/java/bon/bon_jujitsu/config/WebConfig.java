@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
     @Override
@@ -16,11 +18,16 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/");
+    }
+
+    @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        // 모든 요청을 index.html로 리다이렉트
-        registry.addViewController("/{x:[\\w-]+}")
+        registry.addViewController("/{x:^(?!api$).*$}")
                .setViewName("forward:/index.html");
-        registry.addViewController("/**/{x:[\\w-]+}")
+        registry.addViewController("/**/{x:^(?!api$).*$}")
                .setViewName("forward:/index.html");
     }
 }
