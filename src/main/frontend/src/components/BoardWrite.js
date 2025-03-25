@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../utils/api';
+import axios from 'axios'; // axios 직접 import
 import '../styles/boardWrite.css';
 
 function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
@@ -16,37 +17,16 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
     const [previewImages, setPreviewImages] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [userId, setUserId] = useState('');
+    // 고정된 userId로 설정
+    const [userId] = useState('14'); // 기본값 14로 고정, API 요청없이 직접 설정
     const navigate = useNavigate();
+    const isMounted = useRef(true);
 
-    // 사용자 정보 가져오기
+    // 컴포넌트 언마운트 시 isMounted 플래그 업데이트
     useEffect(() => {
-        // 로컬 스토리지에서 사용자 정보 가져오기
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            try {
-                const parsedUserInfo = JSON.parse(userInfo);
-                setUserId(parsedUserInfo.id || '');
-            } catch (e) {
-                console.error('사용자 정보 파싱 오류:', e);
-            }
-        } else {
-            // 사용자 정보 API 호출
-            const fetchUserInfo = async () => {
-                try {
-                    const response = await API.get('/user/info');
-                    if (response.status === 200) {
-                        setUserId(response.data.id || '');
-                        // 필요하다면 로컬 스토리지에 저장
-                        localStorage.setItem('userInfo', JSON.stringify(response.data));
-                    }
-                } catch (error) {
-                    console.error('사용자 정보 가져오기 실패:', error);
-                }
-            };
-            
-            fetchUserInfo();
-        }
+        return () => {
+            isMounted.current = false;
+        };
     }, []);
 
     // fetchPostData 함수를 useCallback으로 메모이제이션
@@ -54,6 +34,9 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
         try {
             setLoading(true);
             const response = await API.get(`${apiEndpoint}/${id}`);
+            // 컴포넌트가 마운트된 상태인지 확인
+            if (!isMounted.current) return;
+            
             if (response.status === 200) {
                 const postData = response.data;
                 setFormData({
@@ -66,10 +49,14 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
                 setPreviewImages(postData.images || []);
             }
         } catch (error) {
-            console.error('게시글 데이터 불러오기 실패:', error);
-            setError('게시글 데이터를 불러오는 중 오류가 발생했습니다.');
+            if (isMounted.current) {
+                console.error('게시글 데이터 불러오기 실패:', error);
+                setError('게시글 데이터를 불러오는 중 오류가 발생했습니다.');
+            }
         } finally {
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         }
     }, [apiEndpoint, id]);
 
@@ -99,26 +86,23 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
         files.forEach(file => {
             const reader = new FileReader();
             reader.onload = (event) => {
-                setPreviewImages(prev => [...prev, event.target.result]);
+                if (isMounted.current) {
+                    setPreviewImages(prev => [...prev, event.target.result]);
+                }
             };
             reader.readAsDataURL(file);
         });
     };
 
     const removeImage = (index) => {
-        // 미리보기 이미지 삭제
         setPreviewImages(prev => prev.filter((_, i) => i !== index));
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
         
-        // 새로 선택한 파일인 경우
-        if (index < selectedFiles.length) {
-            setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-        } 
-        // 기존 이미지인 경우
-        else if (isEditMode) {
-            const existingImageIndex = index - selectedFiles.length;
+        // 수정 모드에서 기존 이미지 삭제 처리
+        if (isEditMode) {
             setFormData(prev => ({
                 ...prev,
-                images: prev.images.filter((_, i) => i !== existingImageIndex)
+                images: prev.images.filter((_, i) => i !== index)
             }));
         }
     };
@@ -126,127 +110,116 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // 유효성 검사
-        if (!formData.title.trim()) {
-            setError('제목을 입력해주세요.');
-            return;
-        }
-        
-        if (!formData.content.trim()) {
-            setError('내용을 입력해주세요.');
-            return;
-        }
-        
-        // 사용자 ID 체크 (뉴스 API에만 필요)
-        if (apiEndpoint === '/news' && !userId) {
-            setError('사용자 정보를 가져올 수 없습니다. 다시 로그인해주세요.');
-            return;
-        }
-        
         try {
             setLoading(true);
             setError('');
             
-            let response;
+            // 기본 유효성 검사
+            if (!formData.title.trim()) {
+                setError('제목을 입력해주세요.');
+                setLoading(false);
+                return;
+            }
             
-            // 수정 모드
-            if (isEditMode) {
-                // API 요청
-                if (apiEndpoint === '/news') {
-                    // 뉴스 API는 다른 형식으로 처리
-                    const newsData = {
-                        request: {
-                            title: formData.title,
-                            content: formData.content
-                        },
-                        images: formData.images
-                    };
-                    
-                    response = await API.put(`${apiEndpoint}/${id}?id=${userId}`, newsData);
-                } else {
-                    // 일반 게시판 API
-                    const formDataObj = new FormData();
-                    formDataObj.append('title', formData.title);
-                    formDataObj.append('content', formData.content);
-                    formDataObj.append('region', formData.region);
-                    
-                    // 기존 이미지 정보
-                    formDataObj.append('images', JSON.stringify(formData.images));
-                    
-                    // 새로 추가된 이미지 파일
-                    selectedFiles.forEach(file => {
-                        formDataObj.append('files', file);
+            if (!formData.content.trim()) {
+                setError('내용을 입력해주세요.');
+                setLoading(false);
+                return;
+            }
+            
+            if (apiEndpoint !== '/news' && !formData.region) {
+                setError('지역을 선택해주세요.');
+                setLoading(false);
+                return;
+            }
+            
+            let response;
+            let base64Images = [];
+            
+            // 이미지 파일이 있는 경우 base64로 변환
+            if (selectedFiles.length > 0) {
+                const convertToBase64 = (file) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = (error) => reject(error);
+                        reader.readAsDataURL(file);
                     });
-                    
-                    response = await API.put(`${apiEndpoint}/${id}`, formDataObj, {
+                };
+                
+                const base64Promises = selectedFiles.map(file => convertToBase64(file));
+                base64Images = await Promise.all(base64Promises);
+            }
+            
+            // 뉴스 API와 게시판 API의 데이터 형식이 다른 경우 분기 처리
+            if (apiEndpoint === '/news') {
+                // 뉴스 API 요청 데이터 구조
+                const newsData = {
+                    // API 요구사항에 맞게 데이터 구조 정의
+                    request: {
+                        title: formData.title,
+                        content: formData.content,
+                        userId: userId // API에서 요구하는 사용자 ID
+                    },
+                    images: base64Images
+                };
+                
+                console.log('뉴스 등록 요청 데이터:', newsData);
+                console.log('요청 URL:', `/api${apiEndpoint}?id=${userId}`);
+                
+                // 직접 axios 사용하여 요청
+                if (isEditMode) {
+                    // PUT 요청 (수정)
+                    response = await axios.put(`/api${apiEndpoint}/${id}?id=${userId}`, newsData, {
                         headers: {
-                            'Content-Type': 'multipart/form-data'
+                            'Content-Type': 'application/json'
                         }
                     });
-                }
-            } 
-            // 새 글 작성 모드
-            else {
-                if (apiEndpoint === '/news') {
-                    // 이미지 파일을 base64로 변환
-                    const base64Promises = selectedFiles.map(file => {
-                        return new Promise((resolve) => {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                                const base64String = reader.result.split(',')[1];
-                                resolve(base64String);
-                            };
-                            reader.readAsDataURL(file);
-                        });
-                    });
-                    
-                    const base64Images = await Promise.all(base64Promises);
-                    
-                    // 뉴스 API 요청 형식에 맞게 데이터 준비
-                    const newsData = {
-                        request: {
-                            title: formData.title,
-                            content: formData.content
-                        },
-                        images: base64Images
-                    };
-                    
-                    const currentUserId = userId || '14'; // 기본값 설정 (보안상 좋지 않지만 임시 조치)
-                    response = await API.post(`${apiEndpoint}?id=${currentUserId}`, newsData);
                 } else {
-                    // 일반 게시판 API
-                    const formDataObj = new FormData();
-                    formDataObj.append('title', formData.title);
-                    formDataObj.append('content', formData.content);
-                    formDataObj.append('region', formData.region);
-                    
-                    // 이미지 파일 첨부
-                    selectedFiles.forEach(file => {
-                        formDataObj.append('files', file);
-                    });
-                    
-                    response = await API.post(apiEndpoint, formDataObj, {
+                    // POST 요청 (등록)
+                    response = await axios.post(`/api${apiEndpoint}?id=${userId}`, newsData, {
                         headers: {
-                            'Content-Type': 'multipart/form-data'
+                            'Content-Type': 'application/json'
                         }
                     });
                 }
                 
-                if (response.status === 200 || response.status === 201) {
-                    // 성공 시 게시글 목록 또는 상세 페이지로 이동
-                    if (apiEndpoint === '/news') {
-                        navigate('/news'); // 뉴스 목록으로 이동
-                    } else {
-                        const redirectId = isEditMode ? id : response.data.id;
-                        navigate(`${apiEndpoint.startsWith('/') ? apiEndpoint : '/' + apiEndpoint}/${redirectId}`);
-                    }
+                console.log('API 응답:', response);
+            } else {
+                // 일반 게시판 API 요청
+                const postData = {
+                    ...formData,
+                    images: base64Images
+                };
+                
+                if (isEditMode) {
+                    response = await API.put(`${apiEndpoint}/${id}`, postData);
+                } else {
+                    response = await API.post(apiEndpoint, postData);
+                }
+            }
+            
+            if (response.status === 200 || response.status === 201) {
+                // 성공 시 게시글 목록 또는 상세 페이지로 이동
+                if (apiEndpoint === '/news') {
+                    // 뉴스 목록으로 이동
+                    navigate('/news');
+                } else {
+                    // ID가 있으면 해당 게시글의 상세 페이지로, 없으면 목록으로 이동
+                    const redirectId = isEditMode ? id : response.data.id;
+                    navigate(`${apiEndpoint.startsWith('/') ? apiEndpoint : '/' + apiEndpoint}/${redirectId}`);
                 }
             }
         } catch (error) {
-            console.error('게시글 저장 실패:', error);
-            setError('게시글을 저장하는 중 오류가 발생했습니다.');
+            if (isMounted.current) {
+                console.error('게시글 저장 실패:', error);
+                console.error('에러 세부정보:', error.response ? error.response.data : '응답 데이터 없음');
+                setError(`게시글을 저장하는 중 오류가 발생했습니다: ${error.message}`);
+            }
         } finally {
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         }
     };
 
