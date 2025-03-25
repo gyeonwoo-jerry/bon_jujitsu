@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from "../utils/api";
 import '../styles/boardList.css';
@@ -10,12 +10,8 @@ function BoardList({ apiEndpoint = '/board', title = '게시판', detailPathPref
     const [pageSize] = useState(10);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        document.title = title;
-        fetchPosts(currentPage);
-    }, [currentPage, apiEndpoint]);
-
-    const fetchPosts = (page) => {
+    // useCallback을 사용하여 fetchPosts 함수를 메모이제이션
+    const fetchPosts = useCallback((page) => {
         API.get(`${apiEndpoint}?page=${page}&size=${pageSize}`)
             .then(response => {
                 if (response.status === 200) {
@@ -27,7 +23,12 @@ function BoardList({ apiEndpoint = '/board', title = '게시판', detailPathPref
             .catch(error => {
                 console.error('Error fetching posts:', error);
             });
-    };
+    }, [apiEndpoint, pageSize]);
+
+    useEffect(() => {
+        document.title = title;
+        fetchPosts(currentPage);
+    }, [currentPage, apiEndpoint, title, fetchPosts]);
 
     const handlePostClick = (id) => {
         navigate(`${detailPathPrefix}/${id}`);

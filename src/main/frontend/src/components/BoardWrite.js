@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../utils/api';
 import '../styles/boardWrite.css';
@@ -16,19 +16,41 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
     const [previewImages, setPreviewImages] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [userId, setUserId] = useState('');
     const navigate = useNavigate();
 
+    // 사용자 정보 가져오기
     useEffect(() => {
-        document.title = id ? '게시글 수정' : title;
-        
-        // 수정 모드인 경우 기존 게시글 데이터 불러오기
-        if (id) {
-            setIsEditMode(true);
-            fetchPostData();
+        // 로컬 스토리지에서 사용자 정보 가져오기
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+            try {
+                const parsedUserInfo = JSON.parse(userInfo);
+                setUserId(parsedUserInfo.id || '');
+            } catch (e) {
+                console.error('사용자 정보 파싱 오류:', e);
+            }
+        } else {
+            // 사용자 정보 API 호출
+            const fetchUserInfo = async () => {
+                try {
+                    const response = await API.get('/user/info');
+                    if (response.status === 200) {
+                        setUserId(response.data.id || '');
+                        // 필요하다면 로컬 스토리지에 저장
+                        localStorage.setItem('userInfo', JSON.stringify(response.data));
+                    }
+                } catch (error) {
+                    console.error('사용자 정보 가져오기 실패:', error);
+                }
+            };
+            
+            fetchUserInfo();
         }
-    }, [id, title]);
+    }, []);
 
-    const fetchPostData = async () => {
+    // fetchPostData 함수를 useCallback으로 메모이제이션
+    const fetchPostData = useCallback(async () => {
         try {
             setLoading(true);
             const response = await API.get(`${apiEndpoint}/${id}`);
@@ -49,7 +71,17 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [apiEndpoint, id]);
+
+    useEffect(() => {
+        document.title = id ? '게시글 수정' : title;
+        
+        // 수정 모드인 경우 기존 게시글 데이터 불러오기
+        if (id) {
+            setIsEditMode(true);
+            fetchPostData();
+        }
+    }, [id, title, fetchPostData]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -105,47 +137,110 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
             return;
         }
         
+        // 사용자 ID 체크 (뉴스 API에만 필요)
+        if (apiEndpoint === '/news' && !userId) {
+            setError('사용자 정보를 가져올 수 없습니다. 다시 로그인해주세요.');
+            return;
+        }
+        
         try {
             setLoading(true);
             setError('');
             
-            // FormData 객체 생성
-            const submitData = new FormData();
-            submitData.append('title', formData.title);
-            submitData.append('content', formData.content);
-            submitData.append('region', formData.region);
-            
-            // 파일 추가
-            selectedFiles.forEach(file => {
-                submitData.append('files', file);
-            });
-            
-            // 기존 이미지 추가 (수정 모드인 경우)
-            if (isEditMode && formData.images.length > 0) {
-                submitData.append('existingImages', JSON.stringify(formData.images));
-            }
-            
             let response;
-            if (isEditMode) {
-                // 수정 모드
-                response = await API.put(`${apiEndpoint}/${id}`, submitData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-            } else {
-                // 작성 모드
-                response = await API.post(apiEndpoint, submitData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-            }
             
-            if (response.status === 200 || response.status === 201) {
-                // 성공 시 게시글 목록 또는 상세 페이지로 이동
-                const redirectId = isEditMode ? id : response.data.id;
-                navigate(`${apiEndpoint.startsWith('/') ? apiEndpoint : '/' + apiEndpoint}/${redirectId}`);
+            // 수정 모드
+            if (isEditMode) {
+                // API 요청
+                if (apiEndpoint === '/news') {
+                    // 뉴스 API는 다른 형식으로 처리
+                    const newsData = {
+                        request: {
+                            title: formData.title,
+                            content: formData.content
+                        },
+                        images: formData.images
+                    };
+                    
+                    response = await API.put(`${apiEndpoint}/${id}?id=${userId}`, newsData);
+                } else {
+                    // 일반 게시판 API
+                    const formDataObj = new FormData();
+                    formDataObj.append('title', formData.title);
+                    formDataObj.append('content', formData.content);
+                    formDataObj.append('region', formData.region);
+                    
+                    // 기존 이미지 정보
+                    formDataObj.append('images', JSON.stringify(formData.images));
+                    
+                    // 새로 추가된 이미지 파일
+                    selectedFiles.forEach(file => {
+                        formDataObj.append('files', file);
+                    });
+                    
+                    response = await API.put(`${apiEndpoint}/${id}`, formDataObj, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                }
+            } 
+            // 새 글 작성 모드
+            else {
+                if (apiEndpoint === '/news') {
+                    // 이미지 파일을 base64로 변환
+                    const base64Promises = selectedFiles.map(file => {
+                        return new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                const base64String = reader.result.split(',')[1];
+                                resolve(base64String);
+                            };
+                            reader.readAsDataURL(file);
+                        });
+                    });
+                    
+                    const base64Images = await Promise.all(base64Promises);
+                    
+                    // 뉴스 API 요청 형식에 맞게 데이터 준비
+                    const newsData = {
+                        request: {
+                            title: formData.title,
+                            content: formData.content
+                        },
+                        images: base64Images
+                    };
+                    
+                    const currentUserId = userId || '14'; // 기본값 설정 (보안상 좋지 않지만 임시 조치)
+                    response = await API.post(`${apiEndpoint}?id=${currentUserId}`, newsData);
+                } else {
+                    // 일반 게시판 API
+                    const formDataObj = new FormData();
+                    formDataObj.append('title', formData.title);
+                    formDataObj.append('content', formData.content);
+                    formDataObj.append('region', formData.region);
+                    
+                    // 이미지 파일 첨부
+                    selectedFiles.forEach(file => {
+                        formDataObj.append('files', file);
+                    });
+                    
+                    response = await API.post(apiEndpoint, formDataObj, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                }
+                
+                if (response.status === 200 || response.status === 201) {
+                    // 성공 시 게시글 목록 또는 상세 페이지로 이동
+                    if (apiEndpoint === '/news') {
+                        navigate('/news'); // 뉴스 목록으로 이동
+                    } else {
+                        const redirectId = isEditMode ? id : response.data.id;
+                        navigate(`${apiEndpoint.startsWith('/') ? apiEndpoint : '/' + apiEndpoint}/${redirectId}`);
+                    }
+                }
             }
         } catch (error) {
             console.error('게시글 저장 실패:', error);
@@ -172,33 +267,35 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
             {error && <div className="error-message">{error}</div>}
             
             <form className="board-write-form" onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="region">지역</label>
-                    <select 
-                        id="region" 
-                        name="region" 
-                        value={formData.region} 
-                        onChange={handleInputChange}
-                    >
-                        <option value="">지역 선택</option>
-                        <option value="서울">서울</option>
-                        <option value="경기">경기</option>
-                        <option value="인천">인천</option>
-                        <option value="부산">부산</option>
-                        <option value="대구">대구</option>
-                        <option value="대전">대전</option>
-                        <option value="광주">광주</option>
-                        <option value="울산">울산</option>
-                        <option value="강원">강원</option>
-                        <option value="충북">충북</option>
-                        <option value="충남">충남</option>
-                        <option value="전북">전북</option>
-                        <option value="전남">전남</option>
-                        <option value="경북">경북</option>
-                        <option value="경남">경남</option>
-                        <option value="제주">제주</option>
-                    </select>
-                </div>
+                {apiEndpoint !== '/news' && (
+                    <div className="form-group">
+                        <label htmlFor="region">지역</label>
+                        <select 
+                            id="region" 
+                            name="region" 
+                            value={formData.region} 
+                            onChange={handleInputChange}
+                        >
+                            <option value="">지역 선택</option>
+                            <option value="서울특별시">서울특별시</option>
+                            <option value="경기도">경기도</option>
+                            <option value="인천광역시">인천광역시</option>
+                            <option value="부산광역시">부산광역시</option>
+                            <option value="대구광역시">대구광역시</option>
+                            <option value="대전광역시">대전광역시</option>
+                            <option value="광주광역시">광주광역시</option>
+                            <option value="울산광역시">울산광역시</option>
+                            <option value="강원도">강원도</option>
+                            <option value="충청북도">충청북도</option>
+                            <option value="충청남도">충청남도</option>
+                            <option value="전라북도">전라북도</option>
+                            <option value="전라남도">전라남도</option>
+                            <option value="경상북도">경상북도</option>
+                            <option value="경상남도">경상남도</option>
+                            <option value="제주특별자치도">제주특별자치도</option>
+                        </select>
+                    </div>
+                )}
                 
                 <div className="form-group">
                     <label htmlFor="title">제목</label>

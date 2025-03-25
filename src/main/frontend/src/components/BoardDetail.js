@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import '../styles/boardDetail.css';
@@ -10,14 +10,8 @@ function BoardDetail({ apiEndpoint = '/board' }) {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        // 게시글 ID가 있을 때만 API를 호출합니다.
-        if (id) {
-            fetchPostDetail();
-        }
-    }, [id, apiEndpoint]);
-
-    const fetchPostDetail = async () => {
+    // fetchPostDetail 함수를 useCallback으로 메모이제이션
+    const fetchPostDetail = useCallback(async () => {
         try {
             setLoading(true);
             const response = await API.get(`${apiEndpoint}/${id}`);
@@ -32,7 +26,14 @@ function BoardDetail({ apiEndpoint = '/board' }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [apiEndpoint, id]);
+
+    useEffect(() => {
+        // 게시글 ID가 있을 때만 API를 호출합니다.
+        if (id) {
+            fetchPostDetail();
+        }
+    }, [id, apiEndpoint, fetchPostDetail]);
 
     const handleGoBack = () => {
         navigate(-1); // 이전 페이지로 이동
@@ -48,9 +49,9 @@ function BoardDetail({ apiEndpoint = '/board' }) {
         return <div className="error">{error}</div>;
     }
 
-    // 게시글 데이터가 없는 경우
+    // 게시글이 없는 경우
     if (!post) {
-        return <div className="not-found">게시글을 찾을 수 없습니다.</div>;
+        return <div className="error">게시글을 찾을 수 없습니다.</div>;
     }
 
     return (
