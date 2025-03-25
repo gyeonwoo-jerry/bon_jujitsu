@@ -48,7 +48,7 @@ public class AuthenticationFilter implements Filter {
             requestUri.equals("/robots.txt") ||
             requestUri.equals("/") ||
             (requestUri.startsWith("/api/board") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/board 예외 처리 추가
-            (requestUri.startsWith("/api/branch") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/branch 예외 처리 추가
+            (requestUri.startsWith("/api/branch") ) || //  GET /api/branch 예외 처리 추가
             (requestUri.startsWith("/api/notice") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/notice 예외 처리 추가
             (requestUri.startsWith("/api/news") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/notice 예외 처리 추가
             (requestUri.startsWith("/api/skill") && "GET".equalsIgnoreCase(httpMethod)) || //  GET /api/skill 예외 처리 추가
