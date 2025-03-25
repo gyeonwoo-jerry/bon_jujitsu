@@ -11,6 +11,7 @@ import Store from './pages/store';
 import Skill from './pages/skill';
 import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
+import NewsWrite from './pages/newsWrite';
 import Qna from './pages/qna';
 import Sponsor from './pages/sponsor';
 import Join from './pages/join';
@@ -32,6 +33,7 @@ function App() {
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
+          <Route path="/newsWrite" element={<NewsWrite />} />
           <Route path="/qna" element={<Qna />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/join" element={<Join />} />
