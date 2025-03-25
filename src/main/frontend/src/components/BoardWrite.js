@@ -151,44 +151,38 @@ function BoardWrite({ apiEndpoint = '/board', title = '게시글 작성' }) {
                 base64Images = await Promise.all(base64Promises);
             }
             
-            // 뉴스 API와 게시판 API의 데이터 형식이 다른 경우 분기 처리
+            // 뉴스 API는 다른 형식으로 데이터 전송
             if (apiEndpoint === '/news') {
-                // 뉴스 API 요청 데이터 구조
                 const newsData = {
-                    // API 요구사항에 맞게 데이터 구조 정의
                     request: {
                         title: formData.title,
                         content: formData.content,
-                        userId: userId // API에서 요구하는 사용자 ID
+                        userId: userId
                     },
                     images: base64Images
                 };
                 
                 console.log('뉴스 등록 요청 데이터:', newsData);
-                console.log('요청 URL:', `/api${apiEndpoint}?id=${userId}`);
                 
-                // 직접 axios 사용하여 요청
-                if (isEditMode) {
-                    // PUT 요청 (수정)
-                    response = await axios.put(`/api${apiEndpoint}/${id}?id=${userId}`, newsData, {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                } else {
-                    // POST 요청 (등록)
-                    response = await axios.post(`/api${apiEndpoint}?id=${userId}`, newsData, {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                }
+                // 백엔드 API 서버 URL 직접 지정 (CORS 이슈가 있을 수 있음)
+                // 개발환경 프록시 설정 확인 필요
+                const API_BASE_URL = 'http://211.110.44.79:58080/api'; // 백엔드 서버 URL
+                console.log('요청 URL:', `${API_BASE_URL}${apiEndpoint}?id=${userId}`);
+                
+                // API.post 대신 axios 직접 사용
+                response = await axios.post(`${API_BASE_URL}${apiEndpoint}?id=${userId}`, newsData, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 
                 console.log('API 응답:', response);
             } else {
-                // 일반 게시판 API 요청
+                // 일반 게시글 등록/수정 로직
                 const postData = {
-                    ...formData,
+                    title: formData.title,
+                    content: formData.content,
+                    region: formData.region,
                     images: base64Images
                 };
                 
