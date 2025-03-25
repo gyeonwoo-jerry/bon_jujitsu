@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import SubHeader from '../components/SubHeader';
+import BoardList from '../components/BoardList';
 
-function news() {
+function News() {
+  const [pageName, setPageName] = useState('');
+  useEffect(() => { 
+    const title = '뉴스';
+    setPageName(title);
+    document.title = title;
+  }, []);
+
   return (
     <div className="news">
-      <h1>환영합니다!</h1>
-      <p>이것은 뉴스입니다.</p>
+      <SubHeader pageName={pageName} />
+      <BoardList
+        apiEndpoint="/news"
+        title="뉴스"
+        detailPathPrefix="/newsDetail"/>
     </div>
   );
 }
 
-export default news; 
+export default News; 

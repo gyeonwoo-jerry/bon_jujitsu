@@ -73,6 +73,10 @@ input[type="date"]::-webkit-calendar-picker-indicator { padding: 0; }
 body {
     margin: 0;
 }
+
+.display_none {
+    display: none !important;
+}
   
   /* 여기에 CSS 스타일을 추가하세요 */
 .App {
