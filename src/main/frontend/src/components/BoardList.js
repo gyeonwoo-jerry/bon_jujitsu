@@ -57,32 +57,42 @@ function BoardList({ apiEndpoint = '/board', title = '게시판', detailPathPref
                 {posts.map(post => (
                     <div key={post.id} className="post-item" onClick={() => handlePostClick(post.id)}>
                         <div className='thumbnail'>
-                            {post.images && post.images.length > 0 && (
-                                <div className="post-images">
+                            <div className="post-images">
+                                {post.images && post.images.length > 0 ? (
+                                    <>
+                                        <img 
+                                            src={post.images[0]} 
+                                            alt={`${post.title} 이미지`} 
+                                            className="post-thumbnail" 
+                                        />
+                                        {post.images.length > 1 && (
+                                            <span className="image-count">+{post.images.length - 1}</span>
+                                        )}
+                                    </>
+                                ) : (
                                     <img 
-                                        src={post.images[0]} 
-                                        alt={`${post.title} 이미지`} 
-                                        className="post-thumbnail" 
+                                        src="/images/blank_img.png" 
+                                        alt="기본 이미지" 
+                                        className="post-thumbnail blank" 
                                     />
-                                    {post.images.length > 1 && (
-                                        <span className="image-count">+{post.images.length - 1}</span>
-                                    )}
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                        <div className="post-header">
-                            <h2 className="post-title">{post.title}</h2>
-                            <span className="post-region">{post.region}</span>
+                        <div className="post-contents">
+                            <div className="post-header">
+                                <h2 className="post-title">{post.title}</h2>
+                                <span className={`post-region ${post.region == "" ? "display_none" : ""}`}>{post.region}</span>
+                            </div>
+                            <div className='post-desc'>{truncateContent(post.content)}</div>
+                            <div className="post-footer">
+                                <span className="post-author">{post.name}</span>
+                                <span className="post-date">
+                                    {new Date(post.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
                         </div>
-                        <div className="post-content">
-                            <p>{truncateContent(post.content)}</p>
-                        </div>
-                        <div className="post-footer">
-                            <span className="post-author">{post.name}</span>
-                            <span className="post-date">
-                                {new Date(post.createdAt).toLocaleDateString()}
-                            </span>
-                        </div>
+                        
+                        
                     </div>
                 ))}
             </div>

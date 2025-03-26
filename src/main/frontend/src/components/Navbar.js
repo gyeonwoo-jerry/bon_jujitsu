@@ -9,6 +9,7 @@ function Navbar() {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
   const navigate = useNavigate();
 
   // 스크롤 이벤트 처리
@@ -40,6 +41,7 @@ function Navbar() {
           const user = JSON.parse(userInfo);
           setIsLoggedIn(true);
           setUserName(user.name || '사용자'); // 이름이 없으면 '사용자'로 표시
+          setUserRole(user.role || ''); // role 값도 설정
         } catch (error) {
           console.error('사용자 정보 파싱 오류:', error);
           setIsLoggedIn(false);
@@ -72,6 +74,7 @@ function Navbar() {
       // 상태 업데이트
       setIsLoggedIn(false);
       setUserName('');
+      setUserRole('');
       
       // 필요한 경우 홈페이지로 리디렉션
       navigate('/');
@@ -99,7 +102,9 @@ function Navbar() {
       {isLoggedIn ? (
         // 로그인 상태일 때 사용자 정보와 로그아웃 버튼 표시
         <div className="user_status">
-          <span className="user_name">{userName} 님, 환영합니다</span>
+          <span className="user_name">
+            {userName} {userRole=="USER" && `님,`} {userRole=="OWNER" && `관장님,`} {userRole=="ADMIN" && `관리자님,`} 환영합니다
+          </span>
           <button className="logout_btn" onClick={handleLogout}>로그아웃</button>
         </div>
       ) : (
@@ -118,6 +123,7 @@ function Navbar() {
             const user = JSON.parse(userInfo);
             setIsLoggedIn(true);
             setUserName(user.name || '사용자');
+            setUserRole(user.role || ''); // role 값도 업데이트
           } catch (error) {
             console.error('사용자 정보 파싱 오류:', error);
           }

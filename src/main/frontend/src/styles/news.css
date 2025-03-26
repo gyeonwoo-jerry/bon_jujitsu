@@ -37,20 +37,110 @@
 .news-container .board-title {
   display: none;
 } 
+
+.news-container .board-container {
+  width: 100%;
+  max-width: 100%;
+}
+
 .news-container .board-list {
   display: flex;
+  flex-direction: row;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .news-container .board-list .post-item {
-  display: flex;
-  gap: 20px;
+  width: calc(33% - 12px);
+  border-radius: 30px;
+  padding: 0;
 }
 
 .news-container .board-list .post-item .thumbnail {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  background-color: var(--gray-color);
+  overflow: hidden;
 }
 
+.news-container .board-list .post-item .thumbnail .post-images {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
+.news-container .board-list .post-item .thumbnail .post-images .post-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+} 
+
+.news-container .board-list .post-item .thumbnail .post-images .blank {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.news-container .board-list .post-item .post-contents {
+  width: 100%;
+  height: 100%;
+  padding: 10px 24px 44px;
+}
+
+.news-container .board-list .post-item .post-contents .post-header {
+  width: 100%;
+  display: block
+} 
+
+.news-container .board-list .post-item .post-contents .post-header .post-title {
+  width: 100%;
+  font-size: 21px;
+  font-weight: bold;
+  text-align: left;
+  color: var(--black-color);
+  margin-top: 14px;
+} 
+
+.news-container .board-list .post-item .post-contents .post-header .post-region {
+  display: none;
+} 
+
+.news-container .board-list .post-item .post-contents .post-desc {
+  width: 100%;
+  font-size: 16px;
+  color: var(--black-color);
+  margin-top: 14px;
+  text-align: left;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}   
+
+.news-container .board-list .post-item .post-contents .post-footer {
+  width: 100%;
+  margin-top: 24px;
+} 
+
+.news-container .inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: calc(100% - 100px);
+  margin: 0 auto;
+  gap: 30px;
+}
+
+.news-container .section_title {
+  font-size: 44px;
+  font-weight: bold;
+  color: var(--black-color);
+  text-align: center;
+  margin-bottom: 0;
+  margin-top: 64px;
+}
 

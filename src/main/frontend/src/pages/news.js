@@ -28,20 +28,20 @@ function News() {
     <div className="news">
       <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
       <div className="news-container">
-        <div className="news-header">
-          <h1 className="news-title">뉴스</h1>
-          <button 
-            className="write-button"
-            onClick={handleWriteClick}
-          >
-            글쓰기
-          </button>
+        <div className="inner">
+            <div className="section_title">본주짓수 <font className='thin small'>in</font> MEDIA</div>
+            <BoardList
+              apiEndpoint="/news"
+              title=""
+              detailPathPrefix="/newsDetail"
+            />
+            <button 
+              className="write-button"
+              onClick={handleWriteClick}
+            >
+              글쓰기
+            </button>
         </div>
-        <BoardList
-          apiEndpoint="/news"
-          title=""
-          detailPathPrefix="/newsDetail"
-        />
       </div>
     </div>
   );

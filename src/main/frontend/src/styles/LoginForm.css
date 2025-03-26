@@ -86,8 +86,12 @@
 }
 
 .login-form button:hover {
-  background-color: #0056b3;
+  background-color: var(--point-color);
 } 
+.login-form button:focus {
+  outline: none;
+  padding: 13px;
+}
 
 .login_form_input {
     position: relative;

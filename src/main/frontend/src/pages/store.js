@@ -10,7 +10,7 @@ function Store() {
     const title = '스토어'; 
     setPageName(title);
     document.title = title;
-    const descName = '환영합니다!';
+    const descName = 'BON JIU JITSU STORE';
     setDescName(descName);
     const backgroundImage = '/images/store_back.png';
     setBackgroundImage(backgroundImage);

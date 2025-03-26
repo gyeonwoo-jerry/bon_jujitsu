@@ -25,13 +25,15 @@ function LoginForm({ onLoginSuccess }) {
           // 토큰 저장
           localStorage.setItem("token", response.data.token);
           
-          // 사용자 정보 저장 (response.data.user에서 데이터 추출)
+          // 사용자 정보 저장 (response.data에서 데이터 추출)
           const userInfo = {
             id: response.data.id || response.data.userId || '',
             name: response.data.name || username, // 서버에서 이름이 없으면 아이디를 사용
             email: response.data.email || '',
-            role: response.data.role || ''
+            role: response.data.userRole || '' // userRole로 저장
           };
+          
+          console.log("저장할 사용자 정보:", userInfo);
           
           // 로컬 스토리지에 사용자 정보 저장
           localStorage.setItem("userInfo", JSON.stringify(userInfo));
