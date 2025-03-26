@@ -4,6 +4,9 @@ import Home from './pages/Home';
 import Navbar from './components/Navbar'; 
 import Footer from './components/Footer'; 
 import Academy from './pages/academy';
+import IntroGreeting from './pages/introGreeting';  
+import IntroJiujitsu from './pages/introJiujitsu';
+import IntroLevel from './pages/introLevel';
 import Branches from './pages/branches';
 import BranchesDetail from './pages/branchesDetail';
 import Comunity from './pages/comunity';
@@ -26,6 +29,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/academy" element={<Academy />} />
+          <Route path="/introGreeting" element={<IntroGreeting />} />
+          <Route path="/introJiujitsu" element={<IntroJiujitsu />} />
+          <Route path="/introLevel" element={<IntroLevel />} />
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/comunity" element={<Comunity />} />

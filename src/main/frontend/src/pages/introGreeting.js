@@ -4,13 +4,13 @@ import TabMenu from '../components/TabMenu';
 
 
 
-function Academy() {
+function IntroGreeting() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
 
   useEffect(() => {
-    const title = '아카데미 소개';
+    const title = '대표 인삿말';
     setPageName(title);
     document.title = title;
     const descName = '본주짓수는 다양한 지역에서 활동하고 있습니다.';
@@ -25,11 +25,11 @@ function Academy() {
       <div className='academy_container'>
         <TabMenu />
         <div className='academy_content'>
-          <h1>아카데미 소개</h1>
+          <h1>대표 인삿말</h1>
         </div>
       </div>
     </div>
   );
 }
 
-export default Academy; 
+export default IntroGreeting; 

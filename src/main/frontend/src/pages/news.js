@@ -6,12 +6,18 @@ import '../styles/news.css'; // 스타일 파일이 없다면 생성해야 합�
 
 function News() {
   const [pageName, setPageName] = useState('');
+  const [descName, setDescName] = useState('');
+  const [backgroundImage, setBackgroundImage] = useState('');
   const navigate = useNavigate();
   
   useEffect(() => { 
     const title = '뉴스';
     setPageName(title);
     document.title = title;
+    const descName = '본주짓수는 다양한 지역에서 활동하고 있습니다.';
+    setDescName(descName);
+    const backgroundImage = '';
+    setBackgroundImage(backgroundImage);
   }, []);
 
   const handleWriteClick = () => {
@@ -20,7 +26,7 @@ function News() {
 
   return (
     <div className="news">
-      <SubHeader pageName={pageName} />
+      <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
       <div className="news-container">
         <div className="news-header">
           <h1 className="news-title">뉴스</h1>

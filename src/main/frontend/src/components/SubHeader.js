@@ -1,18 +1,19 @@
 import React from 'react';
 import '../styles/subHeader.css';
 
-function SubHeader({ pageName }) {
-
+function SubHeader({ pageName, descName, backgroundImage }) {
+    
     return (
         <header className="subHeader">
-            <div className='subHeader_container'>
+            <div className='subHeader_container' style={{ backgroundImage: `url(${backgroundImage})` }}>
+                <img className='subHeader_background_img' src='/images/background_img.png' alt="background" />
                 <div className='inner'>
                     <div className='subHeader_container_title'>
                         {pageName}
                     </div>
                     <div className='subHeader_line'></div>
                     <div className='subHeader_desc'>
-                        본주짓수는 다양한 지역에서 활동하고 있습니다.
+                        {descName} 
                     </div>
                 </div>
             </div>
