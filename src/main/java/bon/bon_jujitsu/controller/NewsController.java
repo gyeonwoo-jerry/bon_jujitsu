@@ -61,7 +61,7 @@ public class NewsController {
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(newsService.getBoard(newsId));
+        .body(newsService.getNews(newsId));
   }
 
   @PatchMapping("/news/{newsId}")

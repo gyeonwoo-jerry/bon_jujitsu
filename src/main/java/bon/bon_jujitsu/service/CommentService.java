@@ -7,10 +7,8 @@ import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.CommentRequest;
 import bon.bon_jujitsu.dto.response.CommentResponse;
 import bon.bon_jujitsu.dto.update.CommentUpdate;
-import bon.bon_jujitsu.repository.BoardRepository;
-import bon.bon_jujitsu.repository.CommentRepository;
-import bon.bon_jujitsu.repository.NoticeRepository;
-import bon.bon_jujitsu.repository.UserRepository;
+import bon.bon_jujitsu.repository.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +27,8 @@ public class CommentService {
   private final CommentRepository commentRepository;
   private final BoardRepository boardRepository;
   private final NoticeRepository noticeRepository;
+  private final NewsRepository newsRepository;
+  private final SponsorRepository sponsorRepository;
 
   public void createComment(Long userId, CommentRequest request) {
     User user = userRepository.findById(userId)
@@ -58,13 +58,19 @@ public class CommentService {
 
   @Transactional(readOnly = true)
   public List<CommentResponse> getComments(Long targetId, CommentType commentType) {
-    // targetId가 Board인지 Notice인지 확인
+    // commentType 확인
     if (commentType == CommentType.BOARD) {
       boardRepository.findById(targetId)
           .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     } else if (commentType == CommentType.NOTICE) {
       noticeRepository.findById(targetId)
           .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+    } else if (commentType == CommentType.NEWS) {
+      newsRepository.findById(targetId)
+              .orElseThrow(() -> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
+    } else if (commentType == CommentType.SPONSOR) {
+      sponsorRepository.findById(targetId)
+              .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
     } else {
       throw new IllegalArgumentException("올바르지 않은 댓글 타입입니다.");
     }

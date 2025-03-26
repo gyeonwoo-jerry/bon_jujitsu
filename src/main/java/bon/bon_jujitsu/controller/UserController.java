@@ -3,6 +3,7 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.request.LoginRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
+import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -34,8 +35,9 @@ public class UserController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<String> login(@Valid @RequestBody LoginRequest req) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(usersService.login(req));
+  public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
+    LoginResponse response = usersService.login(req);
+    return ResponseEntity.ok(response);
   }
 
   @GetMapping("/profile")

@@ -76,7 +76,7 @@ public class NewsService {
   }
 
   @Transactional(readOnly = true)
-  public NewsResponse getBoard(Long newsId) {
+  public NewsResponse getNews(Long newsId) {
     News post = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
     NewsResponse newsResponse = NewsResponse.fromEntity(post);

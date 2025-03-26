@@ -9,6 +9,7 @@ import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.LoginRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
+import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
 import bon.bon_jujitsu.jwt.JwtUtil;
@@ -96,20 +97,21 @@ public class UserService {
     userImageService.uploadImage(user, images);
   }
 
-  public String login(LoginRequest req) {
-    User user = userRepository.findByMemberId(req.memberId()).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+  public LoginResponse login(LoginRequest req) {
+    User user = userRepository.findByMemberId(req.memberId())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
     if (user.getUserRole() == UserRole.PENDING) {
       throw new IllegalArgumentException("회원가입 승인 대기 중입니다. 승인 완료 후 로그인할 수 있습니다.");
     }
 
     if (!passwordEncoder.matches(req.password(), user.getPassword())) {
-      throw new IllegalArgumentException("아이디나 비밀번호를 정확하게 입력해주세요 .");
+      throw new IllegalArgumentException("아이디나 비밀번호를 정확하게 입력해주세요.");
     }
 
     String token = jwtUtil.createToken(user.getId());
 
-    return token;
+    return new LoginResponse(true, "로그인되었습니다.", token);
   }
 
   public Status assignOwnerRole(Long adminUserId, Long targetUserId) {
