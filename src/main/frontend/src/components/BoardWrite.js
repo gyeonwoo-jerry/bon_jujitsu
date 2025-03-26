@@ -167,19 +167,12 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
           { type: "application/json" }
         );
         newsFormData.append("request", jsonBlob);
-
-        if (base64Images.length > 0) {
-          base64Images.forEach((image, index) => {
-            newsFormData.append(`images[${index}]`, image);
+        // 선택한 파일이 있는 경우 FormData에 추가
+        if (selectedFiles.length > 0) {
+          selectedFiles.forEach((file) => {
+            newsFormData.append("images", file); // 'images' 키로 파일 추가
           });
         }
-        // const newsData = {
-        //   request: {
-        //     title: formData.title,
-        //     content: formData.content,
-        //   },
-        //   images: base64Images, // Base64 문자열을 백엔드가 처리할 수 있는지 확인 필요
-        // };
 
         console.log("뉴스 등록 요청 데이터:", newsFormData);
 
