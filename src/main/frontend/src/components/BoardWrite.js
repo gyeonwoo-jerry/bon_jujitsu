@@ -185,7 +185,25 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
           },
         });
 
-        console.log("API 응답:", response);
+        if (response.status === 200) {
+          if (response.data.success) {
+            console.log("뉴스 등록 성공:", response.data);
+          } else {
+            console.log("뉴스 등록 실패:", response.data);
+            if (response.data.message) {
+              setError(response.data.message);
+            } else {
+              setError("뉴스 등록 실패");
+            }
+          }
+        } else {
+          console.log("뉴스 등록 실패:", response.data);
+          if (response.data.message) {
+            setError(response.data.message);
+          } else {
+            setError("뉴스 등록 실패");
+          }
+        }
       } else {
         // 일반 게시글 등록/수정 로직
         const postData = {
