@@ -68,9 +68,9 @@ public class CommentService {
     } else if (commentType == CommentType.NEWS) {
       newsRepository.findById(targetId)
               .orElseThrow(() -> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
-    } else if (commentType == CommentType.SPONSOR) {
+    } else if (commentType == CommentType.SKILL) {
       sponsorRepository.findById(targetId)
-              .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
+              .orElseThrow(() -> new IllegalArgumentException("스킬 게시물을 찾을 수 없습니다."));
     } else {
       throw new IllegalArgumentException("올바르지 않은 댓글 타입입니다.");
     }

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,7 +99,7 @@ public class OrderService {
   public PageResponse<OrderResponse> getMyOrders(int page, int size, Long id) {
     userRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
     Page<Order> orders = orderRepository.findAllByUserId(id, pageRequest);
 
     Page<OrderResponse> myOrders = orders.map(order -> new OrderResponse(
@@ -132,7 +133,7 @@ public class OrderService {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
     Page<Order> orders = orderRepository.findAllByOrderStatusOrderByCreatedAtDesc(OrderStatus.WAITING, pageRequest);
 

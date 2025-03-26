@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -148,7 +149,7 @@ public class UserService {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
     Page<User> userPage = userRepository.findAllByIsDeletedFalse(pageRequest);
 
@@ -175,7 +176,7 @@ public class UserService {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
     Page<User> userPage = userRepository.findAllByIsDeletedTrue(pageRequest);
 
@@ -202,7 +203,7 @@ public class UserService {
       throw new IllegalArgumentException("관장 권한이 없습니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
     Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRoleNot(
             user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
@@ -289,7 +290,7 @@ public class UserService {
       throw new IllegalArgumentException("관장 권한이 없습니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
     Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRole(
             user.getBranch().getRegion(), UserRole.PENDING, pageRequest);

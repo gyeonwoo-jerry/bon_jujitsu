@@ -13,6 +13,7 @@ import bon.bon_jujitsu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +62,7 @@ public class BranchService {
 
 
   public PageResponse<BranchResponse> getAllBranch(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page - 1, size);
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "name"));
 
     Page<Branch> branches = branchRepository.findAllWithOwner(pageRequest);
 

@@ -54,13 +54,11 @@ public class BranchImageService {
 
         String filePath = uploads + fileName;
 
-        String dbFilepath = filepath + fileName;
-
         Path path = Paths.get(filePath);
         Files.createDirectories(path.getParent());
         Files.write(path, image.getBytes());
 
-        return dbFilepath;
+        return filePath;
     }
 
     public void updateImages(Branch branch, List<MultipartFile> newImages) {
