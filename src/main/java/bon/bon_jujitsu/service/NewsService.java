@@ -1,7 +1,5 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.News;
 import bon.bon_jujitsu.domain.NewsImage;
 import bon.bon_jujitsu.domain.User;
@@ -9,14 +7,11 @@ import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.NewsRequest;
-import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.response.NewsResponse;
 import bon.bon_jujitsu.dto.update.NewsUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NewsRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -33,8 +30,7 @@ public class NewsService {
 
   private final NewsRepository newsRepository;
   private final UserRepository userRepository;
-  private final BranchRepository branchRepository;
-  private final NewsImageService newsImageService;
+  private final PostImageService postImageService;
 
   public void createNews(Long userId, NewsRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -51,7 +47,7 @@ public class NewsService {
 
     newsRepository.save(news);
 
-    newsImageService.uploadImage(news, images);
+    postImageService.uploadImage(news.getId(), "news", images);
   }
 
   @Transactional(readOnly = true)
@@ -92,7 +88,7 @@ public class NewsService {
 
     news.updateNews(update);
 
-    newsImageService.updateImages(news, images);
+    postImageService.updateImages(news.getId(), "news", images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("뉴스 수정 완료").build();
   }

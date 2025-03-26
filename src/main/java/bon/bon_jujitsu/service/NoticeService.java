@@ -1,11 +1,6 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.BoardImage;
-import bon.bon_jujitsu.domain.Branch;
-import bon.bon_jujitsu.domain.Notice;
-import bon.bon_jujitsu.domain.NoticeImage;
-import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
+import bon.bon_jujitsu.domain.*;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.NoticeRequest;
@@ -14,7 +9,6 @@ import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -32,7 +28,7 @@ public class NoticeService {
   private final NoticeRepository noticeRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
-  private final NoticeImageService noticeImageService;
+  private final PostImageService postImageService;
 
   public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> images, Long branchId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -64,7 +60,7 @@ public class NoticeService {
 
     noticeRepository.save(notice);
 
-    noticeImageService.uploadImage(notice, images);
+    postImageService.uploadImage(notice.getId(), "notice", images);
   }
 
   @Transactional(readOnly = true)
@@ -110,7 +106,7 @@ public class NoticeService {
 
     notice.updateNotice(update);
 
-    noticeImageService.updateImages(notice, images);
+    postImageService.updateImages(notice.getId(), "notice", images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("공지사항 수정 완료").build();
   }

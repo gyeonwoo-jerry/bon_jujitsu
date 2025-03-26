@@ -112,7 +112,7 @@ public class UserService {
 
     String token = jwtUtil.createToken(user.getId());
 
-    return new LoginResponse(true, "로그인되었습니다.", token);
+    return new LoginResponse(true, "로그인되었습니다.", token, user.getUserRole(), user.getName());
   }
 
   public Status assignOwnerRole(Long adminUserId, Long targetUserId) {

@@ -32,7 +32,7 @@ public class BoardService {
   private final BoardRepository boardRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
-  private final BoardImageService boardImageService;
+  private final PostImageService postImageService;
 
   public void createBoard(Long userId, BoardRequest request, List<MultipartFile> images, Long branchId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -53,7 +53,7 @@ public class BoardService {
 
     boardRepository.save(board);
 
-    boardImageService.uploadImage(board, images);
+    postImageService.uploadImage(board.getId(), "boarde", images);
   }
 
   @Transactional(readOnly = true)
@@ -96,7 +96,7 @@ public class BoardService {
 
     board.updateBoard(request);
 
-    boardImageService.updateImages(board, images);
+    postImageService.updateImages(board.getId(), "board", images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("게시글 수정 완료").build();
   }

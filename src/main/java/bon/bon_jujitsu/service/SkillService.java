@@ -31,7 +31,7 @@ public class SkillService {
   private final SkillRepository skillRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
-  private final SKillImageService sKillImageService;
+  private final PostImageService postImageService;
 
   public void createNotice(Long userId, SkillRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -52,7 +52,7 @@ public class SkillService {
 
     skillRepository.save(skill);
 
-    sKillImageService.uploadImage(skill, images);
+    postImageService.uploadImage(skill.getId(), "skill", images);
   }
 
   @Transactional(readOnly = true)
@@ -93,7 +93,7 @@ public class SkillService {
 
     skill.updateSkill(update);
 
-    sKillImageService.updateImages(skill, images);
+    postImageService.updateImages(skill.getId(), "skill", images);
 
     return Status.builder().status(HttpStatus.OK.value()).message("스킬게시물 수정 완료").build();
   }
