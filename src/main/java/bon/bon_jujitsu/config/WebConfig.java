@@ -27,7 +27,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 업로드된 파일을 위한 정적 리소스 핸들러 추가
         registry.addResourceHandler("/uploads/**")
-        .addResourceLocations("file:" + filepath) // 업로드된 파일 경로 (서버 환경에 맞게 수정)
+        .addResourceLocations("file:/uploads/") 
         .setCachePeriod(3600) // 캐시 설정 (선택 사항)
         .resourceChain(true)
         .addResolver(new PathResourceResolver());
