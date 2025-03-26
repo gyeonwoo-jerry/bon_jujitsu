@@ -16,10 +16,20 @@ function LoginForm() {
         memberId: username,
         password: password,
       });
-      console.log("로그인 성공:", response.data);
-      // 로그인 성공 후 처리 (예: 토큰 저장, 리다이렉트 등)
-      localStorage.setItem("token", response.data);
-      window.location.href = "/";
+      if (response.status === 200) {
+        if (response.data.success) {
+          console.log("로그인 성공:", response.data);
+          // 로그인 성공 후 처리 (예: 토큰 저장, 리다이렉트 등)
+          localStorage.setItem("token", response.data.token);
+          window.location.href = "/";
+        } else {
+          alert("아이디나 비밀번호가 일치하지 않습니다.");
+          console.log("로그인 실패:", response.data);
+        }
+      } else {
+        alert("처리 중 오류가 발생하였습니다.");
+        console.log("로그인 실패:", response.data);
+      }
       // 우아
     } catch (error) {
       console.error("로그인 실패:", error);
