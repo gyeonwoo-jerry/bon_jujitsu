@@ -37,3 +37,20 @@
 .news-container .board-title {
   display: none;
 } 
+.news-container .board-list {
+  display: flex;
+  gap: 20px;
+}
+
+.news-container .board-list .post-item {
+  display: flex;
+  gap: 20px;
+}
+
+.news-container .board-list .post-item .thumbnail {
+  width: 100px;
+  height: 100px;
+}
+
+
+

@@ -56,12 +56,7 @@ function BoardList({ apiEndpoint = '/board', title = '게시판', detailPathPref
             <div className="board-list">
                 {posts.map(post => (
                     <div key={post.id} className="post-item" onClick={() => handlePostClick(post.id)}>
-                        <div className="post-header">
-                            <h2 className="post-title">{post.title}</h2>
-                            <span className="post-region">{post.region}</span>
-                        </div>
-                        <div className="post-content">
-                            <p>{truncateContent(post.content)}</p>
+                        <div className='thumbnail'>
                             {post.images && post.images.length > 0 && (
                                 <div className="post-images">
                                     <img 
@@ -74,6 +69,13 @@ function BoardList({ apiEndpoint = '/board', title = '게시판', detailPathPref
                                     )}
                                 </div>
                             )}
+                        </div>
+                        <div className="post-header">
+                            <h2 className="post-title">{post.title}</h2>
+                            <span className="post-region">{post.region}</span>
+                        </div>
+                        <div className="post-content">
+                            <p>{truncateContent(post.content)}</p>
                         </div>
                         <div className="post-footer">
                             <span className="post-author">{post.name}</span>

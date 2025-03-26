@@ -1,27 +1,51 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/LoginForm.css";
 
-function LoginForm() {
+function LoginForm({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("로그인 성공:", username);
+    console.log("로그인 시도:", username);
     try {
       const response = await API.post("/users/login", {
         memberId: username,
         password: password,
       });
+      
       if (response.status === 200) {
         if (response.data.success) {
           console.log("로그인 성공:", response.data);
-          // 로그인 성공 후 처리 (예: 토큰 저장, 리다이렉트 등)
+          
+          // 토큰 저장
           localStorage.setItem("token", response.data.token);
-          window.location.href = "/";
+          
+          // 사용자 정보 저장 (response.data.user에서 데이터 추출)
+          const userInfo = {
+            id: response.data.id || response.data.userId || '',
+            name: response.data.name || username, // 서버에서 이름이 없으면 아이디를 사용
+            email: response.data.email || '',
+            role: response.data.role || ''
+          };
+          
+          // 로컬 스토리지에 사용자 정보 저장
+          localStorage.setItem("userInfo", JSON.stringify(userInfo));
+          
+          // 로그인 성공 알림
+          alert("로그인 성공");
+          
+          // 로그인 성공 콜백 함수 호출 (props로 전달된 경우)
+          if (onLoginSuccess && typeof onLoginSuccess === 'function') {
+            onLoginSuccess();
+          }
+          
+          // 리디렉션 (React Router의 navigate 사용)
+          navigate('/');
         } else {
           alert("아이디나 비밀번호가 일치하지 않습니다.");
           console.log("로그인 실패:", response.data);
@@ -30,9 +54,9 @@ function LoginForm() {
         alert("처리 중 오류가 발생하였습니다.");
         console.log("로그인 실패:", response.data);
       }
-      // 우아
     } catch (error) {
       console.error("로그인 실패:", error);
+      alert("로그인 처리 중 오류가 발생했습니다.");
     }
   };
 

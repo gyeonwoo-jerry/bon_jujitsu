@@ -65,20 +65,24 @@
 
 .login-form input {
     width: 100%;
-    padding: 8px;
+    padding: 8px 12px;
     font-size: 16px;
-    color: #333;
+    color: var(--black-color);
     box-sizing: border-box;
+    background-color: var(--white-color);
+    border-radius: 30px;
 }
 
 .login-form button {
   width: 100%;
-  padding: 10px;
-  background-color: #007bff;
+  padding: 13px;
+  background-color: var(--black-color);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 35px;
   cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .login-form button:hover {
@@ -88,7 +92,9 @@
 .login_form_input {
     position: relative;
     width: 100%;
+    margin-bottom: 10px;
 }
+
 .login_form_input label {
     position: absolute;
     top: 50%;
@@ -106,3 +112,19 @@
     border-radius: 30px;
     background-color: #fff;
 }
+
+.join_btn {
+    width: 100%;
+    padding: 0 24px;
+    text-align: right;
+    margin-top: 14px;
+}
+
+.join_btn a {
+    color: var(--black-color);
+    font-size: 14px;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+

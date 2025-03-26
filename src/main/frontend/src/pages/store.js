@@ -12,7 +12,7 @@ function Store() {
     document.title = title;
     const descName = '환영합니다!';
     setDescName(descName);
-    const backgroundImage = '/images/bon_academy_back@3x.png';
+    const backgroundImage = '/images/store_back.png';
     setBackgroundImage(backgroundImage);
   }, []);
 
