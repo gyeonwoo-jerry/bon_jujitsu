@@ -35,9 +35,6 @@ public class SponsorService {
   public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
-        new IllegalArgumentException("존재하지 않는 체육관입니다."));
-
     // 공지사항은 OWNER만 작성 가능
     if (user.getUserRole() != UserRole.OWNER) {
       throw new IllegalArgumentException("스폰서는 관장만 작성할 수 있습니다.");
@@ -46,7 +43,6 @@ public class SponsorService {
     Sponsor sponsor = Sponsor.builder()
         .title(request.title())
         .content(request.content())
-        .branch(branch)
         .user(user)
         .build();
 
@@ -65,7 +61,6 @@ public class SponsorService {
         sponsers.getId(),
         sponsers.getTitle(),
         sponsers.getContent(),
-        sponsers.getBranch().getRegion(),
         sponsers.getUser().getName(),
         sponsers.getImages().stream().map(SponsorImage::getImagePath).toList(),
         sponsers.getCreatedAt(),

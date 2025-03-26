@@ -11,7 +11,6 @@ public record SponsorResponse(
     Long id,
     String title,
     String content,
-    String region,
     String name,
     List<String> images,
     LocalDateTime createdAt,
@@ -22,7 +21,6 @@ public record SponsorResponse(
         .id(sponsor.getId())
         .title(sponsor.getTitle())
         .content(sponsor.getContent())
-        .region(sponsor.getBranch().getRegion())
         .name(sponsor.getUser().getName())
         .images(sponsor.getImages().stream().map(SponsorImage::getImagePath).toList())
         .createdAt(sponsor.getCreatedAt())

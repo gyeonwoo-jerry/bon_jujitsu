@@ -44,9 +44,7 @@ public class Sponsor extends Timestamped {
   @Column(nullable = false)
   private boolean isDeleted = false;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "branch_id", nullable = false)
-  private Branch branch;
+
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)

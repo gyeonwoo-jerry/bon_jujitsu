@@ -7,5 +7,4 @@ public record BranchUpdate(
     Optional<String> address,
     Optional<String> area
 ) {
-
 }

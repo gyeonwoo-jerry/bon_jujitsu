@@ -38,9 +38,6 @@ public class NewsService {
   public void createNews(Long userId, NewsRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
-        new IllegalArgumentException("존재하지 않는 체육관입니다."));
-
     if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("뉴스는 관장이나 관리자만 작성할 수 있습니다.");
     }
