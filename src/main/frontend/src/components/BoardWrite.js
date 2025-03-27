@@ -27,6 +27,14 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
       isMounted.current = false;
     };
   }, []);
+  // 에러가 있을 때 alert 표시
+  React.useEffect(() => {
+    if (error) {
+      alert(error);
+      // 에러 메시지 표시 후 error 상태 초기화
+      setError(null);
+    }
+  }, [error]);
 
   // fetchPostData 함수를 useCallback으로 메모이제이션
   const fetchPostData = useCallback(async () => {
@@ -184,26 +192,6 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
             "Content-Type": "multipart/form-data",
           },
         });
-
-        if (response.status === 200) {
-          if (response.data.success) {
-            console.log("뉴스 등록 성공:", response.data);
-          } else {
-            console.log("뉴스 등록 실패:", response.data);
-            if (response.data.message) {
-              setError(response.data.message);
-            } else {
-              setError("뉴스 등록 실패");
-            }
-          }
-        } else {
-          console.log("뉴스 등록 실패:", response.data);
-          if (response.data.message) {
-            setError(response.data.message);
-          } else {
-            setError("뉴스 등록 실패");
-          }
-        }
       } else {
         // 일반 게시글 등록/수정 로직
         const postData = {
@@ -219,20 +207,35 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
           response = await API.post(apiEndpoint, postData);
         }
       }
-
+      console.log("게시글 등록 성공1111:", response.data);
       if (response.status === 200 || response.status === 201) {
-        // 성공 시 게시글 목록 또는 상세 페이지로 이동
-        if (apiEndpoint === "/news") {
-          // 뉴스 목록으로 이동
-          navigate("/news");
+        console.log("게시글 등록 성공2222:", response.data);
+        if (response.data.success) {
+          // 성공 시 게시글 목록 또는 상세 페이지로 이동
+          if (apiEndpoint === "/news") {
+            // 뉴스 목록으로 이동
+            navigate(apiEndpoint);
+          } else {
+            // ID가 있으면 해당 게시글의 상세 페이지로, 없으면 목록으로 이동
+            const redirectId = isEditMode ? id : response.data.id;
+            if (redirectId) {
+              // 수정 모드일 경우 해당 게시글의 상세 페이지로 이동
+              navigate(
+                `${
+                  apiEndpoint.startsWith("/") ? apiEndpoint : "/" + apiEndpoint
+                }/${redirectId}`
+              );
+            } else {
+              // 등록 모드일 경우 게시글 목록으로 이동
+              navigate(apiEndpoint);
+            }
+          }
         } else {
-          // ID가 있으면 해당 게시글의 상세 페이지로, 없으면 목록으로 이동
-          const redirectId = isEditMode ? id : response.data.id;
-          navigate(
-            `${
-              apiEndpoint.startsWith("/") ? apiEndpoint : "/" + apiEndpoint
-            }/${redirectId}`
-          );
+          if (response.data.message) {
+            setError(response.data.message);
+          } else {
+            setError("글 등록에 실패했습니다.");
+          }
         }
       }
     } catch (error) {
