@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements Filter {
@@ -89,6 +92,9 @@ public class AuthenticationFilter implements Filter {
 
     // 인증 헤더 확인
     if (Objects.isNull(authorizationHeader)) {
+      
+      log.error("1. 인증헤더 없음.");
+
       // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
@@ -98,6 +104,7 @@ public class AuthenticationFilter implements Filter {
 
     // Bearer 접두사 확인 및 제거
     if (!authorizationHeader.startsWith("Bearer ")) {
+      log.error("2. 유효하지 않은 토큰 형식입니다.");
       throw new IllegalArgumentException("유효하지 않은 토큰 형식입니다.");
     }
 
@@ -105,6 +112,7 @@ public class AuthenticationFilter implements Filter {
     System.out.println("추출된 토큰: " + token); // 디버깅용
 
     if(token.equals("null") || token.equals("undefined")){
+      log.error("3. 토큰이 없습니다.");
       // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
@@ -114,6 +122,7 @@ public class AuthenticationFilter implements Filter {
 
     // 토큰 만료 체크 (순서 중요: Bearer 제거 후)
     if (jwtUtil.isTokenExpired(token)) {
+      log.error("4. 토큰이 만료되었습니다.");
       // throw new IllegalArgumentException("로그인 시간이 만료되었습니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
@@ -124,7 +133,7 @@ public class AuthenticationFilter implements Filter {
       // 기존 인증 로직
       chain.doFilter(request, response);
     } catch (IllegalArgumentException e) {
-      
+        log.error("5. 인증 오류 발생: {}", e.getMessage());
         res.setStatus(HttpStatus.UNAUTHORIZED.value());
         res.setContentType("application/json");
         res.getWriter().write(
