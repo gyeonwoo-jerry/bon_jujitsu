@@ -54,8 +54,8 @@ function BoardDetail({ apiEndpoint = "/board" }) {
       if (response.status === 200) {
         console.log("Post detail fetched:", response.data);
         if (response.data.success) {
-          setPost(response.data.data);
-          document.title = response.data.data?.title || "게시글 상세";
+          setPost(response.data.content);
+          document.title = response.data.content?.title || "게시글 상세";
         } else {
           throw new Error("게시글을 불러오는데 실패했습니다.");
         }
