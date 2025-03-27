@@ -1,21 +1,20 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemImage;
 import bon.bon_jujitsu.repository.ItemImageRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor

@@ -6,14 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Where;
 
 @Entity
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Where(clause = "is_deleted = false")
 @Table(name = "branch_image")
 public class BranchImage extends Timestamped {
     @Id
@@ -23,15 +21,10 @@ public class BranchImage extends Timestamped {
     @Column(nullable = false)
     private String imagePath;
 
+    @Column(nullable = false)
+    private String originalFileName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")
     private Branch branch;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    public void softDelete() {
-        this.isDeleted = true;
-    }
 }

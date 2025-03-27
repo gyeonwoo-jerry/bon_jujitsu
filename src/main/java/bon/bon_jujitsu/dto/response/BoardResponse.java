@@ -1,10 +1,10 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.BoardImage;
+import lombok.Builder;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Builder;
 
 @Builder
 public record BoardResponse(

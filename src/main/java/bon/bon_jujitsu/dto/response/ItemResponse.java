@@ -1,15 +1,15 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemImage;
+import lombok.Builder;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.Builder;
 
 @Builder
 public record ItemResponse(

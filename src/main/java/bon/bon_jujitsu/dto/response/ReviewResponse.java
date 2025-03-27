@@ -1,10 +1,9 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.ReviewImage;
+
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
