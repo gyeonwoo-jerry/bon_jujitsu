@@ -19,6 +19,42 @@ const StoreItemList = () => {
   const [sortOption, setSortOption] = useState("newest");
   const [filteredItems, setFilteredItems] = useState([]);
 
+  // 관리자 권한 상태
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // 로컬 스토리지에서 사용자 권한 확인
+  useEffect(() => {
+    try {
+      // 로컬 스토리지에서 userInfo 정보 가져오기 (LoginForm.js에서 사용한 키)
+      const userInfoStr = localStorage.getItem('userInfo');
+      console.log('로컬 스토리지의 userInfo:', userInfoStr);
+      
+      if (userInfoStr) {
+        // JSON 문자열을 객체로 변환
+        const userInfo = JSON.parse(userInfoStr);
+        console.log('파싱된 사용자 정보:', userInfo);
+        
+        // role 속성 접근 
+        const userRole = userInfo.role;
+        console.log('사용자 권한:', userRole);
+        
+        // 권한이 ADMIN 또는 OWNER인 경우 관리자로 설정 (대소문자 무관)
+        const isAdminOrOwner = 
+          userRole?.toUpperCase() === 'ADMIN' || 
+          userRole?.toUpperCase() === 'OWNER';
+        
+        console.log('관리자 권한 여부:', isAdminOrOwner);
+        setIsAdmin(isAdminOrOwner);
+      } else {
+        console.log('로컬 스토리지에 userInfo 정보가 없습니다.');
+        setIsAdmin(false);
+      }
+    } catch (error) {
+      console.error('사용자 정보 확인 오류:', error);
+      setIsAdmin(false);
+    }
+  }, []);
+
   // 필터링 및 정렬을 적용하는 함수 - useCallback으로 감싸기
   const applyFiltersAndSort = useCallback((items, category, sort) => {
     console.log(`필터 적용: 카테고리=${category}, 정렬=${sort}`);
@@ -289,6 +325,11 @@ const StoreItemList = () => {
     }
   };
 
+  // 상품 등록 페이지로 이동하는 함수
+  const handleAddProduct = () => {
+    navigate('/storeWrite');
+  };
+
   // 데이터 로드 중일 때 로딩 표시
   if (loading) return <div className="loading">상품 정보를 불러오는 중...</div>;
   if (error) return <div className="error">오류: {error}</div>;
@@ -296,51 +337,64 @@ const StoreItemList = () => {
   return (
     <div className="store-container">
       <div className="inner">
-        <div className="store-filters">
-          <div className="filter-options">
-            <button
-              className={`filter-btn ${
-                activeCategory === "all" ? "active" : ""
-              }`}
-              onClick={() => handleCategoryChange("all")}
-            >
-              전체
-            </button>
-            <button
-              className={`filter-btn ${
-                activeCategory === "clothing" ? "active" : ""
-              }`}
-              onClick={() => handleCategoryChange("clothing")}
-            >
-              의류
-            </button>
-            <button
-              className={`filter-btn ${
-                activeCategory === "supplies" ? "active" : ""
-              }`}
-              onClick={() => handleCategoryChange("supplies")}
-            >
-              용품
-            </button>
-            <button
-              className={`filter-btn ${
-                activeCategory === "accessories" ? "active" : ""
-              }`}
-              onClick={() => handleCategoryChange("accessories")}
-            >
-              악세서리
-            </button>
+        <div className="store-header">
+          <div className="store-filters">
+            <div className="filter-options">
+              <button
+                className={`filter-btn ${
+                  activeCategory === "all" ? "active" : ""
+                }`}
+                onClick={() => handleCategoryChange("all")}
+              >
+                전체
+              </button>
+              <button
+                className={`filter-btn ${
+                  activeCategory === "clothing" ? "active" : ""
+                }`}
+                onClick={() => handleCategoryChange("clothing")}
+              >
+                의류
+              </button>
+              <button
+                className={`filter-btn ${
+                  activeCategory === "supplies" ? "active" : ""
+                }`}
+                onClick={() => handleCategoryChange("supplies")}
+              >
+                용품
+              </button>
+              <button
+                className={`filter-btn ${
+                  activeCategory === "accessories" ? "active" : ""
+                }`}
+                onClick={() => handleCategoryChange("accessories")}
+              >
+                악세서리
+              </button>
+            </div>
+            
+            <div className="store-actions">
+              {isAdmin && (
+                <button
+                  className="add-product-btn"
+                  onClick={handleAddProduct}
+                >
+                  상품 등록
+                </button>
+              )}
+              <select
+                className="sort-select"
+                value={sortOption}
+                onChange={handleSortChange}
+              >
+                <option value="newest">최신순</option>
+                <option value="price-low">가격 낮은순</option>
+                <option value="price-high">가격 높은순</option>
+                <option value="rating">평점 높은순</option>
+              </select>
+            </div>
           </div>
-          <select
-            className="sort-select"
-            value={sortOption}
-            onChange={handleSortChange}
-          >
-            <option value="newest">최신순</option>
-            <option value="price-low">가격 낮은순</option>
-            <option value="price-high">가격 높은순</option>
-            <option value="rating">평점 높은순</option>
-          </select>
         </div>
 
         {filteredItems.length > 0 ? (

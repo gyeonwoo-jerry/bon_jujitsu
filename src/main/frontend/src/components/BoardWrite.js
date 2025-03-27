@@ -141,24 +141,6 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
       }
 
       let response;
-      let base64Images = [];
-
-      // 이미지 파일이 있는 경우 base64로 변환
-      if (selectedFiles.length > 0) {
-        const convertToBase64 = (file) => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
-            reader.readAsDataURL(file);
-          });
-        };
-
-        const base64Promises = selectedFiles.map((file) =>
-          convertToBase64(file)
-        );
-        base64Images = await Promise.all(base64Promises);
-      }
 
       // 뉴스 API는 다른 형식으로 데이터 전송
       if (apiEndpoint === "/news") {
@@ -194,17 +176,38 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
         });
       } else {
         // 일반 게시글 등록/수정 로직
-        const postData = {
-          title: formData.title,
-          content: formData.content,
-          region: formData.region,
-          images: base64Images,
-        };
+        const newsFormData = new FormData();
+
+        // JSON 데이터를 Blob으로 변환하여 추가
+        const jsonBlob = new Blob(
+          [
+            JSON.stringify({
+              title: formData.title,
+              content: formData.content,
+            }),
+          ],
+          { type: "application/json" }
+        );
+        newsFormData.append("request", jsonBlob);
+        // 선택한 파일이 있는 경우 FormData에 추가
+        if (selectedFiles.length > 0) {
+          selectedFiles.forEach((file) => {
+            newsFormData.append("images", file); // 'images' 키로 파일 추가
+          });
+        }
 
         if (isEditMode) {
-          response = await API.put(`${apiEndpoint}/${id}`, postData);
+          response = await API.put(`${apiEndpoint}/${id}`, newsFormData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            }
+        });
         } else {
-          response = await API.post(apiEndpoint, postData);
+            response = await API.post(apiEndpoint, newsFormData, newsFormData, {
+                headers: {
+                "Content-Type": "multipart/form-data",
+                }
+            });
         }
       }
       if (response.status === 200 || response.status === 201) {

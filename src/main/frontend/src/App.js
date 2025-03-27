@@ -21,6 +21,7 @@ import Sponsor from './pages/sponsor';
 import Join from './pages/join';
 import Cart from './pages/cart';
 import Order from './pages/order';
+import StoreWritePage from './pages/storeWrite';
 import './styles/main.css';
 import './styles/response.css';
 
@@ -40,6 +41,7 @@ function App() {
           <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
+          <Route path="/storeWrite" element={<StoreWritePage />} />
           <Route path="/storeDetail/:itemId" element={<StoreDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/order" element={<Order />} />
