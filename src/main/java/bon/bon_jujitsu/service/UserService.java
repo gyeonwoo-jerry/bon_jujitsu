@@ -117,7 +117,7 @@ public class UserService {
     return new LoginResponse(token, user.getUserRole(), user.getName());
   }
 
-  public Status assignOwnerRole(Long adminUserId, Long targetUserId) {
+  public void assignOwnerRole(Long adminUserId, Long targetUserId) {
     User targetUser = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
     User admin = userRepository.findById(adminUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
@@ -132,11 +132,6 @@ public class UserService {
     targetUser.setUserRole(UserRole.OWNER);
 
     userRepository.save(targetUser);
-
-    return Status.builder()
-        .status(HttpStatus.CREATED.value())
-        .message("관장으로 등록되었습니다.")
-        .build();
     }
 
   @Transactional(readOnly = true)

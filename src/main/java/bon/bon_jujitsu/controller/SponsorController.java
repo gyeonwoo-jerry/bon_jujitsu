@@ -71,11 +71,11 @@ public class SponsorController {
   }
 
   @DeleteMapping("/sponsor/{sponsorId}")
-  private ResponseEntity<Status> deleteSponsor(
+  private ApiResponse<Void> deleteSponsor(
       @AuthenticationUserId Long userId,
       @PathVariable("sponsorId") Long sponsorId
   ) {
     sponsorService.deleteSponsor(userId, sponsorId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("스폰서 삭제 성공", null);
   }
 }

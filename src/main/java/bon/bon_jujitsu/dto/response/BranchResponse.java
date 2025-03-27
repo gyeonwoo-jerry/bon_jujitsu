@@ -1,8 +1,6 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.Branch;
-import bon.bon_jujitsu.domain.BranchImage;
-import bon.bon_jujitsu.domain.User;
+import bon.bon_jujitsu.domain.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +22,10 @@ public record BranchResponse (
           String sns2,
           String sns3,
           String sns4,
-          String sns5
+          String sns5,
+          Integer level,
+          Stripe stripe,
+          List<String> userImages
   ) {}
 
   public static BranchResponse from(Branch branch, User owner) {
@@ -36,7 +37,10 @@ public record BranchResponse (
                     owner.getSns2(),
                     owner.getSns3(),
                     owner.getSns4(),
-                    owner.getSns5()
+                    owner.getSns5(),
+                    owner.getLevel(),
+                    owner.getStripe(),
+                    owner.getImages().stream().map(UserImage::getImagePath).toList()
             ) : null;
 
     return new BranchResponse(

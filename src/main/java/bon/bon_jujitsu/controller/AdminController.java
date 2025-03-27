@@ -1,14 +1,11 @@
 package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
-import bon.bon_jujitsu.dto.common.ListResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,11 +16,11 @@ public class AdminController {
   private final UserService userService;
 
   @PostMapping("/assign-owner/{targetUserId}")
-  public ApiResponse<Status> assignOwner(
+  public ApiResponse<Void> assignOwner(
           @AuthenticationUserId Long adminUserId,
           @PathVariable Long targetUserId) {
-    Status response = userService.assignOwnerRole(adminUserId, targetUserId);
-    return ApiResponse.success("관장 등록 완료", response);
+    userService.assignOwnerRole(adminUserId, targetUserId);
+    return ApiResponse.success("관장 등록 완료", null);
   }
 
   @GetMapping("/users")

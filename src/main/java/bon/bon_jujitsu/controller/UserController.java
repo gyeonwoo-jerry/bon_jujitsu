@@ -28,11 +28,11 @@ public class UserController {
   private final UserService usersService;
 
   @PostMapping("/signup")
-  public ResponseEntity<String> signup(
+  public ApiResponse<Void> signup(
           @RequestPart("request") @Valid SignupRequest request,
           @RequestPart(value = "images", required = false) List<MultipartFile> images) {
     usersService.signup(request, images);
-    return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 정상적으로 처리되었습니다.");
+    return ApiResponse.success("회원 가입 완료", null);
   }
 
   @PostMapping("/login")
@@ -42,26 +42,26 @@ public class UserController {
   }
 
   @GetMapping("/profile")
-  public ResponseEntity<UserResponse> getProfile(@AuthenticationUserId Long userId) {
+  public ApiResponse<UserResponse> getProfile(@AuthenticationUserId Long userId) {
     UserResponse response = usersService.getProfile(userId);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    return ApiResponse.success("프로필 조회 성공", response);
   }
 
   @PatchMapping("/profile")
-  public ResponseEntity<Void> updateProfile(
+  public ApiResponse<Void> updateProfile(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid ProfileUpdateRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images) {
     usersService.updateProfile(userId, request, images);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ApiResponse.success("프로필 수정 성공", null);
   }
 
   @DeleteMapping("/me")
-  public ResponseEntity<Void> deleteProfile(
+  public ApiResponse<Void> deleteProfile(
       @AuthenticationUserId Long userId,
       @RequestBody @Valid ProfileDeleteRequest request) {
     usersService.deleteUser(userId, request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ApiResponse.success("프로필 삭제 성공", null);
   }
 }
 

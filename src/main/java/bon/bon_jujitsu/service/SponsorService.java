@@ -100,7 +100,7 @@ public class SponsorService {
   }
 
 
-  public Status updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images) {
+  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
@@ -112,8 +112,6 @@ public class SponsorService {
     sponsor.updateSponsor(update);
 
     postImageService.updateImages(sponsor.getId(), "sponnsor", images);
-
-    return Status.builder().status(HttpStatus.OK.value()).message("스폰서 수정 완료").build();
   }
 
 
