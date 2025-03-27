@@ -22,7 +22,7 @@ public class AdminController {
 
   private final UserService userService;
 
-  @PostMapping("/assign-owner/{userId}")
+  @PostMapping("/assign-owner/{targetUserId}")
   public ResponseEntity<Status> assignOwner(
           @AuthenticationUserId Long adminUserId,
           @PathVariable Long targetUserId) {
@@ -50,8 +50,8 @@ public class AdminController {
     return ResponseEntity.ok(response);
   }
 
-  @PostMapping("/{userId}")
-  public ResponseEntity<Status> assignAdmin(@PathVariable Long targetUserId) {
+  @PostMapping("/{targetUserId}")
+  public ResponseEntity<Status> assignAdmin(@PathVariable("targetUserId") Long targetUserId) {
     Status response = userService.assignAdmin(targetUserId);
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
