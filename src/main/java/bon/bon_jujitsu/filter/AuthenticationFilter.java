@@ -100,7 +100,11 @@ public class AuthenticationFilter implements Filter {
     System.out.println("추출된 토큰: " + token); // 디버깅용
 
     if(token.equals("null") || token.equals("undefined")){
-      throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
+      // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
+      res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
+      res.setContentType("application/json"); // JSON 응답
+      res.getWriter().write("{\"error\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
+      return;
     }
 
     // 토큰 만료 체크 (순서 중요: Bearer 제거 후)
