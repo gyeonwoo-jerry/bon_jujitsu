@@ -56,32 +56,29 @@ public class NewsController {
   }
 
   @GetMapping("/news/{newsId}")
-  public ResponseEntity<NewsResponse> getNews(
+  public ApiResponse<NewsResponse> getNews(
       @PathVariable("newsId") Long newsId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(newsService.getNews(newsId));
+    return ApiResponse.success("뉴스 조회 성공", newsService.getNews(newsId));
   }
 
   @PatchMapping("/news/{newsId}")
-  public ResponseEntity<Status> updateNews(
+  public ApiResponse<Void> updateNews(
       @RequestPart("update") @Valid NewsUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("newsId") Long newsId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(newsService.updateNews(update, userId, newsId, images));
+    newsService.updateNews(update, userId, newsId, images);
+    return ApiResponse.success("뉴스 수정 성공", null);
   }
 
   @DeleteMapping("/news/{newsId}")
-  public ResponseEntity<Status> deleteNews(
+  public ApiResponse<Void> deleteNews(
       @AuthenticationUserId Long userId,
       @PathVariable("newsId") Long newsId
   ) {
     newsService.deleteNews(userId, newsId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("뉴스 삭제 성공", null);
   }
 }

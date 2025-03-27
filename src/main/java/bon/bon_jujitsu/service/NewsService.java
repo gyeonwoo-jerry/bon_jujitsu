@@ -100,7 +100,7 @@ public class NewsService {
     return newsResponse;
   }
 
-  public Status updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images) {
+  public void updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
@@ -112,8 +112,6 @@ public class NewsService {
     news.updateNews(update);
 
     postImageService.updateImages(news.getId(), "news", images);
-
-    return Status.builder().status(HttpStatus.OK.value()).message("뉴스 수정 완료").build();
   }
 
 

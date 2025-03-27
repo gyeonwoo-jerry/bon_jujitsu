@@ -67,7 +67,7 @@ public class BoardController {
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     boardService.updateBoard(update,userId,boardId,images);
-    return ApiResponse.success("게시판 조회 성공", null);
+    return ApiResponse.success("게시판 수정 성공", null);
   }
 
   @DeleteMapping("/board/{boardId}")

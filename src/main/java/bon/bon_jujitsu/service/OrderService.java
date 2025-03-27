@@ -160,7 +160,7 @@ public class OrderService {
     return PageResponse.fromPage(waitingOrders);
   }
 
-  public Status updateOrderByAdmin(OrderUpdate request, Long userId) {
+  public void updateOrderByAdmin(OrderUpdate request, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.ADMIN) {
@@ -228,14 +228,9 @@ public class OrderService {
     }
 
     orderRepository.save(order);
-
-    return Status.builder()
-        .status(HttpStatus.OK.value())
-        .message("주문 상태변경 완료")
-        .build();
   }
 
-  public Status cancelOrder(Long orderId, Long userId) {
+  public void cancelOrder(Long orderId, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
@@ -249,14 +244,9 @@ public class OrderService {
     } else {
       throw new IllegalArgumentException("주문 취소는 대기중인 주문만 가능합니다.");
     }
-
-    return Status.builder()
-        .status(HttpStatus.OK.value())
-        .message("주문 취소 완료")
-        .build();
   }
 
-  public Status returnOrder(Long orderId, Long userId) {
+  public void returnOrder(Long orderId, Long userId) {
     userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -274,10 +264,5 @@ public class OrderService {
     } else {
       throw new IllegalArgumentException("완료된 주문만 반품 신청이 가능합니다.");
     }
-
-    return Status.builder()
-        .status(HttpStatus.OK.value())
-        .message("반품 신청 완료")
-        .build();
   }
 }

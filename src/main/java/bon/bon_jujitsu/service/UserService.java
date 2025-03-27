@@ -178,7 +178,7 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public ListResponse<UserResponse> getMyUsers(Long userId, int page, int size) {
+  public PageResponse<UserResponse> getMyUsers(Long userId, int page, int size) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
 
     if(page < 1 || size < 1) {
@@ -194,15 +194,7 @@ public class UserService {
     Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRoleNot(
             user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
 
-    List<UserResponse> userResponses = userPage.getContent().stream()
-        .map(UserResponse::fromEntity)
-        .collect(Collectors.toList());
-
-    return ListResponse.success(
-        userResponses,
-        HttpStatus.OK,
-        "회원 조회 성공"
-    );
+    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
 
   @Transactional(readOnly = true)
@@ -265,7 +257,7 @@ public class UserService {
 //  }
 
   @Transactional(readOnly = true)
-  public ListResponse<UserResponse> getPendingUsers(Long userId, int page, int size) {
+  public PageResponse<UserResponse> getPendingUsers(Long userId, int page, int size) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
 
     if(page < 1 || size < 1) {
@@ -281,18 +273,10 @@ public class UserService {
     Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRole(
             user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
 
-    List<UserResponse> userResponses = userPage.getContent().stream()
-            .map(UserResponse::fromEntity)
-            .collect(Collectors.toList());
-
-    return ListResponse.success(
-            userResponses,
-            HttpStatus.OK,
-            "회원 조회 성공"
-    );
+    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
 
-  public Status assignUser(Long ownerUserId, Long targetUserId) {
+  public void assignUser(Long ownerUserId, Long targetUserId) {
     User user = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
     User owner = userRepository.findById(ownerUserId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
@@ -309,10 +293,5 @@ public class UserService {
     }
 
     user.setUserRole(UserRole.USER);
-
-    return Status.builder()
-            .status(HttpStatus.CREATED.value())
-            .message("회원으로 등록되었습니다.")
-            .build();
   }
 }

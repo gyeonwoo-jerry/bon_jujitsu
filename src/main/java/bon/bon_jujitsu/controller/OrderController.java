@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.OrderRequest;
@@ -28,65 +29,56 @@ public class OrderController {
   private final OrderService orderService;
 
   @PostMapping("/orders")
-  public ResponseEntity<Status> createOrder(
+  public ApiResponse<Void> createOrder(
       @AuthenticationUserId Long userId,
       @Valid @RequestBody OrderRequest request
   ) {
     orderService.createOrder(userId, request);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "주문성공"));
+    return ApiResponse.success("주문 완료", null);
   }
 
   @GetMapping("/orders")
-  public ResponseEntity<PageResponse<OrderResponse>> getMyOrders (
+  public ApiResponse<PageResponse<OrderResponse>> getMyOrders (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
       @AuthenticationUserId Long id
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(orderService.getMyOrders(page, size, id));
+    return ApiResponse.success("나의 주문 조회 완료", orderService.getMyOrders(page, size, id));
   }
 
   @GetMapping("/orders/admin")
-  public ResponseEntity<PageResponse<OrderResponse>> getWaitingOrders (
+  public ApiResponse<PageResponse<OrderResponse>> getWaitingOrders (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
       @AuthenticationUserId Long id
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(orderService.getWaitingOrders(page, size, id));
+    return ApiResponse.success("웨이팅 주문 조회 완료", orderService.getWaitingOrders(page, size, id));
   }
 
   @PatchMapping("/orders/admin")
-  public ResponseEntity<Status> updateOrderByAdmin (
+  public ApiResponse<Void> updateOrderByAdmin (
       @Valid @RequestBody OrderUpdate request,
       @AuthenticationUserId Long userId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(orderService.updateOrderByAdmin(request, userId));
+    orderService.updateOrderByAdmin(request, userId);
+    return ApiResponse.success("주문 상태 변경 완료", null);
   }
 
   @PatchMapping("/orders/cancel/{orderId}")
-  public ResponseEntity<Status> cancelOrder (
+  public ApiResponse<Void> cancelOrder (
       @PathVariable("orderId") Long orderId,
       @AuthenticationUserId Long userId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(orderService.cancelOrder(orderId, userId));
+    orderService.cancelOrder(orderId, userId);
+    return ApiResponse.success("주문 취소 완료", null);
   }
 
   @PatchMapping("/orders/return/{orderId}")
-  public ResponseEntity<Status> returnOrder (
+  public ApiResponse<Void> returnOrder (
       @PathVariable("orderId") Long orderId,
       @AuthenticationUserId Long userId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(orderService.returnOrder(orderId, userId));
+    orderService.returnOrder(orderId, userId);
+    return ApiResponse.success("주문 환불 신청 완료", null);
   }
 }

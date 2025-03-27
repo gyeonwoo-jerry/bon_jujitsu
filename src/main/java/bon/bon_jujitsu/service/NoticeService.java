@@ -117,7 +117,7 @@ public class NoticeService {
   }
 
 
-  public Status updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images) {
+  public void updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -133,8 +133,6 @@ public class NoticeService {
     notice.updateNotice(update);
 
     postImageService.updateImages(notice.getId(), "notice", images);
-
-    return Status.builder().status(HttpStatus.OK.value()).message("공지사항 수정 완료").build();
   }
 
   public void deleteNotice(Long userId, Long noticeId) {

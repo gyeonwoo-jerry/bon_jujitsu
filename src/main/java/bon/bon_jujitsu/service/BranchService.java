@@ -4,7 +4,6 @@ import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BranchRequest;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
@@ -14,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,7 +79,7 @@ public class BranchService {
   }
 
 
-  public Status updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images) {
+  public void updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()
@@ -90,8 +88,6 @@ public class BranchService {
     branch.updateBranch(update);
 
     branchImageService.updateImages(branch, images);
-
-    return Status.builder().status(HttpStatus.OK.value()).message("지부 정보 수정완료").build();
   }
 
 

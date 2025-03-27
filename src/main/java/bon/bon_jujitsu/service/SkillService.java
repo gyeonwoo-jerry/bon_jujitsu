@@ -37,13 +37,12 @@ public class SkillService {
   private final PostImageService postImageService;
   private final PostImageRepository postImageRepository;
 
-  public void createNotice(Long userId, SkillRequest request, List<MultipartFile> images) {
+  public void createSkill(Long userId, SkillRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
-    // 공지사항은 OWNER만 작성 가능
     if (user.getUserRole() != UserRole.OWNER) {
       throw new IllegalArgumentException("스킬게시물은 관장만 작성할 수 있습니다.");
     }
@@ -91,7 +90,7 @@ public class SkillService {
   }
 
   @Transactional(readOnly = true)
-  public SkillResponse getskill(Long skillId) {
+  public SkillResponse getSkill(Long skillId) {
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 
     List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SKILL", skill.getId())

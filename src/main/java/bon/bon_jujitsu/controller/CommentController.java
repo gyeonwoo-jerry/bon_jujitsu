@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.domain.CommentType;
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.CommentRequest;
@@ -32,42 +33,39 @@ public class CommentController {
   private final CommentService commentService;
 
   @PostMapping("/comment")
-  public ResponseEntity<Status> createComment(
+  public ApiResponse<Void> createComment(
       @AuthenticationUserId Long userId,
       @Valid @RequestBody CommentRequest request
   ) {
     commentService.createComment(userId, request);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED,"댓글 등록 완료"));
+    return ApiResponse.success("댓글 생성 완료", null);
   }
 
   @GetMapping("/comment")
-  public ResponseEntity<List<CommentResponse>> getComments(
+  public ApiResponse<List<CommentResponse>> getComments(
       @RequestParam Long targetId,
       @RequestParam CommentType commentType
   ) {
     List<CommentResponse> comments = commentService.getComments(targetId, commentType);
-    return ResponseEntity.ok(comments);
+    return ApiResponse.success("댓글 목록 조회 성공", comments);
   }
 
   @PatchMapping("/comment/{commentId}")
-  public ResponseEntity<Status> updateComment(
+  public ApiResponse<Void> updateComment(
       @AuthenticationUserId Long userId,
       @PathVariable("commentId") Long commentId,
       @Valid @RequestBody CommentUpdate request
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(commentService.updateComment(userId, commentId, request));
+    commentService.updateComment(userId, commentId, request);
+    return ApiResponse.success("댓글 수정 성공", null);
   }
 
   @DeleteMapping("/comment/{commentId}")
-  private ResponseEntity<Void> deleteComment(
+  private ApiResponse<Void> deleteComment(
       @AuthenticationUserId Long userId,
       @PathVariable("commentId") Long commentId
   ) {
     commentService.deleteComment(userId, commentId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("댓글 삭제 성공", null);
   }
 }

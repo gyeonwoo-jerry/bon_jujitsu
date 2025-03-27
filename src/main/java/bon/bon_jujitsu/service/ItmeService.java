@@ -102,7 +102,7 @@ public class ItmeService {
     return itemResponse;
   }
 
-  public Status updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images) {
+  public void updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
@@ -114,11 +114,6 @@ public class ItmeService {
     item.updateItem(update);
 
     itemImageService.updateImages(item, images);
-
-    return Status.builder()
-        .status(HttpStatus.OK.value())
-        .message("상품 정보 수정완료")
-        .build();
   }
 
   public void deleteItem(Long userId, Long itemId) {

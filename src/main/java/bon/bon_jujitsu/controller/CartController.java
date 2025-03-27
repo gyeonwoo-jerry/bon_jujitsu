@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.CartRequest;
 import bon.bon_jujitsu.dto.response.CartResponse;
@@ -27,54 +28,45 @@ public class CartController {
   private final CartService cartService;
 
   @PostMapping
-  public ResponseEntity<Status> createCart(
+  public ApiResponse<Void> createCart(
       @AuthenticationUserId Long userId,
       @Valid @RequestBody CartRequest request
   ) {
     cartService.createCart(userId, request);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "카트생성 완료"));
+    return ApiResponse.success("카트 생성 완료", null);
   }
 
   @GetMapping
-  public ResponseEntity<CartResponse> getCart(
+  public ApiResponse<CartResponse> getCart(
       @AuthenticationUserId Long userId
   ) {
-    CartResponse cartResponse = cartService.getCart(userId);
-    return ResponseEntity.ok(cartResponse);
+    return ApiResponse.success("카트 조회 성공", cartService.getCart(userId));
   }
 
   @PatchMapping("/items/{cartItemId}")
-  public ResponseEntity<Status> updateCartItemQuantity(
+  public ApiResponse<Void> updateCartItemQuantity(
       @AuthenticationUserId Long userId,
       @PathVariable Long cartItemId,
       @Valid @RequestBody UpdateQuantityRequest request
   ) {
     cartService.updateCartItemQuantity(userId, cartItemId, request.quantity());
-    return ResponseEntity.ok(
-        Status.createStatusDto(HttpStatus.OK, "상품 수량이 변경되었습니다.")
-    );
+    return ApiResponse.success("카트 수정 성공", null);
   }
 
   @DeleteMapping("/items/{itemId}")
-  public ResponseEntity<Status> removeCartItem(
+  public ApiResponse<Void> removeCartItem(
       @AuthenticationUserId Long userId,
       @PathVariable Long itemId
   ) {
     cartService.removeCartItem(userId, itemId);
-    return ResponseEntity.ok(
-        Status.createStatusDto(HttpStatus.OK, "장바구니에서 상품이 삭제되었습니다.")
-    );
+    return ApiResponse.success("카트 삭제 성공", null);
   }
 
   @DeleteMapping
-  public ResponseEntity<Status> clearCart(
+  public ApiResponse<Void> clearCart(
       @AuthenticationUserId Long userId
   ) {
     cartService.clearCart(userId);
-    return ResponseEntity.ok(
-        Status.createStatusDto(HttpStatus.OK, "장바구니가 비워졌습니다.")
-    );
+    return ApiResponse.success("카트 비우기 성공", null);
   }
 }

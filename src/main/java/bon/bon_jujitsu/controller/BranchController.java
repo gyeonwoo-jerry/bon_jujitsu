@@ -1,8 +1,10 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BranchRequest;
+import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -24,52 +26,46 @@ public class BranchController {
   private final BranchService branchService;
 
   @PostMapping("/branch")
-  public ResponseEntity<Status> createBranch(
+  public ApiResponse<Void> createBranch(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid BranchRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     branchService.createBranch(userId, request, images);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "지부 생성 완료"));
+    return ApiResponse.success("지부 생성 완료", null);
   }
 
   @GetMapping("/branch/{branchId}")
-  public ResponseEntity<BranchResponse> getBranch(
+  public ApiResponse<BranchResponse> getBranch(
       @PathVariable("branchId") Long branchId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(branchService.getBranch(branchId));
+    return ApiResponse.success("지부 조회 성공", branchService.getBranch(branchId));
   }
 
   @GetMapping("/branch/all")
-  public ResponseEntity<PageResponse<BranchResponse>> getAllBranch(
+  public ApiResponse<PageResponse<BranchResponse>> getAllBranch(
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(branchService.getAllBranch(page, size));
+    PageResponse<BranchResponse> branchList = branchService.getAllBranch(page, size);
+    return ApiResponse.success("지부 목록 조회 성공", branchList);
   }
 
   @PatchMapping("/branch")
-  public ResponseEntity<Status> updateBranch(
+  public ApiResponse<Void> updateBranch(
       @AuthenticationUserId Long userId,
       @RequestPart("update") @Valid BranchUpdate update,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(branchService.updateBranch(userId, update, images));
+    branchService.updateBranch(userId, update, images);
+    return ApiResponse.success("지부 수정 성공", null);
   }
 
   @DeleteMapping("/branch")
-  public ResponseEntity<Status> deleteBranch(
+  public ApiResponse<Void> deleteBranch(
       @AuthenticationUserId Long userId
   ) {
     branchService.deleteBranch(userId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("지부 삭제 성공", null);
   }
 }

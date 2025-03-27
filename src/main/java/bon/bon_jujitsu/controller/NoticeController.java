@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.NoticeRequest;
@@ -31,55 +32,48 @@ public class NoticeController {
   private final NoticeService noticeService;
 
   @PostMapping("/notice/{branchId}")
-  public ResponseEntity<Status> createNotice(
+  public ApiResponse<Void> createNotice(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") NoticeRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images,
       @PathVariable("branchId") Long branchId
   ) {
     noticeService.createNotice(userId, request, images, branchId);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "공지사항 생성 완료"));
+    return ApiResponse.success("공지사항 생성 완료", null);
   }
 
   @GetMapping("/notice")
-  public ResponseEntity<PageResponse<NoticeResponse>> getNotices (
+  public ApiResponse<PageResponse<NoticeResponse>> getNotices (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(noticeService.getNotices(page, size));
+    return ApiResponse.success("공지사항 리스트 조회 완료", noticeService.getNotices(page, size));
   }
 
   @GetMapping("/notice/{noticeId}")
-  public ResponseEntity<NoticeResponse> getNotice(
+  public ApiResponse<NoticeResponse> getNotice(
       @PathVariable("noticeId") Long noticeId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(noticeService.getNotice(noticeId));
+    return ApiResponse.success("공지사항 조회 완료", noticeService.getNotice(noticeId));
   }
 
   @PatchMapping("/notice/{noticeId}")
-  public ResponseEntity<Status> updateNotice(
+  public ApiResponse<Void> updateNotice(
       @Valid @RequestPart("update") NoticeUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("noticeId") Long noticeId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(noticeService.updateNotice(update, userId, noticeId, images));
+    noticeService.updateNotice(update, userId, noticeId, images);
+    return ApiResponse.success("공지사항 수정 완료", null);
   }
 
   @DeleteMapping("/notice/{noticeId}")
-  private ResponseEntity<Status> deleteNotice(
+  private ApiResponse<Void> deleteNotice(
       @AuthenticationUserId Long userId,
       @PathVariable("noticeId") Long noticeId
   ) {
     noticeService.deleteNotice(userId, noticeId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("공지사항 삭제 완료", null);
   }
 }

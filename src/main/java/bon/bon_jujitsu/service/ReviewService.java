@@ -164,7 +164,7 @@ public class ReviewService {
     return PageResponse.fromPage(reviewResponses);
   }
 
-  public Status updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
+  public void updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
     Review review = reviewRepository.findById(reviewId).orElseThrow(()->new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
     // 사용자 검증
@@ -180,11 +180,6 @@ public class ReviewService {
     review.updateReview(request.content(), request.star());
 
     reviewImageService.updateImages(review, images);
-
-    return Status.builder()
-        .status(HttpStatus.OK.value())
-        .message("리뷰 수정 완료")
-        .build();
   }
 
 

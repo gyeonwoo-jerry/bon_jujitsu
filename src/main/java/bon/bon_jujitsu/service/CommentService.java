@@ -109,7 +109,7 @@ public class CommentService {
     return roots;
   }
 
-  public Status updateComment(Long userId, Long commentId, CommentUpdate request) {
+  public void updateComment(Long userId, Long commentId, CommentUpdate request) {
     Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
     // 사용자 검증
@@ -123,11 +123,6 @@ public class CommentService {
     }
 
     comment.updateComment(request.content());
-
-    return Status.builder()
-        .status(HttpStatus.OK.value())
-        .message("댓글 수정 완료")
-        .build();
   }
 
   public void deleteComment(Long userId, Long commentId) {

@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.SkillRequest;
@@ -32,34 +33,28 @@ public class SkillController {
   private final SkillService skillService;
 
   @PostMapping("/skill")
-  public ResponseEntity<Status> createSkill(
+  public ApiResponse<Void> createSkill(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SkillRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    skillService.createNotice(userId, request, images);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "기술게시판 생성 완료"));
+    skillService.createSkill(userId, request, images);
+    return ApiResponse.success("기술 게시물 생성 완료", null);
   }
 
   @GetMapping("/skill")
-  public ResponseEntity<PageResponse<SkillResponse>> getSkills (
+  public ApiResponse<PageResponse<SkillResponse>> getSkills (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(skillService.getSkills(page, size));
+    return ApiResponse.success("기술 게시물 목록 조회 성공", skillService.getSkills(page, size));
   }
 
   @GetMapping("/skill/{skillId}")
-  public ResponseEntity<SkillResponse> getskill(
+  public ApiResponse<SkillResponse> getSkill(
       @PathVariable("skillId") Long skillId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(skillService.getskill(skillId));
+    return ApiResponse.success("기술 게시물 조회 성공", skillService.getSkill(skillId));
   }
 
   @PatchMapping("/skill/{skillId}")
