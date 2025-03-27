@@ -94,6 +94,15 @@ const StoreItemList = () => {
         setLoading(false);
       } catch (error) {
         console.error("상품 데이터 불러오기 실패:", error);
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          setError(error.response.data.message);
+        } else {
+          setError("데이터를 불러오는 중 오류가 발생했습니다");
+        }
         setError(error.message || "데이터를 불러오는 중 오류가 발생했습니다");
         setStoreData({
           data: [],

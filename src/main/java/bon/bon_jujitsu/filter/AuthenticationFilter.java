@@ -88,7 +88,7 @@ public class AuthenticationFilter implements Filter {
 
     // 인증 헤더 확인
     if (Objects.isNull(authorizationHeader)) {
-      throw new IllegalArgumentException("접근 토큰이 없습니다.");
+      throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
     }
 
     // Bearer 접두사 확인 및 제거
@@ -99,9 +99,13 @@ public class AuthenticationFilter implements Filter {
     String token = authorizationHeader.substring(7); // "Bearer " 제거
     System.out.println("추출된 토큰: " + token); // 디버깅용
 
+    if(token.equals("null") || token.equals("undefined")){
+      throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
+    }
+
     // 토큰 만료 체크 (순서 중요: Bearer 제거 후)
     if (jwtUtil.isTokenExpired(token)) {
-      throw new IllegalArgumentException("토큰이 만료되었습니다.");
+      throw new IllegalArgumentException("로그인 시간이 만료되었습니다.");
     }
     try {
       // 기존 인증 로직
