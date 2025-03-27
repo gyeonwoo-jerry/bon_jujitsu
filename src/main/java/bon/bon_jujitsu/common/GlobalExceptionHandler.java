@@ -9,13 +9,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.HttpStatus;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(IllegalArgumentException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ApiResponse<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+      log.error("GlobalExceptionHandler  IllegalArgumentException: {}", ex.getMessage());
       return ApiResponse.error(ex.getMessage(), null);
   }
 
