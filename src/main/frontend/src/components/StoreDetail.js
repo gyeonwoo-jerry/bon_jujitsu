@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import API from '../utils/api';
 import '../styles/StoreDetail.css';
+import { useNavigate } from 'react-router-dom';
 
 const StoreDetail = ({ itemId }) => {
   const [item, setItem] = useState(null);
@@ -9,6 +10,8 @@ const StoreDetail = ({ itemId }) => {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
+  
+  const navigate = useNavigate();
   
   console.log("StoreDetail 컴포넌트 렌더링 - 아이템 ID:", itemId);
   
@@ -145,7 +148,24 @@ const StoreDetail = ({ itemId }) => {
 
   // 바로 구매하기
   const buyNow = () => {
-    alert('구매 페이지로 이동합니다.');
+    if (!item) return;
+    
+    // 주문할 상품 정보 준비
+    const orderItem = {
+      id: item.id,
+      name: item.name,
+      price: item.sale > 0 ? item.sale : item.price,
+      image: item.images && item.images.length > 0 ? item.images[0] : null,
+      quantity: quantity,
+      totalPrice: calculateTotalPrice()
+    };
+    
+    // localStorage에 임시 주문 정보 저장
+    localStorage.setItem('tempOrderItems', JSON.stringify([orderItem]));
+    localStorage.setItem('tempOrderTotalPrice', calculateTotalPrice());
+    
+    // 주문 페이지로 이동
+    navigate('/order/new');
   };
 
   // 이미지 변경

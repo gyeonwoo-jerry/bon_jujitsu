@@ -181,11 +181,15 @@ const Cart = () => {
     // 선택된 상품만 가져오기
     const itemsToCheckout = cartItems.filter(item => selectedItems.includes(item.id));
     
-    // 체크아웃 페이지로 이동하거나 주문 API 호출
-    alert(`${itemsToCheckout.length}개 상품 주문 처리를 시작합니다.`);
+    // 최종 가격 계산
+    const finalPrice = totalPrice > 50000 ? totalPrice : totalPrice + 3000;
     
-    // 예시: 체크아웃 페이지로 이동
-    navigate('/checkout', { state: { items: itemsToCheckout, totalPrice } });
+    // localStorage에 임시 주문 정보 저장
+    localStorage.setItem('tempOrderItems', JSON.stringify(itemsToCheckout));
+    localStorage.setItem('tempOrderTotalPrice', finalPrice);
+    
+    // 주문 페이지로 이동
+    navigate('/order/new');
   };
 
   const selectedCount = selectedItems.length;
