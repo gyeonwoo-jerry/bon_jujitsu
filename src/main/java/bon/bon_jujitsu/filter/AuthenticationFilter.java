@@ -111,11 +111,12 @@ public class AuthenticationFilter implements Filter {
       // 기존 인증 로직
       chain.doFilter(request, response);
     } catch (IllegalArgumentException e) {
-        res.setStatus(HttpStatus.UNAUTHORIZED.value());
-        res.setContentType("application/json");
-        res.getWriter().write(
-            "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
-        );
+      throw e;
+        // res.setStatus(HttpStatus.UNAUTHORIZED.value());
+        // res.setContentType("application/json");
+        // res.getWriter().write(
+        //     "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
+        // );
     }
   }
 }
