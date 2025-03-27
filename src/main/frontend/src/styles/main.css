@@ -101,3 +101,13 @@ body {
 .medium {
   font-size: 1.2em;
 }
+
+
+.inner .section_title {
+  font-size: 44px;
+  font-weight: bold;
+  color: var(--black-color);
+  text-align: center;
+  margin-bottom: 0;
+  margin-top: 64px;
+}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import SubHeader from '../components/SubHeader';
-import StoreList from '../components/StoreList';
+import StoreDetail from '../components/StoreDetail';
 
-function Store() {
+function StoreDetailPage() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
@@ -18,16 +18,16 @@ function Store() {
   }, []);
 
   return (
-    <div className="store">
+    <div className="storeDetail">
       <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
       <div className='store_container'>
         <div className="inner">
           <div className="section_title">본주짓수 <font className='thin small'>in</font> STORE</div>
-          <StoreList />
+          <StoreDetail />
         </div>
       </div>
     </div>
   );
 }
 
-export default Store; 
+export default StoreDetailPage; 

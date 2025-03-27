@@ -11,6 +11,7 @@ import Branches from './pages/branches';
 import BranchesDetail from './pages/branchesDetail';
 import Comunity from './pages/comunity';
 import Store from './pages/store';
+import StoreDetail from './pages/storeDetail';
 import Skill from './pages/skill';
 import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
@@ -36,6 +37,7 @@ function App() {
           <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
+          <Route path="/storeDetail/:id" element={<StoreDetail />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
