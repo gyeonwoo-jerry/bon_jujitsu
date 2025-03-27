@@ -58,24 +58,23 @@ public class SkillController {
   }
 
   @PatchMapping("/skill/{skillId}")
-  public ResponseEntity<Status> updateSkill(
+  public ApiResponse<Status> updateSkill(
       @Valid @RequestPart("update") SkillUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(skillService.updateSkill(update, userId, skillId, images));
+    skillService.updateSkill(update, userId, skillId, images);
+    return ApiResponse.success("기술 게시물 수정 성공", null);
   }
 
   @DeleteMapping("/skill/{skillId}")
-  private ResponseEntity<Status> deleteNotice(
+  private ApiResponse<Status> deleteNotice(
       @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId
   ) {
     skillService.deleteSkill(userId, skillId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("기술 게시물 삭제 성공", null);
   }
 }
 

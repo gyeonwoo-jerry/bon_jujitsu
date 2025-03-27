@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.NoticeRequest;
@@ -34,46 +35,39 @@ public class SponsorController {
   private final SponsorService sponsorService;
 
   @PostMapping("/sponsor")
-  public ResponseEntity<Status> createSponsor(
+  public ApiResponse<Status> createSponsor(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SponsorRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     sponsorService.createSponsor(userId, request, images);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "스폰서 생성 완료"));
+    return ApiResponse.success("스폰서 생성 완료", null);
   }
 
   @GetMapping("/sponsor")
-  public ResponseEntity<PageResponse<SponsorResponse>> getSponsors (
+  public ApiResponse<PageResponse<SponsorResponse>> getSponsors (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(sponsorService.getNotices(page, size));
+    return ApiResponse.success("스폰서 목록 조회 성공", sponsorService.getNotices(page, size));
   }
 
   @GetMapping("/sponsor/{sponsorId}")
-  public ResponseEntity<SponsorResponse> getSponsor(
+  public ApiResponse<SponsorResponse> getSponsor(
       @PathVariable("sponsorId") Long sponsorId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(sponsorService.getSponsor(sponsorId));
+    return ApiResponse.success("스폰서 조회 성공", sponsorService.getSponsor(sponsorId));
   }
 
   @PatchMapping("/sponsor/{sponsorId}")
-  public ResponseEntity<Status> updateSponsor(
+  public ApiResponse<Void> updateSponsor(
       @Valid @RequestPart("update") SponsorUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("sponsorId") Long sponsorId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(sponsorService.updateSponsor(update, userId, sponsorId, images));
+    sponsorService.updateSponsor(update, userId, sponsorId, images);
+    return ApiResponse.success("스폰서 수정 성공", null);
   }
 
   @DeleteMapping("/sponsor/{sponsorId}")
