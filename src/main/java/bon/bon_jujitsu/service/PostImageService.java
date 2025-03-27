@@ -34,7 +34,7 @@ public class PostImageService {
         }
 
         try {
-            String uploads = filepath + contentType ;
+            String uploads = filepath + contentType + "/" ;
 
             for (MultipartFile image : images) {
                 String originalFileName = image.getOriginalFilename(); // 원본 파일명
