@@ -45,7 +45,7 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
       if (!isMounted.current) return;
 
       if (response.status === 200) {
-        const postData = response.data;
+        const postData = response.data.dataBody;
         setFormData({
           title: postData.title || "",
           content: postData.content || "",
@@ -207,9 +207,7 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
           response = await API.post(apiEndpoint, postData);
         }
       }
-      console.log("게시글 등록 성공1111:", response.data);
       if (response.status === 200 || response.status === 201) {
-        console.log("게시글 등록 성공2222:", response.data);
         if (response.data.success) {
           // 성공 시 게시글 목록 또는 상세 페이지로 이동
           if (apiEndpoint === "/news") {
@@ -240,12 +238,15 @@ function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
       }
     } catch (error) {
       if (isMounted.current) {
-        console.error("게시글 저장 실패:", error);
-        console.error(
-          "에러 세부정보:",
-          error.response ? error.response.data : "응답 데이터 없음"
-        );
-        setError(`게시글을 저장하는 중 오류가 발생했습니다: ${error.message}`);
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          setError(error.response.data.message);
+        } else {
+          setError("게시글을 저장하는 중 오류가 발생했습니다.");
+        }
       }
     } finally {
       if (isMounted.current) {

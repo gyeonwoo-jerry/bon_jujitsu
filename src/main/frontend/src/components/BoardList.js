@@ -32,8 +32,8 @@ function BoardList({
           if (response.status === 200) {
             console.log("Posts fetched:", response.data);
             if (response.data.success) {
-              setPosts(response.data.data.list || []);
-              setTotalPages(response.data.data.totalPage || 1);
+              setPosts(response.data.content.list || []);
+              setTotalPages(response.data.content.totalPage || 1);
             } else {
               alert(response.data.message);
             }

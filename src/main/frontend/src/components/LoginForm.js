@@ -23,14 +23,14 @@ function LoginForm({ onLoginSuccess }) {
           console.log("로그인 성공:", response.data);
 
           // 토큰 저장
-          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("token", response.data.content.token);
 
           // 사용자 정보 저장 (response.data에서 데이터 추출)
           const userInfo = {
-            id: response.data.id || response.data.userId || "",
-            name: response.data.name || username, // 서버에서 이름이 없으면 아이디를 사용
-            email: response.data.email || "",
-            role: response.data.userRole || "", // userRole로 저장
+            id: response.data.content.id || response.data.content.userId || "",
+            name: response.data.content.name || username, // 서버에서 이름이 없으면 아이디를 사용
+            email: response.data.content.email || "",
+            role: response.data.content.userRole || "", // userRole로 저장
           };
 
           console.log("저장할 사용자 정보:", userInfo);
