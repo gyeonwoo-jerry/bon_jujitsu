@@ -12,7 +12,7 @@ function BranchesDetail() {
       .then((response) => {
         if (response.status === 200) {
           if (response.data.success) {
-            setBranch(response.data.dataBody);
+            setBranch(response.data.content);
           } else {
             throw new Error("브랜치 상세 정보를 불러오는데 실패했습니다.");
           }
@@ -48,13 +48,8 @@ function BranchesDetail() {
             <p>Email: {branch.owner.email}</p>
             <p>Phone: {branch.owner.phoneNum}</p>
             <p>Address: {branch.owner.address}</p>
-            <p>
-              Birthday: {new Date(branch.owner.birthday).toLocaleDateString()}
-            </p>
-            <p>Gender: {branch.owner.gender}</p>
             <p>Level: {branch.owner.level}</p>
             <p>Stripe: {branch.owner.stripe}</p>
-            <p>User Role: {branch.owner.userRole}</p>
           </div>
         )}
       </div>

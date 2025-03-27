@@ -18,7 +18,7 @@ function BranchList() {
       .then((response) => {
         if (response.status === 200) {
           if (response.data.success) {
-            const branchData = response.data.content || [];
+            const branchData = response.data.content.list || [];
             console.log("Data fetched:", branchData);
             setBranches(branchData);
             setFilteredBranches(branchData); // 초기에 모든 지부 데이터로 필터링된 목록 설정
