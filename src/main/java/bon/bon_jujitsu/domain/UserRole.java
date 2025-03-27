@@ -1,10 +1,10 @@
 package bon.bon_jujitsu.domain;
 
 public enum UserRole {
-  PENDING(Authority.PENDING),
   USER(Authority.USER), //일반유저 권한
   OWNER(Authority.OWNER), //관장님 권한
-  ADMIN(Authority.ADMIN); //관리자 권한;
+  ADMIN(Authority.ADMIN), //관리자 권한;
+  PENDING(Authority.PENDING);
 
   private final String authority;
 

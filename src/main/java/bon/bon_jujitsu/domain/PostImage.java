@@ -13,7 +13,6 @@ import org.hibernate.annotations.Where;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Where(clause = "is_deleted = false")
 @Table(name = "post_image")
 public class PostImage extends Timestamped {
     @Id

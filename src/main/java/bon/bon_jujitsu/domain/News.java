@@ -42,7 +42,7 @@ public class News extends Timestamped {
   private String content;
 
   @Builder.Default
-  @Column(nullable = false)
+  @Column(name = "is_deleted", nullable = false)
   private boolean isDeleted = false;
 
   @ManyToOne(fetch = FetchType.LAZY)

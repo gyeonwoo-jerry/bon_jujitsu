@@ -76,7 +76,7 @@ public class User extends Timestamped {
   @Enumerated(EnumType.STRING)
   private Stripe stripe;
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 20)
   @Enumerated(EnumType.STRING)
   private UserRole userRole;
 

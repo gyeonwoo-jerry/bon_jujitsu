@@ -2,6 +2,8 @@ package bon.bon_jujitsu.repository;
 
 import bon.bon_jujitsu.domain.PostImage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
@@ -9,5 +11,6 @@ import java.util.List;
 public interface PostImageRepository extends JpaRepository<PostImage, Long> {
     List<PostImage> findByPostIdAndPostType(Long postId, String postType);
 
-    List<PostImage> findByPostTypeAndPostId(String board, Long id);
+    @Query("SELECT pi FROM PostImage pi WHERE pi.postType = :postType AND pi.postId = :postId")
+    List<PostImage> findByPostTypeAndPostId(@Param("postType") String postType, @Param("postId") Long postId);
 }
