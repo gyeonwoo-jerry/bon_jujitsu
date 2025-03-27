@@ -5,6 +5,7 @@ import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.ListResponse;
+import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.LoginRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
@@ -139,7 +140,7 @@ public class UserService {
     }
 
   @Transactional(readOnly = true)
-  public ListResponse<UserResponse> getUsers(int page, int size, Long userId) {
+  public PageResponse<UserResponse> getUsers(int page, int size, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
@@ -154,19 +155,11 @@ public class UserService {
 
     Page<User> userPage = userRepository.findAllByIsDeletedFalse(pageRequest);
 
-    List<UserResponse> userResponses = userPage.getContent().stream()
-        .map(UserResponse::fromEntity)
-        .collect(Collectors.toList());
-
-    return ListResponse.success(
-        userResponses,
-        HttpStatus.OK,
-        "회원 조회 성공"
-    );
+    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
 
   @Transactional(readOnly = true)
-  public ListResponse<UserResponse> getDeletedUsers(int page, int size, Long userId) {
+  public PageResponse<UserResponse> getDeletedUsers(int page, int size, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
@@ -181,15 +174,7 @@ public class UserService {
 
     Page<User> userPage = userRepository.findAllByIsDeletedTrue(pageRequest);
 
-    List<UserResponse> userResponses = userPage.getContent().stream()
-        .map(UserResponse::fromEntity)
-        .collect(Collectors.toList());
-
-    return ListResponse.success(
-        userResponses,
-        HttpStatus.OK,
-        "회원 조회 성공"
-    );
+    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
 
   @Transactional(readOnly = true)

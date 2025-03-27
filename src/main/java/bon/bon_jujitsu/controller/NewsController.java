@@ -37,7 +37,7 @@ public class NewsController {
   private final NewsService newsService;
 
   @PostMapping("/news")
-  public ApiResponse<Status> createNews(
+  public ApiResponse<Void> createNews(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid NewsRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
@@ -52,7 +52,6 @@ public class NewsController {
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
     PageResponse<NewsResponse> newsList = newsService.getAllNews(page, size);
-    log.info("뉴스 목록 조회 성공: {}", newsList);
     return ApiResponse.success("뉴스 목록 조회 성공", newsList);
   }
 

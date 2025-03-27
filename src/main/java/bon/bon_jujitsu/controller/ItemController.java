@@ -1,9 +1,12 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.ItemRequest;
 import bon.bon_jujitsu.dto.response.ItemResponse;
+import bon.bon_jujitsu.dto.response.NewsResponse;
+import bon.bon_jujitsu.dto.update.ItemUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.ItmeService;
 import jakarta.validation.Valid;
@@ -31,56 +34,50 @@ public class ItemController {
   private final ItmeService itmeService;
 
   @PostMapping("/items")
-  public ResponseEntity<Status> createItem(
+  public ApiResponse<Void> createItem(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid ItemRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     itmeService.createItem(userId, request, images);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "상품등록 완료"));
+    return ApiResponse.success("상품 등록 완료", null);
   }
 
   @GetMapping("/items")
-  public ResponseEntity<PageResponse<ItemResponse>> getItems (
+  public ApiResponse<PageResponse<ItemResponse>> getItems (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
       @AuthenticationUserId Long userId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(itmeService.getItems(page, size, userId));
+    PageResponse<ItemResponse> itemList = itmeService.getItems(page, size, userId);
+    return ApiResponse.success("상품 목록 조회 성공", itemList);
   }
 
   @GetMapping("/items/{itemId}")
-  public ResponseEntity<ItemResponse> getItem (
+  public ApiResponse<ItemResponse> getItem (
       @PathVariable("itemId") Long itemId,
       @AuthenticationUserId Long userId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(itmeService.getItem(itemId, userId));
+    return ApiResponse.success("상품 조회 성공", itmeService.getItem(itemId, userId));
   }
 
   @PatchMapping("/items/{itemId}")
-  public ResponseEntity<Status> updateItem(
+  public ApiResponse<Void> updateItem(
       @AuthenticationUserId Long userId,
-      @RequestPart("request") @Valid ItemResponse request,
+      @RequestPart("request") @Valid ItemUpdate update,
       @PathVariable("itemId") Long itemId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(itmeService.updateItem(userId,request,itemId, images));
+    itmeService.updateItem(userId, update, itemId, images);
+    return ApiResponse.success("상품 수정 성공", null);
   }
 
   @DeleteMapping("/items/{itemId}")
-  public ResponseEntity<Void> deleteItem(
+  public ApiResponse<Void> deleteItem(
       @AuthenticationUserId Long userId,
       @PathVariable("itemId") Long itemId
   ) {
     itmeService.deleteItem(userId, itemId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("상품 삭제 성공", null);
   }
 }

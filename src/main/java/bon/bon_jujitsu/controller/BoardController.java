@@ -1,9 +1,11 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BoardRequest;
 import bon.bon_jujitsu.dto.response.BoardResponse;
+import bon.bon_jujitsu.dto.response.NewsResponse;
 import bon.bon_jujitsu.dto.update.BoardUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.BoardService;
@@ -31,55 +33,49 @@ public class BoardController {
   private final BoardService boardService;
 
   @PostMapping("/board/{branchId}")
-  public ResponseEntity<Status> createBoard(
+  public ApiResponse<Void> createBoard(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid BoardRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images,
       @PathVariable("branchId") Long branchId
   ) {
     boardService.createBoard(userId, request, images, branchId);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "게시글 생성 완료"));
+    return ApiResponse.success("게시판 생성 완료", null);
   }
 
   @GetMapping("/board")
-  public ResponseEntity<PageResponse<BoardResponse>> getBoards (
+  public ApiResponse<PageResponse<BoardResponse>> getBoards (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(boardService.getBoards(page, size));
+    PageResponse<BoardResponse> boardList = boardService.getBoards(page, size);
+    return ApiResponse.success("게시판 목록 조회 성공", boardList);
   }
 
   @GetMapping("/board/{boardId}")
-  public ResponseEntity<BoardResponse> getBoard(
+  public ApiResponse<BoardResponse> getBoard(
       @PathVariable("boardId") Long boardId
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(boardService.getBoard(boardId));
+    return ApiResponse.success("게시판 조회 성공", boardService.getBoard(boardId));
   }
 
   @PatchMapping("/board/{boardId}")
-  public ResponseEntity<Status> updateBoard(
+  public ApiResponse<Void> updateBoard(
       @RequestPart("update") @Valid BoardUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("boardId") Long boardId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(boardService.updateBoard(update, userId, boardId, images));
+    boardService.updateBoard(update,userId,boardId,images);
+    return ApiResponse.success("게시판 조회 성공", null);
   }
 
   @DeleteMapping("/board/{boardId}")
-  public ResponseEntity<Status> deleteBoard(
+  public ApiResponse<Void> deleteBoard(
       @AuthenticationUserId Long userId,
       @PathVariable("boardId") Long boardId
   ) {
     boardService.deleteBoard(userId, boardId);
-    return ResponseEntity.noContent().build();
+    return ApiResponse.success("게시판 삭제 성공", null);
   }
 }

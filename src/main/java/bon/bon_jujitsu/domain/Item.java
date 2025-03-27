@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.domain;
 
 import bon.bon_jujitsu.common.Timestamped;
+import bon.bon_jujitsu.dto.update.ItemUpdate;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,30 +61,13 @@ public class Item extends Timestamped {
   @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ItemImage> images = new ArrayList<>();
 
-  public void updateItem(String name, String size, String content, int price, int sale, int amount) {
-    if (name != null && !name.isBlank()) {
-      this.name = name;
-    }
-
-    if (size != null && !size.isBlank()) {
-      this.size = size;
-    }
-
-    if (content != null && !content.isBlank()) {
-      this.content = content;
-    }
-
-    if (price != 0) {
-      this.price = price;
-    }
-
-    if (sale != 0) {
-      this.sale = sale;
-    }
-
-    if (amount != 0) {
-      this.amount = amount;
-    }
+  public void updateItem(ItemUpdate update) {
+    update.name().ifPresent(value -> this.name = value);
+    update.size().ifPresent(value -> this.size = value);
+    update.content().ifPresent(value -> this.content = value);
+    update.price().ifPresent(value -> this.price = value);
+    update.sale().ifPresent(value -> this.sale = value);
+    update.amount().ifPresent(value -> this.amount = value);
   }
 
   public void softDelete() {

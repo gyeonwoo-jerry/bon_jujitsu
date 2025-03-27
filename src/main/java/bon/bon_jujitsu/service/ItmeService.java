@@ -9,6 +9,7 @@ import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.ItemRequest;
 import bon.bon_jujitsu.dto.response.ItemResponse;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
+import bon.bon_jujitsu.dto.update.ItemUpdate;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -101,7 +102,7 @@ public class ItmeService {
     return itemResponse;
   }
 
-  public Status updateItem(Long userId, ItemResponse request, Long itemId, List<MultipartFile> images) {
+  public Status updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if(user.getUserRole() != UserRole.ADMIN) {
@@ -110,14 +111,7 @@ public class ItmeService {
 
     Item item = itemRepository.findById(itemId).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    item.updateItem(
-        request.name(),
-        request.size(),
-        request.content(),
-        request.price(),
-        request.sale(),
-        request.amount()
-    );
+    item.updateItem(update);
 
     itemImageService.updateImages(item, images);
 
