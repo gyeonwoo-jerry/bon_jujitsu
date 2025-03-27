@@ -52,10 +52,6 @@ public class Board extends Timestamped {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  @Builder.Default
-  @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<BoardImage> images = new ArrayList<>();
-
   public void updateBoard(BoardUpdate boardUpdate) {
     boardUpdate.title().ifPresent(title -> {
       if (!title.isBlank()) this.title = title;
@@ -68,6 +64,5 @@ public class Board extends Timestamped {
 
   public void softDelte() {
     this.isDeleted = true;
-    this.images.forEach(BoardImage::softDelete);
   }
 }

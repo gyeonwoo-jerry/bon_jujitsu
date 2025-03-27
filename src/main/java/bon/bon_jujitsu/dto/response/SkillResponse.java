@@ -17,13 +17,13 @@ public record SkillResponse(
     LocalDateTime modifiedAT
 ) {
 
-  public static SkillResponse fromEntity(Skill skill) {
+  public static SkillResponse fromEntity(Skill skill, List<String> imagePaths) {
     return SkillResponse.builder()
         .id(skill.getId())
         .title(skill.getTitle())
         .content(skill.getContent())
         .name(skill.getUser().getName())
-        .images(skill.getImages().stream().map(SkillImage::getImagePath).toList())
+        .images(imagePaths)
         .createdAt(skill.getCreatedAt())
         .modifiedAT(skill.getModifiedAt())
         .build();

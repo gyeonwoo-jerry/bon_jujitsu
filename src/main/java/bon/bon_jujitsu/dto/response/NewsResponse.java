@@ -17,13 +17,13 @@ public record NewsResponse(
     LocalDateTime modifiedAT
 ) {
 
-  public static NewsResponse fromEntity(News news) {
+  public static NewsResponse fromEntity(News news, List<String> imagePaths) {
     return NewsResponse.builder()
         .id(news.getId())
         .title(news.getTitle())
         .content(news.getContent())
         .name(news.getUser().getName())
-        .images(news.getImages().stream().map(NewsImage::getImagePath).toList())
+        .images(imagePaths)
         .createdAt(news.getCreatedAt())
         .modifiedAT(news.getModifiedAt())
         .build();

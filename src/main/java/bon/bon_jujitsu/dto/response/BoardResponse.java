@@ -8,26 +8,25 @@ import lombok.Builder;
 
 @Builder
 public record BoardResponse(
-    Long id,
-    String title,
-    String content,
-    String region,
-    String name,
-    List<String> images,
-    LocalDateTime createdAt,
-    LocalDateTime modifiedAT
+        Long id,
+        String title,
+        String content,
+        String region,
+        String author,
+        List<String> images,
+        LocalDateTime createdAt,
+        LocalDateTime modifiedAt
 ) {
-
-  public static BoardResponse fromEntity(Board board) {
+  public static BoardResponse fromEntity(Board board, List<String> imagePaths) {
     return BoardResponse.builder()
-        .id(board.getId())
-        .title(board.getTitle())
-        .content(board.getContent())
-        .region(board.getBranch().getRegion())
-        .name(board.getUser().getName())
-        .images(board.getImages().stream().map(BoardImage::getImagePath).toList())
-        .createdAt(board.getCreatedAt())
-        .modifiedAT(board.getModifiedAt())
-        .build();
+            .id(board.getId())
+            .title(board.getTitle())
+            .content(board.getContent())
+            .region(board.getBranch().getRegion())
+            .author(board.getUser().getName()) // `name` → `author`로 가독성 개선
+            .images(imagePaths) // 이미지는 따로 주입받음
+            .createdAt(board.getCreatedAt())
+            .modifiedAt(board.getModifiedAt())
+            .build();
   }
 }

@@ -16,13 +16,13 @@ public record SponsorResponse(
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
-  public static SponsorResponse fromEntity(Sponsor sponsor) {
+  public static SponsorResponse fromEntity(Sponsor sponsor, List<String> imagePaths) {
     return SponsorResponse.builder()
         .id(sponsor.getId())
         .title(sponsor.getTitle())
         .content(sponsor.getContent())
         .name(sponsor.getUser().getName())
-        .images(sponsor.getImages().stream().map(SponsorImage::getImagePath).toList())
+        .images(imagePaths)
         .createdAt(sponsor.getCreatedAt())
         .modifiedAT(sponsor.getModifiedAt())
         .build();

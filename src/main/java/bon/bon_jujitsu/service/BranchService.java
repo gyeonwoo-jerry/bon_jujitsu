@@ -62,7 +62,7 @@ public class BranchService {
 
 
   public PageResponse<BranchResponse> getAllBranch(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "name"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "region"));
 
     Page<Branch> branches = branchRepository.findAllWithOwner(pageRequest);
 

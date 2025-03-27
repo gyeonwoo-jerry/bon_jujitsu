@@ -8,12 +8,17 @@ import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.SponsorRequest;
+import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
+import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.SponsorRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +35,7 @@ public class SponsorService {
   private final SponsorRepository sponsorRepository;
   private final UserRepository userRepository;
   private final PostImageService postImageService;
+  private final PostImageRepository postImageRepository;
 
   public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -54,17 +60,30 @@ public class SponsorService {
   public PageResponse<SponsorResponse> getNotices(int page, int size) {
     PageRequest pageRequest = PageRequest.of(page -1, size);
 
-    Page<Sponsor> sponsor = sponsorRepository.findAll(pageRequest);
+    Page<Sponsor> sponsors = sponsorRepository.findAll(pageRequest);
 
-    Page<SponsorResponse> sponsorResponses = sponsor.map(sponsers-> new SponsorResponse(
-        sponsers.getId(),
-        sponsers.getTitle(),
-        sponsers.getContent(),
-        sponsers.getUser().getName(),
-        sponsers.getImages().stream().map(SponsorImage::getImagePath).toList(),
-        sponsers.getCreatedAt(),
-        sponsers.getModifiedAt()
-    ));
+    Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
+      // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR", sponsor.getId())
+              .stream()
+              .map(postImage -> {
+                // 파일 경로 안전하게 조합
+                String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+                String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
+                return path + fileName;
+              })
+              .collect(Collectors.toList());
+
+      return new SponsorResponse(
+              sponsor.getId(),
+              sponsor.getTitle(),
+              sponsor.getContent(),
+              sponsor.getUser().getName(),
+              imagePaths,
+              sponsor.getCreatedAt(),
+              sponsor.getModifiedAt()
+      );
+    });
 
     return PageResponse.success(sponsorResponses, HttpStatus.OK, "스폰서 조회 성공");
   }
@@ -72,7 +91,17 @@ public class SponsorService {
   public SponsorResponse getSponsor(Long sponsorId) {
     Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
-    SponsorResponse sponsorResponse = SponsorResponse.fromEntity(sponsor);
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR", sponsor.getId())
+            .stream()
+            .map(postImage -> {
+              // 파일 경로 안전하게 조합
+              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+              String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
+              return path + fileName;
+            })
+            .collect(Collectors.toList());
+
+    SponsorResponse sponsorResponse = SponsorResponse.fromEntity(sponsor, imagePaths);
     return sponsorResponse;
   }
 

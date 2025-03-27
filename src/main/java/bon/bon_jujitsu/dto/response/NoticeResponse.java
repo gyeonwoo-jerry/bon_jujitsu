@@ -18,14 +18,14 @@ public record NoticeResponse(
     LocalDateTime modifiedAT
 ) {
 
-  public static NoticeResponse fromEntity(Notice notice) {
+  public static NoticeResponse fromEntity(Notice notice, List<String> imagePaths) {
     return NoticeResponse.builder()
         .id(notice.getId())
         .title(notice.getTitle())
         .content(notice.getContent())
         .region(notice.getBranch().getRegion())
         .name(notice.getUser().getName())
-        .images(notice.getImages().stream().map(NoticeImage::getImagePath).toList())
+        .images(imagePaths)
         .createdAt(notice.getCreatedAt())
         .modifiedAT(notice.getModifiedAt())
         .build();

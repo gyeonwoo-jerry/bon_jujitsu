@@ -1,20 +1,17 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.BoardImage;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BoardRequest;
 import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.update.BoardUpdate;
-import bon.bon_jujitsu.repository.BoardImageRepository;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
+import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +20,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class BoardService {
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
   private final PostImageService postImageService;
+  private final PostImageRepository postImageRepository;
 
   public void createBoard(Long userId, BoardRequest request, List<MultipartFile> images, Long branchId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -58,31 +60,54 @@ public class BoardService {
 
   @Transactional(readOnly = true)
   public PageResponse<BoardResponse> getBoards(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Board> post = boardRepository.findAll(pageRequest);
+    Page<Board> boards = boardRepository.findAll(pageRequest);
 
-    Page<BoardResponse> posts = post.map(board-> new BoardResponse(
-        board.getId(),
-        board.getTitle(),
-        board.getContent(),
-        board.getBranch().getRegion(),
-        board.getUser().getName(),
-        board.getImages().stream().map(BoardImage::getImagePath).toList(),
-        board.getCreatedAt(),
-        board.getModifiedAt()
-    ));
+    Page<BoardResponse> boardResponses = boards.map(board -> {
+      // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("BOARD", board.getId())
+              .stream()
+              .map(postImage -> {
+                // 파일 경로 안전하게 조합
+                String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+                String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
+                return path + fileName;
+              })
+              .collect(Collectors.toList());
 
-    return PageResponse.success(posts, HttpStatus.OK, "게시글 조회 성공");
+      return new BoardResponse(
+              board.getId(),
+              board.getTitle(),
+              board.getContent(),
+              board.getBranch().getRegion(),
+              board.getUser().getName(),
+              imagePaths,
+              board.getCreatedAt(),
+              board.getModifiedAt()
+      );
+    });
+
+    return PageResponse.success(boardResponses, HttpStatus.OK, "게시글 조회 성공");
   }
 
   @Transactional(readOnly = true)
   public BoardResponse getBoard(Long boardId) {
-    Board post = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    BoardResponse boardResponse = BoardResponse.fromEntity(post);
-    return boardResponse;
+    // 해당 게시글의 이미지 조회
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("BOARD", board.getId())
+            .stream()
+            .map(postImage -> {
+              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+              String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
+              return path + fileName;
+            })
+            .toList();
+
+    return BoardResponse.fromEntity(board, imagePaths);
   }
+
 
 
   public Status updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images) {

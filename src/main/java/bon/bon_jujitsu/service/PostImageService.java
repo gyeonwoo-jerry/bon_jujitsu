@@ -34,8 +34,7 @@ public class PostImageService {
         }
 
         try {
-            String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) + "/";
-            String uploads = filepath + contentType + "/" + datePath; // 예: filepath + "board/2025/03/26/"
+            String uploads = filepath + contentType ;
 
             for (MultipartFile image : images) {
                 String originalFileName = image.getOriginalFilename(); // 원본 파일명
