@@ -29,9 +29,9 @@ public class UserController {
 
   @PostMapping("/signup")
   public ResponseEntity<String> signup(
-          @RequestPart("request") @Valid SignupRequest reqest,
+          @RequestPart("request") @Valid SignupRequest request,
           @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-    usersService.signup(reqest, images);
+    usersService.signup(request, images);
     return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 정상적으로 처리되었습니다.");
   }
 

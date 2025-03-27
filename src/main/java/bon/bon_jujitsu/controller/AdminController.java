@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.ListResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.response.UserResponse;
@@ -23,11 +24,11 @@ public class AdminController {
   private final UserService userService;
 
   @PostMapping("/assign-owner/{targetUserId}")
-  public ResponseEntity<Status> assignOwner(
+  public ApiResponse<Status> assignOwner(
           @AuthenticationUserId Long adminUserId,
           @PathVariable Long targetUserId) {
     Status response = userService.assignOwnerRole(adminUserId, targetUserId);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    return ApiResponse.success("관장 등록 완료", response);
   }
 
   @GetMapping("/users")
@@ -50,9 +51,9 @@ public class AdminController {
     return ResponseEntity.ok(response);
   }
 
-  @PostMapping("/{targetUserId}")
-  public ResponseEntity<Status> assignAdmin(@PathVariable("targetUserId") Long targetUserId) {
-    Status response = userService.assignAdmin(targetUserId);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
-  }
+//  @PostMapping("/{targetUserId}")
+//  public ResponseEntity<Status> assignAdmin(@PathVariable("targetUserId") Long targetUserId) {
+//    Status response = userService.assignAdmin(targetUserId);
+//    return ResponseEntity.status(HttpStatus.OK).body(response);
+//  }
 }

@@ -15,9 +15,6 @@ import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
 import bon.bon_jujitsu.jwt.JwtUtil;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +24,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -260,23 +261,23 @@ public class UserService {
     user.softDelete();
   }
 
-  public Status assignAdmin(Long targetUserId) {
-    User user = userRepository.findByIdAndIsDeletedFalse(targetUserId)
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-
-    if (user.getUserRole() == UserRole.ADMIN) {
-      throw new IllegalArgumentException("이미 관리자(ADMIN) 으로 등록된 회원입니다.");
-    }
-
-    user.setUserRole(UserRole.ADMIN);
-
-    userRepository.save(user);
-
-    return Status.builder()
-        .status(HttpStatus.CREATED.value())
-        .message("관리자로 등록되었습니다.")
-        .build();
-  }
+//  public Status assignAdmin(Long targetUserId) {
+//    User user = userRepository.findByIdAndIsDeletedFalse(targetUserId)
+//        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+//
+//    if (user.getUserRole() == UserRole.ADMIN) {
+//      throw new IllegalArgumentException("이미 관리자(ADMIN) 으로 등록된 회원입니다.");
+//    }
+//
+//    user.setUserRole(UserRole.ADMIN);
+//
+//    userRepository.save(user);
+//
+//    return Status.builder()
+//        .status(HttpStatus.CREATED.value())
+//        .message("관리자로 등록되었습니다.")
+//        .build();
+//  }
 
   @Transactional(readOnly = true)
   public ListResponse<UserResponse> getPendingUsers(Long userId, int page, int size) {
