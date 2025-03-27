@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SubHeader from '../components/SubHeader';
+import StoreList from '../components/StoreList';
 
 function Store() {
   const [pageName, setPageName] = useState('');
@@ -20,8 +21,7 @@ function Store() {
     <div className="store">
       <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
       <div className='store_container'>
-        <h1>환영합니다!</h1>
-        <p>이것은 스토어입니다.</p>
+        <StoreList />
       </div>
     </div>
   );

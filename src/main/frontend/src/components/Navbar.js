@@ -103,7 +103,7 @@ function Navbar() {
         // 로그인 상태일 때 사용자 정보와 로그아웃 버튼 표시
         <div className="user_status">
           <span className="user_name">
-            {userName} {userRole=="USER" && `님,`} {userRole=="OWNER" && `관장님,`} {userRole=="ADMIN" && `관리자님,`} 환영합니다
+            {userName} {userRole==="USER" && `님,`} {userRole==="OWNER" && `관장님,`} {userRole==="ADMIN" && `관리자님,`} 환영합니다
           </span>
           <button className="logout_btn" onClick={handleLogout}>로그아웃</button>
         </div>

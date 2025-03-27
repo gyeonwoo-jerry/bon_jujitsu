@@ -1,3 +1,33 @@
+@media (max-width: 1650px) {
+    nav.main_nav ul li.logo {
+        position: absolute;
+        left: 60px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0;
+    }
+    .user_status {
+        right: 60px;
+    }
+}
+
+@media (max-width: 1250px) {
+    nav.main_nav ul li {
+        display: none;  
+    }
+    nav.main_nav ul li.logo {
+        position: absolute;
+        display: block;
+        left: 60px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0;
+    }
+}
+
+
+
+
 @media (max-width: 768px) {
     section.news .news_content .news_list {
         display: flex;
@@ -8,5 +38,7 @@
     section.news .news_content .news_list .news_item {
         max-width: 100%;
     }
+
+    
     
 }
