@@ -20,6 +20,7 @@ import Qna from './pages/qna';
 import Sponsor from './pages/sponsor';
 import Join from './pages/join';
 import Cart from './pages/cart';
+import Order from './pages/order';
 import './styles/main.css';
 import './styles/response.css';
 
@@ -41,6 +42,7 @@ function App() {
           <Route path="/store" element={<Store />} />
           <Route path="/storeDetail/:itemId" element={<StoreDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/order" element={<Order />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 

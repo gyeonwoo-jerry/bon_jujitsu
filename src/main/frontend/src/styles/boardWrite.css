@@ -134,6 +134,11 @@
     border: none;
 }
 
+.submit-button:focus {
+    outline: none;
+    padding: 12px 24px;
+}
+
 .submit-button:hover {
     background-color: #0056b3;
 }

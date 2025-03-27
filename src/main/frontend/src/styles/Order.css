@@ -1,0 +1,269 @@
+.order-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.order-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.order-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.order-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.order-date {
+  font-size: 14px;
+  color: #666;
+}
+
+.order-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.status-waiting {
+  background-color: #ffecb3;
+  color: #f57c00;
+}
+
+.status-processing {
+  background-color: #bbdefb;
+  color: #1565c0;
+}
+
+.status-shipping {
+  background-color: #c8e6c9;
+  color: #388e3c;
+}
+
+.status-completed {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.status-canceled {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.order-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.order-details {
+  flex: 0 0 40%;
+}
+
+.order-number, .order-payment, .order-amount, .order-items-count {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.order-items-preview {
+  flex: 0 0 58%;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-item-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.item-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.item-quantity {
+  margin: 0 10px;
+  color: #666;
+}
+
+.item-price {
+  font-weight: 500;
+  min-width: 80px;
+  text-align: right;
+}
+
+.more-items {
+  text-align: center;
+  color: #666;
+  font-size: 13px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.delivery-info {
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  font-size: 14px;
+}
+
+.delivery-address {
+  display: flex;
+  align-items: flex-start;
+}
+
+.address-label {
+  flex-shrink: 0;
+  margin-right: 10px;
+  color: #555;
+}
+
+.address-value {
+  line-height: 1.4;
+}
+
+.empty-orders {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.empty-orders-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.empty-orders-message {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.shop-now-button {
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.shop-now-button:hover {
+  background-color: #303f9f;
+}
+
+/* 페이지네이션 스타일 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  gap: 5px;
+}
+
+.pagination-button, 
+.pagination-number {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-number.active {
+  background-color: #3f51b5;
+  color: #fff;
+  border-color: #3f51b5;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button:hover:not(:disabled),
+.pagination-number:hover:not(.active) {
+  background-color: #f5f5f5;
+}
+
+.loading-container, 
+.error-container {
+  text-align: center;
+  padding: 40px 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin: 20px 0;
+}
+
+.retry-button {
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background-color: #303f9f;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+  .order-info {
+    flex-direction: column;
+  }
+  
+  .order-details,
+  .order-items-preview {
+    flex: 0 0 100%;
+  }
+  
+  .order-details {
+    margin-bottom: 15px;
+  }
+} 

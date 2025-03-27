@@ -33,6 +33,11 @@
   background-color: #0056b3;
 }
 
+.write-button:focus {
+  outline: none;
+  padding: 10px 20px;
+}
+
 /* BoardList 컴포넌트의 제목을 숨김 처리 (중복 방지) */
 .news-container .board-title {
   display: none;
