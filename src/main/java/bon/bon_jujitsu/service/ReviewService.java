@@ -94,7 +94,7 @@ public class ReviewService {
     // Page 형식으로 다시 변환 (트리 구조 적용 후)
     Page<ReviewResponse> reviewPage = new PageImpl<>(reviewTree, pageRequest, reviews.getTotalElements());
 
-    return PageResponse.success(reviewPage, HttpStatus.OK, "리뷰 조회 성공");
+    return PageResponse.fromPage(reviewPage);
   }
 
   // 대댓글을 포함한 트리 구조로 변환하는 메서드
@@ -161,7 +161,7 @@ public class ReviewService {
       return new ReviewResponse(parentReview, childResponses);
     });
 
-    return PageResponse.success(reviewResponses, HttpStatus.OK, "리뷰 조회 성공");
+    return PageResponse.fromPage(reviewResponses);
   }
 
   public Status updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {

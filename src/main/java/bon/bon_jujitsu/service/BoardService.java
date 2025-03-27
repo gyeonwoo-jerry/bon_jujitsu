@@ -87,7 +87,7 @@ public class BoardService {
       );
     });
 
-    return PageResponse.success(boardResponses, HttpStatus.OK, "게시글 조회 성공");
+    return PageResponse.fromPage(boardResponses);
   }
 
   @Transactional(readOnly = true)

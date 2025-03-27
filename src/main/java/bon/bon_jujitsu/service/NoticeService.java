@@ -97,7 +97,7 @@ public class NoticeService {
       );
     });
 
-    return PageResponse.success(noticeResponses, HttpStatus.OK, "공지사항 조회 성공");
+    return PageResponse.fromPage(noticeResponses);
   }
 
   public NoticeResponse getNotice(Long noticeId) {

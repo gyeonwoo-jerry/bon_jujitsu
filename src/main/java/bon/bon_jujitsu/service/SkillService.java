@@ -87,7 +87,7 @@ public class SkillService {
       );
     });
 
-    return PageResponse.success(skillResponses, HttpStatus.OK, "스킬게시물 조회 성공");
+    return PageResponse.fromPage(skillResponses);
   }
 
   @Transactional(readOnly = true)

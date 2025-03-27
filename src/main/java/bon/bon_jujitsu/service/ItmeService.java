@@ -83,7 +83,7 @@ public class ItmeService {
     ));
 
 
-    return PageResponse.success(allItems, HttpStatus.OK, "상품 조회 성공");
+    return PageResponse.fromPage(allItems);
   }
 
   @Transactional(readOnly = true)

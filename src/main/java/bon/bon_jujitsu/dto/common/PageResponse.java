@@ -5,38 +5,22 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 
 /**
  * 페이징 객체를 반환할때 사용하는 responseDto
  */
 @Getter
 @SuperBuilder(builderMethodName = "createResponseBuilder")
-public class PageResponse<T> extends Status {
+public class PageResponse<T> {
 
-  private List<T> data;
+  private List<T> list;
   private int page;
   private int size;
   private int totalPage;
-
-  public static <T> PageResponse<T> success(Page<T> data, HttpStatus status, String message) {
+  public static <T> PageResponse<T> fromPage(Page<T> data) {
     Pageable pageable = data.getPageable();
     return PageResponse.<T>createResponseBuilder()
-        .data(data.hasContent() ? data.getContent() : null)
-        .status(status.value())
-        .message(message)
-        .page(createPage(pageable))
-        .size(createPageSize(pageable))
-        .totalPage(data.getTotalPages())
-        .build();
-  }
-
-  public static <T> PageResponse<T> create(Page<T> data) {
-    Pageable pageable = data.getPageable();
-    return PageResponse.<T>createResponseBuilder()
-        .data(data.hasContent() ? data.getContent() : null)
-        .status(createStatus(data).value())
-        .message(createMessage(data))
+        .list(data.hasContent() ? data.getContent() : null)
         .page(createPage(pageable))
         .size(createPageSize(pageable))
         .totalPage(data.getTotalPages())
@@ -49,19 +33,5 @@ public class PageResponse<T> extends Status {
 
   private static int createPageSize(Pageable pageable) {
     return pageable.isPaged() ? pageable.getPageSize() : 0;
-  }
-
-  private static <T> String createMessage(Page<T> data) {
-    if(data.isEmpty())
-      return "조회 결과가 없습니다.";
-    else
-      return "조회 성공";
-  }
-
-  private static <T> HttpStatus createStatus(Page<T> data) {
-    if(data.isEmpty())
-      return HttpStatus.NOT_FOUND;
-    else
-      return HttpStatus.OK;
   }
 }

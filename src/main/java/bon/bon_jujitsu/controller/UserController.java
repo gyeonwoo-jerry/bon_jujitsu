@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import bon.bon_jujitsu.dto.common.ApiResponse;
 
 import java.util.List;
 
@@ -35,9 +36,9 @@ public class UserController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
+  public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
     LoginResponse response = usersService.login(req);
-    return ResponseEntity.ok(response);
+    return ApiResponse.success("로그인 성공", response);
   }
 
   @GetMapping("/profile")

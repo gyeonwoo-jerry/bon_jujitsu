@@ -77,7 +77,7 @@ public class BranchService {
       return BranchResponse.from(branch, owner);
     });
 
-    return PageResponse.success(branchResponses, HttpStatus.OK, "모든 지부 조회 완료");
+    return PageResponse.fromPage(branchResponses);
   }
 
 

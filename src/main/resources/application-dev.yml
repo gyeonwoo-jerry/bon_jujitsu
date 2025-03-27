@@ -15,7 +15,6 @@ spring:
         format-sql: true
     hibernate:
       ddl-auto: update
-
   web:
     resources:
       static-locations:
@@ -24,7 +23,11 @@ spring:
         - classpath:/resources/
         - classpath:/META-INF/resources/
         - file:///uploads/images/
-
+  jmx:
+    enabled: false
+  liveBeansView:
+    mbean:
+      enabled: false
   servlet:
     multipart:
       max-file-size: 50MB
@@ -32,7 +35,11 @@ spring:
 
 logging:
   level:
-    root: INFO # 전체 애플리케이션 기본 로그 레벨
+    root: DEBUG # 전체 애플리케이션 기본 로그 레벨
+    sun.rmi: INFO
+    sun.rmi.transport.tcp: INFO
+    javax.management.remote.rmi: INFO
+    org.apache.coyote.http11: INFO
     org.springframework: WARN # 스프링 관련 로그 경고(WARN) 이상만 출력
     bon.bon_jujitsu: DEBUG # 특정 패키지(bon.bon_jujitsu) 로그 디버그(DEBUG) 모드 활성화
     org.springframework.web: DEBUG # Spring Web 로그 디버그(DEBUG) 모드 활성화

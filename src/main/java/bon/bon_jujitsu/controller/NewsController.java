@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.BoardRequest;
@@ -25,7 +26,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -34,25 +37,23 @@ public class NewsController {
   private final NewsService newsService;
 
   @PostMapping("/news")
-  public ResponseEntity<Status> createNews(
+  public ApiResponse<Status> createNews(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid NewsRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {
     newsService.createNews(userId, request, images);
-    return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(Status.createStatusDto(HttpStatus.CREATED, "뉴스 생성 완료"));
+    return ApiResponse.success("뉴스 생성 완료", null);
   }
 
   @GetMapping("/news")
-  public ResponseEntity<PageResponse<NewsResponse>> getAllNews (
+  public ApiResponse<PageResponse<NewsResponse>> getAllNews (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(newsService.getAllNews(page, size));
+    PageResponse<NewsResponse> newsList = newsService.getAllNews(page, size);
+    log.info("뉴스 목록 조회 성공: {}", newsList);
+    return ApiResponse.success("뉴스 목록 조회 성공", newsList);
   }
 
   @GetMapping("/news/{newsId}")

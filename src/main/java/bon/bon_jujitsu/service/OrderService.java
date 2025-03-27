@@ -122,7 +122,7 @@ public class OrderService {
         order.getModifiedAt()
     ));
 
-    return PageResponse.success(myOrders, HttpStatus.OK, "내 주문 조회 성공");
+    return PageResponse.fromPage(myOrders);
   }
 
   @Transactional(readOnly = true)
@@ -157,7 +157,7 @@ public class OrderService {
         order.getModifiedAt()
     ));
 
-    return PageResponse.success(waitingOrders, HttpStatus.OK, "주문 조회 성공");
+    return PageResponse.fromPage(waitingOrders);
   }
 
   public Status updateOrderByAdmin(OrderUpdate request, Long userId) {

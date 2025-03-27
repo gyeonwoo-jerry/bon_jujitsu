@@ -80,7 +80,7 @@ public class NewsService {
       );
     });
 
-    return PageResponse.success(newsResponses, HttpStatus.OK, "뉴스 조회 성공");
+    return PageResponse.fromPage(newsResponses);
   }
 
   @Transactional(readOnly = true)

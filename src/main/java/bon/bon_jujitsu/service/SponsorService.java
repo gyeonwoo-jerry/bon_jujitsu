@@ -80,7 +80,7 @@ public class SponsorService {
       );
     });
 
-    return PageResponse.success(sponsorResponses, HttpStatus.OK, "스폰서 조회 성공");
+    return PageResponse.fromPage(sponsorResponses);
   }
 
   public SponsorResponse getSponsor(Long sponsorId) {
