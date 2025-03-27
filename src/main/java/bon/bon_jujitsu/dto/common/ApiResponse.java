@@ -10,13 +10,13 @@ import lombok.Setter;
 public class ApiResponse<T> {
     private boolean success;
     private String message;
-    private T data;
+    private T dataBody;
 
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return new ApiResponse<>(true, message, data);
+    public static <T> ApiResponse<T> success(String message, T dataBody) {
+        return new ApiResponse<>(true, message, dataBody);
     }
 
-    public static <T> ApiResponse<T> error(String message, T data) {
-        return new ApiResponse<>(false, message, data);
+    public static <T> ApiResponse<T> error(String message, T dataBody) {
+        return new ApiResponse<>(false, message, dataBody);
     }
 }
