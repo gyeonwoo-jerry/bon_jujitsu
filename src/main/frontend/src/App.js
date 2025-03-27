@@ -19,8 +19,10 @@ import NewsWrite from './pages/newsWrite';
 import Qna from './pages/qna';
 import Sponsor from './pages/sponsor';
 import Join from './pages/join';
+import Cart from './pages/cart';
 import './styles/main.css';
 import './styles/response.css';
+
 
 function App() {
   return (
@@ -37,7 +39,8 @@ function App() {
           <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
-          <Route path="/storeDetail/:id" element={<StoreDetail />} />
+          <Route path="/storeDetail/:itemId" element={<StoreDetail />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 

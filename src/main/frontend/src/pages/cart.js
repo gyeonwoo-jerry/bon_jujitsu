@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
-import StoreDetail from '../components/StoreDetail';
+import Cart from '../components/Cart';
 
-function StoreDetailPage() {
+function CartPage() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
   const { itemId } = useParams();
 
   useEffect(() => {
-    const title = '스토어'; 
+    const title = '장바구니'; 
     setPageName(title);
     document.title = title;
     const descName = 'BON JIU JITSU STORE';
@@ -20,16 +20,16 @@ function StoreDetailPage() {
   }, []);
 
   return (
-    <div className="storeDetail">
+    <div className="cart">
       <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
-      <div className='store_container'>
+      <div className='cart_container'>
         <div className="inner">
-          <div className="section_title">상품 상세정보</div>
-          <StoreDetail itemId={itemId} />
+          <div className="section_title">장바구니</div>
+          <Cart />
         </div>
       </div>
     </div>
   );
 }
 
-export default StoreDetailPage; 
+export default CartPage; 

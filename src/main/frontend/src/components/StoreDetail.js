@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import '../styles/StoreDetail.css';
 
-const StoreDetail = () => {
-  const { itemId } = useParams();
-  const navigate = useNavigate();
+const StoreDetail = ({ itemId }) => {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,16 +10,33 @@ const StoreDetail = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
   
+  console.log("StoreDetail 컴포넌트 렌더링 - 아이템 ID:", itemId);
+  
   // 상품 정보 가져오기
   const fetchItemDetail = useCallback(async () => {
+    if (!itemId) {
+      console.error("유효한 itemId가 없습니다.");
+      setError("상품 ID가 유효하지 않습니다");
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
-      console.log(`상품 상세 정보 요청: /api/items/${itemId}`);
+      // 두 가지 API 경로 시도
+      console.log(`상품 상세 정보 요청: /items/${itemId}`);
       
-      const response = await API.get(`/api/items/${itemId}`);
+      let response;
+      try {
+        response = await API.get(`/items/${itemId}`);
+      } catch (err) {
+        console.log(`첫 번째 경로 실패, 두 번째 경로 시도: /items/${itemId}`);
+        response = await API.get(`/items/${itemId}`);
+      }
+      
       console.log('상품 상세 응답:', response);
       
-      if (response.status === 200) {
+      if (response.status === 200 && response.data) {
         setItem(response.data);
       } else {
         throw new Error('상품 정보를 가져오는 데 실패했습니다.');
@@ -38,7 +52,7 @@ const StoreDetail = () => {
 
   useEffect(() => {
     fetchItemDetail();
-    window.scrollTo(0, 0); // 페이지 상단으로 스크롤
+    window.scrollTo(0, 0);
   }, [fetchItemDetail]);
 
   // 할인율 계산
@@ -74,17 +88,64 @@ const StoreDetail = () => {
     }
   };
 
+  // 이미지 URL 처리
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return '/images/blank_img.png';
+    
+    // 이미 http나 https로 시작하는 URL이면 그대로 사용
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // 상대 경로인 경우 처리
+    return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+  };
+
   // 장바구니에 추가
-  const addToCart = () => {
-    // 로그인 체크 및 장바구니 추가 로직 구현 필요
-    alert(`장바구니에 ${item.name} ${quantity}개가 추가되었습니다.`);
+  const addToCart = async () => {
+    try {
+      // localStorage에서 userId 가져오기 (로그인 시스템에 맞게 수정 필요)
+      const userId = localStorage.getItem('userId') || 1; // 기본값 1로 설정
+      
+      const response = await API.post(`/carts?id=${userId}`, {
+        quantity: quantity, // 선택한 수량 사용
+        itemId: item.id
+      });
+      
+      if (response.status === 200 || response.status === 201) {
+        alert(`${item.name} ${quantity}개가 장바구니에 추가되었습니다.`);
+        
+        // localStorage에 장바구니 정보 저장 (클라이언트 측 캐싱용)
+        const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
+        const existingItemIndex = cartItems.findIndex(cartItem => cartItem.id === item.id);
+        
+        if (existingItemIndex >= 0) {
+          // 이미 있는 상품이면 수량만 증가
+          cartItems[existingItemIndex].quantity += quantity;
+        } else {
+          // 새 상품이면 추가
+          cartItems.push({
+            id: item.id,
+            name: item.name,
+            price: item.sale > 0 ? item.sale : item.price,
+            image: item.images && item.images.length > 0 ? item.images[0] : null,
+            quantity: quantity
+          });
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cartItems));
+      } else {
+        throw new Error('장바구니 추가 실패');
+      }
+    } catch (error) {
+      console.error('장바구니 추가 오류:', error);
+      alert('장바구니에 추가하는 중 오류가 발생했습니다.');
+    }
   };
 
   // 바로 구매하기
   const buyNow = () => {
-    // 로그인 체크 및 결제 페이지로 이동 필요
     alert('구매 페이지로 이동합니다.');
-    // navigate('/checkout', { state: { items: [{ id: item.id, quantity }] } });
   };
 
   // 이미지 변경
@@ -124,6 +185,7 @@ const StoreDetail = () => {
 
   // 날짜 포맷팅
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -140,7 +202,6 @@ const StoreDetail = () => {
   const averageRating = calculateAverageRating(item.reviews);
   const hasReviews = item.reviews && item.reviews.length > 0;
   const hasImages = item.images && item.images.length > 0;
-  const currentImage = hasImages ? item.images[activeImageIndex] : '/images/blank_img.png';
 
   return (
     <div className="store-detail">
@@ -149,9 +210,13 @@ const StoreDetail = () => {
           <div className="detail-image-section">
             <div className="main-image-container">
               <img 
-                src={currentImage} 
+                src={hasImages ? getImageUrl(item.images[activeImageIndex]) : '/images/blank_img.png'} 
                 alt={item.name} 
-                className="main-image" 
+                className="main-image"
+                onError={(e) => {
+                  console.error('이미지 로드 실패:', e.target.src);
+                  e.target.src = '/images/blank_img.png';
+                }}
               />
               {item.sale > 0 && (
                 <span className="discount-badge">
@@ -173,7 +238,13 @@ const StoreDetail = () => {
                     className={`thumbnail ${index === activeImageIndex ? 'active' : ''}`}
                     onClick={() => changeImage(index)}
                   >
-                    <img src={image} alt={`${item.name} 썸네일 ${index + 1}`} />
+                    <img 
+                      src={getImageUrl(image)} 
+                      alt={`${item.name} 썸네일 ${index + 1}`}
+                      onError={(e) => {
+                        e.target.src = '/images/blank_img.png';
+                      }} 
+                    />
                   </div>
                 ))}
               </div>
@@ -288,7 +359,7 @@ const StoreDetail = () => {
                 {item.content ? (
                   <p>{item.content}</p>
                 ) : (
-                  <p className="no-description">상품 설명이 없습니다.</p>
+                  <p>상품 설명이 없습니다.</p>
                 )}
               </div>
             </div>
@@ -297,12 +368,11 @@ const StoreDetail = () => {
           {activeTab === 'reviews' && (
             <div className="reviews-tab">
               <div className="review-summary">
-                <div className="average-rating-display">
-                  <div className="rating-number">{averageRating}</div>
-                  <div className="rating-stars">{renderStars(averageRating)}</div>
-                </div>
-                <div className="review-count-display">
-                  총 <span className="highlight">{item.reviews ? item.reviews.length : 0}</span>개의 리뷰가 있습니다.
+                <div className="review-average">
+                  <h3>평균 평점</h3>
+                  <div className="average-rating-big">{averageRating}</div>
+                  {renderStars(averageRating)}
+                  <div className="review-count">총 {item.reviews ? item.reviews.length : 0}개의 리뷰</div>
                 </div>
               </div>
               
@@ -311,48 +381,54 @@ const StoreDetail = () => {
                   {item.reviews.map((review) => (
                     <div key={review.id} className="review-item">
                       <div className="review-header">
-                        <div className="reviewer-info">
-                          <span className="reviewer-name">{review.name}</span>
-                          <span className="review-date">{formatDate(review.createdAt)}</span>
-                        </div>
-                        <div className="review-rating">{renderStars(review.star)}</div>
+                        <span className="review-author">{review.name}</span>
+                        <span className="review-date">{formatDate(review.createdAt)}</span>
                       </div>
+                      
+                      {review.star > 0 && (
+                        <div className="review-rating">
+                          {renderStars(review.star)}
+                        </div>
+                      )}
+                      
+                      <div className="review-content">{review.content}</div>
                       
                       {review.images && review.images.length > 0 && (
                         <div className="review-images">
                           {review.images.map((image, index) => (
                             <img 
                               key={index} 
-                              src={image} 
-                              alt={`리뷰 이미지 ${index + 1}`} 
-                              className="review-image" 
+                              src={getImageUrl(image)} 
+                              alt={`리뷰 이미지 ${index + 1}`}
+                              className="review-image"
+                              onError={(e) => {
+                                e.target.src = '/images/blank_img.png';
+                              }}
                             />
                           ))}
                         </div>
                       )}
                       
-                      <div className="review-content">{review.content}</div>
-                      
-                      {review.depth === 0 && (
-                        <div className="reply-section">
-                          {item.reviews.filter(r => r.parentId === review.id).map((reply) => (
-                            <div key={reply.id} className="reply-item">
-                              <div className="reply-header">
-                                <span className="reply-badge">답변</span>
-                                <span className="reply-name">{reply.name}</span>
-                                <span className="reply-date">{formatDate(reply.createdAt)}</span>
-                              </div>
-                              <div className="reply-content">{reply.content}</div>
+                      {/* 답변 표시 */}
+                      {item.reviews
+                        .filter(r => r.parentId === review.id)
+                        .map((reply) => (
+                          <div key={reply.id} className="review-reply">
+                            <div className="reply-header">
+                              <span className="reply-badge">답변</span>
+                              <span className="reply-author">{reply.name}</span>
+                              <span className="reply-date">{formatDate(reply.createdAt)}</span>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                            <div className="reply-content">{reply.content}</div>
+                          </div>
+                        ))
+                      }
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="no-reviews">
-                  <p>아직 리뷰가 없습니다. 첫 리뷰를 작성해보세요!</p>
+                  <p>아직 리뷰가 없습니다.</p>
                 </div>
               )}
             </div>

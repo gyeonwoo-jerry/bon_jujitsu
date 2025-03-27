@@ -56,7 +56,8 @@
 }
 
 .item-card {
-  border-radius: 8px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
   overflow: hidden;
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -196,21 +197,7 @@
   color: #777;
 }
 
-.add-to-cart-btn {
-  width: 100%;
-  padding: 12px;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
 
-.add-to-cart-btn:hover {
-  background-color: #2980b9;
-}
 
 .add-to-cart-btn.disabled {
   background-color: #95a5a6;
@@ -273,22 +260,37 @@
   color: #e74c3c;
 }
 
-.view-details-btn {
-  background-color: #f8f8f8;
-  color: #333;
-  border: 1px solid #ddd;
-  padding: 8px 15px;
-  border-radius: 4px;
-  margin-top: 10px;
-  font-size: 14px;
-  width: 100%;
-  cursor: pointer;
-  transition: background-color 0.2s;
+.store-container .btns {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
 }
 
-.view-details-btn:hover {
-  background-color: #efefef;
+.store-container .btns .store-button {
+    width: 48%;
+    border:0;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 20px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 0;
 }
+
+.store-container .btns .store-button:nth-child(1) {
+    background-color: var(--black-color);
+    color: var(--white-color);
+}
+
+.store-container .btns .store-button:nth-child(2) {
+    background-color: var(--white-color);
+    color: var(--black-color);
+    border: 1px solid #ddd;
+}
+
+
+
 
 @media (max-width: 768px) {
   .store-filters {
