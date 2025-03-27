@@ -88,7 +88,11 @@ public class AuthenticationFilter implements Filter {
 
     // 인증 헤더 확인
     if (Objects.isNull(authorizationHeader)) {
-      throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
+      // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
+      res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
+      res.setContentType("application/json"); // JSON 응답
+      res.getWriter().write("{\"error\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
+      return;
     }
 
     // Bearer 접두사 확인 및 제거
