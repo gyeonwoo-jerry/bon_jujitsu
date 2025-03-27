@@ -17,9 +17,9 @@ const StoreItemList = () => {
   const fetchStoreItems = useCallback(async (page) => {
     try {
       setLoading(true);
-      console.log(`상품 데이터 요청: /api/items?page=${page}&size=${pageSize}`);
+      console.log(`상품 데이터 요청: /items?page=${page}&size=${pageSize}`);
       
-      const response = await API.get(`/api/items?page=${page}&size=${pageSize}`);
+      const response = await API.get(`/items?page=${page}&size=${pageSize}`);
       console.log('API 응답:', response);
       
       if (response.status === 200) {
