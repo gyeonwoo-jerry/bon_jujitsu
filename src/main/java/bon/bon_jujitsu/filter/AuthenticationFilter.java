@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.filter;
 
+import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.jwt.JwtUtil;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -91,7 +92,7 @@ public class AuthenticationFilter implements Filter {
       // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
-      res.getWriter().write("{\"error\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
+      res.getWriter().write("{\"success\": \"false\", \"message\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
       return;
     }
 
