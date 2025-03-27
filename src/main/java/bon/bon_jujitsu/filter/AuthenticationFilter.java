@@ -108,24 +108,28 @@ public class AuthenticationFilter implements Filter {
       // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
-      res.getWriter().write("{\"error\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
+      res.getWriter().write("{\"success\": \"false\", \"message\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
       return;
     }
 
     // 토큰 만료 체크 (순서 중요: Bearer 제거 후)
     if (jwtUtil.isTokenExpired(token)) {
-      throw new IllegalArgumentException("로그인 시간이 만료되었습니다.");
+      // throw new IllegalArgumentException("로그인 시간이 만료되었습니다.");
+      res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
+      res.setContentType("application/json"); // JSON 응답
+      res.getWriter().write("{\"success\": \"false\", \"message\": \"로그인 시간이 만료되었습니다.\", \"status\": 401}");
+      return;
     }
     try {
       // 기존 인증 로직
       chain.doFilter(request, response);
     } catch (IllegalArgumentException e) {
-      throw e;
-        // res.setStatus(HttpStatus.UNAUTHORIZED.value());
-        // res.setContentType("application/json");
-        // res.getWriter().write(
-        //     "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
-        // );
+      
+        res.setStatus(HttpStatus.UNAUTHORIZED.value());
+        res.setContentType("application/json");
+        res.getWriter().write(
+            "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
+        );
     }
   }
 }
