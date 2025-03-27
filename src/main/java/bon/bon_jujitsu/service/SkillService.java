@@ -2,23 +2,17 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.Skill;
-import bon.bon_jujitsu.domain.SkillImage;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.SkillRequest;
-import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.response.SkillResponse;
 import bon.bon_jujitsu.dto.update.SkillUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.SkillRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +21,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -74,8 +72,7 @@ public class SkillService {
               .map(postImage -> {
                 // 파일 경로 안전하게 조합
                 String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-                return path + fileName;
+                return path;
               })
               .collect(Collectors.toList());
 
@@ -102,8 +99,7 @@ public class SkillService {
             .map(postImage -> {
               // 파일 경로 안전하게 조합
               String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-              return path + fileName;
+              return path;
             })
             .toList();
 

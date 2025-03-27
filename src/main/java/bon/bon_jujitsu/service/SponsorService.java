@@ -1,17 +1,13 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.Sponsor;
-import bon.bon_jujitsu.domain.SponsorImage;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.SponsorRequest;
-import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
-import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.SponsorRepository;
 import bon.bon_jujitsu.repository.UserRepository;
@@ -69,8 +65,7 @@ public class SponsorService {
               .map(postImage -> {
                 // 파일 경로 안전하게 조합
                 String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-                return path + fileName;
+                return path;
               })
               .collect(Collectors.toList());
 
@@ -96,8 +91,7 @@ public class SponsorService {
             .map(postImage -> {
               // 파일 경로 안전하게 조합
               String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-              return path + fileName;
+              return path;
             })
             .collect(Collectors.toList());
 

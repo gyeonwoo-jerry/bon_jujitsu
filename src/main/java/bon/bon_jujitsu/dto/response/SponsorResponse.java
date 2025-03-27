@@ -1,7 +1,7 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Sponsor;
-import bon.bon_jujitsu.domain.SponsorImage;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;

@@ -1,16 +1,13 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.News;
-import bon.bon_jujitsu.domain.NewsImage;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.NewsRequest;
-import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.response.NewsResponse;
 import bon.bon_jujitsu.dto.update.NewsUpdate;
-import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NewsRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
@@ -68,8 +65,7 @@ public class NewsService {
               .map(postImage -> {
                 // 파일 경로 안전하게 조합
                 String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-                return path + fileName;
+                return path;
               })
               .collect(Collectors.toList());
 
@@ -96,8 +92,7 @@ public class NewsService {
             .map(postImage -> {
               // 파일 경로 안전하게 조합
               String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-              return path + fileName;
+              return path;
             })
             .toList();
 

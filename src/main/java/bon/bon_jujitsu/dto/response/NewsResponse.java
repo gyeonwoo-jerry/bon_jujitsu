@@ -1,10 +1,10 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.News;
-import bon.bon_jujitsu.domain.NewsImage;
+import lombok.Builder;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Builder;
 
 @Builder
 public record NewsResponse(

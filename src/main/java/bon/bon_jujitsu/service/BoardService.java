@@ -71,8 +71,7 @@ public class BoardService {
               .map(postImage -> {
                 // 파일 경로 안전하게 조합
                 String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-                return path + fileName;
+                return path;
               })
               .collect(Collectors.toList());
 
@@ -100,8 +99,7 @@ public class BoardService {
             .stream()
             .map(postImage -> {
               String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              String fileName = Optional.ofNullable(postImage.getOriginalFileName()).orElse("");
-              return path + fileName;
+              return path;
             })
             .toList();
 

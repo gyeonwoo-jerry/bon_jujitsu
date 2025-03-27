@@ -45,20 +45,22 @@ public class ItemController {
   @GetMapping("/items")
   public ResponseEntity<PageResponse<ItemResponse>> getItems (
       @RequestParam(defaultValue = "0", name = "page") int page,
-      @RequestParam(defaultValue = "10", name = "size") int size
+      @RequestParam(defaultValue = "10", name = "size") int size,
+      @AuthenticationUserId Long userId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(itmeService.getItems(page, size));
+        .body(itmeService.getItems(page, size, userId));
   }
 
   @GetMapping("/items/{itemId}")
   public ResponseEntity<ItemResponse> getItem (
-      @PathVariable("itemId") Long itemId
+      @PathVariable("itemId") Long itemId,
+      @AuthenticationUserId Long userId
   ) {
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(itmeService.getItem(itemId));
+        .body(itmeService.getItem(itemId, userId));
   }
 
   @PatchMapping("/items/{itemId}")

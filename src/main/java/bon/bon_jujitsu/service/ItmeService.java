@@ -4,18 +4,13 @@ import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemImage;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
-import bon.bon_jujitsu.dto.response.ItemResponse;
-import bon.bon_jujitsu.dto.request.ItemRequest;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.common.Status;
+import bon.bon_jujitsu.dto.request.ItemRequest;
+import bon.bon_jujitsu.dto.response.ItemResponse;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +54,12 @@ public class ItmeService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ItemResponse> getItems(int page, int size) {
+  public PageResponse<ItemResponse> getItems(int page, int size, Long userId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+
+    if (!EnumSet.of(UserRole.ADMIN, UserRole.OWNER, UserRole.USER).contains(user.getUserRole())) {
+      throw new IllegalArgumentException("잘못된 사용자 역할입니다.");
+    }
 
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
@@ -84,7 +87,13 @@ public class ItmeService {
   }
 
   @Transactional(readOnly = true)
-  public ItemResponse getItem(Long itemId) {
+  public ItemResponse getItem(Long itemId, Long userId) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+
+    if (!EnumSet.of(UserRole.ADMIN, UserRole.OWNER, UserRole.USER).contains(user.getUserRole())) {
+      throw new IllegalArgumentException("잘못된 사용자 역할입니다.");
+    }
+
     Item item = itemRepository.findById(itemId).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     ItemResponse itemResponse = ItemResponse.fromEntity(item);

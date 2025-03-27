@@ -13,7 +13,6 @@ import org.hibernate.annotations.Where;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Where(clause = "is_deleted = false")
 @Table(name = "user_image")
 public class UserImage extends Timestamped {
     @Id
@@ -23,15 +22,10 @@ public class UserImage extends Timestamped {
     @Column(nullable = false)
     private String imagePath;
 
+    @Column(nullable = false)
+    private String originalFileName;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean isDeleted = false;
-
-    public void softDelete() {
-        this.isDeleted = true;
-    }
 }

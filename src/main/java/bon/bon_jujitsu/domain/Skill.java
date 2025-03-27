@@ -48,10 +48,6 @@ public class Skill extends Timestamped {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  @Builder.Default
-  @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<SkillImage> images = new ArrayList<>();
-
   public void updateSkill(SkillUpdate skillUpdate) {
     skillUpdate.title().ifPresent(title -> {
       if (!title.isBlank()) this.title = title;

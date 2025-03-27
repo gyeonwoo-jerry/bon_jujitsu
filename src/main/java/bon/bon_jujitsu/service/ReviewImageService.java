@@ -4,9 +4,12 @@ import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.ReviewImage;
 import bon.bon_jujitsu.repository.ReviewImageRepository;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +37,13 @@ public class ReviewImageService {
       String uploads = filepath+"review/";
 
       for (MultipartFile image : images) {
+        String originalFileName = image.getOriginalFilename();
         String dbFilePath = saveImage(image, uploads);
 
         ReviewImage reviewImage = ReviewImage.builder()
             .review(review)
             .imagePath(dbFilePath)
+            .originalFileName(originalFileName)
             .build();
 
         reviewImageRepository.save(reviewImage);
@@ -49,17 +54,25 @@ public class ReviewImageService {
   }
 
   private String saveImage(MultipartFile image, String uploads) throws IOException {
-    String fileName = UUID.randomUUID().toString().replace("-", "") + "_" + image.getOriginalFilename();
+    String originalFileName = image.getOriginalFilename();
+    String uuid = UUID.randomUUID().toString().replace("-", "");
+    String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")); // "20250326"
 
-    String filePath = uploads + fileName;
+    // 확장자 추출
+    String extension = "";
+    if (originalFileName != null && originalFileName.contains(".")) {
+      extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+    }
 
-    String dbFilepath = filepath + fileName;
+    String fileName = datePrefix + "_" + uuid + extension; // UUID 뒤에 확장자만 붙임
+
+    String filePath = uploads + fileName; // 실제 저장 경로
 
     Path path = Paths.get(filePath);
-    Files.createDirectories(path.getParent());
-    Files.write(path, image.getBytes());
+    Files.createDirectories(path.getParent()); // 디렉토리 생성
+    Files.write(path, image.getBytes()); // 파일 저장
 
-    return dbFilepath;
+    return filePath; // DB에 저장할 파일 경로 반환
   }
 
   public void updateImages(Review review, List<MultipartFile> newImages) {
@@ -73,7 +86,7 @@ public class ReviewImageService {
     // 2. 기존 이미지 파일 삭제 및 엔티티 삭제
     for (ReviewImage existingImage : existingImages) {
       // 물리적 파일 삭제
-      deletePhysicalFile(existingImage.getImagePath());
+      deletePhysicalFile(existingImage.getImagePath(), existingImage.getOriginalFileName());
       // 엔티티 삭제
       reviewImageRepository.delete(existingImage);
     }
@@ -82,12 +95,25 @@ public class ReviewImageService {
     uploadImage(review, newImages);
   }
 
-  private void deletePhysicalFile(String dbFilePath) {
+  private void deletePhysicalFile(String dbDirPath, String originalFileName) {
     try {
-      // DB에 저장된 경로로부터 실제 파일 경로 계산
-      String actualFilePath = dbFilePath;
-      Path path = Paths.get(actualFilePath);
-      Files.deleteIfExists(path);
+      // 기존의 확장자 추출 로직 유지
+      String extension = "";
+      if (originalFileName != null && originalFileName.contains(".")) {
+        extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+      }
+
+      // 디렉토리 경로에서 마지막에 저장된 파일 찾기
+      Path dirPath = Paths.get(dbDirPath);
+
+      // 해당 디렉토리에서 날짜_UUID + 확장자 패턴의 파일 찾기
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath,
+              "*_*" + extension)) {
+        for (Path entry : stream) {
+          Files.deleteIfExists(entry);
+          break; // 첫 번째 매칭되는 파일만 삭제
+        }
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }

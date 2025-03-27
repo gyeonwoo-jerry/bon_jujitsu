@@ -44,15 +44,9 @@ public class Sponsor extends Timestamped {
   @Column(nullable = false)
   private boolean isDeleted = false;
 
-
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
-
-  @Builder.Default
-  @OneToMany(mappedBy = "sponsor", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<SponsorImage> images = new ArrayList<>();
 
   public void updateSponsor(SponsorUpdate sponsorUpdate) {
     sponsorUpdate.title().ifPresent(title -> {
