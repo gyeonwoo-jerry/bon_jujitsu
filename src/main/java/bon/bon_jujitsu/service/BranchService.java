@@ -39,6 +39,7 @@ public class BranchService {
         .region(request.region())
         .address(request.address())
         .area(request.area())
+        .content(request.content())
         .build();
 
     branchRepository.save(branch);
@@ -54,8 +55,12 @@ public class BranchService {
             .findFirst()
             .orElse(null);
 
-    BranchResponse branchResponse = BranchResponse.from(branch, owner);
-    return branchResponse;
+    User coach = branch.getUsers().stream()
+            .filter(user -> UserRole.COACH.equals(user.getUserRole()))
+            .findFirst()
+            .orElse(null);
+
+      return BranchResponse.from(branch, owner, coach);
   }
 
 

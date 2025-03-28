@@ -146,4 +146,23 @@ public class NoticeService {
 
     notice.softDelte();
   }
+
+  public NoticeResponse getMainNotice(Long branchId) {
+    Branch branch = branchRepository.findById(branchId).orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+
+    Notice notice = noticeRepository.findTopByBranchOrderByCreatedAtDesc(branch)
+            .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
+
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
+            .stream()
+            .map(postImage -> {
+              // 파일 경로 안전하게 조합
+              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+              return path;
+            })
+            .toList();
+
+    NoticeResponse noticeResponse = NoticeResponse.fromEntity(notice, imagePaths);
+    return noticeResponse;
+  }
 }

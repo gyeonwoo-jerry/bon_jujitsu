@@ -1,15 +1,11 @@
 package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
-import bon.bon_jujitsu.dto.common.ListResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

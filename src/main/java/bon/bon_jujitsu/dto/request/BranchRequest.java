@@ -8,6 +8,8 @@ public record BranchRequest (
     @NotBlank(message = "체육관 주소를 입력해주세요")
     String address,
     @NotBlank(message = "도, 시, 군 단위를 입력해주세요")
-    String area
+    String area,
+    @NotBlank(message = "지부에 관한 설명을 입력해주세요")
+    String content
 ) {
 }

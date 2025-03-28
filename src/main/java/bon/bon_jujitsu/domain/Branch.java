@@ -34,6 +34,9 @@ public class Branch extends Timestamped {
   @Column(unique = true, nullable = false)
   private String area;
 
+  @Column(nullable = false)
+  private String content;
+
   @Builder.Default
   @Column(nullable = false)
   private boolean isDeleted = false;
