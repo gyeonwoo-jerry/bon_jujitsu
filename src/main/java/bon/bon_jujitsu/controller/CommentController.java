@@ -2,8 +2,6 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.dto.common.ApiResponse;
-import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.CommentRequest;
 import bon.bon_jujitsu.dto.response.CommentResponse;
 import bon.bon_jujitsu.dto.update.CommentUpdate;
@@ -12,9 +10,6 @@ import bon.bon_jujitsu.service.CommentService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;

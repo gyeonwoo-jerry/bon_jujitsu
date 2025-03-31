@@ -1,8 +1,11 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.*;
+import bon.bon_jujitsu.domain.Item;
+import bon.bon_jujitsu.domain.Order;
+import bon.bon_jujitsu.domain.OrderStatus;
+import bon.bon_jujitsu.domain.Review;
+import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
 import bon.bon_jujitsu.dto.update.ReviewUpdate;
@@ -10,17 +13,19 @@ import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.ReviewRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

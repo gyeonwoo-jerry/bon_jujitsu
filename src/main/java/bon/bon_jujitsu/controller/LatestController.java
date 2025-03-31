@@ -1,7 +1,6 @@
 package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
-import bon.bon_jujitsu.dto.common.ListResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.response.LatestItemResponse;
 import bon.bon_jujitsu.dto.response.NoticeResponse;
@@ -9,7 +8,11 @@ import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.ItemService;
 import bon.bon_jujitsu.service.NoticeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")

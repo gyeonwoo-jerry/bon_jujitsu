@@ -19,10 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
   Page<Order> findAllByOrderStatusOrderByCreatedAtDesc(OrderStatus orderStatus, PageRequest pageRequest);
 
-  Optional<Order> findById(Long id);
-
   @Query("SELECT o FROM Order o JOIN o.orderItems oi WHERE o.user.id = :userId AND oi.item.id = :itemId ORDER BY o.createdAt DESC")
   Optional<Order> findLatestByUserAndItemId(@Param("userId") Long userId, @Param("itemId") Long itemId);
 
-  List<Order> findAllByOrderStatus(OrderStatus orderStatus);
 }

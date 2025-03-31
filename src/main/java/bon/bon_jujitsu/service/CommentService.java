@@ -3,18 +3,20 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Comment;
 import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.CommentRequest;
 import bon.bon_jujitsu.dto.response.CommentResponse;
 import bon.bon_jujitsu.dto.update.CommentUpdate;
-import bon.bon_jujitsu.repository.*;
-
+import bon.bon_jujitsu.repository.BoardRepository;
+import bon.bon_jujitsu.repository.CommentRepository;
+import bon.bon_jujitsu.repository.NewsRepository;
+import bon.bon_jujitsu.repository.NoticeRepository;
+import bon.bon_jujitsu.repository.SponsorRepository;
+import bon.bon_jujitsu.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

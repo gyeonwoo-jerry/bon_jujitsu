@@ -2,7 +2,6 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.OrderRequest;
 import bon.bon_jujitsu.dto.response.OrderResponse;
 import bon.bon_jujitsu.dto.update.OrderUpdate;
@@ -10,8 +9,6 @@ import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
