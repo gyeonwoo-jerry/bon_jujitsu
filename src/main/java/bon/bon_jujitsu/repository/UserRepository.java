@@ -7,10 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
   Optional<User> findByIdAndIsDeletedFalse(Long id);
 
@@ -22,11 +21,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Page<User> findAllByIsDeletedFalse(Pageable pageable);
 
-  Page<User> findAllByIsDeletedTrue(PageRequest pageRequest);
-
   Page<User> findAllByBranch_RegionAndIsDeletedFalseAndUserRoleNot(
-          String region, UserRole role, Pageable pageable
+      String region, UserRole role, Pageable pageable
   );
 
-  Page<User> findAllByBranch_RegionAndIsDeletedFalseAndUserRole(String region, UserRole userRole, PageRequest pageRequest);
+  Page<User> findAllByBranch_RegionAndIsDeletedFalseAndUserRole(
+      String region, UserRole userRole, PageRequest pageRequest
+  );
+
+  Page<User> findAllByBranch_IdAndIsDeletedFalse(Long id, PageRequest pageRequest);
+
+  Page<User> findAllByIsDeletedTrue(PageRequest pageRequest);
 }

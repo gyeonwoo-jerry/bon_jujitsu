@@ -4,7 +4,9 @@ import bon.bon_jujitsu.config.PasswordEncoder;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
+import bon.bon_jujitsu.dto.UserRoleRequest;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.GetAllUserRequest;
 import bon.bon_jujitsu.dto.request.LoginRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,7 +65,7 @@ public class UserService {
     }
 
     // 휴대전화 번호 검사
-    if (req.phoneNum().toString().length() < 10) {
+    if (req.phoneNum().length() < 10) {
       throw new IllegalArgumentException("유효한 휴대전화 번호를 입력해주세요.");
     }
 
@@ -112,77 +115,77 @@ public class UserService {
     return new LoginResponse(token, user.getUserRole(), user.getName());
   }
 
-  public void assignOwnerRole(Long adminUserId, Long targetUserId) {
-    User targetUser = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
-    User admin = userRepository.findById(adminUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
+  public void assignRole(Long loggedInUserId, UserRoleRequest request) {
+    User loggedInUser = userRepository.findById(loggedInUserId)
+        .orElseThrow(() -> new IllegalArgumentException("로그인한 회원을 찾을 수 없습니다."));
 
-    if(admin.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관리자 권한이 없습니다.");
+    User targetUser = userRepository.findByIdAndIsDeletedFalse(request.targetUserId())
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+    // ADMIN이 아니라면 OWNER인지 확인
+    if (loggedInUser.getUserRole() != UserRole.ADMIN && loggedInUser.getUserRole() != UserRole.OWNER) {
+      throw new IllegalArgumentException("권한이 없습니다.");
     }
 
-    if (targetUser.getUserRole() == UserRole.OWNER) {
-      throw new IllegalArgumentException("이미 관장(OWNER)으로 등록된 회원입니다.");
+    // OWNER라면 같은 지부의 유저만 변경 가능
+    if (loggedInUser.getUserRole() == UserRole.OWNER && !loggedInUser.getBranch().equals(targetUser.getBranch())) {
+      throw new IllegalArgumentException("해당 지부의 회원만 역할을 변경할 수 있습니다.");
     }
 
-    targetUser.setUserRole(UserRole.OWNER);
-
-    userRepository.save(targetUser);
+    // OWNER가 변경 가능한 역할 제한 (PENDING, USER, COACH만 가능)
+    if (loggedInUser.getUserRole() == UserRole.OWNER) {
+      List<UserRole> allowedRoles = List.of(UserRole.PENDING, UserRole.USER, UserRole.COACH);
+      if (!allowedRoles.contains(request.role())) {
+        throw new IllegalArgumentException("OWNER는 PENDING, USER, COACH 역할만 변경할 수 있습니다.");
+      }
     }
 
-  @Transactional(readOnly = true)
-  public PageResponse<UserResponse> getUsers(int page, int size, Long userId) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
-
-    if(user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관리자 권한이 없습니다.");
+    // 이미 같은 역할로 변경하려는 경우 예외 처리
+    if (targetUser.getUserRole() == request.role()) {
+      throw new IllegalArgumentException("이미 " + request.role() + "으로 등록된 회원입니다.");
     }
 
-    if(page < 1 || size < 1) {
-      throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
-    }
-
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-    Page<User> userPage = userRepository.findAllByIsDeletedFalse(pageRequest);
-
-    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
+    // 역할 변경
+    targetUser.setUserRole(request.role());
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<UserResponse> getDeletedUsers(int page, int size, Long userId) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
+  public PageResponse<UserResponse> getUsers(int page, int size, Long userId, GetAllUserRequest request) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-    if(user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관리자 권한이 없습니다.");
+    if (user.getUserRole() != UserRole.ADMIN && user.getUserRole() != UserRole.OWNER) {
+      throw new IllegalArgumentException("관리자 또는 지부장(Owner) 권한이 없습니다.");
     }
 
-    if(page < 1 || size < 1) {
+    if (page < 1 || size < 1) {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<User> userPage = userRepository.findAllByIsDeletedTrue(pageRequest);
+    // 검색 조건 가져오기
+    String name = (request != null) ? request.name() : null;
+    UserRole role = (request != null) ? request.role() : null;
+    Long branchId = (request != null) ? request.branchId() : null;
 
-    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
-  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<UserResponse> getMyUsers(Long userId, int page, int size) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
-
-    if(page < 1 || size < 1) {
-      throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
+    // Owner인 경우, 자신의 지부(branchId) 내에서만 검색 가능하도록 제한
+    if (user.getUserRole() == UserRole.OWNER) {
+      branchId = user.getBranch().getId(); // Owner의 지부 ID로 고정
     }
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("관장 권한이 없습니다.");
+    // 검색 조건이 없으면 전체 조회 (Owner는 본인 지부만)
+    if (name == null && role == null && branchId == null) {
+      Page<User> userPage = (user.getUserRole() == UserRole.ADMIN) ?
+          userRepository.findAllByIsDeletedFalse(pageRequest) :
+          userRepository.findAllByBranch_IdAndIsDeletedFalse(user.getBranch().getId(), pageRequest);
+
+      return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRoleNot(
-            user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
+    // 검색 조건이 있을 경우 Specification 사용
+    Specification<User> spec = UserSpecification.withFilters(name, role, branchId);
+    Page<User> userPage = userRepository.findAll(spec, pageRequest);
 
     return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
@@ -191,8 +194,7 @@ public class UserService {
   public UserResponse getProfile(Long userId) {
     User profile = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-    UserResponse userResponse = UserResponse.fromEntity(profile);
-    return userResponse;
+    return UserResponse.fromEntity(profile);
   }
 
   public void updateProfile(Long userId, ProfileUpdateRequest request, List<MultipartFile> images) {
@@ -228,60 +230,21 @@ public class UserService {
     user.softDelete();
   }
 
-//  public Status assignAdmin(Long targetUserId) {
-//    User user = userRepository.findByIdAndIsDeletedFalse(targetUserId)
-//        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-//
-//    if (user.getUserRole() == UserRole.ADMIN) {
-//      throw new IllegalArgumentException("이미 관리자(ADMIN) 으로 등록된 회원입니다.");
-//    }
-//
-//    user.setUserRole(UserRole.ADMIN);
-//
-//    userRepository.save(user);
-//
-//    return Status.builder()
-//        .status(HttpStatus.CREATED.value())
-//        .message("관리자로 등록되었습니다.")
-//        .build();
-//  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<UserResponse> getPendingUsers(Long userId, int page, int size) {
+  public PageResponse<UserResponse> getDeletedUsers(int page, int size, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
+
+    if (user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("관리자 권한이 없습니다.");
+    }
 
     if(page < 1 || size < 1) {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
     }
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("관장 권한이 없습니다.");
-    }
-
     PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<User> userPage = userRepository.findAllByBranch_RegionAndIsDeletedFalseAndUserRole(
-            user.getBranch().getRegion(), UserRole.PENDING, pageRequest);
+    Page<User> deletedUsers = userRepository.findAllByIsDeletedTrue(pageRequest);
 
-    return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
-  }
-
-  public void assignUser(Long ownerUserId, Long targetUserId) {
-    User user = userRepository.findByIdAndIsDeletedFalse(targetUserId).orElseThrow(()-> new IllegalArgumentException("존재하지 않는 회원입니다."));
-    User owner = userRepository.findById(ownerUserId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을 수 없습니다."));
-
-    if(owner.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("관장 권한이 없습니다.");
-    }
-
-    if (!owner.getBranch().equals(user.getBranch())) {
-      throw new IllegalArgumentException("해당 지부의 회원만 승인 할 수 있습니다.");
-    }
-
-    if (user.getUserRole() == UserRole.USER) {
-      throw new IllegalArgumentException("이미 유저(USER)으로 등록된 회원입니다.");
-    }
-
-    user.setUserRole(UserRole.USER);
+    return PageResponse.fromPage(deletedUsers.map(UserResponse::fromEntity));
   }
 }
