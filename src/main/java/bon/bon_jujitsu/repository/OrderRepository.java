@@ -15,11 +15,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-  Page<Order> findAllByUserId(Long id, PageRequest pageRequest);
-
   Page<Order> findAllByOrderStatusOrderByCreatedAtDesc(OrderStatus orderStatus, PageRequest pageRequest);
 
   @Query("SELECT o FROM Order o JOIN o.orderItems oi WHERE o.user.id = :userId AND oi.item.id = :itemId ORDER BY o.createdAt DESC")
   Optional<Order> findLatestByUserAndItemId(@Param("userId") Long userId, @Param("itemId") Long itemId);
-
 }

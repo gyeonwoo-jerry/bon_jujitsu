@@ -73,4 +73,15 @@ public class Item extends Timestamped {
   public void softDelete() {
     this.isDeleted = true;
   }
+
+  public void decreaseAmount(int quantity) {
+    if (this.amount < quantity) {
+      throw new IllegalArgumentException("재고 부족: " + this.name);
+    }
+    this.amount -= quantity;
+  }
+
+  public void updateAmount(int newAmount) {
+    this.amount = newAmount;
+  }
 }

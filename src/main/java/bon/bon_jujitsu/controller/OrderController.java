@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.OrderRequest;
@@ -34,22 +35,14 @@ public class OrderController {
     return ApiResponse.success("주문 완료", null);
   }
 
-  @GetMapping("/orders")
-  public ApiResponse<PageResponse<OrderResponse>> getMyOrders (
-      @RequestParam(defaultValue = "0", name = "page") int page,
-      @RequestParam(defaultValue = "10", name = "size") int size,
-      @AuthenticationUserId Long id
-  ) {
-    return ApiResponse.success("나의 주문 조회 완료", orderService.getMyOrders(page, size, id));
-  }
-
   @GetMapping("/orders/admin")
-  public ApiResponse<PageResponse<OrderResponse>> getWaitingOrders (
+  public ApiResponse<PageResponse<OrderResponse>> getOrdersByStatus (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
+      @RequestParam(name = "status", required = false) OrderStatus status,
       @AuthenticationUserId Long id
   ) {
-    return ApiResponse.success("웨이팅 주문 조회 완료", orderService.getWaitingOrders(page, size, id));
+    return ApiResponse.success("주문 조회 완료", orderService.getOrdersByStatus(page, size, id, status));
   }
 
   @PatchMapping("/orders/admin")

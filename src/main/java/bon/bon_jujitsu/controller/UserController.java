@@ -67,5 +67,7 @@ public class UserController {
     usersService.deleteUser(userId, request);
     return ApiResponse.success("프로필 삭제 성공", null);
   }
+
+
 }
 
