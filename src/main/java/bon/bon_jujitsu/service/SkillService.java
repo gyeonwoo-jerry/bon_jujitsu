@@ -1,6 +1,5 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.Skill;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -37,7 +36,7 @@ public class SkillService {
   public void createSkill(Long userId, SkillRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
+    branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
     if (user.getUserRole() != UserRole.OWNER) {
@@ -99,8 +98,7 @@ public class SkillService {
             })
             .toList();
 
-    SkillResponse skillResponse = SkillResponse.fromEntity(skill, imagePaths);
-    return skillResponse;
+    return SkillResponse.fromEntity(skill, imagePaths);
   }
 
   public void updateSkill(SkillUpdate update, Long userId, Long skillId, List<MultipartFile> images) {

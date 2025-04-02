@@ -96,9 +96,7 @@ public class ItemService {
 
     Item item = itemRepository.findById(itemId).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    ItemResponse itemResponse = ItemResponse.fromEntity(item);
-
-    return itemResponse;
+    return ItemResponse.fromEntity(item);
   }
 
   public void updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images) {

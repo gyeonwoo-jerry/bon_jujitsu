@@ -65,7 +65,7 @@ public class CartService {
     }
 
     // 수량 직접 설정 (덮어쓰기)
-    cartItem.setQuantity(quantity);
+    cartItem.updateQuantity(quantity);
   }
 
   public void removeCartItem(Long userId, Long itemId) {

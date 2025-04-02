@@ -92,8 +92,7 @@ public class SponsorService {
             })
             .collect(Collectors.toList());
 
-    SponsorResponse sponsorResponse = SponsorResponse.fromEntity(sponsor, imagePaths);
-    return sponsorResponse;
+    return SponsorResponse.fromEntity(sponsor, imagePaths);
   }
 
 

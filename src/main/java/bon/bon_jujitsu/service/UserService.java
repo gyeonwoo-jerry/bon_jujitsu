@@ -146,7 +146,7 @@ public class UserService {
     }
 
     // 역할 변경
-    targetUser.setUserRole(request.role());
+    targetUser.updateUserRole(request.role());
   }
 
   @Transactional(readOnly = true)
@@ -214,7 +214,7 @@ public class UserService {
     request.branchId().ifPresent(branchId -> {
       Branch newBranch = branchRepository.findById(branchId)
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지사입니다."));
-      profile.setBranch(newBranch);
+      profile.updateBranch(newBranch);
     });
 
     userImageService.updateImages(profile, images);

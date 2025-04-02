@@ -168,11 +168,11 @@ public class User extends Timestamped {
     }
   }
 
-  public void setUserRole(UserRole userRole) {
+  public void updateUserRole(UserRole userRole) {
     this.userRole = userRole;
   }
 
-  public void setBranch(Branch branch) {
+  public void updateBranch(Branch branch) {
     this.branch = branch;
   }
 }

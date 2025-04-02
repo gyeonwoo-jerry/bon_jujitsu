@@ -45,7 +45,7 @@ public class Cart extends Timestamped {
     // 이미 있는 상품인지 확인
     for (CartItem cartItem : cartItems) {
       if (cartItem.getItem().getId().equals(item.getId())) {
-        cartItem.updateQuantity(quantity);
+        cartItem.addQuantity(quantity);
         if (cartItem.getPrice() != item.getPrice()) {
           cartItem.updatePrice(item.getPrice());
         }

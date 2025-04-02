@@ -44,12 +44,12 @@ public class CartItem {
   }
 
   // 수량 업데이트
-  public void updateQuantity(int additionalQuantity) {
+  public void addQuantity(int additionalQuantity) {
     this.quantity += additionalQuantity;
   }
 
   // 수량 설정
-  public void setQuantity(int quantity) {
+  public void updateQuantity(int quantity) {
     this.quantity = quantity;
   }
 

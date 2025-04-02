@@ -93,8 +93,7 @@ public class NewsService {
             })
             .toList();
 
-    NewsResponse newsResponse = NewsResponse.fromEntity(news, imagePaths);
-    return newsResponse;
+    return NewsResponse.fromEntity(news, imagePaths);
   }
 
   public void updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images) {

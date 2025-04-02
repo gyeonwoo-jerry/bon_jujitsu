@@ -106,7 +106,8 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<OrderResponse> getOrdersByStatus(int page, int size, Long id, OrderStatus status) {
+  public PageResponse<OrderResponse> getOrdersByStatus(int page, int size, Long id,
+      OrderStatus status) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -117,10 +118,12 @@ public class OrderService {
     // 상태값이 없으면 기본값(WAITING) 사용
     OrderStatus orderStatus = (status != null) ? status : OrderStatus.WAITING;
 
-    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size,
+        Sort.by(Sort.Direction.DESC, "createdAt"));
 
     // 동적으로 주문 상태 검색
-    Page<Order> orders = orderRepository.findAllByOrderStatusOrderByCreatedAtDesc(orderStatus, pageRequest);
+    Page<Order> orders = orderRepository.findAllByOrderStatusOrderByCreatedAtDesc(orderStatus,
+        pageRequest);
 
     Page<OrderResponse> orderResponses = orders.map(order -> new OrderResponse(
         order.getId(),
@@ -146,13 +149,15 @@ public class OrderService {
   }
 
   public void updateOrderByAdmin(OrderUpdate request, Long userId) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
     }
 
-    Order order = orderRepository.findById(request.orderId()).orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
+    Order order = orderRepository.findById(request.orderId())
+        .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
 
     OrderStatus currentStatus = order.getOrderStatus();
     OrderStatus requestedStatus = request.status();
@@ -185,7 +190,7 @@ public class OrderService {
         break;
 
       case COMPLETED:
-          throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
+        throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
 
       case RETURN_REQUESTED:
         // RETURN_REQUESTED상태에서 RETURNING으로 변경
