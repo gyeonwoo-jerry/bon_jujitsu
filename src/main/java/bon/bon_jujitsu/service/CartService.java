@@ -3,11 +3,13 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Cart;
 import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Item;
+import bon.bon_jujitsu.domain.ItemOption;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.request.CartRequest;
 import bon.bon_jujitsu.dto.response.CartResponse;
 import bon.bon_jujitsu.repository.CartItemRepository;
 import bon.bon_jujitsu.repository.CartRepository;
+import bon.bon_jujitsu.repository.ItemOptionRepository;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class CartService {
   private final UserRepository userRepository;
   private final ItemRepository itemRepository;
   private final CartItemRepository cartItemRepository;
+  private final ItemOptionRepository itemOptionRepository;
 
   public void createCart(Long userId, CartRequest request) {
     User user = userRepository.findById(userId)
@@ -31,12 +34,17 @@ public class CartService {
     Item item = itemRepository.findById(request.itemId())
         .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
+    ItemOption itemOption = itemOptionRepository.findById(request.itemOptionId())
+        .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
+
     // 사용자의 장바구니 찾기, 없으면 새로 생성
     Cart cart = cartRepository.findByUser(user)
         .orElseGet(() -> cartRepository.save(Cart.builder().user(user).build()));
 
     // 장바구니에 상품 추가 (이미 있으면 수량 업데이트)
-    cart.addItem(item, request.quantity());
+    cart.addItem(item, itemOption, request.quantity());
+
+    cartRepository.save(cart);
   }
 
   public CartResponse getCart(Long userId) {
@@ -66,6 +74,8 @@ public class CartService {
 
     // 수량 직접 설정 (덮어쓰기)
     cartItem.updateQuantity(quantity);
+
+    cartRepository.save(cart);
   }
 
   public void removeCartItem(Long userId, Long itemId) {

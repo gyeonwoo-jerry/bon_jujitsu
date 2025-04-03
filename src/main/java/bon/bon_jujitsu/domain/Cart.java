@@ -38,13 +38,15 @@ public class Cart extends Timestamped {
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<CartItem> cartItems = new ArrayList<>();
 
-  public void addItem(Item item, int quantity) {
-    if (cartItems == null) { //null 체크 후 초기화
+  public void addItem(Item item, ItemOption itemOption, int quantity) {
+    if (cartItems == null) { // null 체크 후 초기화
       cartItems = new ArrayList<>();
     }
-    // 이미 있는 상품인지 확인
+
+    // 이미 있는 상품인지 확인 (아이템과 옵션이 모두 동일한지)
     for (CartItem cartItem : cartItems) {
-      if (cartItem.getItem().getId().equals(item.getId())) {
+      if (cartItem.getItem().getId().equals(item.getId()) &&
+          cartItem.getItemOption().getId().equals(itemOption.getId())) {
         cartItem.addQuantity(quantity);
         if (cartItem.getPrice() != item.getPrice()) {
           cartItem.updatePrice(item.getPrice());
@@ -57,6 +59,7 @@ public class Cart extends Timestamped {
     CartItem cartItem = CartItem.builder()
         .cart(this)
         .item(item)
+        .itemOption(itemOption)
         .quantity(quantity)
         .price(item.getPrice()) // 현재 상품 가격 저장
         .build();

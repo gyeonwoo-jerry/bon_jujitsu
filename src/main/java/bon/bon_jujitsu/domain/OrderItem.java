@@ -34,12 +34,17 @@ public class OrderItem {
   @JoinColumn(name = "item_id")
   private Item item;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "item_option_id", nullable = false)
+  private ItemOption itemOption;
+
   @Builder
-  public OrderItem(int quantity, int price, Order order, Item item) {
+  public OrderItem(int quantity, int price, Order order, Item item, ItemOption itemOption) {
     this.quantity = quantity;
     this.price = price;
     this.order = order;
     this.item = item;
+    this.itemOption = itemOption;
   }
 
   public void changeOrder(Order order) {

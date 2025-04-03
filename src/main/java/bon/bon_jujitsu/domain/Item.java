@@ -1,7 +1,6 @@
 package bon.bon_jujitsu.domain;
 
 import bon.bon_jujitsu.common.Timestamped;
-import bon.bon_jujitsu.dto.update.ItemUpdate;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,9 +34,6 @@ public class Item extends Timestamped {
   private String name;
 
   @Column(nullable = false)
-  private String size;
-
-  @Column(nullable = false)
   private String content;
 
   @Column(nullable = false)
@@ -45,9 +41,6 @@ public class Item extends Timestamped {
 
   @Column
   private int sale;
-
-  @Column(nullable = false)
-  private int amount;
 
   @Builder.Default
   @Column(nullable = false)
@@ -61,27 +54,31 @@ public class Item extends Timestamped {
   @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ItemImage> images = new ArrayList<>();
 
-  public void updateItem(ItemUpdate update) {
-    update.name().ifPresent(value -> this.name = value);
-    update.size().ifPresent(value -> this.size = value);
-    update.content().ifPresent(value -> this.content = value);
-    update.price().ifPresent(value -> this.price = value);
-    update.sale().ifPresent(value -> this.sale = value);
-    update.amount().ifPresent(value -> this.amount = value);
+  @Builder.Default
+  @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ItemOption> itemOptions = new ArrayList<>();
+
+  public void updateName(String name) {
+    this.name = name;
+  }
+
+  public void updateContent(String content) {
+    this.content = content;
+  }
+
+  public void updatePrice(int price) {
+    this.price = price;
+  }
+
+  public void updateSale(int sale) {
+    this.sale = sale;
   }
 
   public void softDelete() {
     this.isDeleted = true;
   }
 
-  public void decreaseAmount(int quantity) {
-    if (this.amount < quantity) {
-      throw new IllegalArgumentException("재고 부족: " + this.name);
-    }
-    this.amount -= quantity;
-  }
-
-  public void updateAmount(int newAmount) {
-    this.amount = newAmount;
+  public void addItemOption(ItemOption itemOption) {
+    this.itemOptions.add(itemOption);
   }
 }

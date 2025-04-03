@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Cart;
 import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Item;
+import bon.bon_jujitsu.domain.ItemOption;
 import bon.bon_jujitsu.domain.Order;
 import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
@@ -72,13 +73,18 @@ public class OrderService {
         .payType(request.payType())
         .build();
 
-    // 주문 아이템 생성 및 아이템 재고 차감
     for (CartItem cartItem : cartItems) {
       Item item = cartItem.getItem();
+      ItemOption itemOption = cartItem.getItemOption(); // 선택한 옵션 가져오기
+
+      if (itemOption == null) {
+        throw new IllegalArgumentException("상품 옵션이 선택되지 않았습니다: " + item.getName());
+      }
 
       // 재고 부족 체크
-      if (item.getAmount() < cartItem.getQuantity()) {
-        throw new IllegalArgumentException("재고가 부족한 상품이 있습니다: " + item.getName());
+      if (itemOption.getAmount() < cartItem.getQuantity()) {
+        throw new IllegalArgumentException("재고가 부족한 상품이 있습니다: " + item.getName() +
+            " (" + itemOption.getSize() + ", " + itemOption.getColor() + ")");
       }
 
       // 주문 아이템 생성
@@ -86,14 +92,14 @@ public class OrderService {
           .quantity(cartItem.getQuantity())
           .price(cartItem.getPrice())
           .item(item)
+          .itemOption(itemOption)
           .build();
 
       order.addOrderItem(orderItem);
 
-      // 아이템 재고 차감
-      item.decreaseAmount(cartItem.getQuantity());
+      // 아이템 옵션 재고 차감
+      itemOption.decreaseAmount(cartItem.getQuantity());
     }
-
     orderRepository.save(order);
 
     // 카트에서 아이템 제거
@@ -164,19 +170,24 @@ public class OrderService {
 
     switch (currentStatus) {
       case WAITING:
-        // WAITING상태에서 DELIVERING로 변경 또는 CANCELLED로 변경
+        // WAITING 상태에서 DELIVERING 또는 CANCELLED로 변경
         if (requestedStatus == OrderStatus.DELIVERING) {
           order.UpdateOrderStatus(OrderStatus.DELIVERING);
         } else if (requestedStatus == OrderStatus.CANCELLED) {
           for (OrderItem orderItem : order.getOrderItems()) {
-            Item item = orderItem.getItem();
-            item.updateAmount(item.getAmount() + orderItem.getQuantity());
+            ItemOption itemOption = orderItem.getItemOption(); // 주문된 옵션 가져오기
+
+            if (itemOption == null) {
+              throw new IllegalStateException("해당 주문 아이템에 대한 옵션이 존재하지 않습니다.");
+            }
+
+            // 주문한 수량만큼 재고 복구
+            itemOption.increaseAmount(orderItem.getQuantity());
           }
 
           order.UpdateOrderStatus(OrderStatus.CANCELLED);
-
         } else {
-          throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
+          throw new IllegalArgumentException("상태를 변경할 수 없습니다.");
         }
         break;
 
@@ -241,8 +252,14 @@ public class OrderService {
 
     // 주문 취소 시, 아이템 재고 복구
     for (OrderItem orderItem : order.getOrderItems()) {
-      Item item = orderItem.getItem();
-      item.updateAmount(item.getAmount() + orderItem.getQuantity());
+      ItemOption itemOption = orderItem.getItemOption(); // 주문된 옵션 가져오기
+
+      if (itemOption == null) {
+        throw new IllegalStateException("해당 주문 아이템에 대한 옵션이 존재하지 않습니다.");
+      }
+
+      // 주문한 수량만큼 재고 복구
+      itemOption.increaseAmount(orderItem.getQuantity());
     }
 
     order.UpdateOrderStatus(OrderStatus.CANCELLED);

@@ -31,14 +31,19 @@ public class CartItem {
   @JoinColumn(name = "item_id")
   private Item item;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "item_option_id", nullable = false)
+  private ItemOption itemOption;
+
   private int quantity;
 
   private int price;
 
   @Builder
-  public CartItem(Cart cart, Item item, int quantity, int price) {
+  public CartItem(Cart cart, Item item, ItemOption itemOption, int quantity, int price) {
     this.cart = cart;
     this.item = item;
+    this.itemOption = itemOption;
     this.quantity = quantity;
     this.price = price;
   }

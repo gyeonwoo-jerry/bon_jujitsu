@@ -15,35 +15,36 @@ import java.util.stream.Collectors;
 public record ItemResponse(
     Long id,
     String name,
-    String size,
+    List<ItemOptionResponse> options,
     String content,
     int price,
     int sale,
-    int amount,
     List<ReviewResponse> reviews,
     List<String> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
-
   public static ItemResponse fromEntity(Item item) {
+    List<ItemOptionResponse> optionResponses = item.getItemOptions().stream()
+        .map(ItemOptionResponse::fromEntity)
+        .toList();
+
     return ItemResponse.builder()
         .id(item.getId())
         .name(item.getName())
-        .size(item.getSize())
+        .options(optionResponses)
         .content(item.getContent())
         .price(item.getPrice())
         .sale(item.getSale())
-        .amount(item.getAmount())
-        .reviews(Optional.ofNullable(item.getReviews())  // Null 방지
+        .reviews(Optional.ofNullable(item.getReviews())
             .orElse(Collections.emptyList())
             .stream()
-            .map(review -> new ReviewResponse(review, new ArrayList<>())) // childReviews 추가
+            .map(review -> new ReviewResponse(review, new ArrayList<>()))
             .collect(Collectors.toList()))
         .images(item.getImages().stream().map(ItemImage::getImagePath).toList())
         .createdAt(item.getCreatedAt())
         .modifiedAt(item.getModifiedAt())
         .build();
   }
-
 }
+
