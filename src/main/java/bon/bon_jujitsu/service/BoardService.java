@@ -56,7 +56,7 @@ public class BoardService {
 
     boardRepository.save(board);
 
-    postImageService.uploadImage(board.getId(), "boarde", images);
+    postImageService.uploadImage(board.getId(), "board", images);
   }
 
   @Transactional(readOnly = true)
