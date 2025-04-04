@@ -43,9 +43,10 @@ public class ItemController {
   public ApiResponse<PageResponse<ItemResponse>> getItems (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
-      @AuthenticationUserId Long userId
+      @AuthenticationUserId Long userId,
+      @RequestParam(required = false) String name
   ) {
-    PageResponse<ItemResponse> itemList = itemService.getItems(page, size, userId);
+    PageResponse<ItemResponse> itemList = itemService.getItems(page, size, userId, name);
     return ApiResponse.success("상품 목록 조회 성공", itemList);
   }
 

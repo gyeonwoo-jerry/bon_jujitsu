@@ -5,6 +5,7 @@ import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemOption;
 import bon.bon_jujitsu.domain.User;
+import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.request.CartRequest;
 import bon.bon_jujitsu.dto.response.CartResponse;
 import bon.bon_jujitsu.repository.CartItemRepository;
@@ -31,11 +32,16 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
+    }
+
     Item item = itemRepository.findById(request.itemId())
         .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     ItemOption itemOption = itemOptionRepository.findById(request.itemOptionId())
         .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
+
 
     // 사용자의 장바구니 찾기, 없으면 새로 생성
     Cart cart = cartRepository.findByUser(user)
@@ -51,6 +57,10 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
+    }
+
     Cart cart = cartRepository.findByUser(user)
         .orElseGet(() -> Cart.builder().user(user).build());
 
@@ -60,6 +70,10 @@ public class CartService {
   public void updateCartItemQuantity(Long userId, Long cartItemId, int quantity) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
+    }
 
     Cart cart = cartRepository.findByUser(user)
         .orElseThrow(() -> new IllegalArgumentException("장바구니가 존재하지 않습니다."));
@@ -82,6 +96,10 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
+    }
+
     Cart cart = cartRepository.findByUser(user)
         .orElseThrow(() -> new IllegalArgumentException("장바구니가 존재하지 않습니다."));
 
@@ -91,6 +109,10 @@ public class CartService {
   public void clearCart(Long userId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
+    }
 
     Cart cart = cartRepository.findByUser(user)
         .orElseThrow(() -> new IllegalArgumentException("장바구니가 존재하지 않습니다."));

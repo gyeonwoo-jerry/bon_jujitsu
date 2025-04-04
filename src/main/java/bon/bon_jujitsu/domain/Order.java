@@ -53,7 +53,7 @@ public class Order extends Timestamped {
   private String requirement;
 
   @Column(nullable = false)
-  private double totalPrice;
+  private long totalPrice;
 
   @Column(nullable = false)
   private int totalCount;

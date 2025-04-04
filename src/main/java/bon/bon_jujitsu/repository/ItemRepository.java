@@ -10,4 +10,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     Page<Item> findTop4ByOrderByCreatedAtDesc(PageRequest pageRequest);
 
   boolean existsByName(String name);
+
+  Page<Item> findByNameContainingIgnoreCase(String name, PageRequest pageRequest);
 }

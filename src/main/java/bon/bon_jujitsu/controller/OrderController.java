@@ -9,6 +9,7 @@ import bon.bon_jujitsu.dto.update.OrderUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.OrderService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -43,6 +44,16 @@ public class OrderController {
       @AuthenticationUserId Long id
   ) {
     return ApiResponse.success("주문 조회 완료", orderService.getOrdersByStatus(page, size, id, status));
+  }
+
+  @GetMapping("/orders/myself")
+  public ApiResponse<PageResponse<OrderResponse>> getMyOrders (
+      @AuthenticationUserId Long id,
+      @RequestParam(defaultValue = "0", name = "page") int page,
+      @RequestParam(defaultValue = "10", name = "size") int size,
+      @RequestParam(required = false) List<OrderStatus> status
+  ) {
+    return ApiResponse.success("내 주문 조회 완료", orderService.getMyOrders(page, size, id, status));
   }
 
   @PatchMapping("/orders/admin")

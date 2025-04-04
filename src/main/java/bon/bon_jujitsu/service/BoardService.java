@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Board;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
+import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.BoardRequest;
 import bon.bon_jujitsu.dto.response.BoardResponse;
@@ -131,9 +132,14 @@ public class BoardService {
   }
 
   public void deleteBoard(Long userId, Long boardId) {
-    userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+    if (!user.getUserRole().equals(UserRole.ADMIN) &&
+        !board.getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("삭제 권한이 없습니다.");
+    }
 
     board.softDelte();
   }

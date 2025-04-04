@@ -65,7 +65,7 @@ public class ItemService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ItemResponse> getItems(int page, int size, Long userId) {
+  public PageResponse<ItemResponse> getItems(int page, int size, Long userId, String name) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (!EnumSet.of(UserRole.ADMIN, UserRole.OWNER, UserRole.USER).contains(user.getUserRole())) {
@@ -74,7 +74,12 @@ public class ItemService {
 
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Item> items = itemRepository.findAll(pageRequest);
+    Page<Item> items;
+    if (name != null && !name.isBlank()) {
+      items = itemRepository.findByNameContainingIgnoreCase(name, pageRequest); // 🔍 조건 검색
+    } else {
+      items = itemRepository.findAll(pageRequest); // 전체 조회
+    }
 
     Page<ItemResponse> allItems = items.map(ItemResponse::fromEntity);
 

@@ -9,7 +9,6 @@ import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
-import bon.bon_jujitsu.dto.OrderItemDto;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.OrderRequest;
 import bon.bon_jujitsu.dto.response.OrderResponse;
@@ -20,7 +19,6 @@ import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +40,10 @@ public class OrderService {
     User orderUser = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
+    if (orderUser.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 주문 할 수 없습니다.");
+    }
+
     List<Long> cartItemIds = Optional.ofNullable(request.cartItemIds())
         .filter(list -> !list.isEmpty())
         .orElseThrow(() -> new IllegalArgumentException("장바구니에 최소 한 개의 상품이 있어야 합니다."));
@@ -56,8 +58,8 @@ public class OrderService {
         .mapToInt(CartItem::getQuantity)
         .sum();
 
-    double totalPrice = cartItems.stream()
-        .mapToDouble(cartItem -> cartItem.getPrice() * cartItem.getQuantity())
+    long totalPrice = cartItems.stream()
+        .mapToLong(cartItem -> (long) cartItem.getPrice() * cartItem.getQuantity())
         .sum();
 
     Order order = Order.builder()
@@ -131,27 +133,28 @@ public class OrderService {
     Page<Order> orders = orderRepository.findAllByOrderStatusOrderByCreatedAtDesc(orderStatus,
         pageRequest);
 
-    Page<OrderResponse> orderResponses = orders.map(order -> new OrderResponse(
-        order.getId(),
-        order.getName(),
-        order.getAddress(),
-        order.getZipcode(),
-        order.getAddrDetail(),
-        order.getPhoneNum(),
-        order.getRequirement(),
-        order.getTotalPrice(),
-        order.getTotalCount(),
-        order.getPayType(),
-        order.getOrderStatus(),
-        order.getUser().getId(),
-        order.getOrderItems().stream()
-            .map(OrderItemDto::new)
-            .collect(Collectors.toList()),
-        order.getCreatedAt(),
-        order.getModifiedAt()
-    ));
+    return PageResponse.fromPage(orders.map(OrderResponse::fromEntity));
+  }
 
-    return PageResponse.fromPage(orderResponses);
+
+  public PageResponse<OrderResponse> getMyOrders(int page, int size, Long id, List<OrderStatus> status) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+
+    if (user.getUserRole() == UserRole.PENDING) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 주문을 이용 할 수 없습니다.");
+    }
+
+    // 상태값이 없으면 기본 조회 (WAITING, DELIVERING)
+    if (status == null || status.isEmpty()) {
+      status = List.of(OrderStatus.WAITING, OrderStatus.DELIVERING);
+    }
+
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+    Page<Order> orders = orderRepository.findAllByUserAndOrderStatusIn(user, status, pageRequest);
+
+    return PageResponse.fromPage(orders.map(OrderResponse::fromEntity));
   }
 
   public void updateOrderByAdmin(OrderUpdate request, Long userId) {
