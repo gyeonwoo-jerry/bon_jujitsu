@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Comment;
 import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.domain.User;
+import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.request.CommentRequest;
 import bon.bon_jujitsu.dto.response.CommentResponse;
 import bon.bon_jujitsu.dto.update.CommentUpdate;
@@ -128,11 +129,15 @@ public class CommentService {
   }
 
   public void deleteComment(Long userId, Long commentId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
     Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
     // 사용자 검증
-    if(!userId.equals(comment.getUser().getId())) {
-      throw new IllegalArgumentException("댓글을 삭제할 권한이 없습니다.");
+    if (!user.getUserRole().equals(UserRole.ADMIN) &&
+        !comment.getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("삭제 권한이 없습니다.");
     }
 
     comment.softDelete();

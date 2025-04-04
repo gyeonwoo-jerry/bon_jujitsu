@@ -5,6 +5,7 @@ import bon.bon_jujitsu.domain.Order;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.User;
+import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
@@ -191,9 +192,11 @@ public class ReviewService {
   public void deleteReview(Long userId, Long reviewId) {
     Review review = reviewRepository.findById(reviewId).orElseThrow(()->new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
-    // 사용자 검증
-    if(!userId.equals(review.getUser().getId())) {
-      throw new IllegalArgumentException("리뷰를 수정할 권한이 없습니다.");
+    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+    if (!user.getUserRole().equals(UserRole.ADMIN) &&
+        !review.getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("삭제 권한이 없습니다.");
     }
 
     review.softDelete();

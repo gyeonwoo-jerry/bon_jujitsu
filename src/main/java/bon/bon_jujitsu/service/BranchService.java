@@ -114,6 +114,10 @@ public class BranchService {
     Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()
         -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
+    if (user.getUserRole() == UserRole.OWNER && !branch.getId().equals(user.getBranch().getId())) {
+      throw new IllegalArgumentException("본인 지부만 삭제할 수 있습니다.");
+    }
+
     branch.softDelte();
   }
 

@@ -47,9 +47,8 @@ public class NoticeService {
     Branch requestBranch  = branchRepository.findById(branchId).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
-    // 공지사항은 OWNER만 작성 가능
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("공지사항은 관장만 작성할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("관장님, 관리자만 공지 등록이 가능합니다.");
     }
 
     // 관장의 체육관과 요청된 체육관(branchId)이 같은지 확인
@@ -130,12 +129,12 @@ public class NoticeService {
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("공지사항은 관장만 수정 할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 수정 할 수 있습니다.");
     }
 
-    if (!notice.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("지부 해당 관장만 공지사항을 수정 할 수 있습니다.");
+    if (user.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 공지사항만 수정할 수 있습니다.");
     }
 
     notice.updateNotice(update);
@@ -148,8 +147,12 @@ public class NoticeService {
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("공지사항은 관장만 삭제 할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 삭제 할 수 있습니다.");
+    }
+
+    if (user.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 공지사항만 삭제할 수 있습니다.");
     }
 
     notice.softDelte();

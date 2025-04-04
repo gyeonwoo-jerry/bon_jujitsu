@@ -117,6 +117,10 @@ public class NewsService {
       throw new IllegalArgumentException("뉴스는 관장이나 관리자만 수정 할 수 있습니다.");
     }
 
+    if (user.getUserRole() == UserRole.OWNER && !news.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 뉴스만 수정할 수 있습니다.");
+    }
+
     news.updateNews(update);
 
     postImageService.updateImages(news.getId(), "news", images);
@@ -130,6 +134,10 @@ public class NewsService {
 
     if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("뉴스는 관장이나 관리자만 삭제 할 수 있습니다.");
+    }
+
+    if (user.getUserRole() == UserRole.OWNER && !news.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 뉴스만 삭제할 수 있습니다.");
     }
 
     news.softDelte();

@@ -41,8 +41,8 @@ public class SkillService {
     branchRepository.findById(user.getBranch().getId()).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("스킬게시물은 관장만 작성할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("관장님, 관리자만 공지 등록이 가능합니다.");
     }
 
     Skill skill = Skill.builder()
@@ -118,8 +118,12 @@ public class SkillService {
 
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("스킬게시물은 관장만 수정 할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("스킬게시물은 관장이나 관리자만 수정 할 수 있습니다.");
+    }
+
+    if (user.getUserRole() == UserRole.OWNER && !skill.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 스킬게시물만 수정할 수 있습니다.");
     }
 
     skill.updateSkill(update);
@@ -133,8 +137,12 @@ public class SkillService {
 
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("스킬게시물은 관장만 삭제 할 수 있습니다.");
+    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+      throw new IllegalArgumentException("스킬게시물은 관장이나 관리자만 삭제 할 수 있습니다.");
+    }
+
+    if (user.getUserRole() == UserRole.OWNER && !skill.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 스킬게시물만 삭제할 수 있습니다.");
     }
 
     skill.softDelte();
