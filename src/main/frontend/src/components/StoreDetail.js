@@ -10,6 +10,7 @@ const StoreDetail = ({ itemId }) => {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const navigate = useNavigate();
 
@@ -56,6 +57,21 @@ const StoreDetail = ({ itemId }) => {
   useEffect(() => {
     fetchItemDetail();
     window.scrollTo(0, 0);
+
+    const checkUserRole = () => {
+      try {
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          setIsAdmin(userInfo.role === 'ADMIN');
+        }
+      } catch (error) {
+        console.error('사용자 권한 확인 오류:', error);
+        setIsAdmin(false);
+      }
+    };
+    
+    checkUserRole();
   }, [fetchItemDetail]);
 
   // 할인율 계산
@@ -171,6 +187,48 @@ const StoreDetail = ({ itemId }) => {
     navigate("/order/new");
   };
 
+  // 상품 삭제 함수
+  const handleDelete = async () => {
+    // 상품 유효성 확인
+    if (!itemId || itemId === "undefined") {
+      alert("유효하지 않은 상품입니다.");
+      return;
+    }
+
+    // 사용자 확인
+    if (!window.confirm("정말로 이 상품을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      // localStorage에서 userId 가져오기
+      const userId = localStorage.getItem("userId") || 1;
+
+      console.log(`삭제 API 호출: /items/${itemId}?id=${userId}`);
+
+      // 삭제 API 호출
+      const response = await API.delete(`/items/${itemId}?id=${userId}`);
+
+      console.log("삭제 응답:", response);
+
+      if (response.status === 200) {
+        alert("상품이 성공적으로 삭제되었습니다.");
+        // 목록 페이지로 이동
+        navigate(-1);
+      } else {
+        throw new Error(
+          `삭제 요청이 실패했습니다. 상태 코드: ${response.status}`
+        );
+      }
+    } catch (err) {
+      console.error("상품 삭제 중 오류 발생:", err);
+      alert(
+        "상품 삭제 중 오류가 발생했습니다: " +
+          (err.message || "알 수 없는 오류")
+      );
+    }
+  };
+
   // 이미지 변경
   const changeImage = (index) => {
     setActiveImageIndex(index);
@@ -226,6 +284,13 @@ const StoreDetail = ({ itemId }) => {
   return (
     <div className="store-detail">
       <div className="detail-container">
+        {isAdmin && (
+          <div className="admin-actions">
+            <button onClick={handleDelete} className="delete-btn">
+              상품 삭제
+            </button>
+          </div>
+        )}
         <div className="detail-top">
           <div className="detail-image-section">
             <div className="main-image-container">
