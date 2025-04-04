@@ -60,10 +60,18 @@ public class BoardService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<BoardResponse> getBoards(int page, int size) {
+  public PageResponse<BoardResponse> getBoards(int page, int size, String name) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Board> boards = boardRepository.findAll(pageRequest);
+    Page<Board> boards;
+
+    if (name != null && !name.isBlank()) {
+      // 작성자 이름이 있는 경우에만 필터링
+      boards = boardRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
+    } else {
+      // 전체 게시글 조회
+      boards = boardRepository.findAll(pageRequest);
+    }
 
     Page<BoardResponse> boardResponses = boards.map(board -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회

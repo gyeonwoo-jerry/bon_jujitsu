@@ -44,9 +44,10 @@ public class NewsController {
   @GetMapping("/news")
   public ApiResponse<PageResponse<NewsResponse>> getAllNews (
       @RequestParam(defaultValue = "0", name = "page") int page,
-      @RequestParam(defaultValue = "10", name = "size") int size
+      @RequestParam(defaultValue = "10", name = "size") int size,
+      @RequestParam(required = false) String name
   ) {
-    PageResponse<NewsResponse> newsList = newsService.getAllNews(page, size);
+    PageResponse<NewsResponse> newsList = newsService.getAllNews(page, size, name);
     return ApiResponse.success("뉴스 목록 조회 성공", newsList);
   }
 

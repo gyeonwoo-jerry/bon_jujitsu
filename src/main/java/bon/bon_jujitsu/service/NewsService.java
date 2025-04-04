@@ -52,31 +52,34 @@ public class NewsService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<NewsResponse> getAllNews(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+  public PageResponse<NewsResponse> getAllNews(int page, int size, String name) {
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<News> newsPage = newsRepository.findAll(pageRequest);
+    Page<News> newsPage;
+
+    if (name != null && !name.isBlank()) {
+      // 작성자 이름으로 필터링
+      newsPage = newsRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
+    } else {
+      // 전체 뉴스 조회
+      newsPage = newsRepository.findAll(pageRequest);
+    }
 
     Page<NewsResponse> newsResponses = newsPage.map(news -> {
-      // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
       List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NEWS", news.getId())
-              .stream()
-              .map(postImage -> {
-                // 파일 경로 안전하게 조합
-                String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                return path;
-              })
-              .collect(Collectors.toList());
+          .stream()
+          .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
+          .collect(Collectors.toList());
 
       return new NewsResponse(
-              news.getId(),
-              news.getTitle(),
-              news.getContent(),
-              news.getUser().getName(),
-              imagePaths,
-              news.getViewCount(),
-              news.getCreatedAt(),
-              news.getModifiedAt()
+          news.getId(),
+          news.getTitle(),
+          news.getContent(),
+          news.getUser().getName(),
+          imagePaths,
+          news.getViewCount(),
+          news.getCreatedAt(),
+          news.getModifiedAt()
       );
     });
 

@@ -52,10 +52,18 @@ public class SponsorService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<SponsorResponse> getNotices(int page, int size) {
+  public PageResponse<SponsorResponse> getNotices(int page, int size, String name) {
     PageRequest pageRequest = PageRequest.of(page -1, size);
 
-    Page<Sponsor> sponsors = sponsorRepository.findAll(pageRequest);
+    Page<Sponsor> sponsors;
+
+    if (name != null && !name.isBlank()) {
+      // 작성자 이름으로 필터링
+      sponsors = sponsorRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
+    } else {
+      // 전체 스킬 조회
+      sponsors = sponsorRepository.findAll(pageRequest);
+    }
 
     Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회

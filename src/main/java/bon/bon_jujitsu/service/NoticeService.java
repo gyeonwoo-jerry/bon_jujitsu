@@ -69,31 +69,35 @@ public class NoticeService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<NoticeResponse> getNotices(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+  public PageResponse<NoticeResponse> getNotices(int page, int size, String name) {
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Notice> notices = noticeRepository.findAll(pageRequest);
+    Page<Notice> notices;
+
+    if (name != null && !name.isBlank()) {
+      // 작성자 이름으로 필터링
+      notices = noticeRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
+    } else {
+      // 전체 공지사항 조회
+      notices = noticeRepository.findAll(pageRequest);
+    }
 
     Page<NoticeResponse> noticeResponses = notices.map(notice -> {
-      // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
       List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
-              .stream()
-              .map(postImage -> {
-                // 파일 경로 안전하게 조합
-                return Optional.ofNullable(postImage.getImagePath()).orElse("");
-              })
-              .collect(Collectors.toList());
+          .stream()
+          .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
+          .collect(Collectors.toList());
 
       return new NoticeResponse(
-              notice.getId(),
-              notice.getTitle(),
-              notice.getContent(),
-              notice.getBranch().getRegion(),
-              notice.getUser().getName(),
-              imagePaths,
-              notice.getViewCount(),
-              notice.getCreatedAt(),
-              notice.getModifiedAt()
+          notice.getId(),
+          notice.getTitle(),
+          notice.getContent(),
+          notice.getBranch().getRegion(),
+          notice.getUser().getName(),
+          imagePaths,
+          notice.getViewCount(),
+          notice.getCreatedAt(),
+          notice.getModifiedAt()
       );
     });
 

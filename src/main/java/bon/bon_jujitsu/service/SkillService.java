@@ -57,31 +57,34 @@ public class SkillService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<SkillResponse> getSkills(int page, int size) {
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+  public PageResponse<SkillResponse> getSkills(int page, int size, String name) {
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Skill> skills = skillRepository.findAll(pageRequest);
+    Page<Skill> skills;
+
+    if (name != null && !name.isBlank()) {
+      // 작성자 이름으로 필터링
+      skills = skillRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
+    } else {
+      // 전체 스킬 조회
+      skills = skillRepository.findAll(pageRequest);
+    }
 
     Page<SkillResponse> skillResponses = skills.map(skill -> {
-      // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
       List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SKILL", skill.getId())
-              .stream()
-              .map(postImage -> {
-                // 파일 경로 안전하게 조합
-                String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                return path;
-              })
-              .collect(Collectors.toList());
+          .stream()
+          .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
+          .collect(Collectors.toList());
 
       return new SkillResponse(
-              skill.getId(),
-              skill.getTitle(),
-              skill.getContent(),
-              skill.getUser().getName(),
-              imagePaths,
-              skill.getViewCount(),
-              skill.getCreatedAt(),
-              skill.getModifiedAt()
+          skill.getId(),
+          skill.getTitle(),
+          skill.getContent(),
+          skill.getUser().getName(),
+          imagePaths,
+          skill.getViewCount(),
+          skill.getCreatedAt(),
+          skill.getModifiedAt()
       );
     });
 

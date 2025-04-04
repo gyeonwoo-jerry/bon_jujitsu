@@ -43,9 +43,10 @@ public class BoardController {
   @GetMapping("/board")
   public ApiResponse<PageResponse<BoardResponse>> getBoards (
       @RequestParam(defaultValue = "0", name = "page") int page,
-      @RequestParam(defaultValue = "10", name = "size") int size
+      @RequestParam(defaultValue = "10", name = "size") int size,
+      @RequestParam(required = false) String name
   ) {
-    PageResponse<BoardResponse> boardList = boardService.getBoards(page, size);
+    PageResponse<BoardResponse> boardList = boardService.getBoards(page, size, name);
     return ApiResponse.success("게시판 목록 조회 성공", boardList);
   }
 

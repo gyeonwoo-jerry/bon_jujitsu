@@ -43,9 +43,10 @@ public class SkillController {
   @GetMapping("/skill")
   public ApiResponse<PageResponse<SkillResponse>> getSkills (
       @RequestParam(defaultValue = "0", name = "page") int page,
-      @RequestParam(defaultValue = "10", name = "size") int size
+      @RequestParam(defaultValue = "10", name = "size") int size,
+      @RequestParam(required = false) String name
   ) {
-    return ApiResponse.success("기술 게시물 목록 조회 성공", skillService.getSkills(page, size));
+    return ApiResponse.success("기술 게시물 목록 조회 성공", skillService.getSkills(page, size, name));
   }
 
   @GetMapping("/skill/{skillId}")
