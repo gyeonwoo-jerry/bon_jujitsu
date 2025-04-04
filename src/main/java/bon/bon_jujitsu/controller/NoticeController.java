@@ -7,6 +7,7 @@ import bon.bon_jujitsu.dto.response.NoticeResponse;
 import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.NoticeService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,10 @@ public class NoticeController {
 
   @GetMapping("/notice/{noticeId}")
   public ApiResponse<NoticeResponse> getNotice(
-      @PathVariable("noticeId") Long noticeId
+      @PathVariable("noticeId") Long noticeId,
+      HttpServletRequest request
   ) {
-    return ApiResponse.success("공지사항 조회 완료", noticeService.getNotice(noticeId));
+    return ApiResponse.success("공지사항 조회 완료", noticeService.getNotice(noticeId, request));
   }
 
   @PatchMapping("/notice/{noticeId}")

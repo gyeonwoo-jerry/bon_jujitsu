@@ -8,6 +8,7 @@ import bon.bon_jujitsu.dto.response.SkillResponse;
 import bon.bon_jujitsu.dto.update.SkillUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.SkillService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,10 @@ public class SkillController {
 
   @GetMapping("/skill/{skillId}")
   public ApiResponse<SkillResponse> getSkill(
-      @PathVariable("skillId") Long skillId
+      @PathVariable("skillId") Long skillId,
+      HttpServletRequest request
   ) {
-    return ApiResponse.success("기술 게시물 조회 성공", skillService.getSkill(skillId));
+    return ApiResponse.success("기술 게시물 조회 성공", skillService.getSkill(skillId, request));
   }
 
   @PatchMapping("/skill/{skillId}")

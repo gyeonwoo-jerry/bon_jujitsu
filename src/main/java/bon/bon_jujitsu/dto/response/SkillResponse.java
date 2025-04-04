@@ -13,6 +13,7 @@ public record SkillResponse(
     String content,
     String name,
     List<String> images,
+    Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
@@ -24,6 +25,7 @@ public record SkillResponse(
         .content(skill.getContent())
         .name(skill.getUser().getName())
         .images(imagePaths)
+        .viewCount(skill.getViewCount())
         .createdAt(skill.getCreatedAt())
         .modifiedAT(skill.getModifiedAt())
         .build();

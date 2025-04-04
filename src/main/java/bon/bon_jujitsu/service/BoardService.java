@@ -11,6 +11,8 @@ import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -80,6 +82,7 @@ public class BoardService {
               board.getBranch().getRegion(),
               board.getUser().getName(),
               imagePaths,
+              board.getViewCount(),
               board.getCreatedAt(),
               board.getModifiedAt()
       );
@@ -89,8 +92,17 @@ public class BoardService {
   }
 
   @Transactional(readOnly = true)
-  public BoardResponse getBoard(Long boardId) {
+  public BoardResponse getBoard(Long boardId, HttpServletRequest request) {
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+    HttpSession session = request.getSession();
+    String sessionKey = "viewed_board_" + boardId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      board.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+    }
 
     // 해당 게시글의 이미지 조회
     List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("BOARD", board.getId())

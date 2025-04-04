@@ -40,6 +40,10 @@ public class Notice extends Timestamped {
   @Column(nullable = false)
   private boolean isDeleted = false;
 
+  @Builder.Default
+  @Column(nullable = false)
+  private Long viewCount = 0L;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "branch_id", nullable = false)
   private Branch branch;
@@ -60,5 +64,9 @@ public class Notice extends Timestamped {
 
   public void softDelte() {
     this.isDeleted = true;
+  }
+
+  public void increaseViewCount() {
+    this.viewCount += 1;
   }
 }

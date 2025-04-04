@@ -10,6 +10,8 @@ import bon.bon_jujitsu.dto.update.NewsUpdate;
 import bon.bon_jujitsu.repository.NewsRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -72,6 +74,7 @@ public class NewsService {
               news.getContent(),
               news.getUser().getName(),
               imagePaths,
+              news.getViewCount(),
               news.getCreatedAt(),
               news.getModifiedAt()
       );
@@ -81,8 +84,17 @@ public class NewsService {
   }
 
   @Transactional(readOnly = true)
-  public NewsResponse getNews(Long newsId) {
+  public NewsResponse getNews(Long newsId, HttpServletRequest request) {
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
+
+    HttpSession session = request.getSession();
+    String sessionKey = "viewed_news_" + newsId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      news.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+    }
 
     List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NEWS", news.getId())
             .stream()

@@ -8,6 +8,7 @@ import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.SponsorService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,10 @@ public class SponsorController {
 
   @GetMapping("/sponsor/{sponsorId}")
   public ApiResponse<SponsorResponse> getSponsor(
-      @PathVariable("sponsorId") Long sponsorId
+      @PathVariable("sponsorId") Long sponsorId,
+      HttpServletRequest request
   ) {
-    return ApiResponse.success("스폰서 조회 성공", sponsorService.getSponsor(sponsorId));
+    return ApiResponse.success("스폰서 조회 성공", sponsorService.getSponsor(sponsorId, request));
   }
 
   @PatchMapping("/sponsor/{sponsorId}")

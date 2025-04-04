@@ -28,6 +28,10 @@ public class News extends Timestamped {
   @Column(name = "is_deleted", nullable = false)
   private boolean isDeleted = false;
 
+  @Builder.Default
+  @Column(nullable = false)
+  private Long viewCount = 0L;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
@@ -46,4 +50,7 @@ public class News extends Timestamped {
     this.isDeleted = true;
   }
 
+  public void increaseViewCount() {
+    this.viewCount += 1;
+  }
 }

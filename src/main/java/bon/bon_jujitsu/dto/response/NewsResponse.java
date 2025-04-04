@@ -13,6 +13,7 @@ public record NewsResponse(
     String content,
     String name,
     List<String> images,
+    Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
@@ -24,6 +25,7 @@ public record NewsResponse(
         .content(news.getContent())
         .name(news.getUser().getName())
         .images(imagePaths)
+        .viewCount(news.getViewCount())
         .createdAt(news.getCreatedAt())
         .modifiedAT(news.getModifiedAt())
         .build();

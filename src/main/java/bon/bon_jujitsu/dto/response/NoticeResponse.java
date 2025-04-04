@@ -14,6 +14,7 @@ public record NoticeResponse(
     String region,
     String name,
     List<String> images,
+    Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
@@ -26,6 +27,7 @@ public record NoticeResponse(
         .region(notice.getBranch().getRegion())
         .name(notice.getUser().getName())
         .images(imagePaths)
+        .viewCount(notice.getViewCount())
         .createdAt(notice.getCreatedAt())
         .modifiedAT(notice.getModifiedAt())
         .build();

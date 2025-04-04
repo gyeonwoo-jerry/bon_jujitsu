@@ -14,6 +14,7 @@ public record BoardResponse(
         String region,
         String author,
         List<String> images,
+        Long viewCount,
         LocalDateTime createdAt,
         LocalDateTime modifiedAt
 ) {
@@ -23,8 +24,9 @@ public record BoardResponse(
             .title(board.getTitle())
             .content(board.getContent())
             .region(board.getBranch().getRegion())
-            .author(board.getUser().getName()) // `name` → `author`로 가독성 개선
-            .images(imagePaths) // 이미지는 따로 주입받음
+            .author(board.getUser().getName())
+            .images(imagePaths)
+            .viewCount(board.getViewCount())
             .createdAt(board.getCreatedAt())
             .modifiedAt(board.getModifiedAt())
             .build();

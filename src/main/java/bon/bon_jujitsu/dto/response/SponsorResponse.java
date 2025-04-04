@@ -13,6 +13,7 @@ public record SponsorResponse(
     String content,
     String name,
     List<String> images,
+    Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {

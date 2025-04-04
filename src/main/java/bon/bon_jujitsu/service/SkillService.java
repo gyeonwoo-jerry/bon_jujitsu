@@ -11,6 +11,8 @@ import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.SkillRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,6 +79,7 @@ public class SkillService {
               skill.getContent(),
               skill.getUser().getName(),
               imagePaths,
+              skill.getViewCount(),
               skill.getCreatedAt(),
               skill.getModifiedAt()
       );
@@ -86,8 +89,17 @@ public class SkillService {
   }
 
   @Transactional(readOnly = true)
-  public SkillResponse getSkill(Long skillId) {
+  public SkillResponse getSkill(Long skillId, HttpServletRequest request) {
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
+
+    HttpSession session = request.getSession();
+    String sessionKey = "viewed_skill_" + skillId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      skill.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+    }
 
     List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SKILL", skill.getId())
             .stream()

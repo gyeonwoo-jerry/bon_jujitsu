@@ -7,6 +7,7 @@ import bon.bon_jujitsu.dto.response.BoardResponse;
 import bon.bon_jujitsu.dto.update.BoardUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.BoardService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -50,9 +51,10 @@ public class BoardController {
 
   @GetMapping("/board/{boardId}")
   public ApiResponse<BoardResponse> getBoard(
-      @PathVariable("boardId") Long boardId
+      @PathVariable("boardId") Long boardId,
+      HttpServletRequest request
   ) {
-    return ApiResponse.success("게시판 조회 성공", boardService.getBoard(boardId));
+    return ApiResponse.success("게시판 조회 성공", boardService.getBoard(boardId, request));
   }
 
   @PatchMapping("/board/{boardId}")

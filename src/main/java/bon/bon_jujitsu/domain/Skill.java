@@ -40,6 +40,10 @@ public class Skill extends Timestamped {
   @Column(nullable = false)
   private boolean isDeleted = false;
 
+  @Builder.Default
+  @Column(nullable = false)
+  private Long viewCount = 0L;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
@@ -56,5 +60,9 @@ public class Skill extends Timestamped {
 
   public void softDelte() {
     this.isDeleted = true;
+  }
+
+  public void increaseViewCount() {
+    this.viewCount += 1;
   }
 }

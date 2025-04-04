@@ -7,6 +7,7 @@ import bon.bon_jujitsu.dto.response.NewsResponse;
 import bon.bon_jujitsu.dto.update.NewsUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.NewsService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -51,9 +52,10 @@ public class NewsController {
 
   @GetMapping("/news/{newsId}")
   public ApiResponse<NewsResponse> getNews(
-      @PathVariable("newsId") Long newsId
+      @PathVariable("newsId") Long newsId,
+      HttpServletRequest request
   ) {
-    return ApiResponse.success("뉴스 조회 성공", newsService.getNews(newsId));
+    return ApiResponse.success("뉴스 조회 성공", newsService.getNews(newsId, request));
   }
 
   @PatchMapping("/news/{newsId}")

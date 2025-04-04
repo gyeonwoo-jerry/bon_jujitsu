@@ -12,6 +12,8 @@ import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -90,6 +92,7 @@ public class NoticeService {
               notice.getBranch().getRegion(),
               notice.getUser().getName(),
               imagePaths,
+              notice.getViewCount(),
               notice.getCreatedAt(),
               notice.getModifiedAt()
       );
@@ -98,8 +101,17 @@ public class NoticeService {
     return PageResponse.fromPage(noticeResponses);
   }
 
-  public NoticeResponse getNotice(Long noticeId) {
+  public NoticeResponse getNotice(Long noticeId, HttpServletRequest request) {
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+
+    HttpSession session = request.getSession();
+    String sessionKey = "viewed_notice_" + noticeId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      notice.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+    }
 
     List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
             .stream()

@@ -10,6 +10,8 @@ import bon.bon_jujitsu.dto.update.SponsorUpdate;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.SponsorRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -72,6 +74,7 @@ public class SponsorService {
               sponsor.getContent(),
               sponsor.getUser().getName(),
               imagePaths,
+              sponsor.getViewCount(),
               sponsor.getCreatedAt(),
               sponsor.getModifiedAt()
       );
@@ -80,8 +83,17 @@ public class SponsorService {
     return PageResponse.fromPage(sponsorResponses);
   }
 
-  public SponsorResponse getSponsor(Long sponsorId) {
+  public SponsorResponse getSponsor(Long sponsorId, HttpServletRequest request) {
     Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
+
+    HttpSession session = request.getSession();
+    String sessionKey = "viewed_sponsor_" + sponsorId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      sponsor.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+    }
 
     List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR", sponsor.getId())
             .stream()
