@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     Page<Item> findTop4ByOrderByCreatedAtDesc(PageRequest pageRequest);
+
+  boolean existsByName(String name);
 }

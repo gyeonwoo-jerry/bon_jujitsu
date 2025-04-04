@@ -170,4 +170,8 @@ public class ItemService {
 
     return PageResponse.fromPage(latestItems);
   }
+
+  public boolean isNameDuplicate(String name) {
+    return itemRepository.existsByName(name);
+  }
 }

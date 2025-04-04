@@ -9,4 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 public interface BranchRepository extends JpaRepository<Branch, Long> {
     @Query("SELECT b FROM Branch b JOIN b.users u WHERE u.userRole = 'OWNER'")
     Page<Branch> findAllWithOwner(Pageable pageable);
+
+  boolean existsByRegion(String region);
 }

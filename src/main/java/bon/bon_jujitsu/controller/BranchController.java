@@ -3,6 +3,7 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.BranchRequest;
+import bon.bon_jujitsu.dto.response.BranchCheckResponse;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -70,5 +71,14 @@ public class BranchController {
   ) {
     branchService.deleteBranch(userId);
     return ApiResponse.success("지부 삭제 성공", null);
+  }
+
+  @GetMapping("/branch/check")
+  public ApiResponse<BranchCheckResponse> checkRegionDuplicate(
+      @RequestParam String region
+  ) {
+    boolean isDuplicate = branchService.isRegionDuplicate(region);
+    String message = isDuplicate ? "이미 사용중인 지부명입니다." : "사용 가능한 지역 입니다.";
+    return ApiResponse.success("지부 중복확인", new BranchCheckResponse(isDuplicate, message));
   }
 }

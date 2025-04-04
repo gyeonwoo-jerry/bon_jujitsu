@@ -3,6 +3,7 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.ItemRequest;
+import bon.bon_jujitsu.dto.response.ItemCheckResponse;
 import bon.bon_jujitsu.dto.response.ItemResponse;
 import bon.bon_jujitsu.dto.update.ItemUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -74,5 +75,14 @@ public class ItemController {
   ) {
     itemService.deleteItem(userId, itemId);
     return ApiResponse.success("상품 삭제 성공", null);
+  }
+
+  @GetMapping("/items/check-name")
+  public ApiResponse<ItemCheckResponse> checkItemNameDuplicate (
+      @RequestParam String name
+  ) {
+    boolean isDuplicate = itemService.isNameDuplicate(name);
+    String message = isDuplicate ? "이미 사용중인 상품명입니다." : "사용 가능한 상품명 입니다.";
+    return ApiResponse.success("상품명 중복확인", new ItemCheckResponse(isDuplicate, message));
   }
 }

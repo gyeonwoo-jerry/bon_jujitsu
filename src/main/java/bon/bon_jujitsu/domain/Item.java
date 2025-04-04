@@ -77,8 +77,4 @@ public class Item extends Timestamped {
   public void softDelete() {
     this.isDeleted = true;
   }
-
-  public void addItemOption(ItemOption itemOption) {
-    this.itemOptions.add(itemOption);
-  }
 }

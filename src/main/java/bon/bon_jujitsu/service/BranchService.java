@@ -108,4 +108,8 @@ public class BranchService {
 
     branch.softDelte();
   }
+
+  public boolean isRegionDuplicate(String region) {
+    return branchRepository.existsByRegion(region);
+  }
 }

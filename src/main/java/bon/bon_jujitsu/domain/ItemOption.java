@@ -44,10 +44,6 @@ public class ItemOption {
     this.amount -= quantity;
   }
 
-  public static ItemOption createDefault(Item item, int amount) {
-    return new ItemOption(null, "NONE", "DEFAULT", amount, item);
-  }
-
   public void updateSize(String size) {
     this.size = size;
   }
