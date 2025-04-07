@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import API from "../utils/api";
+import "../styles/branchesDetail.css";
 
 function BranchesDetail() {
   const { id } = useParams(); // URL에서 id 파라미터를 가져옵니다.
@@ -38,20 +39,85 @@ function BranchesDetail() {
   return (
     <div className="branchDetail_container">
       <div className="inner">
-        <h2>{branch.region}</h2>
-        <p>Address: {branch.address}</p>
-        <p>Area: {branch.area}</p>
-        {branch.owner && (
-          <div>
-            <h3>Owner Information</h3>
-            <p>Name: {branch.owner.name}</p>
-            <p>Email: {branch.owner.email}</p>
-            <p>Phone: {branch.owner.phoneNum}</p>
-            <p>Address: {branch.owner.address}</p>
-            <p>Level: {branch.owner.level}</p>
-            <p>Stripe: {branch.owner.stripe}</p>
+        <div className="branchDetail_header" style={{backgroundImage: "url('/images/dangsan01.png')"}}>
+          <div className="branchInfo">
+            <div className="ownerImage">
+              <img src="/images/002.png" alt="ownerImage" />
+            </div>
+            <div className="ownerInfo">
+              <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
+              <div className="ownerName">{branch.owner.name} 관장</div>
+              <div className={`ownerBelt ${branch.owner.stripe}`}>
+                {branch.owner.stripe} BELT / {branch.owner.level} GRAU
+                <div className="grau">
+                  {Array.from({ length: branch.owner.level }, (_, index) => (
+                    <div key={index} className="grauLine"></div>
+                  ))}
+                </div>
+              </div>
+              <div className="branchAddress">{branch.address}</div>
+              <div className="branchPhone">T. {branch.owner.phoneNum}</div>
+              <div className="branchSns">
+                  <ul>  
+                    {branch.owner.sns1 && (
+                      <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
+                        <img src="/images/insta.png" alt="sns1" />
+                      </a>
+                    )}
+                      {branch.owner.sns2 && (
+                        <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
+                          <img src="/images/fb.png" alt="sns2" /> 
+                        </a>
+                    )}
+                    {branch.owner.sns3 && (
+                      <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
+                        <img src="/images/blog.png" alt="sns3" />
+                      </a>
+                    )}
+                    {branch.owner.sns4 && (
+                      <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
+                        <img src="/images/cafe.png" alt="sns4" />
+                      </a>
+                    )}
+                  </ul>
+              </div>
+            </div>
+            
           </div>
-        )}
+        </div>
+        <div className="branchDetail_content">
+          {branch.content && (
+                <>
+          <div className="branchDetail_content_inner">
+            <div className="branchDetail_content_title">
+              <div className="stit">{branch.area}</div>
+              <div className="btit">본주짓수아카데미 {branch.region}</div>
+              
+                  <div className="divider"></div>
+                  <p>{branch.content}</p>
+                
+            </div>
+            <div className="branchDetail_content_text">
+              <img src="/images/dangsan01.png" alt="dangsan02" />
+            </div>  
+          </div>
+          </>
+          )}
+        </div>
+        
+        <div className="coaches">
+          <div className="coaches_inner">
+            <div className="coaches_title">
+              <div className="stit">코치진</div>
+              <div className="btit">COACHING STAFF</div>
+            </div>
+            <div className="coaches_list">
+              <ul>
+
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

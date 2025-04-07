@@ -1,0 +1,227 @@
+.branchDetail_container {
+    width: 100%;
+    height: 100%;
+    background-color: var(--white-color);
+}
+
+.branchDetail_container .inner {
+    width: 100%;
+    height: 100%;
+    padding: 0 50px;
+}
+
+.branchDetail_header {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    border-radius: 35px;;
+    background-color: var(--black-color);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.branchDetail_header .branchInfo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 100px;
+} 
+
+.branchDetail_header .branchInfo .ownerInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+}
+
+.branchDetail_header .branchInfo .ownerInfo .branchName {
+    font-size: 18px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 300px;
+    background-color: var(--white-color);
+    color: var(--black-color);
+}
+
+.branchDetail_header .branchInfo .ownerInfo .ownerName {
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--black-color);
+    margin: 14px 0 14px;
+}   
+
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt {
+    position: relative;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--black-color);
+    margin-bottom: 24px;
+    margin-left: 6px;
+    padding: 6px 64px 6px 10px;
+}
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt .grau {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt.WHITE .grauLine {
+    background-color: var(--black-color);
+}
+
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt .grauLine {
+    width: 5px;
+    height: 32px;
+    background-color: var(--white-color);
+}
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt.WHITE {
+    color: var(--black-color);
+    background-color: var(--white-color);
+}
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt.BLUE {
+    color: var(--white-color);
+    background-color: var(--blue-color);
+}
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt.PURPLE {
+    color: var(--white-color);
+    background-color: var(--purple-color);
+}
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt.BROWN {
+    color: var(--white-color);
+    background-color: var(--brown-color);
+}
+.branchDetail_header .branchInfo .ownerInfo .ownerBelt.BLACK {
+    color: var(--white-color);
+    background-color: var(--black-color);
+}
+
+
+
+
+.branchDetail_header .branchInfo .ownerInfo .branchAddress {
+    font-size: 18px;
+    font-weight: 400;
+    margin-left: 6px;
+    color: var(--black-color);
+    margin-bottom: 10px;
+}
+
+.branchDetail_header .branchInfo .ownerInfo .branchPhone {
+    font-size: 18px;
+    font-weight: 400;
+    margin-left: 6px;   
+    color: var(--black-color);
+}
+
+.branchDetail_header .branchInfo .ownerInfo .branchSns {
+    margin-top:24px;
+    padding-left: 6px;
+}
+
+.branchDetail_header .branchInfo .ownerInfo .branchSns ul {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.branchDetail_header .branchInfo .ownerInfo .branchSns ul a {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    transition: all 0.3s;
+    
+}
+.branchDetail_header .branchInfo .ownerInfo .branchSns ul a:hover {
+    transform: rotate(360deg);
+    background-color: var(--white-color);
+    
+}
+
+.branchDetail_header .branchInfo .ownerImage {
+  width: 300px;
+  height: auto;
+  margin-bottom: -5px;
+}
+.branchDetail_header .branchInfo .ownerImage img {
+    filter: drop-shadow(0px 6px 12px var(--black-color));
+}
+
+.branchDetail_content {
+    width: 100%;
+    height: 100%;
+    margin-top: 54px;
+}
+
+.branchDetail_content .branchDetail_content_inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 50px;
+    gap: 50px;
+}   
+
+.branchDetail_content .branchDetail_content_title {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    gap: 10px; 
+    
+}   
+
+.branchDetail_content .branchDetail_content_title p {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--black-color);
+    text-align: left;
+    line-height: 1.54;
+}
+
+.branchDetail_content .branchDetail_content_title .divider {
+    margin: 24px 0px;
+    width: 60px;
+    height: 1px;
+    display: inline-block;
+    background-color: var(--black-color);
+}
+
+.branchDetail_content .branchDetail_content_title .btit {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--black-color);
+}   
+
+.branchDetail_content .branchDetail_content_title .stit {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--white-color);
+    border-radius: 30px;
+    background-color: var(--black-color);
+    padding: 6px 14px;
+    margin-left: -4px;
+}   
+
+
+
+.branchDetail_content .branchDetail_content_text {
+    width: 100%;
+    height: 100%;
+}           

@@ -8,6 +8,9 @@ License: none (public domain)
     --white-color: #fff;
     --point-color: #fe6c2e;
     --gray-color: #dbdbdb;
+    --blue-color: #007bff;
+    --purple-color: #6f42c1;
+    --brown-color: #5f3c2c;
   }
 
 @import url('../assets/fonts/pretendard.css');
