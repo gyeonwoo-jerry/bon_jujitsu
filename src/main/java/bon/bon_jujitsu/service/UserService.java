@@ -81,7 +81,7 @@ public class UserService {
         .name(req.name())
         .memberId(req.memberId())
         .password(password)
-        .email(req.email())
+        .email(email)
         .phoneNum(phoneNum)
         .address(req.address())
         .birthday(req.birthday())
