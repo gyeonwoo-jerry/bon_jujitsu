@@ -48,19 +48,19 @@ public class BranchService {
   }
 
   public BranchResponse getBranch(Long branchId) {
-    Branch branch = branchRepository.findById(branchId).orElseThrow(()->new IllegalArgumentException("지부를 찾을 수 없습니다."));
+    Branch branch = branchRepository.findById(branchId)
+        .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
     User owner = branch.getUsers().stream()
-            .filter(user -> UserRole.OWNER.equals(user.getUserRole()))
-            .findFirst()
-            .orElse(null);
+        .filter(user -> UserRole.OWNER.equals(user.getUserRole()))
+        .findFirst()
+        .orElse(null);
 
-    User coach = branch.getUsers().stream()
-            .filter(user -> UserRole.COACH.equals(user.getUserRole()))
-            .findFirst()
-            .orElse(null);
+    List<User> coaches = branch.getUsers().stream()
+        .filter(user -> UserRole.COACH.equals(user.getUserRole()))
+        .toList();
 
-      return BranchResponse.from(branch, owner, coach);
+    return BranchResponse.from(branch, owner, coaches);
   }
 
 

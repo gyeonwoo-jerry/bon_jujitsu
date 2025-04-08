@@ -42,7 +42,6 @@ public class CartService {
     ItemOption itemOption = itemOptionRepository.findById(request.itemOptionId())
         .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
 
-
     // 사용자의 장바구니 찾기, 없으면 새로 생성
     Cart cart = cartRepository.findByUser(user)
         .orElseGet(() -> cartRepository.save(Cart.builder().user(user).build()));
