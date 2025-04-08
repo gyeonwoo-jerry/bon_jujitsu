@@ -57,16 +57,19 @@ public class UserService {
       throw new IllegalArgumentException("중복된 Email 입니다.");
     }
 
-    // 휴대전화번호 중복 확인
+    // 휴대전화 번호 유효성 검사
     String phoneNum = req.phoneNum();
-    Optional<User> checkPhone_num = userRepository.findByPhoneNum(phoneNum);
-    if (checkPhone_num.isPresent()) {
-      throw new IllegalArgumentException("중복된 전화번호 입니다.");
+    String phoneRegex = "^(01[0|1|6|7|8|9])\\d{7,8}$";
+
+    boolean isOnlyDigits = phoneNum.chars().allMatch(Character::isDigit);
+
+    if (!phoneNum.matches(phoneRegex) || !isOnlyDigits) {
+      throw new IllegalArgumentException("휴대전화 번호는 숫자만 입력하며, 010으로 시작하는 10~11자리여야 합니다.");
     }
 
-    // 휴대전화 번호 검사
-    if (req.phoneNum().length() < 10) {
-      throw new IllegalArgumentException("유효한 휴대전화 번호를 입력해주세요.");
+    // 휴대전화 중복 검사
+    if (userRepository.findByPhoneNum(phoneNum).isPresent()) {
+      throw new IllegalArgumentException("중복된 전화번호입니다.");
     }
 
     // 지사 확인
