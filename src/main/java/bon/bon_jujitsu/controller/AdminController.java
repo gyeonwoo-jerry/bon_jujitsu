@@ -1,7 +1,7 @@
 package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.domain.UserRole;
-import bon.bon_jujitsu.dto.UserRoleRequest;
+import bon.bon_jujitsu.dto.request.UserRoleRequest;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.GetAllUserRequest;

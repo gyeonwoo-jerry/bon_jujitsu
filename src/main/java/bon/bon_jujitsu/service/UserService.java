@@ -4,7 +4,7 @@ import bon.bon_jujitsu.config.PasswordEncoder;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
-import bon.bon_jujitsu.dto.UserRoleRequest;
+import bon.bon_jujitsu.dto.request.UserRoleRequest;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.GetAllUserRequest;
 import bon.bon_jujitsu.dto.request.LoginRequest;

@@ -1,4 +1,4 @@
-package bon.bon_jujitsu.dto;
+package bon.bon_jujitsu.dto.request;
 
 import bon.bon_jujitsu.domain.UserRole;
 
