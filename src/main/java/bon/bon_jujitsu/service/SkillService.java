@@ -148,6 +148,6 @@ public class SkillService {
       throw new IllegalArgumentException("본인이 작성한 스킬게시물만 삭제할 수 있습니다.");
     }
 
-    skill.softDelte();
+    skill.softDelete();
   }
 }

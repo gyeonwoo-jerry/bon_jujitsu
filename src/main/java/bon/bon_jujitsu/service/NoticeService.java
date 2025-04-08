@@ -159,7 +159,7 @@ public class NoticeService {
       throw new IllegalArgumentException("본인이 작성한 공지사항만 삭제할 수 있습니다.");
     }
 
-    notice.softDelte();
+    notice.softDelete();
   }
 
   public NoticeResponse getMainNotice(Long branchId) {

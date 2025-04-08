@@ -62,7 +62,7 @@ public class Board extends Timestamped {
     });
   }
 
-  public void softDelte() {
+  public void softDelete() {
     this.isDeleted = true;
   }
 

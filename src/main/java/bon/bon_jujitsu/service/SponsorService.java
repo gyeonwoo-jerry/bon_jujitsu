@@ -140,6 +140,6 @@ public class SponsorService {
       throw new IllegalArgumentException("스폰서는 관장만 삭제 할 수 있습니다.");
     }
 
-    sponsor.softDelte();
+    sponsor.softDelete();
   }
 }

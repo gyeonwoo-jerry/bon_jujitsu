@@ -58,7 +58,7 @@ public class Sponsor extends Timestamped {
     });
   }
 
-  public void softDelte() {
+  public void softDelete() {
     this.isDeleted = true;
   }
 
