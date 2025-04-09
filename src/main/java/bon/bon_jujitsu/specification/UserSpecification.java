@@ -1,4 +1,4 @@
-package bon.bon_jujitsu.service;
+package bon.bon_jujitsu.specification;
 
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;

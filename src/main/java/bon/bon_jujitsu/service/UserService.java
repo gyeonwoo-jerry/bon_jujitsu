@@ -11,11 +11,13 @@ import bon.bon_jujitsu.dto.request.LoginRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
 import bon.bon_jujitsu.dto.response.LoginResponse;
+import bon.bon_jujitsu.dto.response.LogoutResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
 import bon.bon_jujitsu.jwt.JwtUtil;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import bon.bon_jujitsu.specification.UserSpecification;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -113,9 +115,27 @@ public class UserService {
       throw new IllegalArgumentException("아이디나 비밀번호를 정확하게 입력해주세요.");
     }
 
-    String token = jwtUtil.createToken(user.getId());
+    JwtUtil.TokenInfo tokenInfo = jwtUtil.createTokens(user.getId());
 
-    return new LoginResponse(token, user.getUserRole(), user.getName());
+    return new LoginResponse(
+        tokenInfo.getAccessToken(),
+        tokenInfo.getRefreshToken(),
+        user.getUserRole(),
+        user.getName()
+    );
+  }
+
+  public LogoutResponse logout(String accessToken) {
+    try {
+      Long userId = jwtUtil.getPayload(accessToken);
+
+      jwtUtil.logout(userId, accessToken);           // 로그아웃 처리 (ex. Redis 블랙리스트)
+
+      return new LogoutResponse(userId, "정상적으로 로그아웃되었습니다.");
+    } catch (Exception e) {
+      log.error("로그아웃 처리 중 오류 발생", e);
+      throw new IllegalArgumentException("로그아웃 처리 중 오류가 발생했습니다: " + e.getMessage());
+    }
   }
 
   public void assignRole(Long loggedInUserId, UserRoleRequest request) {
@@ -251,5 +271,9 @@ public class UserService {
     Page<User> deletedUsers = userRepository.findAllByIsDeletedTrue(pageRequest);
 
     return PageResponse.fromPage(deletedUsers.map(UserResponse::fromEntity));
+  }
+
+  public String refreshAccessToken(String refreshToken) {
+    return jwtUtil.refreshAccessToken(refreshToken);
   }
 }

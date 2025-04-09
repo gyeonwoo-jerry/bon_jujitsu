@@ -44,9 +44,10 @@ public class NoticeController {
   public ApiResponse<PageResponse<NoticeResponse>> getNotices (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
-      @RequestParam(required = false) String name
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) Long branchId
   ) {
-    return ApiResponse.success("공지사항 리스트 조회 완료", noticeService.getNotices(page, size, name));
+    return ApiResponse.success("공지사항 리스트 조회 완료", noticeService.getNotices(page, size, name, branchId));
   }
 
   @GetMapping("/notice/{noticeId}")

@@ -2,11 +2,16 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.request.LoginRequest;
+import bon.bon_jujitsu.dto.request.LogoutRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
+import bon.bon_jujitsu.dto.request.RefreshTokenRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
 import bon.bon_jujitsu.dto.response.LoginResponse;
+import bon.bon_jujitsu.dto.response.LogoutResponse;
+import bon.bon_jujitsu.dto.response.RefreshTokenResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
+import bon.bon_jujitsu.jwt.JwtUtil;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.UserService;
 import jakarta.validation.Valid;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,9 +46,35 @@ public class UserController {
   }
 
   @PostMapping("/login")
-  public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
+  public ApiResponse<LoginResponse> login(
+      @Valid @RequestBody LoginRequest req
+  ) {
     LoginResponse response = usersService.login(req);
     return ApiResponse.success("로그인 성공", response);
+  }
+
+  @PostMapping("/logout")
+  public ApiResponse<LogoutResponse> logout(
+      @RequestHeader("Authorization") String authorizationHeader
+  ) {
+    String accessToken = extractAccessToken(authorizationHeader);
+    LogoutResponse response = usersService.logout(accessToken);
+    return ApiResponse.success("로그아웃 성공", response);
+  }
+
+  // AccessToken 추출 메서드
+  private String extractAccessToken(String header) {
+    if (header != null && header.startsWith("Bearer ")) {
+      return header.substring(7);
+    }
+    throw new IllegalArgumentException("잘못된 Authorization 헤더입니다.");
+  }
+
+  @PostMapping("/refresh")
+  public ApiResponse<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
+    String newAccessToken = usersService.refreshAccessToken(request.refreshToken());
+    RefreshTokenResponse response = new RefreshTokenResponse(newAccessToken);
+    return ApiResponse.success("Refresh Token 발급 성공", response);
   }
 
   @GetMapping("/profile")

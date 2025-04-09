@@ -12,6 +12,7 @@ import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import bon.bon_jujitsu.specification.NoticeSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -69,18 +71,13 @@ public class NoticeService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<NoticeResponse> getNotices(int page, int size, String name) {
+  public PageResponse<NoticeResponse> getNotices(int page, int size, String name, Long branchId) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Notice> notices;
+    Specification<Notice> spec = Specification.where(NoticeSpecification.hasUserName(name))
+        .and(NoticeSpecification.hasBranchId(branchId));
 
-    if (name != null && !name.isBlank()) {
-      // 작성자 이름으로 필터링
-      notices = noticeRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
-    } else {
-      // 전체 공지사항 조회
-      notices = noticeRepository.findAll(pageRequest);
-    }
+    Page<Notice> notices = noticeRepository.findAll(spec, pageRequest);
 
     Page<NoticeResponse> noticeResponses = notices.map(notice -> {
       List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
