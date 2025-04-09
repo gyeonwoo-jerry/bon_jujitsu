@@ -117,9 +117,11 @@ public class SkillService {
   }
 
   public void updateSkill(SkillUpdate update, Long userId, Long skillId, List<MultipartFile> images) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
+    Skill skill = skillRepository.findById(skillId)
+        .orElseThrow(() -> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
       throw new IllegalArgumentException("스킬게시물은 관장이나 관리자만 수정 할 수 있습니다.");
@@ -131,7 +133,9 @@ public class SkillService {
 
     skill.updateSkill(update);
 
-    postImageService.updateImages(skill.getId(), "skill", images);
+    if (images != null && !images.isEmpty()) {
+      postImageService.updateImages(skill.getId(), "skill", images);
+    }
   }
 
 

@@ -220,7 +220,9 @@ public class UserService {
       profile.updateBranch(newBranch);
     });
 
-    userImageService.updateImages(profile, images);
+    if (images != null && !images.isEmpty()) {
+      userImageService.updateImages(profile, images);
+    }
   }
 
   public void deleteUser(Long userId, ProfileDeleteRequest request) {

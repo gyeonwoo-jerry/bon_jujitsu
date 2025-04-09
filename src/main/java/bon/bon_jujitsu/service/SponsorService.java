@@ -117,9 +117,11 @@ public class SponsorService {
 
 
   public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
+    Sponsor sponsor = sponsorRepository.findById(sponsorId)
+        .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
     if (user.getUserRole() != UserRole.OWNER) {
       throw new IllegalArgumentException("스폰서는 관장만 수정 할 수 있습니다.");
@@ -127,7 +129,9 @@ public class SponsorService {
 
     sponsor.updateSponsor(update);
 
-    postImageService.updateImages(sponsor.getId(), "sponnsor", images);
+    if (images != null && !images.isEmpty()) {
+      postImageService.updateImages(sponsor.getId(), "sponnsor", images);
+    }
   }
 
 

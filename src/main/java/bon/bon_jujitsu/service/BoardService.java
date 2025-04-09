@@ -136,7 +136,9 @@ public class BoardService {
 
     board.updateBoard(request);
 
-    postImageService.updateImages(board.getId(), "board", images);
+    if (images != null && !images.isEmpty()) {
+      postImageService.updateImages(board.getId(), "board", images);
+    }
   }
 
   public void deleteBoard(Long userId, Long boardId) {

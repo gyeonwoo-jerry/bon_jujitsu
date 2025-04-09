@@ -34,7 +34,7 @@ public class AdminController {
   }
 
   @GetMapping("/users")
-  public ApiResponse<PageResponse<UserResponse>> getAllUsers(
+  public ApiResponse<PageResponse<UserResponse>> getAllUser(
       @AuthenticationUserId Long userId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,

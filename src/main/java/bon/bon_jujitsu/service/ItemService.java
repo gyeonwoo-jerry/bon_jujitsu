@@ -145,7 +145,9 @@ public class ItemService {
     });
 
     // 상품 이미지 업데이트
-    itemImageService.updateImages(item, images);
+    if (images != null && !images.isEmpty()) {
+      itemImageService.updateImages(item, images);
+    }
   }
 
   public void deleteItem(Long userId, Long itemId) {

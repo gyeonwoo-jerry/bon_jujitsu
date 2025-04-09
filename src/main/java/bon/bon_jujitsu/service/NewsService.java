@@ -126,7 +126,9 @@ public class NewsService {
 
     news.updateNews(update);
 
-    postImageService.updateImages(news.getId(), "news", images);
+    if (images != null && !images.isEmpty()) {
+      postImageService.updateImages(news.getId(), "news", images);
+    }
   }
 
 

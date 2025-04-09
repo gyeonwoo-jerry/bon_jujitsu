@@ -100,7 +100,9 @@ public class BranchService {
 
     branch.updateBranch(update);
 
-    branchImageService.updateImages(branch, images);
+    if (images != null && !images.isEmpty()) {
+      branchImageService.updateImages(branch, images);
+    }
   }
 
 

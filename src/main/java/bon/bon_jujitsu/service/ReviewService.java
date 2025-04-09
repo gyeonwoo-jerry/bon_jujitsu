@@ -171,10 +171,11 @@ public class ReviewService {
   }
 
   public void updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
-    Review review = reviewRepository.findById(reviewId).orElseThrow(()->new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+    Review review = reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
     // 사용자 검증
-    if(!userId.equals(review.getUser().getId())) {
+    if (!userId.equals(review.getUser().getId())) {
       throw new IllegalArgumentException("리뷰를 수정할 권한이 없습니다.");
     }
 
@@ -185,7 +186,9 @@ public class ReviewService {
 
     review.updateReview(request.content(), request.star());
 
-    reviewImageService.updateImages(review, images);
+    if (images != null && !images.isEmpty()) {
+      reviewImageService.updateImages(review, images);
+    }
   }
 
 

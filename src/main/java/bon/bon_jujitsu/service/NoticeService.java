@@ -143,7 +143,9 @@ public class NoticeService {
 
     notice.updateNotice(update);
 
-    postImageService.updateImages(notice.getId(), "notice", images);
+    if (images != null && !images.isEmpty()) {
+      postImageService.updateImages(notice.getId(), "notice", images);
+    }
   }
 
   public void deleteNotice(Long userId, Long noticeId) {
