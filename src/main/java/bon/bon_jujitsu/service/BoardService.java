@@ -12,12 +12,14 @@ import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import bon.bon_jujitsu.specification.BoardSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,18 +62,13 @@ public class BoardService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<BoardResponse> getBoards(int page, int size, String name) {
+  public PageResponse<BoardResponse> getBoards(int page, int size, String name, Long branchId) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Board> boards;
+    Specification<Board> spec = Specification.where(BoardSpecification.hasUserName(name))
+        .and(BoardSpecification.hasBranchId(branchId));
 
-    if (name != null && !name.isBlank()) {
-      // 작성자 이름이 있는 경우에만 필터링
-      boards = boardRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
-    } else {
-      // 전체 게시글 조회
-      boards = boardRepository.findAll(pageRequest);
-    }
+    Page<Board> boards = boardRepository.findAll(spec, pageRequest);
 
     Page<BoardResponse> boardResponses = boards.map(board -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
