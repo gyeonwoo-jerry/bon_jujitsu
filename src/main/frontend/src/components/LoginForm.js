@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/LoginForm.css";
+import { setWithExpiry } from "../utils/storage";
 
 function LoginForm({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
@@ -23,7 +24,16 @@ function LoginForm({ onLoginSuccess }) {
           console.log("로그인 성공:", response.data);
 
           // 토큰 저장
-          localStorage.setItem("token", response.data.content.token);
+          setWithExpiry(
+            "accessToken",
+            response.data.content.accessToken,
+            1000 * 60 * 60
+          );
+          setWithExpiry(
+            "refreshToken",
+            response.data.content.refreshToken,
+            1000 * 60 * 60 * 24
+          );
 
           // 사용자 정보 저장 (response.data에서 데이터 추출)
           const userInfo = {

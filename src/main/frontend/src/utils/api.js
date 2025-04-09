@@ -1,5 +1,7 @@
 import axios from "axios";
 import config from "./config";
+import { setWithExpiry, getWithExpiry } from "./storage";
+
 // axios 인스턴스 생성
 const API = axios.create({
   baseURL: config.apiUrl + "/api", // 환경 변수에서 API URL 읽기
@@ -10,12 +12,13 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     // localStorage에서 토큰 가져오기
-    const token = localStorage.getItem("token");
+    const token = getWithExpiry("accessToken");
 
     // 토큰이 있는 경우 Authorization 헤더에 추가
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+
     config.headers["Content-Type"] =
       config.headers["Content-Type"] || "application/json";
 
@@ -23,6 +26,42 @@ API.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 응답 인터셉터 설정
+API.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+      try {
+        // 리프레시 토큰으로 새 토큰 요청
+        const refreshToken = getWithExpiry("refreshToken");
+        const response = await axios.post(
+          `${config.apiUrl}/api/refresh-token`,
+          { refreshToken }
+        );
+        const { token } = response.data;
+        setWithExpiry("accessToken", token, 1000 * 60 * 60); // 새 토큰 저장
+        originalRequest.headers["Authorization"] = `Bearer ${token}`; // 새 토큰으로 요청 헤더 업데이트
+        return API(originalRequest); // 원래 요청 재시도
+      } catch (refreshError) {
+        // 리프레시 실패 시 로그인 페이지로 리다이렉트
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
     return Promise.reject(error);
   }
 );
