@@ -42,7 +42,7 @@ function BranchesDetail() {
         <div className="branchDetail_header" style={{backgroundImage: "url('/images/dangsan01.png')"}}>
           <div className="branchInfo">
             <div className="ownerImage">
-              <img src="/images/002.png" alt="ownerImage" />
+              <img src="/images/003.png" alt="ownerImage" />
             </div>
             <div className="ownerInfo">
               <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
@@ -89,22 +89,29 @@ function BranchesDetail() {
           {branch.content && (
                 <>
           <div className="branchDetail_content_inner">
-            <div className="branchDetail_content_title">
-              <div className="stit">{branch.area}</div>
-              <div className="btit">본주짓수아카데미 {branch.region}</div>
-              
-                  <div className="divider"></div>
-                  <p>{branch.content}</p>
-                
+            <div className="branch_title">
+              <div className="stit">지점</div>
+              <div className="btit">BRANCH</div>
             </div>
-            <div className="branchDetail_content_text">
-              <img src="/images/dangsan01.png" alt="dangsan02" />
-            </div>  
+            <div className="contents">
+              <div className="branchDetail_content_title">
+                <div className="stit">{branch.area}</div>
+                <div className="btit">본주짓수아카데미 {branch.region}</div>
+                
+                    <div className="divider"></div>
+                    <p>{branch.content}</p>
+                  
+              </div>
+              <div className="branchDetail_content_text">
+                <img src="/images/dangsan01.png" alt="dangsan02" />
+              </div> 
+            </div>
+             
           </div>
           </>
           )}
         </div>
-        
+        {branch.coaches && (
         <div className="coaches">
           <div className="coaches_inner">
             <div className="coaches_title">
@@ -113,10 +120,26 @@ function BranchesDetail() {
             </div>
             <div className="coaches_list">
               <ul>
-
+                {branch.coaches.map((coach, index) => (
+                <li key={index}>
+                  <div className="thumnail">
+                    <img src='/images/002.png' alt={branch.coaches[index].name} />
+                  </div>
+                  <div className="coach_info">
+                    <div className="coach_name">{branch.coaches[index].name}</div>
+                    <div className="coach_belt">{branch.coaches[index].stripe} BELT / {branch.coaches[index].level} GRAU</div>
+                  </div>
+                  
+                </li>
+                ))}
               </ul>
             </div>
           </div>
+        </div>
+        )}
+
+        <div className="branch_board">
+
         </div>
       </div>
     </div>
