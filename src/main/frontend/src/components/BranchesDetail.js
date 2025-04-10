@@ -42,7 +42,7 @@ function BranchesDetail() {
         <div className="branchDetail_header" style={{backgroundImage: `url(${branch.images[0]})`}}>
           <div className="branchInfo">
             <div className="ownerImage">
-              <img src='{branch.owner.userImages}' alt="ownerImage" />
+              <img src={branch.owner.userImages} alt="ownerImage" />
             </div>
             <div className="ownerInfo">
               <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
