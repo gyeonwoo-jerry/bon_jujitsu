@@ -90,7 +90,7 @@ function BranchesDetail() {
                 <>
           <div className="branchDetail_content_inner">
             <div className="branch_title">
-              <div className="stit">지점</div>
+              <div className="stit">지부</div>
               <div className="btit">BRANCH</div>
             </div>
             <div className="contents">
@@ -111,7 +111,8 @@ function BranchesDetail() {
           </>
           )}
         </div>
-        {branch.coaches && (
+        {branch.coaches.length > 0 && (
+            <>
         <div className="coaches">
           <div className="coaches_inner">
             <div className="coaches_title">
@@ -136,10 +137,17 @@ function BranchesDetail() {
             </div>
           </div>
         </div>
+          </>
         )}
 
-        <div className="branch_board">
-
+        <div className="branch_container">
+          <div className="branch_inner">
+            <div className="branch_board_title">
+              <div className="stit">지부 게시판</div>
+              <div className="btit">BRANCH BOARD</div>
+            </div>
+            
+          </div>
         </div>
       </div>
     </div>
