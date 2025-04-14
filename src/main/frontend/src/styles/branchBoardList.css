@@ -32,7 +32,7 @@
 }
 
 .branch-board-container .board-list .post-item .post-region {
-    background-color: var(--white-color);
+    background-color: transparent;
 }
 
 .branch-board-container .board-list thead tr {

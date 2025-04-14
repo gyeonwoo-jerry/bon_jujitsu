@@ -88,7 +88,7 @@
 
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt .grauLine {
     width: 5px;
-    height: 32px;
+    height: 28px;
     background-color: var(--white-color);
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.WHITE {
