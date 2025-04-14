@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import API from "../utils/api";
 import "../styles/branchesDetail.css";
 import BranchBoardList from "./BranchBoardList";
@@ -33,6 +36,27 @@ function BranchesDetail() {
         }
       });
   }, [id]);
+
+  // 슬라이더 설정
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    pauseOnHover: true,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          arrows: false,
+        }
+      }
+    ]
+  };
 
   if (!branch) {
     return <div>Loading...</div>;
@@ -105,12 +129,29 @@ function BranchesDetail() {
                   
               </div>
               <div className="branchDetail_content_text">
-                <div className="slide_images">
-                  {branch.images.map((image, index) => (
-                    <div className="slide_image" key={index}>
-                      <img src={image} alt={`slide_image_${index}`} />
+                <div className="slide_images_container">
+                  {branch.images && branch.images.length > 0 ? (
+                    branch.images.length === 1 ? (
+                      // 이미지가 1장인 경우 단일 이미지로 표시
+                      <div className="slide_image">
+                        <img src={branch.images[0]} alt="지점 이미지" />
+                      </div>
+                    ) : (
+                      // 이미지가 2장 이상인 경우 슬라이더로 표시
+                      <Slider {...sliderSettings} className="image-slider">
+                        {branch.images.map((image, index) => (
+                          <div className="slide_image" key={index}>
+                            <img src={image} alt={`지점 이미지 ${index + 1}`} />
+                          </div>
+                        ))}
+                      </Slider>
+                    )
+                  ) : (
+                    // 이미지가 없는 경우 기본 이미지 표시
+                    <div className="slide_image no-image">
+                      <img src="/images/no-image.png" alt="이미지 없음" />
                     </div>
-                  ))}
+                  )}
                 </div>
               </div> 
             </div>
