@@ -37,6 +37,11 @@ public class CommentService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 댓글을 이용할 수 없습니다.");
+    }
+
     Comment parentComment = null;
     if (request.parentId() != null) {
       parentComment = commentRepository.findById(request.parentId())
@@ -135,7 +140,7 @@ public class CommentService {
     Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
     // 사용자 검증
-    if (!user.getUserRole().equals(UserRole.ADMIN) &&
+    if (!user.isAdmin() &&
         !comment.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("삭제 권한이 없습니다.");
     }

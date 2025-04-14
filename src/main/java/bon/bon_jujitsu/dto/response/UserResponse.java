@@ -5,6 +5,7 @@ import bon.bon_jujitsu.domain.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.util.stream.Collectors;
 import lombok.Builder;
 
 @Builder
@@ -17,16 +18,30 @@ public record UserResponse(
     String address,
     String birthday,
     String gender,
-    String region,
     int level,
     Stripe stripe,
-    UserRole userRole,
+    List<BranchUserResponse> branchUsers,  // 사용자가 속한 지점들과 각 지점에서의 역할
     List<String> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
 
+  // BranchUser 정보를 담기 위한 내부 레코드
+  @Builder
+  public record BranchUserResponse(
+      String region,
+      UserRole userRole
+  ) {}
+
   public static UserResponse fromEntity(User user) {
+    // 사용자가 속한 모든 지점 정보와 역할을 매핑
+    List<BranchUserResponse> branchUserResponses = user.getBranchUsers().stream()
+        .map(bu -> BranchUserResponse.builder()
+            .region(bu.getBranch().getRegion())
+            .userRole(bu.getUserRole())
+            .build())
+        .collect(Collectors.toList());
+
     return UserResponse.builder()
         .id(user.getId())
         .name(user.getName())
@@ -36,10 +51,9 @@ public record UserResponse(
         .address(user.getAddress())
         .birthday(user.getBirthday())
         .gender(user.getGender())
-        .region(user.getBranch().getRegion())
         .level(user.getLevel())
         .stripe(user.getStripe())
-        .userRole(user.getUserRole())
+        .branchUsers(branchUserResponses)
         .images(user.getImages().stream().map(UserImage::getImagePath).toList())
         .createdAt(user.getCreatedAt())
         .modifiedAT(user.getModifiedAt())

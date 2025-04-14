@@ -7,12 +7,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -76,17 +73,16 @@ public class User extends Timestamped {
   @Enumerated(EnumType.STRING)
   private Stripe stripe;
 
-  @Column(nullable = false, length = 20)
-  @Enumerated(EnumType.STRING)
-  private UserRole userRole;
-
   @Column
   @Builder.Default
   private boolean isDeleted = false;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "branch_id", nullable = false)
-  private Branch branch;
+  @Column(nullable = false)
+  @Builder.Default
+  private boolean isAdmin = false;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<BranchUser> branchUsers = new ArrayList<>();
 
   @Builder.Default
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -168,12 +164,8 @@ public class User extends Timestamped {
     }
   }
 
-  public void updateUserRole(UserRole userRole) {
-    this.userRole = userRole;
-  }
-
-  public void updateBranch(Branch branch) {
-    this.branch = branch;
+  public boolean isAdminUser() {
+    return Boolean.TRUE.equals(this.isAdmin);
   }
 }
 

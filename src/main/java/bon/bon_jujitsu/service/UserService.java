@@ -2,22 +2,26 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.config.PasswordEncoder;
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
-import bon.bon_jujitsu.dto.request.UserRoleRequest;
+import bon.bon_jujitsu.dto.BranchRoleDto;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.GetAllUserRequest;
 import bon.bon_jujitsu.dto.request.LoginRequest;
 import bon.bon_jujitsu.dto.request.ProfileDeleteRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
+import bon.bon_jujitsu.dto.request.UserRoleRequest;
 import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.LogoutResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
 import bon.bon_jujitsu.jwt.JwtUtil;
 import bon.bon_jujitsu.repository.BranchRepository;
+import bon.bon_jujitsu.repository.BranchUserRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.UserSpecification;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +45,7 @@ public class UserService {
   private final BranchRepository branchRepository;
   private final JwtUtil jwtUtil;
   private final UserImageService userImageService;
+  private final BranchUserRepository branchUserRepository;
 
   public void signup(SignupRequest req, List<MultipartFile> images) {
     String memberId = req.memberId();
@@ -88,7 +93,6 @@ public class UserService {
         .address(req.address())
         .birthday(req.birthday())
         .gender(req.gender())
-        .branch(branch)
         .level(req.level())
         .sns1(req.sns1())
         .sns2(req.sns2())
@@ -96,32 +100,52 @@ public class UserService {
         .sns4(req.sns4())
         .sns5(req.sns5())
         .stripe(req.stripe())
-        .userRole(UserRole.PENDING)
         .build();
     userRepository.save(user);
+
+    BranchUser branchUser = BranchUser.builder()
+        .user(user)
+        .branch(branch)
+        .userRole(UserRole.PENDING)
+        .build();
+    branchUserRepository.save(branchUser);
 
     userImageService.uploadImage(user, images);
   }
 
   public LoginResponse login(LoginRequest req) {
     User user = userRepository.findByMemberId(req.memberId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
-      throw new IllegalArgumentException("회원가입 승인 대기 중입니다. 승인 완료 후 로그인할 수 있습니다.");
+    if (user.isDeleted()) {
+      throw new IllegalArgumentException("탈퇴한 회원입니다.");
     }
 
     if (!passwordEncoder.matches(req.password(), user.getPassword())) {
       throw new IllegalArgumentException("아이디나 비밀번호를 정확하게 입력해주세요.");
     }
 
+    if (!user.isAdmin()) {
+      boolean onlyPending = user.getBranchUsers().stream()
+          .allMatch(bu -> bu.getUserRole() == UserRole.PENDING);
+      if (onlyPending) {
+        throw new IllegalArgumentException("회원가입 승인 대기 중입니다. 승인 완료 후 로그인할 수 있습니다.");
+      }
+    }
+
     JwtUtil.TokenInfo tokenInfo = jwtUtil.createTokens(user.getId());
+
+    List<BranchRoleDto> branchRoles = user.getBranchUsers().stream()
+        .map(bu -> new BranchRoleDto(bu.getBranch().getId(), bu.getBranch().getRegion(),
+            bu.getUserRole()))
+        .toList();
 
     return new LoginResponse(
         tokenInfo.getAccessToken(),
         tokenInfo.getRefreshToken(),
-        user.getUserRole(),
-        user.getName()
+        user.getName(),
+        user.isAdmin(),
+        branchRoles
     );
   }
 
@@ -145,77 +169,108 @@ public class UserService {
     User targetUser = userRepository.findByIdAndIsDeletedFalse(request.targetUserId())
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-    // ADMIN이 아니라면 OWNER인지 확인
-    if (loggedInUser.getUserRole() != UserRole.ADMIN && loggedInUser.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("권한이 없습니다.");
-    }
+    Branch branch = branchRepository.findById(request.branchId())
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지부입니다."));
 
-    // OWNER라면 같은 지부의 유저만 변경 가능
-    if (loggedInUser.getUserRole() == UserRole.OWNER && !loggedInUser.getBranch().equals(targetUser.getBranch())) {
-      throw new IllegalArgumentException("해당 지부의 회원만 역할을 변경할 수 있습니다.");
-    }
+    BranchUser loginBranchUser = branchUserRepository.findByUserAndBranch(loggedInUser, branch)
+        .orElseThrow(() -> new IllegalArgumentException("해당 지부에 소속되지 않은 사용자입니다."));
 
-    // OWNER가 변경 가능한 역할 제한 (PENDING, USER, COACH만 가능)
-    if (loggedInUser.getUserRole() == UserRole.OWNER) {
+    // 권한 체크
+    if (!loggedInUser.isAdmin()) {
+      if (loginBranchUser.getUserRole() != UserRole.OWNER) {
+        throw new IllegalArgumentException("권한이 없습니다.");
+      }
+
+      // OWNER가 권한 변경 가능한 범위 제한
       List<UserRole> allowedRoles = List.of(UserRole.PENDING, UserRole.USER, UserRole.COACH);
       if (!allowedRoles.contains(request.role())) {
         throw new IllegalArgumentException("OWNER는 PENDING, USER, COACH 역할만 변경할 수 있습니다.");
       }
     }
 
-    // 이미 같은 역할로 변경하려는 경우 예외 처리
-    if (targetUser.getUserRole() == request.role()) {
-      throw new IllegalArgumentException("이미 " + request.role() + "으로 등록된 회원입니다.");
-    }
+    // 대상 유저가 이미 해당 지부에 소속되어 있는지 확인
+    Optional<BranchUser> optionalBranchUser = branchUserRepository.findByUserAndBranch(targetUser,
+        branch);
 
-    // 역할 변경
-    targetUser.updateUserRole(request.role());
+    if (optionalBranchUser.isPresent()) {
+      BranchUser targetBranchUser = optionalBranchUser.get();
+
+      if (targetBranchUser.getUserRole() == request.role()) {
+        throw new IllegalArgumentException("이미 " + request.role() + " 역할입니다.");
+      }
+
+      // 역할 업데이트
+      targetBranchUser.updateUserRole(request.role());
+    } else {
+      // 소속이 없다면 새롭게 등록
+      BranchUser newBranchUser = BranchUser.builder()
+          .user(targetUser)
+          .branch(branch)
+          .userRole(request.role())
+          .build();
+
+      branchUserRepository.save(newBranchUser);
+    }
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<UserResponse> getUsers(int page, int size, Long userId, GetAllUserRequest request) {
+  public PageResponse<UserResponse> getUsers(int page, int size, Long userId,
+      GetAllUserRequest request) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN && user.getUserRole() != UserRole.OWNER) {
+    // ADMIN or OWNER 권한 체크
+    boolean isAdmin = user.isAdmin();
+    List<Long> ownerBranchIds = user.getBranchUsers().stream()
+        .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+        .map(bu -> bu.getBranch().getId())
+        .toList();
+    boolean isOwner = !ownerBranchIds.isEmpty();
+
+    // 권한 체크
+    if (!isAdmin && !isOwner) {
       throw new IllegalArgumentException("관리자 또는 지부장(Owner) 권한이 없습니다.");
     }
 
+    // 페이지 체크
     if (page < 1 || size < 1) {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size,
+        Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    // 검색 조건 가져오기
     String name = (request != null) ? request.name() : null;
     UserRole role = (request != null) ? request.role() : null;
     Long branchId = (request != null) ? request.branchId() : null;
 
-    // Owner인 경우, 자신의 지부(branchId) 내에서만 검색 가능하도록 제한
-    if (user.getUserRole() == UserRole.OWNER) {
-      branchId = user.getBranch().getId(); // Owner의 지부 ID로 고정
-    }
-
-    // 검색 조건이 없으면 전체 조회 (Owner는 본인 지부만)
+    // 검색 조건 없는 경우
     if (name == null && role == null && branchId == null) {
-      Page<User> userPage = (user.getUserRole() == UserRole.ADMIN) ?
-          userRepository.findAllByIsDeletedFalse(pageRequest) :
-          userRepository.findAllByBranch_IdAndIsDeletedFalse(user.getBranch().getId(), pageRequest);
+      Page<User> userPage = isAdmin
+          ? userRepository.findAllByIsDeletedFalse(pageRequest)
+          : userRepository.findAllByBranchIdInAndIsDeletedFalse(ownerBranchIds, pageRequest);
 
       return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
     }
 
-    // 검색 조건이 있을 경우 Specification 사용
+    // 검색 조건 있는 경우
+    if (!isAdmin && isOwner) {
+      // Owner는 검색 조건이 있더라도 자신의 지부들 안에서만 필터링
+      Specification<User> spec = UserSpecification.withFilters(name, role, ownerBranchIds);
+      Page<User> userPage = userRepository.findAll(spec, pageRequest);
+      return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
+    }
+
+    // Admin인 경우 전체 필터링 가능
     Specification<User> spec = UserSpecification.withFilters(name, role, branchId);
     Page<User> userPage = userRepository.findAll(spec, pageRequest);
-
     return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
 
   @Transactional(readOnly = true)
   public UserResponse getProfile(Long userId) {
-    User profile = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+    User profile = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     return UserResponse.fromEntity(profile);
   }
@@ -234,10 +289,36 @@ public class UserService {
       }
     });
 
+    // 지부 변경
     request.branchId().ifPresent(branchId -> {
       Branch newBranch = branchRepository.findById(branchId)
           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지사입니다."));
-      profile.updateBranch(newBranch);
+
+      // 유저가 이미 새 지부에 소속되어 있는지 확인
+      boolean alreadyInBranch = profile.getBranchUsers().stream()
+          .anyMatch(bu -> bu.getBranch().getId().equals(branchId));
+
+      if (!alreadyInBranch) {
+        // 유저의 첫 번째 지부 기준으로 역할 확인 (대표 지부 기준이 없으므로)
+        BranchUser currentBranchUser = profile.getBranchUsers().stream()
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("지부 소속 정보가 없습니다."));
+
+        UserRole currentRole = currentBranchUser.getUserRole();
+
+        if (currentRole == UserRole.OWNER || currentRole == UserRole.COACH) {
+          throw new IllegalArgumentException("OWNER 또는 COACH는 지부를 변경할 수 없습니다.");
+        }
+
+        // 새 지부 등록 + 역할 PENDING 부여
+        BranchUser newBranchUser = BranchUser.builder()
+            .user(profile)
+            .branch(newBranch)
+            .userRole(UserRole.PENDING)
+            .build();
+
+        branchUserRepository.save(newBranchUser);
+      }
     });
 
     if (images != null && !images.isEmpty()) {
@@ -246,29 +327,48 @@ public class UserService {
   }
 
   public void deleteUser(Long userId, ProfileDeleteRequest request) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-    if(!passwordEncoder.matches(request.password(), user.getPassword())) {
+    if (!passwordEncoder.matches(request.password(), user.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
 
     user.softDelete();
   }
 
+  @Transactional(readOnly = true)
   public PageResponse<UserResponse> getDeletedUsers(int page, int size, Long userId) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("회원을 찾을수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관리자 권한이 없습니다.");
-    }
-
-    if(page < 1 || size < 1) {
+    if (page < 1 || size < 1) {
       throw new IllegalArgumentException("페이지 번호와 크기는 1 이상이어야 합니다.");
     }
 
-    PageRequest pageRequest = PageRequest.of(page -1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size,
+        Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<User> deletedUsers = userRepository.findAllByIsDeletedTrue(pageRequest);
+    Page<User> deletedUsers;
+
+    if (user.isAdmin()) {
+      // 관리자: 전체 탈퇴 유저 조회
+      deletedUsers = userRepository.findAllByIsDeletedTrue(pageRequest);
+
+    } else {
+      // 지부장 여부 확인
+      List<Long> ownerBranchIds = user.getBranchUsers().stream()
+          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+          .map(bu -> bu.getBranch().getId())
+          .toList();
+
+      if (ownerBranchIds.isEmpty()) {
+        throw new IllegalArgumentException("탈퇴 회원을 조회할 권한이 없습니다.");
+      }
+
+      // 지부장: 해당 지부에 속한 탈퇴 유저 조회
+      deletedUsers = userRepository.findDeletedUsersByBranchIds(ownerBranchIds, pageRequest);
+    }
 
     return PageResponse.fromPage(deletedUsers.map(UserResponse::fromEntity));
   }

@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.Notice;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -41,27 +42,22 @@ public class NoticeService {
   public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> images, Long branchId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch userBranch = user.getBranch();
-    if (userBranch == null) {
-      throw new IllegalArgumentException("사용자에게 등록된 체육관이 없습니다.");
-    }
-
-    Branch requestBranch  = branchRepository.findById(branchId).orElseThrow(()->
+    Branch branch  = branchRepository.findById(branchId).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관장님, 관리자만 공지 등록이 가능합니다.");
-    }
+    BranchUser branchUser = user.getBranchUsers().stream()
+        .filter(bu -> bu.getBranch().getId().equals(branchId))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
 
-    // 관장의 체육관과 요청된 체육관(branchId)이 같은지 확인
-    if (!userBranch.getId().equals(requestBranch.getId())) {
-      throw new IllegalArgumentException("해당 체육관의 공지사항을 작성할 권한이 없습니다.");
+    if (!(branchUser.getUserRole() == UserRole.OWNER || user.isAdmin())) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 작성할 수 있습니다.");
     }
 
     Notice notice = Notice.builder()
         .title(request.title())
         .content(request.content())
-        .branch(requestBranch )
+        .branch(branch )
         .user(user)
         .build();
 
@@ -130,11 +126,22 @@ public class NoticeService {
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 수정 할 수 있습니다.");
+    // 공지사항이 속한 지점 확인
+    Branch noticeBranch = notice.getBranch();
+
+    // 사용자가 해당 지점에 등록되어 있는지와 역할 확인
+    BranchUser branchUser = user.getBranchUsers().stream()
+        .filter(bu -> bu.getBranch().getId().equals(noticeBranch.getId()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
+
+    // 관리자이거나 해당 지점의 관장인 경우에만 수정 가능
+    if (!(user.isAdmin() || branchUser.getUserRole() == UserRole.OWNER)) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 수정할 수 있습니다.");
     }
 
-    if (user.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
+    // 관장인 경우 본인이 작성한 공지사항만 수정 가능
+    if (branchUser.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
       throw new IllegalArgumentException("본인이 작성한 공지사항만 수정할 수 있습니다.");
     }
 
@@ -150,11 +157,22 @@ public class NoticeService {
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 삭제 할 수 있습니다.");
+    // 공지사항이 속한 지점 확인
+    Branch noticeBranch = notice.getBranch();
+
+    // 사용자가 해당 지점에 등록되어 있는지와 역할 확인
+    BranchUser branchUser = user.getBranchUsers().stream()
+        .filter(bu -> bu.getBranch().getId().equals(noticeBranch.getId()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
+
+    // 관리자이거나 해당 지점의 관장인 경우에만 수정 가능
+    if (!(user.isAdmin() || branchUser.getUserRole() == UserRole.OWNER)) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 삭제할 수 있습니다.");
     }
 
-    if (user.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
+    // 관장인 경우 본인이 작성한 공지사항만 수정 가능
+    if (branchUser.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
       throw new IllegalArgumentException("본인이 작성한 공지사항만 삭제할 수 있습니다.");
     }
 

@@ -68,9 +68,10 @@ public class BranchController {
 
   @DeleteMapping("/branch")
   public ApiResponse<Void> deleteBranch(
-      @AuthenticationUserId Long userId
+      @AuthenticationUserId Long userId,
+      @PathVariable("branchId") Long branchId
   ) {
-    branchService.deleteBranch(userId);
+    branchService.deleteBranch(userId, branchId);
     return ApiResponse.success("지부 삭제 성공", null);
   }
 

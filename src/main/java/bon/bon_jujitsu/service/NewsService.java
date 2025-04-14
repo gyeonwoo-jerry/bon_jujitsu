@@ -36,7 +36,8 @@ public class NewsService {
   public void createNews(Long userId, NewsRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
+    if (user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
       throw new IllegalArgumentException("뉴스는 관장이나 관리자만 작성할 수 있습니다.");
     }
 
@@ -116,11 +117,12 @@ public class NewsService {
 
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 수정 할 수 있습니다.");
+    if (user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
+      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 수정할 수 있습니다.");
     }
 
-    if (user.getUserRole() == UserRole.OWNER && !news.getUser().getId().equals(user.getId())) {
+    if (!news.getUser().getId().equals(user.getId())) {
       throw new IllegalArgumentException("본인이 작성한 뉴스만 수정할 수 있습니다.");
     }
 
@@ -137,11 +139,12 @@ public class NewsService {
 
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 삭제 할 수 있습니다.");
+    if (user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
+      throw new IllegalArgumentException("뉴스는 관장이나 관리자만 삭제할 수 있습니다.");
     }
 
-    if (user.getUserRole() == UserRole.OWNER && !news.getUser().getId().equals(user.getId())) {
+    if (!news.getUser().getId().equals(user.getId())) {
       throw new IllegalArgumentException("본인이 작성한 뉴스만 삭제할 수 있습니다.");
     }
 

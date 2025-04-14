@@ -197,8 +197,7 @@ public class ReviewService {
 
     User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-    if (!user.getUserRole().equals(UserRole.ADMIN) &&
-        !review.getUser().getId().equals(userId)) {
+    if (!user.isAdmin() && !review.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("삭제 권한이 없습니다.");
     }
 

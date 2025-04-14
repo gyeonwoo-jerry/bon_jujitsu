@@ -33,11 +33,12 @@ public class SponsorService {
   private final PostImageRepository postImageRepository;
 
   public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    // 공지사항은 OWNER만 작성 가능
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("스폰서는 관장만 작성할 수 있습니다.");
+    if (user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
+      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 작성할 수 있습니다.");
     }
 
     Sponsor sponsor = Sponsor.builder()
@@ -53,7 +54,7 @@ public class SponsorService {
 
   @Transactional(readOnly = true)
   public PageResponse<SponsorResponse> getNotices(int page, int size, String name) {
-    PageRequest pageRequest = PageRequest.of(page -1, size);
+    PageRequest pageRequest = PageRequest.of(page - 1, size);
 
     Page<Sponsor> sponsors;
 
@@ -67,24 +68,25 @@ public class SponsorService {
 
     Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR", sponsor.getId())
-              .stream()
-              .map(postImage -> {
-                // 파일 경로 안전하게 조합
-                String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                return path;
-              })
-              .collect(Collectors.toList());
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR",
+              sponsor.getId())
+          .stream()
+          .map(postImage -> {
+            // 파일 경로 안전하게 조합
+            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+            return path;
+          })
+          .collect(Collectors.toList());
 
       return new SponsorResponse(
-              sponsor.getId(),
-              sponsor.getTitle(),
-              sponsor.getContent(),
-              sponsor.getUser().getName(),
-              imagePaths,
-              sponsor.getViewCount(),
-              sponsor.getCreatedAt(),
-              sponsor.getModifiedAt()
+          sponsor.getId(),
+          sponsor.getTitle(),
+          sponsor.getContent(),
+          sponsor.getUser().getName(),
+          imagePaths,
+          sponsor.getViewCount(),
+          sponsor.getCreatedAt(),
+          sponsor.getModifiedAt()
       );
     });
 
@@ -92,7 +94,8 @@ public class SponsorService {
   }
 
   public SponsorResponse getSponsor(Long sponsorId, HttpServletRequest request) {
-    Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
+    Sponsor sponsor = sponsorRepository.findById(sponsorId)
+        .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
     HttpSession session = request.getSession();
     String sessionKey = "viewed_sponsor_" + sponsorId;
@@ -103,28 +106,35 @@ public class SponsorService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR", sponsor.getId())
-            .stream()
-            .map(postImage -> {
-              // 파일 경로 안전하게 조합
-              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              return path;
-            })
-            .collect(Collectors.toList());
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR",
+            sponsor.getId())
+        .stream()
+        .map(postImage -> {
+          // 파일 경로 안전하게 조합
+          String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+          return path;
+        })
+        .collect(Collectors.toList());
 
     return SponsorResponse.fromEntity(sponsor, imagePaths);
   }
 
 
-  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images) {
+  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId,
+      List<MultipartFile> images) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Sponsor sponsor = sponsorRepository.findById(sponsorId)
         .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("스폰서는 관장만 수정 할 수 있습니다.");
+    if (user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
+      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 수정할 수 있습니다.");
+    }
+
+    if (!sponsor.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 스폰서만 수정할 수 있습니다.");
     }
 
     sponsor.updateSponsor(update);
@@ -136,12 +146,25 @@ public class SponsorService {
 
 
   public void deleteSponsor(Long userId, Long sponsorId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Sponsor sponsor = sponsorRepository.findById(sponsorId).orElseThrow(()-> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
+    Sponsor sponsor = sponsorRepository.findById(sponsorId)
+        .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER) {
-      throw new IllegalArgumentException("스폰서는 관장만 삭제 할 수 있습니다.");
+    // 관리자인 경우 - 모든 스폰서 삭제 가능
+    if (user.isAdmin()) {
+      // 관리자는 모든 스폰서 삭제 가능하므로 추가 검사 없이 진행
+    }
+    // 관장인 경우 - 본인이 작성한 스폰서만 삭제 가능
+    else if (user.getBranchUsers().stream().anyMatch(bu -> bu.getUserRole() == UserRole.OWNER)) {
+      if (!sponsor.getUser().getId().equals(user.getId())) {
+        throw new IllegalArgumentException("본인이 작성한 스폰서만 삭제할 수 있습니다.");
+      }
+    }
+    // 그 외 경우 - 삭제 권한 없음
+    else {
+      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 삭제할 수 있습니다.");
     }
 
     sponsor.softDelete();

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import bon.bon_jujitsu.domain.BranchUser;
 
 import java.util.List;
 
@@ -31,8 +32,8 @@ public class BranchService {
   public void createBranch(Long userId, BranchRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관장님, 관리자만 지부 등록이 가능합니다.");
+    if (!user.isAdmin()) {
+      throw new IllegalArgumentException("관리자만 지부 등록이 가능합니다.");
     }
 
     Branch branch = Branch.builder()
@@ -51,13 +52,17 @@ public class BranchService {
     Branch branch = branchRepository.findById(branchId)
         .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
-    User owner = branch.getUsers().stream()
-        .filter(user -> UserRole.OWNER.equals(user.getUserRole()))
+    // OWNER 권한을 가진 유저 찾기
+    User owner = branch.getBranchUsers().stream()
+        .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+        .map(BranchUser::getUser)
         .findFirst()
         .orElse(null);
 
-    List<User> coaches = branch.getUsers().stream()
-        .filter(user -> UserRole.COACH.equals(user.getUserRole()))
+    // COACH 권한을 가진 유저들 리스트
+    List<User> coaches = branch.getBranchUsers().stream()
+        .filter(bu -> bu.getUserRole() == UserRole.COACH)
+        .map(BranchUser::getUser)
         .toList();
 
     return BranchResponse.from(branch, owner, coaches);
@@ -79,10 +84,11 @@ public class BranchService {
 
     Page<BranchResponse> branchResponses = branches.map(branch -> {
       // 각 지부마다 OWNER 찾기
-      User owner = branch.getUsers().stream()
-              .filter(user -> UserRole.OWNER.equals(user.getUserRole()))
-              .findFirst()
-              .orElse(null);
+      User owner = branch.getBranchUsers().stream()
+          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+          .map(BranchUser::getUser)
+          .findFirst()
+          .orElse(null);
 
       // OWNER 정보를 포함한 응답 생성
       return BranchResponse.from(branch, owner);
@@ -95,8 +101,12 @@ public class BranchService {
   public void updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()
-        -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+    BranchUser branchUser = user.getBranchUsers().stream()
+        .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("해당 유저는 지부의 관장(OWNER)이 아닙니다."));
+
+    Branch branch = branchUser.getBranch();
 
     branch.updateBranch(update);
 
@@ -106,19 +116,15 @@ public class BranchService {
   }
 
 
-  public void deleteBranch(Long userId) {
+  public void deleteBranch(Long userId, Long branchId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.OWNER && user.getUserRole() != UserRole.ADMIN) {
-      throw new IllegalArgumentException("관장님, 관리자만 지부 정보 삭제가 가능합니다.");
+    if (!user.isAdmin()) {
+      throw new IllegalArgumentException("관리자만 지부 삭제가 가능합니다.");
     }
 
-    Branch branch = branchRepository.findById(user.getBranch().getId()).orElseThrow(()
+    Branch branch = branchRepository.findById(branchId).orElseThrow(()
         -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
-
-    if (user.getUserRole() == UserRole.OWNER && !branch.getId().equals(user.getBranch().getId())) {
-      throw new IllegalArgumentException("본인 지부만 삭제할 수 있습니다.");
-    }
 
     branch.softDelete();
   }

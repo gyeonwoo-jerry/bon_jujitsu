@@ -4,6 +4,7 @@ import bon.bon_jujitsu.domain.UserRole;
 
 public record UserRoleRequest(
     Long targetUserId,
+    Long branchId,
     UserRole role
 ) {
 

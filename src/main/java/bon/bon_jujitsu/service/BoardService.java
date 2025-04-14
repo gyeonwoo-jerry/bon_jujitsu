@@ -45,7 +45,10 @@ public class BoardService {
     Branch branch = branchRepository.findById(branchId).orElseThrow(()->
         new IllegalArgumentException("존재하지 않는 체육관입니다."));
 
-    if (!user.getBranch().equals(branch)) {
+    boolean isMemberOfBranch = user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getBranch().getId().equals(branchId));
+
+    if (!isMemberOfBranch) {
       throw new IllegalArgumentException("해당 체육관의 회원만 게시글을 작성할 수 있습니다.");
     }
 
@@ -143,8 +146,7 @@ public class BoardService {
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (!user.getUserRole().equals(UserRole.ADMIN) &&
-        !board.getUser().getId().equals(userId)) {
+    if (!user.isAdmin() && !board.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("삭제 권한이 없습니다.");
     }
 

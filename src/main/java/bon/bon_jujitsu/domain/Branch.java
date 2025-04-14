@@ -41,8 +41,9 @@ public class Branch extends Timestamped {
   @Column(nullable = false)
   private boolean isDeleted = false;
 
+  @Builder.Default
   @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<User> users = new ArrayList<>();
+  private List<BranchUser> branchUsers = new ArrayList<>();
 
   @Builder.Default
   @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)

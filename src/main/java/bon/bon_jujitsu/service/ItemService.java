@@ -37,7 +37,7 @@ public class ItemService {
   public void createItem(Long userId, ItemRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if(user.getUserRole() != UserRole.ADMIN) {
+    if(!user.isAdmin()) {
       throw new IllegalArgumentException("관리자만 상품등록이 가능합니다.");
     }
 
@@ -68,8 +68,9 @@ public class ItemService {
   public PageResponse<ItemResponse> getItems(int page, int size, Long userId, String name) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (!EnumSet.of(UserRole.ADMIN, UserRole.OWNER, UserRole.USER).contains(user.getUserRole())) {
-      throw new IllegalArgumentException("잘못된 사용자 역할입니다.");
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
     }
 
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -90,8 +91,9 @@ public class ItemService {
   public ItemResponse getItem(Long itemId, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (!EnumSet.of(UserRole.ADMIN, UserRole.OWNER, UserRole.USER).contains(user.getUserRole())) {
-      throw new IllegalArgumentException("잘못된 사용자 역할입니다.");
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
     }
 
     Item item = itemRepository.findById(itemId).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
@@ -103,7 +105,7 @@ public class ItemService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN) {
+    if (!user.isAdmin()) {
       throw new IllegalArgumentException("관리자만 상품수정이 가능합니다.");
     }
 
@@ -153,7 +155,7 @@ public class ItemService {
   public void deleteItem(Long userId, Long itemId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if(user.getUserRole() != UserRole.ADMIN) {
+    if(!user.isAdmin()) {
       throw new IllegalArgumentException("관리자만 상품삭제가 가능합니다.");
     }
 
@@ -165,8 +167,9 @@ public class ItemService {
   public PageResponse<LatestItemResponse> getMainItems(int page, int size, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (!EnumSet.of(UserRole.ADMIN, UserRole.OWNER, UserRole.USER).contains(user.getUserRole())) {
-      throw new IllegalArgumentException("잘못된 사용자 역할입니다.");
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
     }
 
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));

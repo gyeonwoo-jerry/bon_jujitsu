@@ -32,7 +32,8 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
     }
 
@@ -56,7 +57,8 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
     }
 
@@ -70,7 +72,8 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
     }
 
@@ -95,7 +98,8 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
     }
 
@@ -109,7 +113,8 @@ public class CartService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 장바구니를 이용할 수 없습니다.");
     }
 

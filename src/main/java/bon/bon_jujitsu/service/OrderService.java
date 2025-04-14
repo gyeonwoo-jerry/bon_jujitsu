@@ -40,8 +40,9 @@ public class OrderService {
     User orderUser = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (orderUser.getUserRole() == UserRole.PENDING) {
-      throw new IllegalArgumentException("승인 대기 중인 사용자는 주문 할 수 없습니다.");
+    if (orderUser.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 주문을 할 수 없습니다.");
     }
 
     List<Long> cartItemIds = Optional.ofNullable(request.cartItemIds())
@@ -119,7 +120,7 @@ public class OrderService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN) {
+    if (user.isAdmin()) {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
     }
 
@@ -141,8 +142,9 @@ public class OrderService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() == UserRole.PENDING) {
-      throw new IllegalArgumentException("승인 대기 중인 사용자는 주문을 이용 할 수 없습니다.");
+    if (user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 주문을 할 수 없습니다.");
     }
 
     // 상태값이 없으면 기본 조회 (WAITING, DELIVERING)
@@ -161,7 +163,7 @@ public class OrderService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN) {
+    if (user.isAdmin()) {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
     }
 
@@ -245,7 +247,7 @@ public class OrderService {
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
 
-    if (user.getUserRole() != UserRole.ADMIN && !order.getUser().getId().equals(userId)) {
+    if (!user.isAdmin() && !order.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("본인의 주문만 취소할 수 있습니다.");
     }
 
