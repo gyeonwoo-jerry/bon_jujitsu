@@ -23,6 +23,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
   Page<User> findAllByIsDeletedFalse(Pageable pageable);
 
+  @Query("SELECT u FROM User u WHERE u.isDeleted = true")
   Page<User> findAllByIsDeletedTrue(PageRequest pageRequest);
 
   @Query("SELECT DISTINCT u FROM User u JOIN u.branchUsers bu WHERE bu.branch.id IN :branchIds AND u.isDeleted = false")
