@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/branchesDetail.css";
 import BranchBoardList from "./BranchBoardList";
+import NoticeBoardList from "./NoticeBoardList";
 
 function BranchesDetail() {
   const { id } = useParams(); // URL에서 id 파라미터를 가져옵니다.
@@ -158,7 +159,7 @@ function BranchesDetail() {
                 <BranchBoardList />
               </div>
               <div className="board_list">
-                <BranchBoardList />
+                <NoticeBoardList />
               </div>
             </div>
               

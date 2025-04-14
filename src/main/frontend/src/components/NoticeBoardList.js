@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/branchBoardList.css";
 
-const BranchBoardList = () => {
+const NoticeBoardList = () => {
   // URL 파라미터에서 브랜치 ID 직접 가져오기 (/branches/:branchId)
   const params = useParams();
   const location = useLocation();
@@ -40,7 +40,7 @@ const BranchBoardList = () => {
   }, [params, location.pathname]);
 
   // API 엔드포인트 설정
-  const apiEndpoint = '/board';
+  const apiEndpoint = '/notice';
 
   // useCallback을 사용하여 fetchPosts 함수를 메모이제이션
   const fetchPosts = useCallback((pageIndex) => {
@@ -181,7 +181,7 @@ const BranchBoardList = () => {
 
   return (
     <div className="branch-board-container">
-      <h1 className="board-title">지부 자유게시판</h1>
+      <h1 className="board-title">지부 공지사항</h1>
 
       <table className="board-list">
         <colgroup>
@@ -294,4 +294,4 @@ const BranchBoardList = () => {
   );
 };
 
-export default BranchBoardList; 
+export default NoticeBoardList; 
