@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.specification;
 
+import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -23,7 +24,8 @@ public class UserSpecification {
 
       // 역할 검색 (= role)
       if (role != null) {
-        predicates.add(criteriaBuilder.equal(root.get("userRole"), role));
+        Join<User, BranchUser> branchUserJoin = root.join("branchUsers", JoinType.INNER);
+        predicates.add(criteriaBuilder.equal(branchUserJoin.get("userRole"), role));
       }
 
       // 브랜치 검색 (= branchId)
