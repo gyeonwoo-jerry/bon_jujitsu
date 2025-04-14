@@ -3,6 +3,8 @@ package bon.bon_jujitsu.specification;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +28,8 @@ public class UserSpecification {
 
       // 브랜치 검색 (= branchId)
       if (branchId != null) {
-        predicates.add(criteriaBuilder.equal(root.get("branch").get("id"), branchId));
+        Join<Object, Object> branchUserJoin = root.join("branchUsers", JoinType.INNER);
+        predicates.add(criteriaBuilder.equal(branchUserJoin.get("branch").get("id"), branchId));
       }
 
       // 삭제되지 않은 유저만 조회
