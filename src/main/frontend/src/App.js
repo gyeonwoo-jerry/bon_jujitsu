@@ -9,6 +9,7 @@ import IntroJiujitsu from './pages/introJiujitsu';
 import IntroLevel from './pages/introLevel';
 import Branches from './pages/branches';
 import BranchesDetail from './pages/branchesDetail';
+import BoardDetailPage from './pages/boardDetail';
 import Comunity from './pages/comunity';
 import Store from './pages/store';
 import StoreDetail from './pages/storeDetail';
@@ -39,6 +40,8 @@ function App() {
           <Route path="/introLevel" element={<IntroLevel />} />
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
+          <Route path="/branches/:id/board/:id" element={<BoardDetailPage />} />
+          <Route path="/branches/:id/notice/:id" element={<BoardDetailPage />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
           <Route path="/storeWrite" element={<StoreWritePage />} />

@@ -1,0 +1,105 @@
+.board-detail-container {
+    
+}
+
+.board-detail-container .inner {
+    width: 100%;
+    max-width: var(--branch-board-width);
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.board-detail-container .detail_header {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between ;
+    align-items: center;
+}   
+.board-detail-container .detail_header .back-button {
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--black-color);
+    border: 1px solid var(--black-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    justify-content: center;
+}
+.board-detail-container .detail_header .back-button:hover {
+    background-color: var(--point-color);
+    color: var(--white-color);
+    border: 1px solid var(--point-color);
+}
+
+.board-detail-container .detail_header .delete-button {
+    transition: all 0.3s ease;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--black-color);
+    border: 1px solid var(--black-color);
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.board-detail-container .detail_header .delete-button:hover {
+    background-color: var(--point-color);
+    color: var(--white-color);
+    border: 1px solid var(--point-color);
+}
+
+.board-detail-container .detail_content {
+    width: 100%;
+    height: 100%;
+    margin-top: 24px;
+    border-bottom: 1px solid var(--gray-color);
+}
+
+.board-detail-container .detail_content .title {
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--black-color);
+    margin-bottom: 24px;
+}
+
+.board-detail-container .detail_content .meta_data {
+    display: flex;
+    align-items: center;
+    justify-content:  center;
+    gap: 24px;
+    border-bottom: 1px solid var(--gray-color);
+    padding-bottom: 24px;
+}
+.board-detail-container .detail_content .meta_data span {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--black-color);
+}
+
+.board-detail-container .detail_content .meta_data .post-detail-region {
+    padding: 6px 12px;
+    border-radius: 14px;
+    background-color: var(--point-color);
+    color: var(--white-color);
+}
+
+.board-detail-container .detail_content .post-detail-content {
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+}
+
+.board-detail-container .detail_content .post-detail-content .post_image {
+    padding: 14px 0;
+}
+
+.board-detail-container .detail_content .post-detail-content .post_detail_images {
+    padding: 14px 0;
+}

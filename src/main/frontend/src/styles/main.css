@@ -11,6 +11,8 @@ License: none (public domain)
     --blue-color: #007bff;
     --purple-color: #6f42c1;
     --brown-color: #5f3c2c;
+    --branch-board-width: 1400px;
+
   }
 
 @import url('../assets/fonts/pretendard.css');

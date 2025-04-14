@@ -117,7 +117,7 @@ const NoticeBoardList = () => {
       console.error("유효하지 않은 게시물 ID입니다");
       return;
     }
-    navigate(`/branches/${branchId}/board/${id}`);
+    navigate(`/branches/${branchId}/notice/${id}`);
   };
 
   const handlePageChange = (pageNumber) => {

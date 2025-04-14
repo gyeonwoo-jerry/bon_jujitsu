@@ -3,12 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/boardDetail.css";
 
-function BoardDetail({ apiEndpoint = "/board" }) {
+function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
   const { id } = useParams(); // URL에서 게시글 ID를 가져옵니다.
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // API 엔드포인트 정규화
   const normalizedApiEndpoint = apiEndpoint.startsWith("/")
@@ -49,13 +50,21 @@ function BoardDetail({ apiEndpoint = "/board" }) {
     try {
       setLoading(true);
       console.log(`게시물 상세 정보 요청: ${normalizedApiEndpoint}/${id}`);
-      const response = await API.get(`${normalizedApiEndpoint}/${id}`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await API.get(`${normalizedApiEndpoint}/${id}`, { headers });
 
       if (response.status === 200) {
         console.log("Post detail fetched:", response.data);
         if (response.data.success) {
-          setPost(response.data.content);
-          document.title = response.data.content?.title || "게시글 상세";
+          const postData = response.data.content;
+          setPost(postData);
+          document.title = postData?.title || "게시글 상세";
+          
+          // 게시글 제목을 부모 컴포넌트로 전달
+          if (onPostLoad && postData.title) {
+            onPostLoad(postData.title);
+          }
         } else {
           throw new Error("게시글을 불러오는데 실패했습니다.");
         }
@@ -71,9 +80,23 @@ function BoardDetail({ apiEndpoint = "/board" }) {
     } finally {
       setLoading(false);
     }
-  }, [normalizedApiEndpoint, id]);
+  }, [normalizedApiEndpoint, id, onPostLoad]);
 
   useEffect(() => {
+    const checkUserRole = () => {
+      try {
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          setIsAdmin(userInfo.role === 'ADMIN');
+        }
+      } catch (error) {
+        console.error('사용자 권한 확인 오류:', error);
+        setIsAdmin(false);
+      }
+    };
+    checkUserRole();
+
     // 게시글 ID가 있을 때만 API를 호출합니다.
     if (id && id !== "undefined") {
       fetchPostDetail();
@@ -169,59 +192,64 @@ function BoardDetail({ apiEndpoint = "/board" }) {
 
   return (
     <div className="board-detail-container">
-      <div className="board-detail-header">
-        <button className="back-button" onClick={handleGoBack}>
-          &larr; 목록으로
-        </button>
-
-        <button className="delete-button" onClick={handleDelete}>
-          삭제
-        </button>
-      </div>
-
-      <div className="post-detail-header">
-        <h1 className="post-detail-title">{post.title || "제목 없음"}</h1>
-        <div className="post-detail-meta">
-          {post.region && (
-            <span className="post-detail-region">{post.region}</span>
+      <div className="inner">
+        <div className="detail_header">
+          <button className="back-button" onClick={handleGoBack}>
+            &larr;
+          </button>
+          {isAdmin && (
+          <button className="delete-button" onClick={handleDelete}>
+            삭제
+          </button>
           )}
-          <span className="post-detail-author">
-            {post.name || "작성자 없음"}
-          </span>
-          <span className="post-detail-date">
-            {post.createdAt
-              ? new Date(post.createdAt).toLocaleDateString()
-              : "날짜 정보 없음"}
-          </span>
+          
         </div>
-      </div>
 
-      <div className="post-detail-content">
-        {post.content && (
-          <div className="post-detail-text">
-            {post.content.split("\n").map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
+        <div className="detail_content">
+          <h1 className="title">{post.title || "제목 없음"}</h1>
+          <div className="meta_data">
+            {post.region && (
+              <span className="post-detail-region">{post.region}</span>
+            )}
+            <span className="post-detail-author">
+              {post.name || "작성자 없음"}
+            </span>
+            <span className="post-detail-date">
+              {post.createdAt
+                ? new Date(post.createdAt).toLocaleDateString()
+                : "날짜 정보 없음"}
+            </span>
           </div>
-        )}
-
-        {Array.isArray(post.images) && post.images.length > 0 && (
-          <div className="post-detail-images">
-            {post.images.map((image, index) => (
-              <div key={index} className="post-detail-image-container">
-                <img
-                  src={normalizeImageUrl(image)}
-                  alt={`${post.title || "게시글"} 이미지 ${index + 1}`}
-                  className="post-detail-image"
-                  onError={(e) => {
-                    console.log("이미지 로딩 오류, 기본 이미지로 대체:", image);
-                    e.target.src = "/images/blank_img.png";
-                  }}
-                />
+          <div className="post-detail-content">
+            {post.content && (
+              <div className="post-detail-text">
+                {post.content.split("\n").map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
               </div>
-            ))}
+            )}
+
+            {Array.isArray(post.images) && post.images.length > 0 && (
+              <div className="post_detail_images">
+                {post.images.map((image, index) => (
+                  <div key={index} className="post_image">
+                    <img
+                      src={normalizeImageUrl(image)}
+                      alt={`${post.title || "게시글"} 이미지 ${index + 1}`}
+                      className="post-detail-image"
+                      onError={(e) => {
+                        console.log("이미지 로딩 오류, 기본 이미지로 대체:", image);
+                        e.target.src = "/images/blank_img.png";
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        
       </div>
     </div>
   );
