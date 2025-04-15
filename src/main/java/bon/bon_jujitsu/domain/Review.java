@@ -27,7 +27,7 @@ import org.hibernate.annotations.Where;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Where(clause = "is_deleted = false")
-@Table(name = "reivew")
+@Table(name = "review")
 public class Review extends Timestamped {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
