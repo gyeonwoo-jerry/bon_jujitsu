@@ -39,15 +39,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
   @Query(
       value = """
-        SELECT u.* FROM users u
-        JOIN branch_user bu ON u.id = bu.user_id
+        SELECT u.* 
+        FROM users u
+        JOIN branch_users bu ON u.id = bu.user_id
         WHERE u.is_deleted = true
         AND bu.branch_id IN (:branchIds)
         ORDER BY u.id DESC
         """,
       countQuery = """
-        SELECT COUNT(*) FROM users u
-        JOIN branch_user bu ON u.id = bu.user_id
+        SELECT COUNT(*) 
+        FROM users u
+        JOIN branch_users bu ON u.id = bu.user_id
         WHERE u.is_deleted = true
         AND bu.branch_id IN (:branchIds)
         """,
