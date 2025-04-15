@@ -83,24 +83,39 @@ public class ReviewService {
   public PageResponse<ReviewResponse> getReviews(Long itemId, PageRequest pageRequest) {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 페이지네이션된 리뷰 조회
-    Page<Review> reviews = reviewRepository.findAllByItem_IdOrderByCreatedAtDesc(itemId, pageRequest);
+    // 먼저 depth=0인 부모 리뷰만 페이지네이션하여 조회
+    Page<Review> parentReviews = reviewRepository.findAllByItem_IdAndDepthOrderByCreatedAtDesc(itemId, 0, pageRequest);
 
-    // Review → ReviewResponse 변환
-    List<ReviewResponse> reviewResponses = reviews.getContent().stream()
-        .map(review -> new ReviewResponse(
-            review,
-            new ArrayList<>() // 대댓글 리스트 초기화
-        ))
+    // 부모 리뷰들의 ID 목록
+    List<Long> parentIds = parentReviews.getContent().stream()
+        .map(Review::getId)
         .collect(Collectors.toList());
 
-    // 계층 구조로 변환
-    List<ReviewResponse> reviewTree = buildReviewTree(reviewResponses);
+    // 부모 리뷰들의 모든 대댓글 한번에 조회 (페이지네이션 없이)
+    List<Review> childReviews = Collections.emptyList();
+    if (!parentIds.isEmpty()) {
+      childReviews = reviewRepository.findAllByParentReview_IdInOrderByCreatedAtAsc(parentIds);
+    }
 
-    // Page 형식으로 다시 변환 (트리 구조 적용 후)
-    Page<ReviewResponse> reviewPage = new PageImpl<>(reviewTree, pageRequest, reviews.getTotalElements());
+    // 부모 ID별로 자식 리뷰 맵핑
+    Map<Long, List<Review>> childReviewMap = childReviews.stream()
+        .collect(Collectors.groupingBy(review -> review.getParentReview().getId()));
 
-    return PageResponse.fromPage(reviewPage);
+    // Review → ReviewResponse 변환 (부모 리뷰만)
+    List<ReviewResponse> reviewResponses = parentReviews.getContent().stream()
+        .map(review -> {
+          // 현재 부모 리뷰의 모든 자식 리뷰를 찾아서 ReviewResponse로 변환
+          List<ReviewResponse> children = childReviewMap.getOrDefault(review.getId(), Collections.emptyList())
+              .stream()
+              .map(childReview -> new ReviewResponse(childReview, new ArrayList<>()))
+              .collect(Collectors.toList());
+
+          return new ReviewResponse(review, children);
+        })
+        .collect(Collectors.toList());
+
+    // Page 형식으로 변환
+    return PageResponse.fromPage(new PageImpl<>(reviewResponses, pageRequest, parentReviews.getTotalElements()));
   }
 
   // 대댓글을 포함한 트리 구조로 변환하는 메서드

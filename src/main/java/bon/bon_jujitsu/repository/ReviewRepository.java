@@ -13,5 +13,9 @@ public interface ReviewRepository extends JpaRepository <Review, Long>{
   List<Review> findAllByParentReviewIdIn(List<Long> parentReviewIds);
 
   Page<Review> findAllByItem_IdOrderByCreatedAtDesc(Long itemId, PageRequest pageRequest);
+
+  Page<Review> findAllByItem_IdAndDepthOrderByCreatedAtDesc(Long itemId, int i, PageRequest pageRequest);
+
+  List<Review> findAllByParentReview_IdInOrderByCreatedAtAsc(List<Long> parentIds);
 }
 
