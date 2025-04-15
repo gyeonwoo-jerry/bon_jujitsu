@@ -84,7 +84,11 @@ public class ReviewService {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     // 먼저 depth=0인 부모 리뷰만 페이지네이션하여 조회
-    Page<Review> parentReviews = reviewRepository.findAllByItem_IdAndDepthOrderByCreatedAtDesc(itemId, 0, pageRequest);
+    Page<Review> parentReviews = reviewRepository.findAllByItem_IdAndDepthAndIsDeletedFalseOrderByCreatedAtDesc(itemId, 0, pageRequest);
+
+    if (parentReviews.isEmpty()) {
+      return PageResponse.fromPage(new PageImpl<>(Collections.emptyList(), pageRequest, 0));
+    }
 
     // 부모 리뷰들의 ID 목록
     List<Long> parentIds = parentReviews.getContent().stream()
@@ -92,14 +96,20 @@ public class ReviewService {
         .collect(Collectors.toList());
 
     // 부모 리뷰들의 모든 대댓글 한번에 조회 (페이지네이션 없이)
-    List<Review> childReviews = Collections.emptyList();
-    if (!parentIds.isEmpty()) {
-      childReviews = reviewRepository.findAllByParentReview_IdInOrderByCreatedAtAsc(parentIds);
-    }
+    List<Review> childReviews = reviewRepository.findAllByParentReview_IdInAndIsDeletedFalseOrderByCreatedAtAsc(parentIds);
 
     // 부모 ID별로 자식 리뷰 맵핑
-    Map<Long, List<Review>> childReviewMap = childReviews.stream()
-        .collect(Collectors.groupingBy(review -> review.getParentReview().getId()));
+    Map<Long, List<Review>> childReviewMap = new HashMap<>();
+
+    for (Review childReview : childReviews) {
+      if (childReview.getParentReview() != null) {
+        Long parentId = childReview.getParentReview().getId();
+        if (!childReviewMap.containsKey(parentId)) {
+          childReviewMap.put(parentId, new ArrayList<>());
+        }
+        childReviewMap.get(parentId).add(childReview);
+      }
+    }
 
     // Review → ReviewResponse 변환 (부모 리뷰만)
     List<ReviewResponse> reviewResponses = parentReviews.getContent().stream()
