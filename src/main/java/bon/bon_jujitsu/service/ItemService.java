@@ -67,7 +67,7 @@ public class ItemService {
   public PageResponse<ItemResponse> getItems(int page, int size, Long userId, String name) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getBranchUsers().stream()
+    if (!user.isAdmin() && user.getBranchUsers().stream()
         .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
     }
@@ -90,7 +90,7 @@ public class ItemService {
   public ItemResponse getItem(Long itemId, Long userId) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.getBranchUsers().stream()
+    if (!user.isAdmin() && user.getBranchUsers().stream()
         .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
     }

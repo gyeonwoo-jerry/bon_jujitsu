@@ -45,7 +45,7 @@ public class ReviewService {
     Item item = itemRepository.findById(request.itemId()).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     // 구매 이력 확인 및 주문 찾기
-    Order order = orderRepository.findLatestByUserAndItemId(user.getId(), item.getId())
+    Order order = orderRepository.findTopByUserIdAndOrderItems_Item_IdOrderByCreatedAtDesc(user.getId(), item.getId())
         .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
 
     // 상품을 받은사람 체크
