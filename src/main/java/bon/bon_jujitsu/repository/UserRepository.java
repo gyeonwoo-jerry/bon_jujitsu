@@ -24,7 +24,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Page<User> findAllByIsDeletedFalse(Pageable pageable);
 
   @Query(
-      value = "SELECT * FROM users WHERE is_deleted = true",
+      value = """
+        SELECT * FROM users 
+        WHERE is_deleted = true 
+        ORDER BY id DESC
+        """,
       countQuery = "SELECT COUNT(*) FROM users WHERE is_deleted = true",
       nativeQuery = true
   )
@@ -34,13 +38,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Page<User> findAllByBranchIdInAndIsDeletedFalse(@Param("branchIds") List<Long> branchIds, PageRequest pageRequest);
 
   @Query(
-      value = "SELECT DISTINCT u.* FROM users u " +
-          "JOIN branch_users bu ON u.id = bu.user_id " +
-          "WHERE bu.branch_id IN :branchIds AND u.is_deleted = true " +
-          "ORDER BY u.created_at DESC",
-      countQuery = "SELECT COUNT(DISTINCT u.id) FROM users u " +
-          "JOIN branch_users bu ON u.id = bu.user_id " +
-          "WHERE bu.branch_id IN :branchIds AND u.is_deleted = true",
-      nativeQuery = true)
+      value = """
+        SELECT u.* FROM users u
+        JOIN branch_user bu ON u.id = bu.user_id
+        WHERE u.is_deleted = true
+        AND bu.branch_id IN (:branchIds)
+        ORDER BY u.id DESC
+        """,
+      countQuery = """
+        SELECT COUNT(*) FROM users u
+        JOIN branch_user bu ON u.id = bu.user_id
+        WHERE u.is_deleted = true
+        AND bu.branch_id IN (:branchIds)
+        """,
+      nativeQuery = true
+  )
   Page<User> findDeletedUsersByBranchIdsNative(@Param("branchIds") List<Long> branchIds, Pageable pageable);
 }
