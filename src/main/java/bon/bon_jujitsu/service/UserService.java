@@ -353,7 +353,7 @@ public class UserService {
 
     if (user.isAdmin()) {
       // 관리자: 전체 탈퇴 유저 조회
-      deletedUsers = userRepository.findAllByIsDeletedTrue(pageRequest);
+      deletedUsers = userRepository.findAllByIsDeletedTrueNative(pageRequest);
 
     } else {
       // 지부장 여부 확인
@@ -367,7 +367,7 @@ public class UserService {
       }
 
       // 지부장: 해당 지부에 속한 탈퇴 유저 조회
-      deletedUsers = userRepository.findDeletedUsersByBranchIds(ownerBranchIds, pageRequest);
+      deletedUsers = userRepository.findDeletedUsersByBranchIdsNative(ownerBranchIds, pageRequest);
     }
 
     return PageResponse.fromPage(deletedUsers.map(UserResponse::fromEntity));
