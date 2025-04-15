@@ -347,7 +347,7 @@ public class UserService {
     }
 
     PageRequest pageRequest = PageRequest.of(page - 1, size,
-        Sort.by(Sort.Direction.DESC, "createdAt"));
+        Sort.by(Sort.Direction.DESC, "id"));
 
     Page<User> deletedUsers;
 
