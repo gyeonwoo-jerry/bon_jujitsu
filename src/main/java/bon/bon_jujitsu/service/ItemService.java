@@ -14,7 +14,6 @@ import bon.bon_jujitsu.repository.ItemOptionRepository;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
