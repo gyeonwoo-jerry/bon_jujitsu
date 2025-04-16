@@ -42,26 +42,15 @@ public class ReviewController {
   }
 
   @GetMapping("/reviews/{itemId}")
-  public ApiResponse<PageResponse<ReviewResponseDTO>> getReviews(
+  public ApiResponse<PageResponse<ReviewResponse>> getReviews(
       @PathVariable("itemId") Long itemId,
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size
   ) {
     return ApiResponse.success(
-        "리뷰 리스트 조회 완료",
-        reviewService.getReviews(itemId, PageRequest.of(Math.max(0, page - 1), size, Sort.by(Sort.Direction.DESC, "createdAt"))));
+            "리뷰 리스트 조회 완료",
+            reviewService.getReviews(itemId, PageRequest.of(Math.max(0, page - 1), size, Sort.by(Sort.Direction.DESC, "createdAt"))));
   }
-
-//  @GetMapping("/reviews/{itemId}")
-//  public ApiResponse<PageResponse<ReviewResponse>> getReviews(
-//      @PathVariable("itemId") Long itemId,
-//      @RequestParam(defaultValue = "0", name = "page") int page,
-//      @RequestParam(defaultValue = "10", name = "size") int size
-//  ) {
-//    return ApiResponse.success(
-//            "리뷰 리스트 조회 완료",
-//            reviewService.getReviews(itemId, PageRequest.of(Math.max(0, page - 1), size, Sort.by(Sort.Direction.DESC, "createdAt"))));
-//  }
 
   @GetMapping("/reviews")
   public ApiResponse<PageResponse<ReviewResponse>> getMyReviews(
