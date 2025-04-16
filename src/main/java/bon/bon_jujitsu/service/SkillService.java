@@ -90,7 +90,6 @@ public class SkillService {
     return PageResponse.fromPage(skillResponses);
   }
 
-  @Transactional(readOnly = true)
   public SkillResponse getSkill(Long skillId, HttpServletRequest request) {
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));
 

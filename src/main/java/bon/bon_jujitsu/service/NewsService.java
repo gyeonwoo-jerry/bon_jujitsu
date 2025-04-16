@@ -88,7 +88,6 @@ public class NewsService {
     return PageResponse.fromPage(newsResponses);
   }
 
-  @Transactional(readOnly = true)
   public NewsResponse getNews(Long newsId, HttpServletRequest request) {
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
 

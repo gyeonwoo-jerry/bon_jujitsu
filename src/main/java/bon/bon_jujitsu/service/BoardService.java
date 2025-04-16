@@ -101,7 +101,6 @@ public class BoardService {
     return PageResponse.fromPage(boardResponses);
   }
 
-  @Transactional(readOnly = true)
   public BoardResponse getBoard(Long boardId, HttpServletRequest request) {
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
