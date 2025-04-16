@@ -9,7 +9,6 @@ import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
-import bon.bon_jujitsu.dto.response.ReviewResponseDTO;
 import bon.bon_jujitsu.dto.update.ReviewUpdate;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
@@ -81,41 +80,27 @@ public class ReviewService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<ReviewResponseDTO> getReviews(Long itemId, PageRequest pageRequest) {
-    // 1. 모든 루트 리뷰 조회 (페이지네이션 적용)
-    Page<Review> rootReviews = reviewRepository.findRootReviewsByItemId(itemId, pageRequest);
+  public PageResponse<ReviewResponse> getReviews(Long itemId, PageRequest pageRequest) {
+    itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 2. 루트 리뷰 ID 목록 추출
-    List<Long> rootIds = rootReviews.getContent().stream()
-        .map(Review::getId)
+    // 페이지네이션된 리뷰 조회
+    Page<Review> reviews = reviewRepository.findAllByItem_IdOrderByCreatedAtDesc(itemId, pageRequest);
+
+    // Review → ReviewResponse 변환
+    List<ReviewResponse> reviewResponses = reviews.getContent().stream()
+        .map(review -> new ReviewResponse(
+            review,
+            new ArrayList<>() // 대댓글 리스트 초기화
+        ))
         .collect(Collectors.toList());
 
-    // 3. 자식 리뷰 한 번에 조회 (N+1 문제 방지)
-    Map<Long, List<Review>> childReviewMap = new HashMap<>();
-    if (!rootIds.isEmpty()) {
-      List<Review> allChildReviews = reviewRepository.findAllChildReviewsByParentIds(rootIds);
-      // 부모 ID 별로 자식 리뷰 그룹화
-      allChildReviews.forEach(child -> {
-        Long parentId = child.getParentReview().getId();
-        childReviewMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(child);
-      });
-    }
+    // 계층 구조로 변환
+    List<ReviewResponse> reviewTree = buildReviewTree(reviewResponses);
 
-    // 4. DTO 변환 및 트리 구조 구성
-    List<ReviewResponseDTO> resultList = rootReviews.getContent().stream()
-        .map(rootReview -> {
-          ReviewResponseDTO rootDto = new ReviewResponseDTO(rootReview);
-          // 자식 리뷰 추가
-          List<Review> children = childReviewMap.getOrDefault(rootReview.getId(), Collections.emptyList());
-          children.forEach(child -> {
-            rootDto.addChildReview(new ReviewResponseDTO(child));
-          });
-          return rootDto;
-        })
-        .collect(Collectors.toList());
+    // Page 형식으로 다시 변환 (트리 구조 적용 후)
+    Page<ReviewResponse> reviewPage = new PageImpl<>(reviewTree, pageRequest, reviews.getTotalElements());
 
-    // 5. 페이지 결과 반환
-    return PageResponse.fromPage(new PageImpl<>(resultList, pageRequest, rootReviews.getTotalElements()));
+    return PageResponse.fromPage(reviewPage);
   }
 
   // 대댓글을 포함한 트리 구조로 변환하는 메서드
