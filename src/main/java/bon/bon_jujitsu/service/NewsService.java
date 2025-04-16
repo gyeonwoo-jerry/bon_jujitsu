@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.News;
+import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -49,7 +50,7 @@ public class NewsService {
 
     newsRepository.save(news);
 
-    postImageService.uploadImage(news.getId(), "news", images);
+    postImageService.uploadImage(news.getId(), PostType.NEWS, images);
   }
 
   @Transactional(readOnly = true)
@@ -67,7 +68,7 @@ public class NewsService {
     }
 
     Page<NewsResponse> newsResponses = newsPage.map(news -> {
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NEWS", news.getId())
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId())
           .stream()
           .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
           .collect(Collectors.toList());
@@ -100,7 +101,7 @@ public class NewsService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NEWS", news.getId())
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId())
             .stream()
             .map(postImage -> {
               // 파일 경로 안전하게 조합
@@ -129,7 +130,7 @@ public class NewsService {
     news.updateNews(update);
 
     if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(news.getId(), "news", images);
+      postImageService.updateImages(news.getId(), PostType.NEWS, images);
     }
   }
 

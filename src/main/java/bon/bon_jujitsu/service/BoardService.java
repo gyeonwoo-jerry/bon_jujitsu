@@ -2,6 +2,7 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -61,7 +62,7 @@ public class BoardService {
 
     boardRepository.save(board);
 
-    postImageService.uploadImage(board.getId(), "board", images);
+    postImageService.uploadImage(board.getId(), PostType.BOARD, images);
   }
 
   @Transactional(readOnly = true)
@@ -75,7 +76,7 @@ public class BoardService {
 
     Page<BoardResponse> boardResponses = boards.map(board -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("BOARD", board.getId())
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId())
               .stream()
               .map(postImage -> {
                 // 파일 경로 안전하게 조합
@@ -114,7 +115,7 @@ public class BoardService {
     }
 
     // 해당 게시글의 이미지 조회
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("BOARD", board.getId())
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId())
             .stream()
             .map(postImage -> {
               String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
@@ -137,7 +138,7 @@ public class BoardService {
     board.updateBoard(request);
 
     if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(board.getId(), "board", images);
+      postImageService.updateImages(board.getId(), PostType.BOARD, images);
     }
   }
 

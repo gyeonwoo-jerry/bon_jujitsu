@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.service;
 
+import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.Skill;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -51,7 +52,7 @@ public class SkillService {
 
     skillRepository.save(skill);
 
-    postImageService.uploadImage(skill.getId(), "skill", images);
+    postImageService.uploadImage(skill.getId(), PostType.SKILL, images);
   }
 
   @Transactional(readOnly = true)
@@ -69,7 +70,7 @@ public class SkillService {
     }
 
     Page<SkillResponse> skillResponses = skills.map(skill -> {
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SKILL", skill.getId())
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId())
           .stream()
           .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
           .collect(Collectors.toList());
@@ -102,7 +103,7 @@ public class SkillService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SKILL", skill.getId())
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId())
             .stream()
             .map(postImage -> {
               // 파일 경로 안전하게 조합
@@ -135,7 +136,7 @@ public class SkillService {
     skill.updateSkill(update);
 
     if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(skill.getId(), "skill", images);
+      postImageService.updateImages(skill.getId(), PostType.SKILL, images);
     }
   }
 

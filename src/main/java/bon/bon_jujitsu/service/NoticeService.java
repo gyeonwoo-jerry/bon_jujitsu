@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.Notice;
+import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -63,7 +64,7 @@ public class NoticeService {
 
     noticeRepository.save(notice);
 
-    postImageService.uploadImage(notice.getId(), "notice", images);
+    postImageService.uploadImage(notice.getId(), PostType.NOTICE, images);
   }
 
   @Transactional(readOnly = true)
@@ -76,7 +77,7 @@ public class NoticeService {
     Page<Notice> notices = noticeRepository.findAll(spec, pageRequest);
 
     Page<NoticeResponse> noticeResponses = notices.map(notice -> {
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
           .stream()
           .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
           .collect(Collectors.toList());
@@ -109,7 +110,7 @@ public class NoticeService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
             .stream()
             .map(postImage -> {
               // 파일 경로 안전하게 조합
@@ -148,7 +149,7 @@ public class NoticeService {
     notice.updateNotice(update);
 
     if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(notice.getId(), "notice", images);
+      postImageService.updateImages(notice.getId(), PostType.NOTICE, images);
     }
   }
 
@@ -185,7 +186,7 @@ public class NoticeService {
     Notice notice = noticeRepository.findTopByBranchOrderByCreatedAtDesc(branch)
             .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("NOTICE", notice.getId())
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
             .stream()
             .map(postImage -> {
               // 파일 경로 안전하게 조합

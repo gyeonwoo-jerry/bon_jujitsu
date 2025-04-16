@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,13 @@ public class PostImageService {
 
     private final PostImageRepository postImageRepository;
 
-    public void uploadImage(Long contentId, String contentType, List<MultipartFile> images) {
+    public void uploadImage(Long contentId, PostType postType, List<MultipartFile> images) {
         if (images == null || images.isEmpty()) {
             return;
         }
 
         try {
-            String uploads = filepath + contentType + "/" ;
+            String uploads = filepath + postType.name() + "/" ;
 
             for (MultipartFile image : images) {
                 String originalFileName = image.getOriginalFilename(); // 원본 파일명
@@ -42,7 +43,7 @@ public class PostImageService {
 
                 PostImage postImage = PostImage.builder()
                         .postId(contentId)
-                        .postType(contentType)
+                        .postType(postType)
                         .imagePath(savedFilePath) // 저장된 경로
                         .originalFileName(originalFileName) // 원본 파일명 저장
                         .build();
@@ -76,13 +77,13 @@ public class PostImageService {
         return filePath; // DB에 저장할 파일 경로 반환
     }
 
-    public void updateImages(Long postId, String postType, List<MultipartFile> newImages) {
+    public void updateImages(Long postId, PostType postType, List<MultipartFile> newImages) {
         if (newImages == null || newImages.isEmpty()) {
             return;
         }
 
         // 1. 기존 이미지 조회 (soft delete 대상)
-        List<PostImage> existingImages = postImageRepository.findByPostIdAndPostType(postId, postType);
+        List<PostImage> existingImages = postImageRepository.findByPostTypeAndPostId(postType, postId);
 
         // 2. 기존 이미지 삭제 (soft delete)
         for (PostImage existingImage : existingImages) {

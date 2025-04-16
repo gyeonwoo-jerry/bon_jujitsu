@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.service;
 
+import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.Sponsor;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -49,7 +50,7 @@ public class SponsorService {
 
     sponsorRepository.save(sponsor);
 
-    postImageService.uploadImage(sponsor.getId(), "sponsor", images);
+    postImageService.uploadImage(sponsor.getId(), PostType.SPONSOR, images);
   }
 
   @Transactional(readOnly = true)
@@ -68,7 +69,7 @@ public class SponsorService {
 
     Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR",
+      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR,
               sponsor.getId())
           .stream()
           .map(postImage -> {
@@ -106,7 +107,7 @@ public class SponsorService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId("SPONSOR",
+    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR,
             sponsor.getId())
         .stream()
         .map(postImage -> {
@@ -140,7 +141,7 @@ public class SponsorService {
     sponsor.updateSponsor(update);
 
     if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(sponsor.getId(), "sponnsor", images);
+      postImageService.updateImages(sponsor.getId(), PostType.SPONSOR, images);
     }
   }
 
