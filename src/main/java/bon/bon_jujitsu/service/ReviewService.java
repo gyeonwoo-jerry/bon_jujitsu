@@ -84,7 +84,7 @@ public class ReviewService {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     // 페이지네이션된 리뷰 조회
-    Page<Review> reviews = reviewRepository.findAllByItem_IdOrderByCreatedAtDesc(itemId, pageRequest);
+    Page<Review> reviews = reviewRepository.findAllByItem_Id(itemId, pageRequest);
 
     // Review → ReviewResponse 변환
     List<ReviewResponse> reviewResponses = reviews.getContent().stream()
