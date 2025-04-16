@@ -4,7 +4,7 @@ import bon.bon_jujitsu.domain.Stripe;
 import jakarta.validation.constraints.Min;
 import java.util.Optional;
 
-public record ProfileUpdateRequest(
+public record ProfileUpdate(
     Optional<String> name,
     Optional<String> memberId,
     Optional<String> password,

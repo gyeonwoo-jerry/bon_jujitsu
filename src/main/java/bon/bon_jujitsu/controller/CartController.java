@@ -3,7 +3,7 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.request.CartRequest;
 import bon.bon_jujitsu.dto.response.CartResponse;
-import bon.bon_jujitsu.dto.update.UpdateQuantityRequest;
+import bon.bon_jujitsu.dto.update.UpdateQuantityUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.CartService;
 import jakarta.validation.Valid;
@@ -44,9 +44,9 @@ public class CartController {
   public ApiResponse<Void> updateCartItemQuantity(
       @AuthenticationUserId Long userId,
       @PathVariable Long cartItemId,
-      @Valid @RequestBody UpdateQuantityRequest request
+      @Valid @RequestBody UpdateQuantityUpdate update
   ) {
-    cartService.updateCartItemQuantity(userId, cartItemId, request.quantity());
+    cartService.updateCartItemQuantity(userId, cartItemId, update.quantity());
     return ApiResponse.success("카트 수정 성공", null);
   }
 

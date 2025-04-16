@@ -5,7 +5,6 @@ import bon.bon_jujitsu.domain.Order;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;

@@ -61,7 +61,7 @@ public class ItemController {
   @PatchMapping("/items/{itemId}")
   public ApiResponse<Void> updateItem(
       @AuthenticationUserId Long userId,
-      @RequestPart("request") @Valid ItemUpdate update,
+      @RequestPart("update") @Valid ItemUpdate update,
       @PathVariable("itemId") Long itemId,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
   ) {

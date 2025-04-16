@@ -15,13 +15,12 @@ import bon.bon_jujitsu.dto.request.UserRoleRequest;
 import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.LogoutResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
-import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
+import bon.bon_jujitsu.dto.update.ProfileUpdate;
 import bon.bon_jujitsu.jwt.JwtUtil;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.BranchUserRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.UserSpecification;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -275,7 +274,7 @@ public class UserService {
     return UserResponse.fromEntity(profile);
   }
 
-  public void updateProfile(Long userId, ProfileUpdateRequest request, List<MultipartFile> images) {
+  public void updateProfile(Long userId, ProfileUpdate request, List<MultipartFile> images) {
 
     User profile = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));

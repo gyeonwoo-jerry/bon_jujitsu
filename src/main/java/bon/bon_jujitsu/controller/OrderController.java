@@ -58,10 +58,10 @@ public class OrderController {
 
   @PatchMapping("/orders/admin")
   public ApiResponse<Void> updateOrderByAdmin (
-      @Valid @RequestBody OrderUpdate request,
+      @Valid @RequestBody OrderUpdate update,
       @AuthenticationUserId Long userId
   ) {
-    orderService.updateOrderByAdmin(request, userId);
+    orderService.updateOrderByAdmin(update, userId);
     return ApiResponse.success("주문 상태 변경 완료", null);
   }
 

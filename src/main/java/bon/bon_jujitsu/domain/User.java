@@ -1,7 +1,7 @@
 package bon.bon_jujitsu.domain;
 
 import bon.bon_jujitsu.common.Timestamped;
-import bon.bon_jujitsu.dto.update.ProfileUpdateRequest;
+import bon.bon_jujitsu.dto.update.ProfileUpdate;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -96,7 +96,7 @@ public class User extends Timestamped {
     this.isDeleted = true;
   }
 
-  public void updateProfile(ProfileUpdateRequest request) {
+  public void updateProfile(ProfileUpdate request) {
     request.name().ifPresent(value -> {
       if (!value.isBlank()) {
         this.name = value;

@@ -49,9 +49,9 @@ public class CommentController {
   public ApiResponse<Void> updateComment(
       @AuthenticationUserId Long userId,
       @PathVariable("commentId") Long commentId,
-      @Valid @RequestBody CommentUpdate request
+      @Valid @RequestBody CommentUpdate update
   ) {
-    commentService.updateComment(userId, commentId, request);
+    commentService.updateComment(userId, commentId, update);
     return ApiResponse.success("댓글 수정 성공", null);
   }
 
