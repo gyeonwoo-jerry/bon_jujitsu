@@ -15,20 +15,14 @@ public interface ReviewRepository extends JpaRepository <Review, Long>{
 
   List<Review> findAllByParentReviewIdIn(List<Long> parentReviewIds);
 
-  @Query("SELECT r FROM Review r " +
-      "JOIN FETCH r.user " +
-      "LEFT JOIN FETCH r.order " +
-      "LEFT JOIN FETCH r.images " +
-      "WHERE r.item.id = :itemId AND r.isDeleted = false " +
-      "ORDER BY r.createdAt DESC")
-  Page<Review> findAllByItem_IdOrderByCreatedAtDesc(@Param("itemId") Long itemId, Pageable pageable);
-
   Page<Review> findAllByItem_IdAndDepthEqualsOrderByCreatedAtDesc(Long itemId, int depth, Pageable pageable);
 
   List<Review> findAllByItem_IdAndParentReview_IdInOrderByCreatedAtAsc(Long itemId, List<Long> rootIds);
 
-  Page<Review> findAllByItem_IdAndParentReviewIsNullOrderByCreatedAtDesc(Long itemId, PageRequest pageRequest);
+  @Query("SELECT r FROM Review r WHERE r.item.id = :itemId AND r.parentReview IS NULL ORDER BY r.createdAt DESC")
+  Page<Review> findRootReviewsByItemId(@Param("itemId") Long itemId, Pageable pageable);
 
-  List<Review> findAllByParentReview_IdOrderByCreatedAtAsc(Long id);
+  @Query("SELECT r FROM Review r WHERE r.parentReview.id IN :parentIds ORDER BY r.createdAt ASC")
+  List<Review> findAllChildReviewsByParentIds(@Param("parentIds") List<Long> parentIds);
 }
 
