@@ -26,5 +26,9 @@ public interface ReviewRepository extends JpaRepository <Review, Long>{
   Page<Review> findAllByItem_IdAndDepthEqualsOrderByCreatedAtDesc(Long itemId, int depth, Pageable pageable);
 
   List<Review> findAllByItem_IdAndParentReview_IdInOrderByCreatedAtAsc(Long itemId, List<Long> rootIds);
+
+  Page<Review> findAllByItem_IdAndParentReviewIsNullOrderByCreatedAtDesc(Long itemId, PageRequest pageRequest);
+
+  List<Review> findAllByParentReview_IdOrderByCreatedAtAsc(Long id);
 }
 

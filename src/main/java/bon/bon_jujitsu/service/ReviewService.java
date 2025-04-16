@@ -83,35 +83,31 @@ public class ReviewService {
   public PageResponse<ReviewResponse> getReviews(Long itemId, PageRequest pageRequest) {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 페이지네이션된 리뷰 조회 (루트 리뷰만 조회)
-    Page<Review> rootReviews = reviewRepository.findAllByItem_IdAndDepthEqualsOrderByCreatedAtDesc(itemId, 0, pageRequest);
+    // 루트 리뷰만 페이지네이션으로 조회
+    Page<Review> rootReviews = reviewRepository.findAllByItem_IdAndParentReviewIsNullOrderByCreatedAtDesc(itemId, pageRequest);
 
-    // 루트 리뷰에 대한 모든 대댓글 조회 (페이지와 상관없이)
-    List<Long> rootIds = rootReviews.getContent().stream().map(Review::getId).collect(Collectors.toList());
-    List<Review> childReviews = rootIds.isEmpty() ? new ArrayList<>() :
-        reviewRepository.findAllByItem_IdAndParentReview_IdInOrderByCreatedAtAsc(itemId, rootIds);
+    // 각 루트 리뷰의 모든 대댓글 조회
+    List<ReviewResponse> rootResponses = new ArrayList<>();
+    for (Review rootReview : rootReviews.getContent()) {
+      // 루트 리뷰를 ResponseDTO로 변환
+      ReviewResponse rootResponse = new ReviewResponse(
+          rootReview,
+          new ArrayList<>() // 빈 자식 리스트로 초기화
+      );
 
-    // 모든 리뷰 매핑 (루트 + 대댓글)
-    Map<Long, ReviewResponse> reviewMap = new HashMap<>();
+      // 대댓글 조회 및 변환
+      List<Review> childReviews = reviewRepository.findAllByParentReview_IdOrderByCreatedAtAsc(rootReview.getId());
+      List<ReviewResponse> childResponses = childReviews.stream()
+          .map(review -> new ReviewResponse(review, new ArrayList<>()))
+          .collect(Collectors.toList());
 
-    // 루트 리뷰 변환 및 매핑
-    List<ReviewResponse> rootResponses = rootReviews.getContent().stream()
-        .map(review -> {
-          ReviewResponse resp = new ReviewResponse(review, new ArrayList<>());
-          reviewMap.put(review.getId(), resp);
-          return resp;
-        })
-        .collect(Collectors.toList());
-
-    // 대댓글 변환 및 부모에 연결
-    childReviews.forEach(childReview -> {
-      ReviewResponse childResp = new ReviewResponse(childReview, new ArrayList<>());
-      Long parentId = childReview.getParentReview().getId();
-      ReviewResponse parentResp = reviewMap.get(parentId);
-      if (parentResp != null) {
-        parentResp.childReviews().add(childResp);
-      }
-    });
+      // 새 루트 리뷰 객체 생성 (자식 리스트 포함)
+      rootResponses.add(new ReviewResponse(
+          rootResponse.id(), rootResponse.content(), rootResponse.star(), rootResponse.depth(),
+          rootResponse.parentId(), rootResponse.name(), rootResponse.itemId(), rootResponse.orderId(),
+          rootResponse.images(), rootResponse.createdAt(), rootResponse.modifiedAt(), childResponses
+      ));
+    }
 
     return PageResponse.fromPage(new PageImpl<>(rootResponses, pageRequest, rootReviews.getTotalElements()));
   }
