@@ -83,24 +83,37 @@ public class ReviewService {
   public PageResponse<ReviewResponse> getReviews(Long itemId, PageRequest pageRequest) {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 페이지네이션된 리뷰 조회
-    Page<Review> reviews = reviewRepository.findAllByItem_IdOrderByCreatedAtDesc(itemId, pageRequest);
+    // 페이지네이션된 리뷰 조회 (루트 리뷰만 조회)
+    Page<Review> rootReviews = reviewRepository.findAllByItem_IdAndDepthEqualsOrderByCreatedAtDesc(itemId, 0, pageRequest);
 
-    // Review → ReviewResponse 변환
-    List<ReviewResponse> reviewResponses = reviews.getContent().stream()
-        .map(review -> new ReviewResponse(
-            review,
-            new ArrayList<>() // 대댓글 리스트 초기화
-        ))
+    // 루트 리뷰에 대한 모든 대댓글 조회 (페이지와 상관없이)
+    List<Long> rootIds = rootReviews.getContent().stream().map(Review::getId).collect(Collectors.toList());
+    List<Review> childReviews = rootIds.isEmpty() ? new ArrayList<>() :
+        reviewRepository.findAllByItem_IdAndParentReview_IdInOrderByCreatedAtAsc(itemId, rootIds);
+
+    // 모든 리뷰 매핑 (루트 + 대댓글)
+    Map<Long, ReviewResponse> reviewMap = new HashMap<>();
+
+    // 루트 리뷰 변환 및 매핑
+    List<ReviewResponse> rootResponses = rootReviews.getContent().stream()
+        .map(review -> {
+          ReviewResponse resp = new ReviewResponse(review, new ArrayList<>());
+          reviewMap.put(review.getId(), resp);
+          return resp;
+        })
         .collect(Collectors.toList());
 
-    // 계층 구조로 변환
-    List<ReviewResponse> reviewTree = buildReviewTree(reviewResponses);
+    // 대댓글 변환 및 부모에 연결
+    childReviews.forEach(childReview -> {
+      ReviewResponse childResp = new ReviewResponse(childReview, new ArrayList<>());
+      Long parentId = childReview.getParentReview().getId();
+      ReviewResponse parentResp = reviewMap.get(parentId);
+      if (parentResp != null) {
+        parentResp.childReviews().add(childResp);
+      }
+    });
 
-    // Page 형식으로 다시 변환 (트리 구조 적용 후)
-    Page<ReviewResponse> reviewPage = new PageImpl<>(reviewTree, pageRequest, reviews.getTotalElements());
-
-    return PageResponse.fromPage(reviewPage);
+    return PageResponse.fromPage(new PageImpl<>(rootResponses, pageRequest, rootReviews.getTotalElements()));
   }
 
   // 대댓글을 포함한 트리 구조로 변환하는 메서드
