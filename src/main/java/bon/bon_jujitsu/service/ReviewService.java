@@ -19,8 +19,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReviewService {
 
   private final UserRepository userRepository;
@@ -83,58 +87,137 @@ public class ReviewService {
   public PageResponse<ReviewResponse> getReviews(Long itemId, PageRequest pageRequest) {
     itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 루트 리뷰만 페이지네이션으로 조회
-    Page<Review> rootReviews = reviewRepository.findAllByItem_IdAndParentReviewIsNullOrderByCreatedAtDesc(itemId, pageRequest);
+    // 디버깅을 위한 로그 추가
+    log.debug("조회 시작: 아이템 ID = {}, 페이지 = {}, 사이즈 = {}", itemId, pageRequest.getPageNumber(), pageRequest.getPageSize());
 
-    // 각 루트 리뷰의 모든 대댓글 조회
-    List<ReviewResponse> rootResponses = new ArrayList<>();
-    for (Review rootReview : rootReviews.getContent()) {
-      // 루트 리뷰를 ResponseDTO로 변환
-      ReviewResponse rootResponse = new ReviewResponse(
-          rootReview,
-          new ArrayList<>() // 빈 자식 리스트로 초기화
-      );
+    // 페이지네이션된 리뷰 조회
+    Page<Review> reviews = reviewRepository.findAllByItem_IdOrderByCreatedAtDesc(itemId, pageRequest);
 
-      // 대댓글 조회 및 변환
-      List<Review> childReviews = reviewRepository.findAllByParentReview_IdOrderByCreatedAtAsc(rootReview.getId());
-      List<ReviewResponse> childResponses = childReviews.stream()
-          .map(review -> new ReviewResponse(review, new ArrayList<>()))
-          .collect(Collectors.toList());
+    // null 체크 및 디버깅
+    log.debug("조회된 리뷰 수: {}", reviews.getContent().size());
 
-      // 새 루트 리뷰 객체 생성 (자식 리스트 포함)
-      rootResponses.add(new ReviewResponse(
-          rootResponse.id(), rootResponse.content(), rootResponse.star(), rootResponse.depth(),
-          rootResponse.parentId(), rootResponse.name(), rootResponse.itemId(), rootResponse.orderId(),
-          rootResponse.images(), rootResponse.createdAt(), rootResponse.modifiedAt(), childResponses
-      ));
-    }
+    // 각 리뷰에 대해 null 체크 추가
+    List<ReviewResponse> reviewResponses = reviews.getContent().stream()
+        .filter(Objects::nonNull) // null 리뷰 필터링
+        .map(review -> {
+          // 이미지 리스트 null 체크
+          List<String> imagePaths = review.getImages() != null ?
+              review.getImages().stream()
+                  .filter(Objects::nonNull)
+                  .map(img -> img.getImagePath() != null ? img.getImagePath() : "")
+                  .collect(Collectors.toList()) :
+              new ArrayList<>();
 
-    return PageResponse.fromPage(new PageImpl<>(rootResponses, pageRequest, rootReviews.getTotalElements()));
+          // 부모 ID 안전하게 가져오기
+          Long parentId = Optional.ofNullable(review.getParentReview())
+              .map(Review::getId)
+              .orElse(null);
+
+          // 사용자 이름 안전하게 가져오기
+          String userName = Optional.ofNullable(review.getUser())
+              .map(User::getName)
+              .orElse("");
+
+          // 아이템 ID 안전하게 가져오기
+          Long reviewItemId = Optional.ofNullable(review.getItem())
+              .map(Item::getId)
+              .orElse(null);
+
+          // 주문 ID 안전하게 가져오기
+          Long orderId = Optional.ofNullable(review.getOrder())
+              .map(Order::getId)
+              .orElse(null);
+
+          return new ReviewResponse(
+              review.getId(),
+              review.getContent() != null ? review.getContent() : "",
+              review.getStar(),
+              review.getDepth(),
+              parentId,
+              userName,
+              reviewItemId,
+              orderId,
+              imagePaths,
+              review.getCreatedAt(),
+              review.getModifiedAt(),
+              new ArrayList<>() // 빈 리스트로 초기화
+          );
+        })
+        .collect(Collectors.toList());
+
+    // null 체크 추가
+    log.debug("변환된 ReviewResponse 수: {}", reviewResponses.size());
+
+    // 트리 구조로 변환 (확인된 null이 없는 상태)
+    List<ReviewResponse> reviewTree = buildReviewTreeSafely(reviewResponses);
+
+    // 페이지 객체 생성
+    Page<ReviewResponse> reviewPage = new PageImpl<>(
+        reviewTree,
+        pageRequest,
+        reviews.getTotalElements()
+    );
+
+    return PageResponse.fromPage(reviewPage);
   }
 
-  // 대댓글을 포함한 트리 구조로 변환하는 메서드
-  private List<ReviewResponse> buildReviewTree(List<ReviewResponse> reviews) {
+  // 안전한 트리 구조 생성 메서드
+  private List<ReviewResponse> buildReviewTreeSafely(List<ReviewResponse> reviews) {
+    if (reviews.isEmpty()) {
+      return new ArrayList<>();
+    }
+
     Map<Long, ReviewResponse> reviewMap = new HashMap<>();
     List<ReviewResponse> roots = new ArrayList<>();
 
     // 모든 리뷰를 매핑
     for (ReviewResponse review : reviews) {
-      reviewMap.put(review.id(), review);
+      if (review.id() != null) {  // ID가 null이 아닌 경우만 매핑
+        reviewMap.put(review.id(), review);
+      }
     }
 
     // 부모-자식 관계 설정
     for (ReviewResponse review : reviews) {
-      if (review.parentId() != null) {
+      if (review.parentId() != null && reviewMap.containsKey(review.parentId())) {
         ReviewResponse parent = reviewMap.get(review.parentId());
-        if (parent != null) {
-          parent.childReviews().add(review); // 대댓글 추가
+
+        // 부모의 자식 리스트가 null인 경우 새 리스트로 초기화
+        List<ReviewResponse> children = parent.childReviews();
+        if (children == null) {
+          // 여기서 문제가 발생하면, ReviewResponse 레코드를 수정하는 방법 필요
+          log.warn("부모 리뷰 ID {}의 자식 리스트가 null입니다", parent.id());
+          continue;
         }
-      } else {
-        roots.add(review); // 부모 리뷰면 루트에 추가
+
+        // 새 객체를 생성하여 자식 목록에 현재 리뷰 추가
+        List<ReviewResponse> newChildren = new ArrayList<>(children);
+        newChildren.add(review);
+
+        // 새 부모 객체 생성
+        ReviewResponse newParent = new ReviewResponse(
+            parent.id(), parent.content(), parent.star(), parent.depth(),
+            parent.parentId(), parent.name(), parent.itemId(), parent.orderId(),
+            parent.images(), parent.createdAt(), parent.modifiedAt(), newChildren
+        );
+
+        // 맵 업데이트
+        reviewMap.put(parent.id(), newParent);
+
+        // 이미 루트에 있다면 업데이트
+        if (roots.contains(parent)) {
+          roots.remove(parent);
+          roots.add(newParent);
+        }
+      } else if (review.parentId() == null) {
+        roots.add(review);
       }
     }
 
-    return roots.isEmpty() ? reviews : roots;
+    // 결과 확인
+    log.debug("루트 리뷰 수: {}", roots.size());
+
+    return !roots.isEmpty() ? roots : reviews;
   }
 
   @Transactional(readOnly = true)
