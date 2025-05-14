@@ -36,11 +36,13 @@ function LoginForm({ onLoginSuccess }) {
           );
 
           // 사용자 정보 저장 (response.data에서 데이터 추출)
+          const parsedBranchRole = response.data.content.branchRoles?.[0]?.role?.replace("ROLE_", "").toUpperCase() || "USER";
+
           const userInfo = {
             id: response.data.content.id || response.data.content.userId || "",
             name: response.data.content.name || username, // 서버에서 이름이 없으면 아이디를 사용
             email: response.data.content.email || "",
-            role: response.data.content.userRole || "", // userRole로 저장
+            role: response.data.content.isAdmin ? "ADMIN" : parsedBranchRole, // userRole로 저장
           };
 
           console.log("저장할 사용자 정보:", userInfo);

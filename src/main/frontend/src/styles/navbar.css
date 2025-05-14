@@ -113,6 +113,20 @@ nav.main_nav ul li.logo img {
     color: var(--white-color);
 }
 
+.admin_btn {
+    background-color: #1f2937; /* 진한 그레이 */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    margin-left: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.admin_btn:hover {
+    background-color: #111827;
+}
 
 
 

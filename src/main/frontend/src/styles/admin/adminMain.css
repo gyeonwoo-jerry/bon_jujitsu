@@ -1,0 +1,47 @@
+/* styles/adminmain.css */
+.admin-main {
+  padding: 2rem;
+}
+
+.summary-cards {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: #f0f0f0;
+  padding: 1rem;
+  flex: 1;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.card .value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.card .label {
+  font-size: 1rem;
+  color: #555;
+}
+
+.quick-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.link-btn {
+  padding: 1rem 2rem;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  background: #555;
+}

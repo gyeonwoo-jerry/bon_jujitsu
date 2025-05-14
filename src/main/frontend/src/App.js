@@ -23,6 +23,8 @@ import Join from './pages/join';
 import Cart from './pages/cart';
 import Order from './pages/order';
 import StoreWritePage from './pages/storeWrite';
+import AdminMain from "./pages/admin/adminMain";
+import MemberManagePage from "./pages/admin/MemberManagePage";
 import './styles/main.css';
 import './styles/response.css';
 
@@ -57,6 +59,8 @@ function App() {
           <Route path="/qna" element={<Qna />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/join" element={<Join />} />
+          <Route path="/admin" element={<AdminMain />} />
+          <Route path="/admin/members" element={<MemberManagePage />} />
         </Routes>
         <Footer />
       </div>
