@@ -36,14 +36,16 @@ const MemberManagePage = () => {
         size: 10,
       });
 
-      // 조건이 있는 경우에만 파라미터 추가
-      if (filters.name && filters.name.trim() !== "") params.append("name", filters.name.trim());
-      if (filters.role && filters.role.trim() !== "") params.append("role", filters.role.trim());
-      // branchId가 있을 경우에만 추가하고, 숫자형으로 변환하여 추가
-      if (filters.branchId && filters.branchId.trim() !== "") {
-        const branchIdNumber = parseInt(filters.branchId.trim(), 10);
-        if (!isNaN(branchIdNumber)) {
-          params.append("branchId", branchIdNumber);
+      // 조건이 있는 경우에만 파라미터 추가 (삭제된 회원 보기에서는 검색 조건 제외)
+      if (!showDeleted) {
+        if (filters.name && filters.name.trim() !== "") params.append("name", filters.name.trim());
+        if (filters.role && filters.role.trim() !== "") params.append("role", filters.role.trim());
+        // branchId가 있을 경우에만 추가하고, 숫자형으로 변환하여 추가
+        if (filters.branchId && filters.branchId.trim() !== "") {
+          const branchIdNumber = parseInt(filters.branchId.trim(), 10);
+          if (!isNaN(branchIdNumber)) {
+            params.append("branchId", branchIdNumber);
+          }
         }
       }
 
@@ -76,6 +78,13 @@ const MemberManagePage = () => {
     }
   };
 
+  // 토글 버튼 클릭시 회원 목록 바로 로드 (수정된 부분)
+  useEffect(() => {
+    if (showDeleted || isSearched) {
+      fetchMembers(1);
+    }
+  }, [showDeleted]); // showDeleted 변경 시 fetchMembers 호출
+
   // 페이지 변경 시 검색 반복
   useEffect(() => {
     if (isSearched) {
@@ -99,23 +108,54 @@ const MemberManagePage = () => {
   // 회원 등급 변경 처리 함수
   const handleRoleUpdate = async (userId, branchId, newRole) => {
     try {
+      // branchId가 없는 경우 처리
+      if (!branchId) {
+        alert('이 회원은 지부가 지정되어 있지 않습니다. 지부가 있는 회원만 등급을 변경할 수 있습니다.');
+        return false; // 실패 시 false 반환
+      }
+
       setIsLoading(true);
-      const response = await API.post('/admin/assignRole', {
-        userId: userId,
+
+      // 요청 데이터 로깅 (디버깅용)
+      const requestData = {
+        targetUserId: userId,
         branchId: branchId,
         role: newRole
-      });
+      };
+      console.log('등급 변경 요청 데이터:', requestData);
+
+      const response = await API.post('/admin/assignRole', requestData);
 
       if (response.data && response.data.success) {
         alert('회원 등급이 성공적으로 변경되었습니다.');
-        // 목록 새로고침
-        fetchMembers(currentPage);
+        // 회원 목록을 새로 가져오는 것이 아닌, 현재 상태에서 해당 회원의 등급만 업데이트
+        const updatedMembers = members.map(member => {
+          if (member.id === userId && member.branchUsers && member.branchUsers.length > 0) {
+            return {
+              ...member,
+              branchUsers: [
+                {
+                  ...member.branchUsers[0],
+                  userRole: newRole
+                },
+                ...member.branchUsers.slice(1)
+              ]
+            };
+          }
+          return member;
+        });
+
+        setMembers(updatedMembers);
+        return true; // 성공 시 true 반환
       } else {
         alert('회원 등급 변경에 실패했습니다.');
+        return false; // 실패 시 false 반환
       }
     } catch (error) {
       console.error('등급 변경 중 오류 발생:', error);
-      alert('등급 변경에 실패했습니다. 다시 시도해주세요.');
+      console.error('에러 상세 정보:', error.response?.data || error.message);
+      alert(`등급 변경에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
+      return false; // 실패 시 false 반환
     } finally {
       setIsLoading(false);
     }
@@ -131,8 +171,7 @@ const MemberManagePage = () => {
                 onClick={() => {
                   setShowDeleted(!showDeleted);
                   setCurrentPage(1);
-                  setIsSearched(false);
-                  setMembers([]);
+                  // 상태 변경 시 자동으로 데이터를 불러오도록 함 (useEffect에서 처리)
                 }}
                 className={`btn-toggle ${showDeleted ? 'active' : 'inactive'}`}
             >

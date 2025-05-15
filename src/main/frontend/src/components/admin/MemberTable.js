@@ -25,6 +25,9 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
   // 회원별 선택된 역할과 수정 버튼 표시 상태 관리
   const [memberRoles, setMemberRoles] = useState({});
 
+  // 로딩 상태
+  const [loading, setLoading] = useState(false);
+
   // 회원 등급 표시
   const getRoleBadge = (role) => {
     if (!role) return null;
@@ -73,35 +76,59 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
   };
 
   // 등급 변경 제출 핸들러
-  const handleRoleUpdate = async (memberId, userId, branchId) => {
+  const handleRoleUpdate = (memberId, userId) => {
     if (!memberRoles[memberId]?.role) return;
 
     const confirmUpdate = window.confirm('회원 등급을 변경하시겠습니까?');
     if (!confirmUpdate) return;
 
-    try {
-      await API.post('/admin/assignRole', {
-        userId: userId,
-        branchId: branchId,
-        role: memberRoles[memberId].role
-      });
+    // 검색 화면에서 본 것처럼 지부 ID는 1로 고정
+    const branchId = 1;
 
-      alert('등급이 성공적으로 변경되었습니다.');
-      // 변경 후 목록 새로고침
-      if (fetchMembers) fetchMembers();
+    // API 요청 데이터
+    const requestData = {
+      targetUserId: userId,
+      branchId: branchId,
+      role: memberRoles[memberId].role
+    };
 
-      // 수정 버튼 숨기기
-      setMemberRoles({
-        ...memberRoles,
-        [memberId]: {
-          ...memberRoles[memberId],
-          showUpdateButton: false
-        }
-      });
-    } catch (error) {
+    console.log('등급 변경 요청 데이터:', requestData);
+
+    setLoading(true);
+
+    // API 직접 호출
+    API.post('/admin/assignRole', requestData)
+    .then(response => {
+      console.log('API 응답:', response);
+      if (response.data && response.data.success) {
+        alert('등급이 성공적으로 변경되었습니다.');
+
+        // 변경 후 목록 새로고침
+        if (fetchMembers) fetchMembers();
+
+        // 수정 버튼 숨기기
+        setMemberRoles({
+          ...memberRoles,
+          [memberId]: {
+            ...memberRoles[memberId],
+            showUpdateButton: false
+          }
+        });
+      } else {
+        alert('등급 변경에 실패했습니다.');
+      }
+    })
+    .catch(error => {
       console.error('등급 변경 중 오류 발생:', error);
-      alert('등급 변경에 실패했습니다. 다시 시도해주세요.');
-    }
+      if (error.response && error.response.data) {
+        alert(`등급 변경 실패: ${error.response.data.message || '서버 오류'}`);
+      } else {
+        alert('등급 변경에 실패했습니다. 다시 시도해주세요.');
+      }
+    })
+    .finally(() => {
+      setLoading(false);
+    });
   };
 
   return (
@@ -117,7 +144,6 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
           <th>소속 지부</th>
           <th>회원 등급</th>
           <th>가입일</th>
-          {!isDeletedView && <th>작업</th>}
         </tr>
         </thead>
         <tbody>
@@ -125,10 +151,6 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
           const currentRole = member.branchUsers && member.branchUsers.length > 0
               ? member.branchUsers[0].userRole
               : 'PENDING';
-
-          const branchId = member.branchUsers && member.branchUsers.length > 0
-              ? member.branchUsers[0].branchId
-              : null;
 
           return (
               <tr key={member.id}>
@@ -153,8 +175,9 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
                         <select
                             className="form-select form-select-sm"
                             style={{ width: 'auto' }}
-                            value={memberRoles[member.id]?.role || currentRole}
+                            defaultValue={currentRole}
                             onChange={(e) => handleRoleChange(member.id, e.target.value, currentRole)}
+                            disabled={loading}
                         >
                           {roleOptions.map(role => (
                               <option key={role} value={role}>
@@ -168,9 +191,10 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
                         {memberRoles[member.id]?.showUpdateButton && (
                             <button
                                 className="btn btn-primary btn-sm"
-                                onClick={() => handleRoleUpdate(member.id, member.id, branchId)}
+                                onClick={() => handleRoleUpdate(member.id, member.id)}
+                                disabled={loading}
                             >
-                              수정
+                              {loading ? '처리중...' : '수정'}
                             </button>
                         )}
                       </div>
@@ -181,7 +205,7 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false }) => {
                 <td>{formatDate(member.createdAt)}</td>
                 {!isDeletedView && (
                     <td>
-                      {/* 삭제 및 수정 버튼 제거됨 */}
+                      {/* 필요한 추가 작업 버튼들 */}
                     </td>
                 )}
               </tr>

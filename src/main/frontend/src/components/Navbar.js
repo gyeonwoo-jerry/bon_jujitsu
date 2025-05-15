@@ -92,43 +92,46 @@ function Navbar() {
     }
   };
 
-  return (
-    <nav className={`main_nav ${isFixed ? "fixed" : ""}`}>
-      <ul>
-        <li>
-          <Link to="/">홈</Link>
-        </li>
-        <li>
-          <Link to="/academy">아카데미</Link>
-        </li>
-        <li>
-          <Link to="/branches">지부소개</Link>
-        </li>
-        <li>
-          <Link to="/store">스토어</Link>
-        </li>
-        <li className="logo">
-          <Link to="/">
-            <img src="/images/logo.png" alt="logo" />
-          </Link>
-        </li>
-        <li>
-          <Link to="/skill">기술</Link>
-        </li>
-        <li>
-          <Link to="/news">뉴스</Link>
-        </li>
-        <li>
-          <Link to="/qna">질문</Link>
-        </li>
-        <li>
-          <Link to="/sponsor">제휴업체</Link>
-        </li>
-      </ul>
+  // 관리자 페이지 접근 권한 확인 (ADMIN 또는 OWNER만 접근 가능)
+  const canAccessAdminPage = userRole === "ADMIN" || userRole === "OWNER";
 
-      {isLoggedIn ? (
-        // 로그인 상태일 때 사용자 정보와 로그아웃 버튼 표시
-        <div className="user_status">
+  return (
+      <nav className={`main_nav ${isFixed ? "fixed" : ""}`}>
+        <ul>
+          <li>
+            <Link to="/">홈</Link>
+          </li>
+          <li>
+            <Link to="/academy">아카데미</Link>
+          </li>
+          <li>
+            <Link to="/branches">지부소개</Link>
+          </li>
+          <li>
+            <Link to="/store">스토어</Link>
+          </li>
+          <li className="logo">
+            <Link to="/">
+              <img src="/images/logo.png" alt="logo" />
+            </Link>
+          </li>
+          <li>
+            <Link to="/skill">기술</Link>
+          </li>
+          <li>
+            <Link to="/news">뉴스</Link>
+          </li>
+          <li>
+            <Link to="/qna">질문</Link>
+          </li>
+          <li>
+            <Link to="/sponsor">제휴업체</Link>
+          </li>
+        </ul>
+
+        {isLoggedIn ? (
+            // 로그인 상태일 때 사용자 정보와 로그아웃 버튼 표시
+            <div className="user_status">
           <span className="user_name">
             {userName}{" "}
             {userRole === "USER" && "님,"}
@@ -137,47 +140,48 @@ function Navbar() {
             {userRole === "ADMIN" && "관리자님,"} 환영합니다
           </span>
 
-          {userRole === "ADMIN" && (
-              <button
-                  className="admin_btn"
-                  onClick={() => navigate("/admin")}
-                  style={{ marginLeft: "12px" }}
-              >
-                관리자 페이지
+              {/* 관리자(ADMIN)와 관장님(OWNER)에게 관리자 페이지 버튼 표시 */}
+              {canAccessAdminPage && (
+                  <button
+                      className="admin_btn"
+                      onClick={() => navigate("/admin")}
+                      style={{ marginLeft: "12px" }}
+                  >
+                    관리자 페이지
+                  </button>
+              )}
+
+              <button className="logout_btn" onClick={handleLogout}>
+                로그아웃
               </button>
-          )}
+            </div>
+        ) : (
+            // 로그인 상태가 아닐 때 로그인 버튼 표시
+            <div className="login_btn" onClick={toggleLoginForm}>
+              로그인
+            </div>
+        )}
 
-          <button className="logout_btn" onClick={handleLogout}>
-            로그아웃
-          </button>
-        </div>
-      ) : (
-        // 로그인 상태가 아닐 때 로그인 버튼 표시
-        <div className="login_btn" onClick={toggleLoginForm}>
-          로그인
-        </div>
-      )}
-
-      {showLoginForm && !isLoggedIn && (
-        <LoginForm
-          onLoginSuccess={() => {
-            setShowLoginForm(false);
-            // 로그인 성공 시 상태 업데이트
-            const userInfo = localStorage.getItem("userInfo");
-            if (userInfo) {
-              try {
-                const user = JSON.parse(userInfo);
-                setIsLoggedIn(true);
-                setUserName(user.name || "사용자");
-                setUserRole(user.role || ""); // role 값도 업데이트
-              } catch (error) {
-                console.error("사용자 정보 파싱 오류:", error);
-              }
-            }
-          }}
-        />
-      )}
-    </nav>
+        {showLoginForm && !isLoggedIn && (
+            <LoginForm
+                onLoginSuccess={() => {
+                  setShowLoginForm(false);
+                  // 로그인 성공 시 상태 업데이트
+                  const userInfo = localStorage.getItem("userInfo");
+                  if (userInfo) {
+                    try {
+                      const user = JSON.parse(userInfo);
+                      setIsLoggedIn(true);
+                      setUserName(user.name || "사용자");
+                      setUserRole(user.role || ""); // role 값도 업데이트
+                    } catch (error) {
+                      console.error("사용자 정보 파싱 오류:", error);
+                    }
+                  }
+                }}
+            />
+        )}
+      </nav>
   );
 }
 
