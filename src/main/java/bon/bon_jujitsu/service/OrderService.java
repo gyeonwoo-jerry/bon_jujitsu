@@ -120,7 +120,7 @@ public class OrderService {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    if (user.isAdmin()) {
+    if (!user.isAdmin()) {
       throw new IllegalArgumentException("관리자 권한이 없습니다.");
     }
 
