@@ -30,7 +30,8 @@ public record UserResponse(
   @Builder
   public record BranchUserResponse(
       String region,
-      UserRole userRole
+      UserRole userRole,
+      Long branchId
   ) {}
 
   public static UserResponse fromEntity(User user) {
@@ -39,6 +40,7 @@ public record UserResponse(
         .map(bu -> BranchUserResponse.builder()
             .region(bu.getBranch().getRegion())
             .userRole(bu.getUserRole())
+            .branchId(bu.getBranch().getId())
             .build())
         .collect(Collectors.toList());
 
