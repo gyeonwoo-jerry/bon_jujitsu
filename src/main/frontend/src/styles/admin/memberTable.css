@@ -1,0 +1,89 @@
+/* MemberTable 기본 스타일 */
+.member-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.member-table th,
+.member-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.member-table thead th {
+  background-color: #f8fafc;
+  text-align: left;
+  font-weight: 600;
+}
+
+.member-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* 상태 배지 스타일 */
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: inline-block;
+}
+
+.status-owner {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-coach {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
+.status-user {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* 역할 컨트롤 스타일 */
+.role-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background-color: #fff;
+  font-size: 0.875rem;
+  width: auto;
+}
+
+.update-button {
+  padding: 0.25rem 0.5rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.update-button:hover {
+  background-color: #2563eb;
+}
+
+.update-button:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.update-button.updating {
+  opacity: 0.75;
+}

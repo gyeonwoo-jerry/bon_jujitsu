@@ -24,7 +24,8 @@ import Cart from './pages/cart';
 import Order from './pages/order';
 import StoreWritePage from './pages/storeWrite';
 import AdminMain from "./pages/admin/adminMain";
-import MemberManagePage from "./pages/admin/MemberManagePage";
+import MemberManagement from "./pages/admin/MemberManagement";
+import OrderManagement from "./pages/admin/OrderManagement";
 import './styles/main.css';
 import './styles/response.css';
 
@@ -60,7 +61,8 @@ function App() {
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/join" element={<Join />} />
           <Route path="/admin" element={<AdminMain />} />
-          <Route path="/admin/members" element={<MemberManagePage />} />
+          <Route path="/admin/members" element={<MemberManagement />} />
+          <Route path="/admin/orders" element={<OrderManagement />} />
         </Routes>
         <Footer />
       </div>

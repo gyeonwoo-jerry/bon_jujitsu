@@ -2,15 +2,17 @@ import React, { useState, useEffect } from "react";
 import MemberTable from "../../components/admin/MemberTable";
 import Pagination from "../../components/admin/Pagination";
 import API from "../../utils/api";
-import "../../styles/admin/memberManage.css"; // CSS 파일 import
+import "../../styles/admin/memberManagement.css"; // CSS 파일 import
 
-const MemberManagePage = () => {
+const MemberManagement = () => {
   const [members, setMembers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showDeleted, setShowDeleted] = useState(false);
   const [isSearched, setIsSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userRole, setUserRole] = useState("");
+  const [userBranchId, setUserBranchId] = useState(null);
 
   // 검색 조건 상태
   const [filters, setFilters] = useState({
@@ -18,6 +20,30 @@ const MemberManagePage = () => {
     role: "",
     branchId: "",
   });
+
+  // 사용자 정보(역할, 지부ID) 로드
+  useEffect(() => {
+    const loadUserInfo = () => {
+      try {
+        const userInfo = localStorage.getItem("userInfo");
+        if (userInfo) {
+          const parsedInfo = JSON.parse(userInfo);
+          setUserRole(parsedInfo.role || "");
+
+          // 관장님인 경우 지부 ID 가져오기
+          if (parsedInfo.role === "OWNER" && parsedInfo.branchId) {
+            setUserBranchId(parsedInfo.branchId);
+            // 지부 ID를 필터에 자동 설정
+            setFilters(prev => ({ ...prev, branchId: parsedInfo.branchId.toString() }));
+          }
+        }
+      } catch (error) {
+        console.error("사용자 정보 로드 오류:", error);
+      }
+    };
+
+    loadUserInfo();
+  }, []);
 
   const handleChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -40,8 +66,13 @@ const MemberManagePage = () => {
       if (!showDeleted) {
         if (filters.name && filters.name.trim() !== "") params.append("name", filters.name.trim());
         if (filters.role && filters.role.trim() !== "") params.append("role", filters.role.trim());
-        // branchId가 있을 경우에만 추가하고, 숫자형으로 변환하여 추가
-        if (filters.branchId && filters.branchId.trim() !== "") {
+
+        // 관장님인 경우 자신의 지부 ID만 사용
+        if (userRole === "OWNER" && userBranchId) {
+          params.append("branchId", userBranchId);
+        }
+        // 관리자인 경우 선택한 지부 ID 사용
+        else if (userRole === "ADMIN" && filters.branchId && filters.branchId.trim() !== "") {
           const branchIdNumber = parseInt(filters.branchId.trim(), 10);
           if (!isNaN(branchIdNumber)) {
             params.append("branchId", branchIdNumber);
@@ -98,66 +129,19 @@ const MemberManagePage = () => {
   };
 
   const resetFilters = () => {
-    setFilters({
-      name: "",
-      role: "",
-      branchId: "",
-    });
-  };
-
-  // 회원 등급 변경 처리 함수
-  const handleRoleUpdate = async (userId, branchId, newRole) => {
-    try {
-      // branchId가 없는 경우 처리
-      if (!branchId) {
-        alert('이 회원은 지부가 지정되어 있지 않습니다. 지부가 있는 회원만 등급을 변경할 수 있습니다.');
-        return false; // 실패 시 false 반환
-      }
-
-      setIsLoading(true);
-
-      // 요청 데이터 로깅 (디버깅용)
-      const requestData = {
-        targetUserId: userId,
-        branchId: branchId,
-        role: newRole
-      };
-      console.log('등급 변경 요청 데이터:', requestData);
-
-      const response = await API.post('/admin/assignRole', requestData);
-
-      if (response.data && response.data.success) {
-        alert('회원 등급이 성공적으로 변경되었습니다.');
-        // 회원 목록을 새로 가져오는 것이 아닌, 현재 상태에서 해당 회원의 등급만 업데이트
-        const updatedMembers = members.map(member => {
-          if (member.id === userId && member.branchUsers && member.branchUsers.length > 0) {
-            return {
-              ...member,
-              branchUsers: [
-                {
-                  ...member.branchUsers[0],
-                  userRole: newRole
-                },
-                ...member.branchUsers.slice(1)
-              ]
-            };
-          }
-          return member;
-        });
-
-        setMembers(updatedMembers);
-        return true; // 성공 시 true 반환
-      } else {
-        alert('회원 등급 변경에 실패했습니다.');
-        return false; // 실패 시 false 반환
-      }
-    } catch (error) {
-      console.error('등급 변경 중 오류 발생:', error);
-      console.error('에러 상세 정보:', error.response?.data || error.message);
-      alert(`등급 변경에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
-      return false; // 실패 시 false 반환
-    } finally {
-      setIsLoading(false);
+    // 관장님인 경우 지부 ID는 유지
+    if (userRole === "OWNER") {
+      setFilters({
+        name: "",
+        role: "",
+        branchId: userBranchId ? userBranchId.toString() : "",
+      });
+    } else {
+      setFilters({
+        name: "",
+        role: "",
+        branchId: "",
+      });
     }
   };
 
@@ -197,33 +181,39 @@ const MemberManagePage = () => {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">회원 등급</label>
-                    <select
-                        name="role"
-                        value={filters.role}
-                        onChange={handleChange}
-                        className="form-select"
-                    >
-                      <option value="">전체 등급</option>
-                      <option value="PENDING">대기중</option>
-                      <option value="USER">일반 회원</option>
-                      <option value="COACH">코치</option>
-                      <option value="OWNER">지부장</option>
-                    </select>
-                  </div>
+                  {/* 관리자만 회원 등급 필터 표시 */}
+                  {userRole === "ADMIN" && (
+                      <div className="form-group">
+                        <label className="form-label">회원 등급</label>
+                        <select
+                            name="role"
+                            value={filters.role}
+                            onChange={handleChange}
+                            className="form-select"
+                        >
+                          <option value="">전체 등급</option>
+                          <option value="PENDING">대기중</option>
+                          <option value="USER">일반 회원</option>
+                          <option value="COACH">코치</option>
+                          <option value="OWNER">지부장</option>
+                        </select>
+                      </div>
+                  )}
 
-                  <div className="form-group">
-                    <label className="form-label">지부 ID</label>
-                    <input
-                        name="branchId"
-                        type="number"
-                        placeholder="지부 번호 입력"
-                        value={filters.branchId}
-                        onChange={handleChange}
-                        className="form-input"
-                    />
-                  </div>
+                  {/* 관리자만 지부 ID 필터 표시 */}
+                  {userRole === "ADMIN" && (
+                      <div className="form-group">
+                        <label className="form-label">지부 ID</label>
+                        <input
+                            name="branchId"
+                            type="number"
+                            placeholder="지부 번호 입력"
+                            value={filters.branchId}
+                            onChange={handleChange}
+                            className="form-input"
+                        />
+                      </div>
+                  )}
                 </div>
 
                 <div className="btn-actions">
@@ -257,7 +247,8 @@ const MemberManagePage = () => {
                       members={members}
                       fetchMembers={() => fetchMembers(currentPage)}
                       isDeletedView={showDeleted}
-                      onRoleUpdate={handleRoleUpdate}
+                      userRole={userRole}
+                      allowedRoles={userRole === "OWNER" ? ["PENDING", "USER", "COACH"] : ["PENDING", "USER", "COACH", "OWNER"]}
                   />
                   <div className="pagination-container">
                     <Pagination
@@ -286,4 +277,4 @@ const MemberManagePage = () => {
   );
 };
 
-export default MemberManagePage;
+export default MemberManagement;
