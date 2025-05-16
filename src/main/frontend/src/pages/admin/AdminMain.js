@@ -1,4 +1,4 @@
-// pages/adminMain.js
+// pages/AdminMain.js
 import React, { useEffect, useState } from "react";
 import SummaryCard from "../../components/admin/SummaryCard";
 import QuickLinkButton from "../../components/admin/QuickLinkButton";

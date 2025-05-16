@@ -1,0 +1,382 @@
+/* productForm.css - 기존 코드에 이미지 관리 섹션 스타일 추가 */
+.product-form-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.product-form-container .title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #3498db;
+}
+
+.error-message {
+  background-color: #fde2e2;
+  color: #d32f2f;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0 20px;
+  border-left: 4px solid #d32f2f;
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* 테이블 스타일 */
+.input-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.input-table th,
+.input-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  vertical-align: top;
+}
+
+.input-table th {
+  width: 150px;
+  background-color: #3498db;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+}
+
+.input-table td {
+  background-color: white;
+}
+
+.input-table input[type="text"],
+.input-table select,
+.input-table textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.input-table textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* 상품명 중복확인 스타일 */
+.name-check-container {
+  display: flex;
+  gap: 10px;
+}
+
+.name-input {
+  flex: 1;
+}
+
+.name-check-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.name-check-button:hover {
+  background-color: #2980b9;
+}
+
+.name-check-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.name-check-message {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+.name-check-message.success {
+  color: #27ae60;
+}
+
+.name-check-message.error {
+  color: #e74c3c;
+}
+
+/* 사이즈 프리셋 스타일 */
+.preset-select {
+  margin-bottom: 10px;
+  max-width: 200px;
+}
+
+.preset-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.preset-button {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.preset-button:hover {
+  background-color: #e0e0e0;
+}
+
+.color-preset-button {
+  color: white;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+  font-size: 11px;
+  min-width: 60px;
+}
+
+.color-presets {
+  margin-top: 15px;
+  border-top: 1px dashed #ddd;
+  padding-top: 10px;
+}
+
+/* 옵션 관리 스타일 */
+.options-header {
+  display: flex;
+  margin-bottom: 10px;
+  font-weight: bold;
+  background-color: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.option-header-item {
+  flex: 1;
+  padding: 0 5px;
+}
+
+.option-row {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.option-item {
+  flex: 1;
+  padding: 0 5px;
+}
+
+.option-actions {
+  width: 50px;
+  flex: 0 0 50px;
+  display: flex;
+  justify-content: center;
+}
+
+.add-option,
+.remove-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.add-option {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.remove-option {
+  background-color: #e74c3c;
+  color: white;
+}
+
+/* 이미지 업로드 스타일 */
+.hidden-file-input {
+  display: none;
+}
+
+.image-upload-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 10px;
+}
+
+.image-upload-button:hover {
+  background-color: #2980b9;
+}
+
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-preview {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-tag {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(255, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.remove-image:hover {
+  background-color: rgba(255, 0, 0, 0.8);
+}
+
+/* 이미지 관리 섹션 추가 스타일 */
+.image-management-section {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.image-section {
+  margin-bottom: 10px;
+}
+
+.image-section-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* 등록 버튼 스타일 */
+.form-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.register-button {
+  background-color: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.register-button:hover {
+  background-color: #1a252f;
+}
+
+.register-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .input-table th {
+    width: 100px;
+  }
+
+  .name-check-container {
+    flex-direction: column;
+  }
+
+  .options-header,
+  .option-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option-header-item {
+    margin-bottom: 5px;
+  }
+
+  .option-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .image-preview {
+    width: 80px;
+    height: 80px;
+  }
+}

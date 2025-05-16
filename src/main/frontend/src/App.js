@@ -23,11 +23,14 @@ import Join from './pages/join';
 import Cart from './pages/cart';
 import Order from './pages/order';
 import StoreWritePage from './pages/storeWrite';
-import AdminMain from "./pages/admin/adminMain";
+import AdminMain from "./pages/admin/AdminMain";
 import MemberManagement from "./pages/admin/MemberManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
 import './styles/main.css';
 import './styles/response.css';
+import ProductManagement from "./pages/admin/ProductManagement";
+import ProductCreate from "./pages/admin/ProductCreate";
+import ProductEdit from "./pages/admin/ProductEdit";
 
 
 function App() {
@@ -63,6 +66,9 @@ function App() {
           <Route path="/admin" element={<AdminMain />} />
           <Route path="/admin/members" element={<MemberManagement />} />
           <Route path="/admin/orders" element={<OrderManagement />} />
+          <Route path="/admin/products" element={<ProductManagement />} />
+          <Route path="/admin/products/create" element={<ProductCreate />} />
+          <Route path="/admin/products/edit/:itemId" element={<ProductEdit />} />
         </Routes>
         <Footer />
       </div>
