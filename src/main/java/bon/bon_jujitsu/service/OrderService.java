@@ -198,14 +198,14 @@ public class OrderService {
 
       case DELIVERING:
         // DELIVERING상태에서 COMPLETED로 변경
-        if (requestedStatus == OrderStatus.COMPLETED) {
-          order.UpdateOrderStatus(OrderStatus.COMPLETED);
+        if (requestedStatus == OrderStatus.COMPLETE) {
+          order.UpdateOrderStatus(OrderStatus.COMPLETE);
         } else {
           throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
         }
         break;
 
-      case COMPLETED:
+      case COMPLETE:
         throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
 
       case RETURN_REQUESTED:
@@ -219,14 +219,14 @@ public class OrderService {
 
       case RETURNING:
         // RETURNING상태에서 RERETURNED으로 변경
-        if (requestedStatus == OrderStatus.RERETURNED) {
-          order.UpdateOrderStatus(OrderStatus.RERETURNED);
+        if (requestedStatus == OrderStatus.RETURNED) {
+          order.UpdateOrderStatus(OrderStatus.RETURNED);
         } else {
           throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
         }
         break;
 
-      case RERETURNED:
+      case RETURNED:
         throw new IllegalArgumentException("상태를 변경 할 수 없습니다.");
 
       case CANCELLED:
@@ -283,7 +283,7 @@ public class OrderService {
     }
 
     // COMPLETED 상태인 경우에만 반품 신청 가능
-    if (order.getOrderStatus() == OrderStatus.COMPLETED) {
+    if (order.getOrderStatus() == OrderStatus.COMPLETE) {
       order.UpdateOrderStatus(OrderStatus.RETURN_REQUESTED);
     } else {
       throw new IllegalArgumentException("완료된 주문만 반품 신청이 가능합니다.");
