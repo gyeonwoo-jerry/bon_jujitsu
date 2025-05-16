@@ -63,9 +63,10 @@ public class ItemController {
       @AuthenticationUserId Long userId,
       @RequestPart("update") @Valid ItemUpdate update,
       @PathVariable("itemId") Long itemId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    itemService.updateItem(userId, update, itemId, images);
+    itemService.updateItem(userId, update, itemId, images, keepImageIds);
     return ApiResponse.success("상품 수정 성공", null);
   }
 

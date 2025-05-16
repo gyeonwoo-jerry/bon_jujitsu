@@ -14,7 +14,11 @@ import bon.bon_jujitsu.repository.ItemOptionRepository;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -100,7 +104,7 @@ public class ItemService {
     return ItemResponse.fromEntity(item);
   }
 
-  public void updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images) {
+  public void updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -111,43 +115,56 @@ public class ItemService {
     Item item = itemRepository.findById(itemId)
         .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-    // 기본 정보 업데이트
+    // 1. 기본 정보 업데이트
     update.name().ifPresent(item::updateName);
     update.content().ifPresent(item::updateContent);
     update.price().ifPresent(item::updatePrice);
     update.sale().ifPresent(item::updateSale);
 
-    // 옵션 정보 업데이트 (기존 옵션 삭제 후 다시 저장)
+    // 2. 옵션 업데이트
     update.option().ifPresent(optionRequests -> {
-      // 기존 옵션 목록 가져오기
+      // 기존 옵션 ID 기준 Map 생성
       List<ItemOption> existingOptions = itemOptionRepository.findByItemId(itemId);
+      Map<Long, ItemOption> existingMap = existingOptions.stream()
+          .collect(Collectors.toMap(ItemOption::getId, o -> o));
 
-      // 새로운 옵션 리스트
-      List<ItemOption> updatedOptions = new ArrayList<>();
+      List<ItemOption> toSave = new ArrayList<>();
+      Set<Long> requestIds = new HashSet<>();
 
-      for (int i = 0; i < optionRequests.size(); i++) {
-        ItemOptionUpdate request = optionRequests.get(i);
-
-        // 기존 옵션이 있으면 업데이트, 없으면 새로 추가
-        ItemOption option = (i < existingOptions.size()) ? existingOptions.get(i)
-            : new ItemOption(null, "NONE", "DEFAULT", 1, item);
-
-        // 값이 들어온 경우에만 업데이트
-        request.size().ifPresent(option::updateSize);
-        request.color().ifPresent(option::updateColor);
-        request.amount().ifPresent(option::updateItemAmount);
-
-        updatedOptions.add(option);
+      for (ItemOptionUpdate request : optionRequests) {
+        if (request.id().isPresent() && existingMap.containsKey(request.id().get())) {
+          // 기존 옵션 업데이트
+          ItemOption option = existingMap.get(request.id().get());
+          request.size().ifPresent(option::updateSize);
+          request.color().ifPresent(option::updateColor);
+          request.amount().ifPresent(option::updateItemAmount);
+          toSave.add(option);
+          requestIds.add(option.getId());
+        } else {
+          // 새 옵션 추가
+          ItemOption newOption = new ItemOption(
+              null,
+              request.size().orElse("NONE"),
+              request.color().orElse("DEFAULT"),
+              request.amount().orElse(1),
+              item
+          );
+          toSave.add(newOption);
+        }
       }
 
-      // 기존 옵션 삭제 후, 새로운 옵션 저장
-      itemOptionRepository.deleteAllByItemId(itemId);
-      itemOptionRepository.saveAll(updatedOptions);
+      // 삭제 대상 옵션 = 기존에는 있었는데 요청에서 누락된 ID
+      List<ItemOption> toDelete = existingOptions.stream()
+          .filter(opt -> !requestIds.contains(opt.getId()))
+          .collect(Collectors.toList());
+
+      itemOptionRepository.deleteAll(toDelete);
+      itemOptionRepository.saveAll(toSave);
     });
 
-    // 상품 이미지 업데이트
+    // 3. 이미지 업데이트
     if (images != null && !images.isEmpty()) {
-      itemImageService.updateImages(item, images);
+      itemImageService.updateImages(item, images, keepImageIds);
     }
   }
 

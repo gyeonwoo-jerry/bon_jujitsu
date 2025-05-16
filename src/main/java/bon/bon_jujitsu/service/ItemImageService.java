@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemImage;
 import bon.bon_jujitsu.repository.ItemImageRepository;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -76,24 +77,23 @@ public class ItemImageService {
     return filePath; // DB에 저장할 파일 경로 반환
   }
 
-  public void updateImages(Item item, List<MultipartFile> newImages) {
-
-    if (newImages == null || newImages.isEmpty()) {
-      return;
-    }
-    // 1. 기존 이미지 조회
+  public void updateImages(Item item, List<MultipartFile> newImages, List<Long> keepImageIds) {
     List<ItemImage> existingImages = itemImageRepository.findByItemId(item.getId());
 
-    // 2. 기존 이미지 파일 삭제 및 엔티티 삭제
-    for (ItemImage existingImage : existingImages) {
-      // 물리적 파일 삭제
-      deletePhysicalFile(existingImage.getImagePath(), existingImage.getOriginalFileName());
-      // 엔티티 삭제
-      itemImageRepository.delete(existingImage);
+    // 삭제 대상 선별: keepImageIds에 없는 기존 이미지
+    List<ItemImage> toDelete = existingImages.stream()
+        .filter(img -> keepImageIds == null || !keepImageIds.contains(img.getId()))
+        .collect(Collectors.toList());
+
+    for (ItemImage image : toDelete) {
+      deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
+      itemImageRepository.delete(image);
     }
 
-    // 3. 새로운 이미지 업로드
-    uploadImage(item, newImages);
+    // 새 이미지 업로드
+    if (newImages != null && !newImages.isEmpty()) {
+      uploadImage(item, newImages);
+    }
   }
 
   private void deletePhysicalFile(String dbDirPath, String originalFileName) {

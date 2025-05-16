@@ -8,7 +8,6 @@ public record ItemUpdate(
     Optional<List<ItemOptionUpdate>> option,
     Optional<String> content,
     Optional<Integer> price,
-    Optional<Integer> sale,
-    Optional<Integer> amount
+    Optional<Integer> sale
 ) {
 }
