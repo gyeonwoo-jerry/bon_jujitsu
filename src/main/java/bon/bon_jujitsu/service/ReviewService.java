@@ -48,7 +48,7 @@ public class ReviewService {
         .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
 
     // 상품을 받은사람 체크
-    if (order.getOrderStatus() != OrderStatus.COMPLETED) {
+    if (order.getOrderStatus() != OrderStatus.COMPLETE) {
       throw new IllegalArgumentException("주문이 완료된 경우에만 리뷰를 작성할 수 있습니다.");
     }
 
