@@ -41,19 +41,19 @@ public class OrderController {
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
       @RequestParam(name = "status", required = false) OrderStatus status,
-      @AuthenticationUserId Long id
+      @AuthenticationUserId Long userId
   ) {
-    return ApiResponse.success("주문 조회 완료", orderService.getOrdersByStatus(page, size, id, status));
+    return ApiResponse.success("주문 조회 완료", orderService.getOrdersByStatus(page, size, userId, status));
   }
 
   @GetMapping("/orders/myself")
   public ApiResponse<PageResponse<OrderResponse>> getMyOrders (
-      @AuthenticationUserId Long id,
+      @AuthenticationUserId Long userId,
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
       @RequestParam(required = false) List<OrderStatus> status
   ) {
-    return ApiResponse.success("내 주문 조회 완료", orderService.getMyOrders(page, size, id, status));
+    return ApiResponse.success("내 주문 조회 완료", orderService.getMyOrders(page, size, userId, status));
   }
 
   @PatchMapping("/orders/admin")

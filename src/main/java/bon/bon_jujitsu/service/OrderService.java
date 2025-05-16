@@ -115,9 +115,9 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<OrderResponse> getOrdersByStatus(int page, int size, Long id,
+  public PageResponse<OrderResponse> getOrdersByStatus(int page, int size, Long userId,
       OrderStatus status) {
-    User user = userRepository.findById(id)
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (!user.isAdmin()) {
@@ -138,8 +138,8 @@ public class OrderService {
   }
 
 
-  public PageResponse<OrderResponse> getMyOrders(int page, int size, Long id, List<OrderStatus> status) {
-    User user = userRepository.findById(id)
+  public PageResponse<OrderResponse> getMyOrders(int page, int size, Long userId, List<OrderStatus> status) {
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (user.getBranchUsers().stream()
