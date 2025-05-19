@@ -31,6 +31,8 @@ import './styles/response.css';
 import ProductManagement from "./pages/admin/ProductManagement";
 import ProductCreate from "./pages/admin/ProductCreate";
 import ProductEdit from "./pages/admin/ProductEdit";
+import BranchManagement from "./pages/admin/BranchManagement";
+import BranchCreate from "./pages/admin/BranchCreate";
 
 
 function App() {
@@ -69,6 +71,8 @@ function App() {
           <Route path="/admin/products" element={<ProductManagement />} />
           <Route path="/admin/products/create" element={<ProductCreate />} />
           <Route path="/admin/products/edit/:itemId" element={<ProductEdit />} />
+          <Route path="/admin/branches" element={<BranchManagement />} />
+          <Route path="/admin/branches/create" element={<BranchCreate />} />
         </Routes>
         <Footer />
       </div>

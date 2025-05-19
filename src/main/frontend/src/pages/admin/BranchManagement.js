@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import API from '../../utils/api';
-import ProductTable from '../../components/admin/ProductTable';
+import BranchTable from '../../components/admin/BranchTable';
 import SearchBar from '../../components/admin/SearchBar';
 import Pagination from '../../components/admin/Pagination';
 import { getWithExpiry } from '../../utils/storage';
 import { Link } from 'react-router-dom';
-import '../../styles/admin/productManagement.css';
+import '../../styles/admin/branchManagement.css';
 
-const ProductManagement = () => {
-  const [products, setProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
+const BranchManagement = () => {
+  const [branches, setBranches] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1); // 백엔드는 1부터 시작하므로 1로 초기화
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState(''); // 지부명 검색어
+  const [selectedRegion, setSelectedRegion] = useState(''); // 지역 필터링 (area 파라미터)
 
   // 토큰 확인 함수
   const checkToken = () => {
@@ -25,7 +26,7 @@ const ProductManagement = () => {
     return true;
   };
 
-  const fetchProducts = async () => {
+  const fetchBranches = async () => {
     // 토큰 확인
     if (!checkToken()) return;
 
@@ -34,17 +35,22 @@ const ProductManagement = () => {
 
     try {
       const params = new URLSearchParams();
-      params.append('page', currentPage + 1); // 백엔드는 1부터 시작하므로 +1 처리
+      params.append('page', currentPage); // 백엔드는 1부터 시작
       params.append('size', 10);
 
-      // 검색어가 있는 경우 추가 (백엔드는 name 파라미터를 사용)
+      // 지부명 검색어가 있는 경우 추가 (region 파라미터)
       if (searchKeyword) {
-        params.append('name', searchKeyword);
+        params.append('region', searchKeyword);
       }
 
-      console.log('API 요청 시작:', `/items?${params.toString()}`);
+      // 지역 필터가 선택되었을 경우 추가 (area 파라미터)
+      if (selectedRegion) {
+        params.append('area', selectedRegion);
+      }
 
-      const res = await API.get(`/items?${params.toString()}`);
+      console.log('API 요청 시작:', `/branch/all?${params.toString()}`);
+
+      const res = await API.get(`/branch/all?${params.toString()}`);
 
       console.log('API 응답:', res.data);
 
@@ -57,11 +63,11 @@ const ProductManagement = () => {
 
       if (res.data?.success) {
         const data = res.data?.content;
-        setProducts(data?.list || []);
+        setBranches(data?.list || []);
         setTotalPages(data?.totalPage || 0);
       } else {
         console.error('조회 실패:', res.data?.message);
-        setError('상품 목록을 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
+        setError('지부 목록을 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
       }
     } catch (err) {
       console.error('API 호출 오류:', err);
@@ -84,48 +90,54 @@ const ProductManagement = () => {
     }
   };
 
-  // 컴포넌트 마운트 시 초기 데이터 로드
+  // 컴포넌트 마운트 시 초기 데이터 로드 및 필터 변경 시 데이터 다시 로드
   useEffect(() => {
-    fetchProducts();
-  }, [currentPage]);
+    fetchBranches();
+  }, [currentPage, selectedRegion]); // selectedRegion이 변경될 때도 재로드
 
   // 검색 처리
   const handleSearch = () => {
-    setCurrentPage(0);
-    fetchProducts();
+    setCurrentPage(1); // 검색 시 첫 페이지로 이동
+    fetchBranches();
   };
 
-  // 검색 입력 변경 처리
+  // 검색어 입력 변경 처리
   const handleSearchInputChange = (e) => {
     setSearchKeyword(e.target.value);
   };
 
-  // 상품 삭제 처리
-  const handleDeleteProduct = async (productId) => {
+  // 지역 변경 처리
+  const handleRegionChange = (region) => {
+    setSelectedRegion(region); // 지역값 설정 (전체 선택 시 빈 문자열)
+    setCurrentPage(1); // 지역 변경 시 첫 페이지로 이동
+  };
+
+  // 지부 삭제 처리
+  const handleDeleteBranch = async (branchId) => {
     if (!checkToken()) return;
 
-    if (!window.confirm("정말로 이 상품을 삭제하시겠습니까?")) {
+    if (!window.confirm("정말로 이 지부를 삭제하시겠습니까?")) {
       return;
     }
 
     try {
-      const res = await API.delete(`/items/${productId}`);
+      const res = await API.delete(`/branch?branchId=${branchId}`);
 
       if (res.data?.success) {
-        alert('상품이 성공적으로 삭제되었습니다.');
-        fetchProducts(); // 상품 목록 새로고침
+        alert('지부가 성공적으로 삭제되었습니다.');
+        fetchBranches(); // 지부 목록 새로고침
       } else {
         alert('삭제 실패: ' + (res.data?.message || '알 수 없는 오류'));
       }
     } catch (err) {
-      console.error('상품 삭제 오류:', err);
-      alert('상품 삭제 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'));
+      console.error('지부 삭제 오류:', err);
+      alert('지부 삭제 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'));
     }
   };
 
   return (
-      <div className="product-management">
-        <h2 className="title">상품관리(상품리스트)</h2>
+      <div className="branch-management">
+        <h2 className="title">지부관리(지부리스트)</h2>
 
         {error && (
             <div className="error-message">
@@ -133,13 +145,17 @@ const ProductManagement = () => {
             </div>
         )}
 
-        <SearchBar
-            searchKeyword={searchKeyword}
-            onSearchInputChange={handleSearchInputChange}
-            onSearch={handleSearch}
-            placeholder="상품명을 입력하세요"
-            // showRegionDropdown 속성을 전달하지 않으면 기본값인 false가 적용되어 드롭박스가 표시되지 않음
-        />
+        <div className="search-container">
+          <SearchBar
+              searchKeyword={searchKeyword}
+              onSearchInputChange={handleSearchInputChange}
+              onSearch={handleSearch}
+              placeholder="지부명을 입력하세요"
+              showRegionDropdown={true} // 지역 드롭다운 표시
+              selectedRegion={selectedRegion}
+              onRegionChange={handleRegionChange}
+          />
+        </div>
 
         {loading ? (
             <div className="loading-indicator">
@@ -147,22 +163,22 @@ const ProductManagement = () => {
             </div>
         ) : (
             <>
-              <ProductTable
-                  products={products}
-                  onDelete={handleDeleteProduct}
+              <BranchTable
+                  branches={branches}
+                  onDelete={handleDeleteBranch}
               />
 
               <div className="action-buttons">
-                <Link to="/admin/products/create" className="register-button">
+                <Link to="/admin/branches/create" className="register-button">
                   등록하기
                 </Link>
               </div>
 
-              {products.length > 0 && (
+              {branches.length > 0 && (
                   <Pagination
-                      currentPage={currentPage + 1}
+                      currentPage={currentPage}
                       totalPages={totalPages}
-                      onPageChange={(page) => setCurrentPage(page - 1)}
+                      onPageChange={(page) => setCurrentPage(page)}
                   />
               )}
             </>
@@ -171,4 +187,4 @@ const ProductManagement = () => {
   );
 };
 
-export default ProductManagement;
+export default BranchManagement;
