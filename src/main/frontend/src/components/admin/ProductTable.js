@@ -48,13 +48,15 @@ const ProductTable = ({ products, onDelete }) => {
                       }
                     </td>
                     <td>
-                      <button
+                      {/* 상품 페이지 이동 버튼 URL 형식 수정 */}
+                      <Link
+                          to={`/storeDetail/${product.id}`}
                           className="detail-button"
-                          disabled
-                          title="준비 중인 기능입니다"
+                          target="_blank"
+                          rel="noopener noreferrer"
                       >
                         상품 페이지 이동
-                      </button>
+                      </Link>
                     </td>
                     <td className="action-buttons">
                       <Link
