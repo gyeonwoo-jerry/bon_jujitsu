@@ -69,16 +69,14 @@ public class BranchService {
   }
 
 
-  public PageResponse<BranchResponse> getAllBranch(int page, int size, String region) {
+  public PageResponse<BranchResponse> getAllBranch(int page, int size, String region, String area) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "region"));
 
     Page<Branch> branches;
 
-    if (region != null && !region.isBlank()) {
-      // 🔍 region이 있으면 해당 지역 지부만 조회
-      branches = branchRepository.findByRegionContainingIgnoreCase(region, pageRequest);
+    if ((region != null && !region.isBlank()) || (area != null && !area.isBlank())) {
+      branches = branchRepository.findByRegionOrName(region, area, pageRequest);
     } else {
-      // 📦 전체 지부 조회
       branches = branchRepository.findAllWithOwner(pageRequest);
     }
 

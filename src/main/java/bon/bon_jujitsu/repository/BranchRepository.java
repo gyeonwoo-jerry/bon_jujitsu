@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface BranchRepository extends JpaRepository<Branch, Long> {
   @EntityGraph(attributePaths = {"branchUsers.user"})
@@ -15,5 +16,10 @@ public interface BranchRepository extends JpaRepository<Branch, Long> {
 
   boolean existsByRegion(String region);
 
-  Page<Branch> findByRegionContainingIgnoreCase(String region, PageRequest pageRequest);
+  @Query("SELECT b FROM Branch b JOIN FETCH b.branchUsers bu " +
+      "WHERE (:region IS NULL OR LOWER(b.region) LIKE LOWER(CONCAT('%', :region, '%'))) " +
+      "AND (:area IS NULL OR LOWER(b.area) LIKE LOWER(CONCAT('%', :area, '%')))")
+  Page<Branch> findByRegionOrName(@Param("region") String region,
+      @Param("area") String area,
+      Pageable pageable);
 }
