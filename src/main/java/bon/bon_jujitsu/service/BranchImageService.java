@@ -2,7 +2,9 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.BranchImage;
+import bon.bon_jujitsu.domain.ItemImage;
 import bon.bon_jujitsu.repository.BranchImageRepository;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -76,24 +78,23 @@ public class BranchImageService {
         return filePath; // DB에 저장할 파일 경로 반환
     }
 
-    public void updateImages(Branch branch, List<MultipartFile> newImages) {
-
-        if (newImages == null || newImages.isEmpty()) {
-            return;
-        }
-        // 1. 기존 이미지 조회
+    public void updateImages(Branch branch, List<MultipartFile> newImages, List<Long> keepImageIds) {
         List<BranchImage> existingImages = branchImageRepository.findByBranchId(branch.getId());
 
-        // 2. 기존 이미지 파일 삭제 및 엔티티 삭제
-        for (BranchImage existingImage : existingImages) {
-            // 물리적 파일 삭제
-            deletePhysicalFile(existingImage.getImagePath(), existingImage.getOriginalFileName());
-            // 엔티티 삭제
-            branchImageRepository.delete(existingImage);
+        // 삭제 대상 선별: keepImageIds에 없는 기존 이미지
+        List<BranchImage> toDelete = existingImages.stream()
+            .filter(img -> keepImageIds == null || !keepImageIds.contains(img.getId()))
+            .collect(Collectors.toList());
+
+        for (BranchImage image : toDelete) {
+            deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
+            branchImageRepository.delete(image);
         }
 
-        // 3. 새로운 이미지 업로드
-        uploadImage(branch, newImages);
+        // 새 이미지 업로드
+        if (newImages != null && !newImages.isEmpty()) {
+            uploadImage(branch, newImages);
+        }
     }
 
     private void deletePhysicalFile(String dbDirPath, String originalFileName) {

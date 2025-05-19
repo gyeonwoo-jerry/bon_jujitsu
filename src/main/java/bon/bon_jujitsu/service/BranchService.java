@@ -97,7 +97,7 @@ public class BranchService {
   }
 
 
-  public void updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images) {
+  public void updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     BranchUser branchUser = user.getBranchUsers().stream()
@@ -110,7 +110,7 @@ public class BranchService {
     branch.updateBranch(update);
 
     if (images != null && !images.isEmpty()) {
-      branchImageService.updateImages(branch, images);
+      branchImageService.updateImages(branch, images, keepImageIds);
     }
   }
 

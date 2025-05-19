@@ -61,9 +61,10 @@ public class BranchController {
   public ApiResponse<Void> updateBranch(
       @AuthenticationUserId Long userId,
       @RequestPart("update") @Valid BranchUpdate update,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    branchService.updateBranch(userId, update, images);
+    branchService.updateBranch(userId, update, images, keepImageIds);
     return ApiResponse.success("지부 수정 성공", null);
   }
 
