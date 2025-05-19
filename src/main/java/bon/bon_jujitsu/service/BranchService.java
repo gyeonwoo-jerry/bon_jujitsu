@@ -1,5 +1,8 @@
 package bon.bon_jujitsu.service;
 
+import static bon.bon_jujitsu.specification.BranchSpecification.areaContains;
+import static bon.bon_jujitsu.specification.BranchSpecification.regionContains;
+
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -13,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,13 +76,10 @@ public class BranchService {
   public PageResponse<BranchResponse> getAllBranch(int page, int size, String region, String area) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "region"));
 
-    Page<Branch> branches;
+    Specification<Branch> spec = Specification.where(regionContains(region))
+        .and(areaContains(area));
 
-    if ((region != null && !region.isBlank()) || (area != null && !area.isBlank())) {
-      branches = branchRepository.findByRegionOrName(region, area, pageRequest);
-    } else {
-      branches = branchRepository.findAllWithOwner(pageRequest);
-    }
+    Page<Branch> branches = branchRepository.findAll(spec, pageRequest);
 
     Page<BranchResponse> branchResponses = branches.map(branch -> {
       // 각 지부마다 OWNER 찾기
