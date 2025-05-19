@@ -96,16 +96,24 @@ public class BranchService {
     return PageResponse.fromPage(branchResponses);
   }
 
-
   public void updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images, List<Long> keepImageIds) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
-    BranchUser branchUser = user.getBranchUsers().stream()
-        .filter(bu -> bu.getUserRole() == UserRole.OWNER)
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("해당 유저는 지부의 관장(OWNER)이 아닙니다."));
+    Branch branch;
 
-    Branch branch = branchUser.getBranch();
+    if (user.isAdminUser()) {
+      Long targetBranchId = update.branchId()
+          .orElseThrow(() -> new IllegalArgumentException("관리자는 branchId를 제공해야 합니다."));
+      branch = branchRepository.findById(targetBranchId)
+          .orElseThrow(() -> new IllegalArgumentException("해당 ID의 지부를 찾을 수 없습니다."));
+    } else {
+      BranchUser branchUser = user.getBranchUsers().stream()
+          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+          .findFirst()
+          .orElseThrow(() -> new IllegalArgumentException("해당 유저는 지부의 관장(OWNER)이 아닙니다."));
+      branch = branchUser.getBranch();
+    }
 
     branch.updateBranch(update);
 

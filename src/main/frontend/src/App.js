@@ -33,6 +33,7 @@ import ProductCreate from "./pages/admin/ProductCreate";
 import ProductEdit from "./pages/admin/ProductEdit";
 import BranchManagement from "./pages/admin/BranchManagement";
 import BranchCreate from "./pages/admin/BranchCreate";
+import BranchEdit from "./pages/admin/BranchEdit";
 
 
 function App() {
@@ -73,6 +74,7 @@ function App() {
           <Route path="/admin/products/edit/:itemId" element={<ProductEdit />} />
           <Route path="/admin/branches" element={<BranchManagement />} />
           <Route path="/admin/branches/create" element={<BranchCreate />} />
+          <Route path="/admin/branches/edit/:branchId" element={<BranchEdit />} />
         </Routes>
         <Footer />
       </div>
