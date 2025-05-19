@@ -350,6 +350,29 @@
   cursor: not-allowed;
 }
 
+.image-preview-section {
+  margin-top: 20px;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.image-preview-section h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.image-preview:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .input-table th {

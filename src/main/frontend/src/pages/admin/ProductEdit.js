@@ -12,20 +12,21 @@ const ProductEdit = () => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // 상품 정보 상태 - 상품의 기본 정보와 옵션을 관리합니다
+  // 상품 정보 상태
   const [productData, setProductData] = useState({
     name: '',
     content: '',
     price: '',
     sale: '',
-    options: [{ id: null, size: '', color: '', amount: '1' }], // id 추가
+    options: [{ id: null, size: '', color: '', amount: '1' }],
     images: [] // 새로 추가할 이미지 파일 객체들이 저장됩니다
   });
 
-  // 기존 이미지 정보 - 서버에서 가져온 기존 이미지 정보를 저장합니다
+  // 기존 이미지 URL 배열
   const [existingImages, setExistingImages] = useState([]);
-  // 유지할 이미지 ID 배열 - 서버로 전송될 유지할 이미지 ID 목록
-  const [keepImageIds, setKeepImageIds] = useState([]);
+
+  // 유지할 이미지 URL 배열 (서버에서 URL 문자열로 이미지를 관리하는 경우)
+  const [keepImageUrls, setKeepImageUrls] = useState([]);
 
   // 자주 사용하는 색상 프리셋
   const colorPresets = [
@@ -80,16 +81,34 @@ const ProductEdit = () => {
 
           // 기존 이미지 설정
           if (itemData.images && itemData.images.length > 0) {
-            const images = itemData.images;
-            console.log('기존 이미지:', images);
-            setExistingImages(images);
+            console.log('서버에서 받은 이미지 데이터:', itemData.images);
 
-            // 모든 기존 이미지 ID를 keepImageIds에 추가
-            const imageIds = images.filter(img => img && img.id).map(img => img.id);
-            setKeepImageIds(imageIds);
+            // 이미지가 URL 문자열 배열인 경우
+            if (typeof itemData.images[0] === 'string') {
+              setExistingImages(itemData.images);
+              setKeepImageUrls(itemData.images); // 모든 이미지 URL을 유지할 목록에 추가
+              console.log('이미지 URL 목록:', itemData.images);
+            }
+            // 이미지가 객체 배열인 경우
+            else if (typeof itemData.images[0] === 'object') {
+              // URL 속성이 있는 경우
+              if (itemData.images[0].url) {
+                const imageUrls = itemData.images.map(img => img.url);
+                setExistingImages(imageUrls);
+                setKeepImageUrls(imageUrls);
+                console.log('이미지 URL 추출:', imageUrls);
+              }
+              // 이미지 자체가 URL인 경우
+              else {
+                setExistingImages(itemData.images);
+                setKeepImageUrls(itemData.images);
+                console.log('이미지 객체 그대로 사용:', itemData.images);
+              }
+            }
           } else {
+            console.log('이미지가 없거나 유효하지 않음');
             setExistingImages([]);
-            setKeepImageIds([]);
+            setKeepImageUrls([]);
           }
         } else {
           setError('상품 정보를 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
@@ -185,7 +204,7 @@ const ProductEdit = () => {
     if (!files || files.length === 0) return;
 
     // 최대 5개 이미지 파일 제한 (기존 이미지 + 새 이미지)
-    const existingCount = keepImageIds ? keepImageIds.length : 0;
+    const existingCount = keepImageUrls ? keepImageUrls.length : 0;
     const newCount = productData.images ? productData.images.length : 0;
     const totalImages = existingCount + newCount + files.length;
 
@@ -207,12 +226,12 @@ const ProductEdit = () => {
   };
 
   // 기존 이미지 제거 핸들러
-  const handleRemoveExistingImage = (imageId) => {
-    if (!imageId) return;
+  const handleRemoveExistingImage = (imageUrl) => {
+    if (!imageUrl) return;
 
-    // keepImageIds에서 해당 ID 제거
-    setKeepImageIds(prev => prev.filter(id => id !== imageId));
-    console.log('유지할 이미지 ID 목록 업데이트:', keepImageIds.filter(id => id !== imageId));
+    // keepImageUrls에서 해당 URL 제거
+    setKeepImageUrls(prev => prev.filter(url => url !== imageUrl));
+    console.log(`이미지 URL '${imageUrl}' 제거됨`);
   };
 
   // 새 이미지 제거 핸들러
@@ -252,7 +271,7 @@ const ProductEdit = () => {
     }
 
     // 이미지 검증 - 최소 1개 이상
-    if (keepImageIds.length === 0 && productData.images.length === 0) {
+    if (keepImageUrls.length === 0 && productData.images.length === 0) {
       setError('상품 이미지를 최소 1개 이상 등록해주세요.');
       return;
     }
@@ -294,17 +313,27 @@ const ProductEdit = () => {
         });
       }
 
-      // 유지할 이미지 ID 목록 추가
-      console.log('유지할 이미지 ID:', keepImageIds);
-      if (keepImageIds && keepImageIds.length > 0) {
-        keepImageIds.forEach(id => {
-          formData.append('keepImageIds', id.toString());
+      // 유지할 이미지 URL 목록 추가
+      console.log('유지할 이미지 URL 목록:', keepImageUrls);
+      if (keepImageUrls && keepImageUrls.length > 0) {
+        // 서버에서 기대하는 방식에 따라 수정
+        // 방법 1: 각 URL을 별도의 항목으로 추가
+        keepImageUrls.forEach(url => {
+          formData.append('keepImageUrls', url);
         });
+
+        // 방법 2: 배열을 JSON 문자열로 변환하여 추가
+        // formData.append('keepImageUrls', JSON.stringify(keepImageUrls));
       }
 
-      // 콘솔에 FormData 내용 출력 (디버깅용)
+      // 디버깅용 FormData 내용 출력
+      console.log('---FormData 내용---');
       for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value instanceof Blob ? 'Blob' : value}`);
+        if (value instanceof Blob) {
+          console.log(`${key}: Blob 데이터`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
       }
 
       // API 요청
@@ -339,6 +368,13 @@ const ProductEdit = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 디버깅용 이미지 정보 출력 함수
+  const debugImages = () => {
+    console.log('현재 existingImages:', existingImages);
+    console.log('현재 keepImageUrls:', keepImageUrls);
+    alert(`기존 이미지 수: ${existingImages.length}, 유지할 이미지 URL 수: ${keepImageUrls.length}`);
   };
 
   if (initialLoading) {
@@ -510,48 +546,71 @@ const ProductEdit = () => {
                     ref={fileInputRef}
                     className="hidden-file-input"
                 />
-                <button
-                    type="button"
-                    className="image-upload-button"
-                    onClick={handleImageUploadClick}
-                >
-                  이미지 등록
-                </button>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                  <button
+                      type="button"
+                      className="image-upload-button"
+                      onClick={handleImageUploadClick}
+                  >
+                    이미지 등록
+                  </button>
+                  <button
+                      type="button"
+                      className="image-upload-button"
+                      onClick={debugImages}
+                      style={{ backgroundColor: '#e74c3c' }}
+                  >
+                    이미지 정보 확인
+                  </button>
+                </div>
 
-                {/* 이미지 관리 섹션 */}
                 <div className="image-management-section">
+                  <h4>이미지 관리</h4>
+
                   {/* 기존 이미지 표시 */}
-                  {existingImages && existingImages.length > 0 && (
-                      <div className="image-section">
-                        <h4 className="image-section-title">기존 이미지</h4>
-                        <div className="image-preview-container">
-                          {existingImages.map((image, index) => (
-                              keepImageIds.includes(image.id) && (
+                  <div>
+                    <h5>기존 이미지 ({existingImages.length}개)</h5>
+                    <div className="image-preview-container">
+                      {existingImages.length > 0 ? (
+                          existingImages.map((imageUrl, index) => (
+                              keepImageUrls.includes(imageUrl) && (
                                   <div key={`existing-${index}`} className="image-preview">
-                                    <img src={image.url} alt={`상품 이미지 ${index + 1}`} />
+                                    <img
+                                        src={imageUrl}
+                                        alt={`상품 이미지 ${index + 1}`}
+                                        onError={(e) => {
+                                          console.error('이미지 로드 실패:', imageUrl);
+                                          e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
+                                        }}
+                                    />
                                     <div className="image-tag">기존</div>
                                     <button
                                         type="button"
                                         className="remove-image"
-                                        onClick={() => handleRemoveExistingImage(image.id)}
+                                        onClick={() => handleRemoveExistingImage(imageUrl)}
                                     >
                                       ✕
                                     </button>
                                   </div>
                               )
-                          ))}
-                        </div>
-                      </div>
-                  )}
+                          ))
+                      ) : (
+                          <div>기존 이미지가 없습니다.</div>
+                      )}
+                    </div>
+                  </div>
 
                   {/* 새 이미지 표시 */}
-                  {productData.images && productData.images.length > 0 && (
-                      <div className="image-section">
-                        <h4 className="image-section-title">새 이미지</h4>
-                        <div className="image-preview-container">
-                          {productData.images.map((file, index) => (
+                  <div>
+                    <h5>새 이미지 ({productData.images.length}개)</h5>
+                    <div className="image-preview-container">
+                      {productData.images.length > 0 ? (
+                          productData.images.map((file, index) => (
                               <div key={`new-${index}`} className="image-preview">
-                                <img src={URL.createObjectURL(file)} alt={`새 이미지 ${index + 1}`} />
+                                <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`새 이미지 ${index + 1}`}
+                                />
                                 <div className="image-tag">신규</div>
                                 <button
                                     type="button"
@@ -561,10 +620,12 @@ const ProductEdit = () => {
                                   ✕
                                 </button>
                               </div>
-                          ))}
-                        </div>
-                      </div>
-                  )}
+                          ))
+                      ) : (
+                          <div>새 이미지가 없습니다.</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </td>
             </tr>
