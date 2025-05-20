@@ -96,16 +96,14 @@ public class BranchService {
     return PageResponse.fromPage(branchResponses);
   }
 
-  public void updateBranch(Long userId, BranchUpdate update, List<MultipartFile> images, List<Long> keepImageIds) {
+  public void updateBranch(Long userId, Long branchId, BranchUpdate update, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Branch branch;
 
     if (user.isAdminUser()) {
-      Long targetBranchId = update.branchId()
-          .orElseThrow(() -> new IllegalArgumentException("관리자는 branchId를 제공해야 합니다."));
-      branch = branchRepository.findById(targetBranchId)
+      branch = branchRepository.findById(branchId)
           .orElseThrow(() -> new IllegalArgumentException("해당 ID의 지부를 찾을 수 없습니다."));
     } else {
       BranchUser branchUser = user.getBranchUsers().stream()

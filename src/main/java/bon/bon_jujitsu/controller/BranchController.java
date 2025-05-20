@@ -57,14 +57,15 @@ public class BranchController {
     return ApiResponse.success("지부 목록 조회 성공", branchList);
   }
 
-  @PatchMapping("/branch")
+  @PatchMapping("/branch/{branchId}")
   public ApiResponse<Void> updateBranch(
       @AuthenticationUserId Long userId,
+      @PathVariable("branchId") Long branchId,
       @RequestPart("update") @Valid BranchUpdate update,
       @RequestPart(value = "images", required = false) List<MultipartFile> images,
       @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    branchService.updateBranch(userId, update, images, keepImageIds);
+    branchService.updateBranch(userId, branchId, update, images, keepImageIds);
     return ApiResponse.success("지부 수정 성공", null);
   }
 
