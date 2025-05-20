@@ -20,7 +20,7 @@ public record ItemResponse(
     int price,
     int sale,
     List<ReviewResponse> reviews,
-    List<String> images,
+    List<ItemImageResponse> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
@@ -41,7 +41,9 @@ public record ItemResponse(
             .stream()
             .map(review -> new ReviewResponse(review, new ArrayList<>()))
             .collect(Collectors.toList()))
-        .images(item.getImages().stream().map(ItemImage::getImagePath).toList())
+        .images(item.getImages().stream()
+            .map(img -> new ItemImageResponse(img.getId(), img.getImagePath()))
+            .toList())
         .createdAt(item.getCreatedAt())
         .modifiedAt(item.getModifiedAt())
         .build();
