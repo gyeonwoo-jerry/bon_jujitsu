@@ -163,9 +163,7 @@ public class ItemService {
     });
 
     // 3. 이미지 업데이트
-    if (images != null && !images.isEmpty()) {
-      itemImageService.updateImages(item, images, keepImageIds);
-    }
+    itemImageService.updateImages(item, images, keepImageIds);
   }
 
   public void deleteItem(Long userId, Long itemId) {
