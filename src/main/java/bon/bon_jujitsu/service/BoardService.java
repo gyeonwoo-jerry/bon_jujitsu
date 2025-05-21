@@ -2,12 +2,14 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.BoardRequest;
 import bon.bon_jujitsu.dto.response.BoardResponse;
+import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.update.BoardUpdate;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
@@ -76,25 +78,29 @@ public class BoardService {
 
     Page<BoardResponse> boardResponses = boards.map(board -> {
       // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId())
-              .stream()
-              .map(postImage -> {
-                // 파일 경로 안전하게 조합
-                String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                return path;
-              })
-              .collect(Collectors.toList());
+      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
+
+      // 이미지 경로를 ImageResponse 객체 리스트로 변환
+      List<ImageResponse> imageResponses = postImages.stream()
+          .map(postImage -> {
+            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+            return ImageResponse.builder()
+                .id(postImage.getId()) // PostImage의 ID 사용
+                .url(path)
+                .build();
+          })
+          .collect(Collectors.toList());
 
       return new BoardResponse(
-              board.getId(),
-              board.getTitle(),
-              board.getContent(),
-              board.getBranch().getRegion(),
-              board.getUser().getName(),
-              imagePaths,
-              board.getViewCount(),
-              board.getCreatedAt(),
-              board.getModifiedAt()
+          board.getId(),
+          board.getTitle(),
+          board.getContent(),
+          board.getBranch().getRegion(),
+          board.getUser().getName(),
+          imageResponses,
+          board.getViewCount(),
+          board.getCreatedAt(),
+          board.getModifiedAt()
       );
     });
 
@@ -125,7 +131,7 @@ public class BoardService {
     return BoardResponse.fromEntity(board, imagePaths);
   }
 
-  public void updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images) {
+  public void updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images, List<Long> keepImageIds) {
     userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -136,9 +142,7 @@ public class BoardService {
 
     board.updateBoard(request);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(board.getId(), PostType.BOARD, images);
-    }
+    postImageService.updateImages(board.getId(), PostType.BOARD, images, keepImageIds);
   }
 
   public void deleteBoard(Long userId, Long boardId) {

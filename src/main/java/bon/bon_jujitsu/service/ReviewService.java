@@ -169,7 +169,7 @@ public class ReviewService {
     return PageResponse.fromPage(reviewResponses);
   }
 
-  public void updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images) {
+  public void updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images, List<Long> keepImageIds) {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
@@ -185,9 +185,7 @@ public class ReviewService {
 
     review.updateReview(request.content(), request.star());
 
-    if (images != null && !images.isEmpty()) {
-      reviewImageService.updateImages(review, images);
-    }
+    reviewImageService.updateImages(review, images, keepImageIds);
   }
 
 

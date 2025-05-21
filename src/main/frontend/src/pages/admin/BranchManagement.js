@@ -121,7 +121,8 @@ const BranchManagement = () => {
     }
 
     try {
-      const res = await API.delete(`/branch?branchId=${branchId}`);
+      // API 경로 수정 - PUT에서 DELETE로 변경하고 경로 수정
+      const res = await API.delete(`/branch/${branchId}`);
 
       if (res.data?.success) {
         alert('지부가 성공적으로 삭제되었습니다.');

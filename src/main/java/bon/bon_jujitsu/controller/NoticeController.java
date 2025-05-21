@@ -63,9 +63,10 @@ public class NoticeController {
       @Valid @RequestPart("update") NoticeUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("noticeId") Long noticeId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    noticeService.updateNotice(update, userId, noticeId, images);
+    noticeService.updateNotice(update, userId, noticeId, images, keepImageIds);
     return ApiResponse.success("공지사항 수정 완료", null);
   }
 

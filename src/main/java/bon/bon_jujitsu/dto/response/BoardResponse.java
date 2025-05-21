@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Board;
+import java.util.stream.Collectors;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -8,27 +9,35 @@ import java.util.List;
 
 @Builder
 public record BoardResponse(
-        Long id,
-        String title,
-        String content,
-        String region,
-        String author,
-        List<String> images,
-        Long viewCount,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt
+    Long id,
+    String title,
+    String content,
+    String region,
+    String author,
+    List<ImageResponse> images,
+    Long viewCount,
+    LocalDateTime createdAt,
+    LocalDateTime modifiedAt
 ) {
   public static BoardResponse fromEntity(Board board, List<String> imagePaths) {
+    // imagePaths를 ImageResponse 리스트로 변환
+    List<ImageResponse> imageResponses = imagePaths.stream()
+        .map(path -> ImageResponse.builder()
+            .id(null) // 이미지 ID가 없는 경우 null로 설정
+            .url(path)
+            .build())
+        .collect(Collectors.toList());
+
     return BoardResponse.builder()
-            .id(board.getId())
-            .title(board.getTitle())
-            .content(board.getContent())
-            .region(board.getBranch().getRegion())
-            .author(board.getUser().getName())
-            .images(imagePaths)
-            .viewCount(board.getViewCount())
-            .createdAt(board.getCreatedAt())
-            .modifiedAt(board.getModifiedAt())
-            .build();
+        .id(board.getId())
+        .title(board.getTitle())
+        .content(board.getContent())
+        .region(board.getBranch().getRegion())
+        .author(board.getUser().getName())
+        .images(imageResponses) // 여기를 imagePaths에서 imageResponses로 변경
+        .viewCount(board.getViewCount())
+        .createdAt(board.getCreatedAt())
+        .modifiedAt(board.getModifiedAt())
+        .build();
   }
 }

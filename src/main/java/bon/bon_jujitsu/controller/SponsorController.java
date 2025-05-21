@@ -62,9 +62,10 @@ public class SponsorController {
       @Valid @RequestPart("update") SponsorUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("sponsorId") Long sponsorId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    sponsorService.updateSponsor(update, userId, sponsorId, images);
+    sponsorService.updateSponsor(update, userId, sponsorId, images, keepImageIds);
     return ApiResponse.success("스폰서 수정 성공", null);
   }
 

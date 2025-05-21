@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -75,24 +76,27 @@ public class ReviewImageService {
     return filePath; // DB에 저장할 파일 경로 반환
   }
 
-  public void updateImages(Review review, List<MultipartFile> newImages) {
-
-    if (newImages == null || newImages.isEmpty()) {
-      return;
-    }
+  public void updateImages(Review review, List<MultipartFile> newImages, List<Long> keepImageIds) {
     // 1. 기존 이미지 조회
     List<ReviewImage> existingImages = reviewImageRepository.findByReviewId(review.getId());
 
-    // 2. 기존 이미지 파일 삭제 및 엔티티 삭제
-    for (ReviewImage existingImage : existingImages) {
+    // 2. 삭제 대상 선별: keepImageIds에 없는 기존 이미지
+    List<ReviewImage> toDelete = existingImages.stream()
+        .filter(img -> keepImageIds == null || !keepImageIds.contains(img.getId()))
+        .collect(Collectors.toList());
+
+    // 3. 삭제 대상 이미지 처리
+    for (ReviewImage image : toDelete) {
       // 물리적 파일 삭제
-      deletePhysicalFile(existingImage.getImagePath(), existingImage.getOriginalFileName());
+      deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
       // 엔티티 삭제
-      reviewImageRepository.delete(existingImage);
+      reviewImageRepository.delete(image);
     }
 
-    // 3. 새로운 이미지 업로드
-    uploadImage(review, newImages);
+    // 4. 새 이미지 업로드 (있는 경우)
+    if (newImages != null && !newImages.isEmpty()) {
+      uploadImage(review, newImages);
+    }
   }
 
   private void deletePhysicalFile(String dbDirPath, String originalFileName) {

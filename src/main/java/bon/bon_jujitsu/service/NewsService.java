@@ -6,6 +6,7 @@ import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.NewsRequest;
+import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.response.NewsResponse;
 import bon.bon_jujitsu.dto.update.NewsUpdate;
 import bon.bon_jujitsu.repository.NewsRepository;
@@ -68,9 +69,16 @@ public class NewsService {
     }
 
     Page<NewsResponse> newsResponses = newsPage.map(news -> {
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId())
+      // 이미지 경로를 ImageResponse 객체 리스트로 변환
+      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId())
           .stream()
-          .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
+          .map(postImage -> {
+            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+            return ImageResponse.builder()
+                .id(postImage.getId()) // PostImage의 ID 사용
+                .url(path)
+                .build();
+          })
           .collect(Collectors.toList());
 
       return new NewsResponse(
@@ -78,7 +86,7 @@ public class NewsService {
           news.getTitle(),
           news.getContent(),
           news.getUser().getName(),
-          imagePaths,
+          imageResponses, // imagePaths 대신 imageResponses 사용
           news.getViewCount(),
           news.getCreatedAt(),
           news.getModifiedAt()
@@ -112,7 +120,7 @@ public class NewsService {
     return NewsResponse.fromEntity(news, imagePaths);
   }
 
-  public void updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images) {
+  public void updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     News news = newsRepository.findById(newsId).orElseThrow(()-> new IllegalArgumentException("뉴스를 찾을 수 없습니다."));
@@ -128,9 +136,7 @@ public class NewsService {
 
     news.updateNews(update);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(news.getId(), PostType.NEWS, images);
-    }
+    postImageService.updateImages(news.getId(), PostType.NEWS, images, keepImageIds);
   }
 
 

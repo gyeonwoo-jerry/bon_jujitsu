@@ -68,9 +68,10 @@ public class ReviewController {
       @AuthenticationUserId Long userId,
       @PathVariable("reviewId") Long reviewId,
       @RequestPart("update") @Valid ReviewUpdate update,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    reviewService.updateReview(userId, reviewId, update, images);
+    reviewService.updateReview(userId, reviewId, update, images, keepImageIds);
     return ApiResponse.success("리뷰 수정 완료", null);
   }
 

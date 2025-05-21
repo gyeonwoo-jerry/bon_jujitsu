@@ -6,6 +6,7 @@ import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SponsorRequest;
+import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
 import bon.bon_jujitsu.repository.PostImageRepository;
@@ -63,19 +64,20 @@ public class SponsorService {
       // 작성자 이름으로 필터링
       sponsors = sponsorRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
     } else {
-      // 전체 스킬 조회
+      // 전체 스폰서 조회
       sponsors = sponsorRepository.findAll(pageRequest);
     }
 
     Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
-      // PostImage 레포지토리를 사용하여 해당 게시글의 이미지들 조회
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR,
-              sponsor.getId())
+      // 이미지 경로를 ImageResponse 객체 리스트로 변환
+      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId())
           .stream()
           .map(postImage -> {
-            // 파일 경로 안전하게 조합
             String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-            return path;
+            return ImageResponse.builder()
+                .id(postImage.getId()) // PostImage의 ID 사용
+                .url(path)
+                .build();
           })
           .collect(Collectors.toList());
 
@@ -84,7 +86,7 @@ public class SponsorService {
           sponsor.getTitle(),
           sponsor.getContent(),
           sponsor.getUser().getName(),
-          imagePaths,
+          imageResponses, // imagePaths 대신 imageResponses 사용
           sponsor.getViewCount(),
           sponsor.getCreatedAt(),
           sponsor.getModifiedAt()
@@ -121,8 +123,7 @@ public class SponsorService {
   }
 
 
-  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId,
-      List<MultipartFile> images) {
+  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -140,9 +141,7 @@ public class SponsorService {
 
     sponsor.updateSponsor(update);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(sponsor.getId(), PostType.SPONSOR, images);
-    }
+    postImageService.updateImages(sponsor.getId(), PostType.SPONSOR, images, keepImageIds);
   }
 
 

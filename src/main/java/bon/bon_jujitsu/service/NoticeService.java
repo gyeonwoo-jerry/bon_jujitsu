@@ -8,6 +8,7 @@ import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.NoticeRequest;
+import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.response.NoticeResponse;
 import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
@@ -77,9 +78,16 @@ public class NoticeService {
     Page<Notice> notices = noticeRepository.findAll(spec, pageRequest);
 
     Page<NoticeResponse> noticeResponses = notices.map(notice -> {
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
+      // 이미지 경로를 ImageResponse 객체 리스트로 변환
+      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
           .stream()
-          .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
+          .map(postImage -> {
+            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+            return ImageResponse.builder()
+                .id(postImage.getId()) // PostImage의 ID 사용
+                .url(path)
+                .build();
+          })
           .collect(Collectors.toList());
 
       return new NoticeResponse(
@@ -88,7 +96,7 @@ public class NoticeService {
           notice.getContent(),
           notice.getBranch().getRegion(),
           notice.getUser().getName(),
-          imagePaths,
+          imageResponses, // imagePaths 대신 imageResponses 사용
           notice.getViewCount(),
           notice.getCreatedAt(),
           notice.getModifiedAt()
@@ -122,7 +130,7 @@ public class NoticeService {
   }
 
 
-  public void updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images) {
+  public void updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -148,9 +156,7 @@ public class NoticeService {
 
     notice.updateNotice(update);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(notice.getId(), PostType.NOTICE, images);
-    }
+    postImageService.updateImages(notice.getId(), PostType.NOTICE, images, keepImageIds);
   }
 
   public void deleteNotice(Long userId, Long noticeId) {

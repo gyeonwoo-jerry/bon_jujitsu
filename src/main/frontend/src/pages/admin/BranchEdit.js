@@ -1,34 +1,36 @@
-// BranchEdit.js
+// BranchEdit.js - ProductEdit.js와 동일한 구조로 개선
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
 import AddressSearch from '../../components/admin/AddressSearch';
 import '../../styles/admin/branchForm.css';
+import config from '../../utils/config';
 
 const BranchEdit = () => {
-  const { branchId } = useParams(); // URL에서 branchId 파라미터 가져오기
+  const { branchId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+  const originalImageIds = useRef([]); // 원래 이미지 ID 목록을 저장하는 ref
 
   // 지부 정보 상태
   const [branchData, setBranchData] = useState({
-    region: '', // 지부명
-    address: '', // 기본 주소
-    addressDetail: '', // 상세 주소 (백엔드로 전송시 주소와 결합됨)
-    area: '', // 지역(시/도)
-    content: '', // 지부 설명
-    images: [] // 새로 추가할 이미지 파일 객체들이 저장됩니다
+    region: '',
+    address: '',
+    addressDetail: '',
+    area: '',
+    content: '',
+    images: [] // 새로 추가할 이미지 파일
   });
 
-  // 기존 이미지 URL 배열
+  // 기존 이미지 정보 (URL과 ID 포함)
   const [existingImages, setExistingImages] = useState([]);
 
-  // 유지할 이미지 URL 배열
-  const [keepImageUrls, setKeepImageUrls] = useState([]);
+  // 유지할 이미지 ID 배열
+  const [keepImageIds, setKeepImageIds] = useState([]);
 
   // 토큰 확인 함수
   const checkToken = () => {
@@ -59,9 +61,16 @@ const BranchEdit = () => {
           const branchInfo = res.data.content;
           console.log('지부 정보:', branchInfo);
 
-          // 주소 분리 (상세 주소가 있는 경우)
+          // 주소 설정
           let mainAddress = branchInfo.address || '';
           let detailAddress = '';
+
+          // 메인 주소와 상세 주소 분리 (서버 응답 형식에 따라 조정 필요)
+          if (mainAddress.includes(' ')) {
+            const lastSpaceIndex = mainAddress.lastIndexOf(' ');
+            detailAddress = mainAddress.substring(lastSpaceIndex + 1);
+            mainAddress = mainAddress.substring(0, lastSpaceIndex);
+          }
 
           // 지부 데이터 설정
           setBranchData({
@@ -70,39 +79,52 @@ const BranchEdit = () => {
             addressDetail: detailAddress,
             area: branchInfo.area || '',
             content: branchInfo.content || '',
-            images: [] // 새로 추가할 이미지 배열 초기화
+            images: [] // 새 이미지 초기화
           });
 
           // 기존 이미지 설정
           if (branchInfo.images && branchInfo.images.length > 0) {
             console.log('서버에서 받은 이미지 데이터:', branchInfo.images);
 
-            // 이미지가 URL 문자열 배열인 경우
-            if (typeof branchInfo.images[0] === 'string') {
-              setExistingImages(branchInfo.images);
-              setKeepImageUrls(branchInfo.images); // 모든 이미지 URL을 유지할 목록에 추가
-              console.log('이미지 URL 목록:', branchInfo.images);
-            }
-            // 이미지가 객체 배열인 경우
-            else if (typeof branchInfo.images[0] === 'object') {
-              // URL 속성이 있는 경우
-              if (branchInfo.images[0].url) {
-                const imageUrls = branchInfo.images.map(img => img.url);
-                setExistingImages(imageUrls);
-                setKeepImageUrls(imageUrls);
-                console.log('이미지 URL 추출:', imageUrls);
+            // 이미지 객체 처리
+            const imageObjects = branchInfo.images.map(img => {
+              // 이미지가 객체인 경우 (id와 url 포함)
+              if (typeof img === 'object' && img.id) {
+                return {
+                  id: img.id,
+                  url: img.imagePath || img.url
+                };
               }
-              // 이미지 자체가 URL인 경우
-              else {
-                setExistingImages(branchInfo.images);
-                setKeepImageUrls(branchInfo.images);
-                console.log('이미지 객체 그대로 사용:', branchInfo.images);
+              // 이미지가 문자열(URL)인 경우
+              else if (typeof img === 'string') {
+                // URL에서 ID 추출 시도
+                const idMatch = img.match(/(\d+)\.jpg$/);
+                const id = idMatch ? parseInt(idMatch[1]) : null;
+                return {
+                  id: id,
+                  url: img
+                };
               }
-            }
+              return null;
+            }).filter(img => img !== null);
+
+            setExistingImages(imageObjects);
+
+            // 모든 이미지 ID를 유지할 목록에 추가 (기본적으로 모든 기존 이미지 유지)
+            const imageIds = imageObjects.map(img => img.id).filter(id => id !== null);
+            setKeepImageIds(imageIds);
+
+            // 원본 이미지 ID 목록 저장 (복원 버튼용)
+            originalImageIds.current = [...imageIds];
+
+            console.log('이미지 객체 정보:', imageObjects);
+            console.log('유지할 이미지 ID 목록:', imageIds);
+            console.log('원본 이미지 ID 목록 저장됨:', originalImageIds.current);
           } else {
             console.log('이미지가 없거나 유효하지 않음');
             setExistingImages([]);
-            setKeepImageUrls([]);
+            setKeepImageIds([]);
+            originalImageIds.current = [];
           }
         } else {
           setError('지부 정보를 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
@@ -118,7 +140,7 @@ const BranchEdit = () => {
     fetchBranchData();
   }, [branchId]);
 
-  // 지부 정보 입력 핸들러
+  // 입력 핸들러
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setBranchData(prev => ({
@@ -127,35 +149,29 @@ const BranchEdit = () => {
     }));
   };
 
-  // 주소 선택 핸들러 (주소 검색 컴포넌트에서 호출)
-  const handleAddressSelect = (fullAddress, area) => {
-    setBranchData(prev => ({
-      ...prev,
-      address: fullAddress,
-      area: area // 지역(시/도) 정보 설정
-    }));
-  };
-
   // 이미지 파일 선택 핸들러
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (!files || files.length === 0) return;
 
-    // 최대 5개 이미지 파일 제한 (기존 이미지 + 새 이미지)
-    const existingCount = keepImageUrls ? keepImageUrls.length : 0;
+    // 최대 5개 이미지 파일 제한 (기존 유지 이미지 + 새 이미지)
+    const existingCount = keepImageIds ? keepImageIds.length : 0;
     const newCount = branchData.images ? branchData.images.length : 0;
     const totalImages = existingCount + newCount + files.length;
 
     if (totalImages > 5) {
-      alert('이미지는 최대 5개까지 업로드할 수 있습니다.');
+      alert(`이미지는 최대 5개까지 업로드할 수 있습니다. (현재 유지 이미지: ${existingCount}개, 신규 이미지: ${newCount}개)`);
       return;
     }
 
-    // 새 이미지 파일 추가
+    // 새 이미지 파일 추가 (기존 이미지 유지)
     setBranchData(prev => ({
       ...prev,
       images: [...(prev.images || []), ...files]
     }));
+
+    // 중요: 이미지를 추가할 때 기존 keepImageIds가 유지되는지 확인
+    console.log('새 이미지 추가 후 keepImageIds:', keepImageIds);
   };
 
   // 이미지 업로드 버튼 클릭 핸들러
@@ -164,12 +180,18 @@ const BranchEdit = () => {
   };
 
   // 기존 이미지 제거 핸들러
-  const handleRemoveExistingImage = (imageUrl) => {
-    if (!imageUrl) return;
+  const handleRemoveExistingImage = (imageId) => {
+    if (imageId === undefined || imageId === null) return;
 
-    // keepImageUrls에서 해당 URL 제거
-    setKeepImageUrls(prev => prev.filter(url => url !== imageUrl));
-    console.log(`이미지 URL '${imageUrl}' 제거됨`);
+    // 디버깅용 로그
+    console.log(`이미지 ID '${imageId}' (타입: ${typeof imageId}) 제거 시도`);
+
+    // keepImageIds에서 해당 ID 제거
+    setKeepImageIds(prev => {
+      const newIds = prev.filter(id => id !== imageId);
+      console.log(`이미지 ID '${imageId}' 제거됨, 남은 ID:`, newIds);
+      return newIds;
+    });
   };
 
   // 새 이미지 제거 핸들러
@@ -190,6 +212,12 @@ const BranchEdit = () => {
       return;
     }
 
+    // 이미지 검증
+    if (keepImageIds.length === 0 && branchData.images.length === 0) {
+      setError('지부 이미지를 최소 1개 이상 등록해주세요.');
+      return;
+    }
+
     // 토큰 확인
     if (!checkToken()) return;
 
@@ -197,62 +225,56 @@ const BranchEdit = () => {
     setError(null);
 
     try {
-      // 요청 데이터 생성
-      const formData = new FormData();
-
-      // 주소 결합 (기본 주소 + 상세 주소)
+      // 주소 결합
       const fullAddress = branchData.addressDetail
           ? `${branchData.address} ${branchData.addressDetail}`
           : branchData.address;
 
-      // 지부 수정 정보를 JSON 문자열로 변환하여 update 파트에 추가
-      const branchUpdate = {
+      // 1. FormData 생성
+      const formData = new FormData();
+
+      // 2. update 필드 추가 (JSON)
+      const updateData = {
         region: branchData.region,
         address: fullAddress,
-        area: branchData.area,
-        content: branchData.content
+        area: branchData.area || ''
       };
 
-      console.log('요청 데이터:', branchUpdate);
+      // 내용이 있는 경우에만 추가
+      if (branchData.content && branchData.content.trim() !== '') {
+        updateData.content = branchData.content;
+      }
 
-      // JSON 문자열로 변환하여 FormData에 추가
-      const updateBlob = new Blob([JSON.stringify(branchUpdate)], { type: 'application/json' });
+      const updateBlob = new Blob([JSON.stringify(updateData)], { type: 'application/json' });
       formData.append('update', updateBlob);
 
-      // 새 이미지 파일 추가
+      // 3. keepImageIds 필드 추가 (JSON 배열)
+      // 중요: 항상 keepImageIds 추가 (빈 배열이라도)
+      const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds || [])], { type: 'application/json' });
+      formData.append('keepImageIds', keepImageIdsBlob);
+
+      // 4. 새 이미지가 있는 경우에만 추가
       if (branchData.images && branchData.images.length > 0) {
         branchData.images.forEach(image => {
           formData.append('images', image);
         });
       }
+      // 새 이미지가 없는 경우에는 아무것도 추가할 필요 없음 - 백엔드가 수정되었으므로
 
-      // 유지할 이미지 URL 목록 추가
-      console.log('유지할 이미지 URL 목록:', keepImageUrls);
-      if (keepImageUrls && keepImageUrls.length > 0) {
-        // 서버에서 기대하는 방식에 따라 수정
-        // 방법 1: 각 URL을 별도의 항목으로 추가
-        keepImageUrls.forEach(url => {
-          formData.append('keepImageUrls', url);
-        });
-
-        // 방법 2: 배열을 JSON 문자열로 변환하여 추가
-        // formData.append('keepImageUrls', JSON.stringify(keepImageUrls));
-      }
-
-      // 디버깅용 FormData 내용 출력
-      console.log('---FormData 내용---');
+      // 디버깅용
+      console.log('FormData 구성:');
       for (let [key, value] of formData.entries()) {
         if (value instanceof Blob) {
-          console.log(`${key}: Blob 데이터`);
+          console.log(`${key}: Blob 데이터 (type: ${value.type})`);
         } else {
           console.log(`${key}: ${value}`);
         }
       }
 
-      // API 요청
-      const res = await API.patch(`/branch`, formData, {
+      // 5. API 요청
+      const res = await API.patch(`/branch/${branchId}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          "Content-Type": "multipart/form-data",
         }
       });
 
@@ -265,7 +287,6 @@ const BranchEdit = () => {
     } catch (err) {
       console.error('지부 수정 오류:', err);
 
-      // 오류 응답 상세 내용 출력
       if (err.response) {
         console.error('오류 상태:', err.response.status);
         console.error('오류 데이터:', err.response.data);
@@ -286,8 +307,16 @@ const BranchEdit = () => {
   // 디버깅용 이미지 정보 출력 함수
   const debugImages = () => {
     console.log('현재 existingImages:', existingImages);
-    console.log('현재 keepImageUrls:', keepImageUrls);
-    alert(`기존 이미지 수: ${existingImages.length}, 유지할 이미지 URL 수: ${keepImageUrls.length}`);
+    console.log('현재 keepImageIds:', keepImageIds);
+
+    // 디버깅 알림 보강
+    alert(`
+이미지 상태 정보:
+- 기존 이미지 수: ${existingImages.length}개
+- 유지할 이미지 ID 수: ${keepImageIds.length}개
+- 유지할 이미지 ID 목록: ${keepImageIds.join(', ') || '없음'}
+- 새 이미지 수: ${branchData.images.length}개
+    `);
   };
 
   if (initialLoading) {
@@ -330,7 +359,13 @@ const BranchEdit = () => {
               <th>주소</th>
               <td>
                 <AddressSearch
-                    onAddressSelect={handleAddressSelect}
+                    onAddressSelect={(address, area) => {
+                      setBranchData(prev => ({
+                        ...prev,
+                        address,
+                        area: area || prev.area
+                      }));
+                    }}
                     selectedAddress={branchData.address}
                 />
                 <p className="input-help-text">* 주소를 변경하려면 주소 검색 버튼을 클릭하세요.</p>
@@ -349,15 +384,29 @@ const BranchEdit = () => {
               </td>
             </tr>
             <tr>
+              <th>지역</th>
+              <td>
+                <input
+                    type="text"
+                    name="area"
+                    value={branchData.area}
+                    onChange={handleInputChange}
+                    placeholder="지역을 입력하세요 (예: 서울특별시, 경기도 등)"
+                    required
+                />
+                <p className="input-help-text">* 주소 검색 시 자동으로 설정됩니다.</p>
+              </td>
+            </tr>
+            <tr>
               <th>지부 설명</th>
               <td>
-                <textarea
-                    name="content"
-                    value={branchData.content}
-                    onChange={handleInputChange}
-                    rows="5"
-                    placeholder="지부 설명을 입력하세요"
-                />
+              <textarea
+                  name="content"
+                  value={branchData.content}
+                  onChange={handleInputChange}
+                  rows="5"
+                  placeholder="지부 설명을 입력하세요"
+              />
               </td>
             </tr>
             <tr>
@@ -387,6 +436,19 @@ const BranchEdit = () => {
                   >
                     이미지 정보 확인
                   </button>
+                  <button
+                      type="button"
+                      className="image-upload-button"
+                      onClick={() => {
+                        // 원본 이미지 ID 목록에서 모든 이미지 ID를 다시 keepImageIds로 설정
+                        setKeepImageIds([...originalImageIds.current]);
+                        console.log('모든 기존 이미지 복원됨:', originalImageIds.current);
+                        alert('모든 기존 이미지가 복원되었습니다.');
+                      }}
+                      style={{ backgroundColor: '#27ae60' }}
+                  >
+                    모든 이미지 복원
+                  </button>
                 </div>
 
                 <div className="image-management-section">
@@ -397,27 +459,29 @@ const BranchEdit = () => {
                     <h5>기존 이미지 ({existingImages.length}개)</h5>
                     <div className="image-preview-container">
                       {existingImages.length > 0 ? (
-                          existingImages.map((imageUrl, index) => (
-                              keepImageUrls.includes(imageUrl) && (
-                                  <div key={`existing-${index}`} className="image-preview">
-                                    <img
-                                        src={imageUrl}
-                                        alt={`지부 이미지 ${index + 1}`}
-                                        onError={(e) => {
-                                          console.error('이미지 로드 실패:', imageUrl);
-                                          e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
-                                        }}
-                                    />
-                                    <div className="image-tag">기존</div>
+                          existingImages.map((image, index) => (
+                              <div key={`existing-${index}`} className="image-preview">
+                                <img
+                                    src={image.url}
+                                    alt={`지부 이미지 ${index + 1}`}
+                                    onError={(e) => {
+                                      console.error('이미지 로드 실패:', image.url);
+                                      e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
+                                    }}
+                                />
+                                <div className="image-tag">기존 [{image.id}]</div>
+                                {keepImageIds.includes(image.id) ? (
                                     <button
                                         type="button"
                                         className="remove-image"
-                                        onClick={() => handleRemoveExistingImage(imageUrl)}
+                                        onClick={() => handleRemoveExistingImage(image.id)}
                                     >
                                       ✕
                                     </button>
-                                  </div>
-                              )
+                                ) : (
+                                    <div className="removed-tag">삭제됨</div>
+                                )}
+                              </div>
                           ))
                       ) : (
                           <div>기존 이미지가 없습니다.</div>
@@ -451,6 +515,14 @@ const BranchEdit = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* 이미지 개수 요약 표시 */}
+                  <div className="image-summary" style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e8f4fd', borderRadius: '4px' }}>
+                    <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {branchData.images.length}개 = 총 {keepImageIds.length + branchData.images.length}개
+                    {(keepImageIds.length + branchData.images.length > 5) &&
+                        <div style={{ color: 'red', marginTop: '5px' }}>⚠️ 이미지는 최대 5개까지만 가능합니다!</div>
+                    }
+                  </div>
                 </div>
               </td>
             </tr>
@@ -464,6 +536,13 @@ const BranchEdit = () => {
                 disabled={loading}
             >
               {loading ? '수정 중...' : '수정하기'}
+            </button>
+            <button
+                type="button"
+                className="cancel-button"
+                onClick={() => navigate('/admin/branches')}
+            >
+              취소
             </button>
           </div>
         </form>

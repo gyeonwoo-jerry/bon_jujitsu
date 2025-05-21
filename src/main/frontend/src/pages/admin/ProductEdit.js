@@ -22,11 +22,11 @@ const ProductEdit = () => {
     images: [] // 새로 추가할 이미지 파일 객체들이 저장됩니다
   });
 
-  // 기존 이미지 URL 배열
+  // 기존 이미지 정보 (URL과 ID 모두 저장)
   const [existingImages, setExistingImages] = useState([]);
 
-  // 유지할 이미지 URL 배열 (서버에서 URL 문자열로 이미지를 관리하는 경우)
-  const [keepImageUrls, setKeepImageUrls] = useState([]);
+  // 유지할 이미지 ID 배열 (서버에서 ID로 이미지를 관리하는 경우)
+  const [keepImageIds, setKeepImageIds] = useState([]);
 
   // 자주 사용하는 색상 프리셋
   const colorPresets = [
@@ -79,36 +79,28 @@ const ProductEdit = () => {
             images: [] // 새로 추가할 이미지 배열 초기화
           });
 
-          // 기존 이미지 설정
+          // 기존 이미지 설정 - 수정된 ItemResponse 형식에 맞게 처리
           if (itemData.images && itemData.images.length > 0) {
             console.log('서버에서 받은 이미지 데이터:', itemData.images);
 
-            // 이미지가 URL 문자열 배열인 경우
-            if (typeof itemData.images[0] === 'string') {
-              setExistingImages(itemData.images);
-              setKeepImageUrls(itemData.images); // 모든 이미지 URL을 유지할 목록에 추가
-              console.log('이미지 URL 목록:', itemData.images);
-            }
-            // 이미지가 객체 배열인 경우
-            else if (typeof itemData.images[0] === 'object') {
-              // URL 속성이 있는 경우
-              if (itemData.images[0].url) {
-                const imageUrls = itemData.images.map(img => img.url);
-                setExistingImages(imageUrls);
-                setKeepImageUrls(imageUrls);
-                console.log('이미지 URL 추출:', imageUrls);
-              }
-              // 이미지 자체가 URL인 경우
-              else {
-                setExistingImages(itemData.images);
-                setKeepImageUrls(itemData.images);
-                console.log('이미지 객체 그대로 사용:', itemData.images);
-              }
-            }
+            // 이미지 객체 처리 (id와 imagePath 필드를 가진 객체 배열)
+            const imageObjects = itemData.images.map(img => ({
+              id: img.id,
+              url: img.imagePath
+            }));
+
+            setExistingImages(imageObjects);
+
+            // 모든 이미지 ID를 유지할 목록에 추가 (기본적으로 모든 기존 이미지 유지)
+            const imageIds = imageObjects.map(img => img.id);
+            setKeepImageIds(imageIds);
+
+            console.log('이미지 객체 정보:', imageObjects);
+            console.log('유지할 실제 이미지 ID 목록:', imageIds);
           } else {
             console.log('이미지가 없거나 유효하지 않음');
             setExistingImages([]);
-            setKeepImageUrls([]);
+            setKeepImageIds([]);
           }
         } else {
           setError('상품 정보를 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
@@ -203,8 +195,8 @@ const ProductEdit = () => {
     const files = Array.from(e.target.files);
     if (!files || files.length === 0) return;
 
-    // 최대 5개 이미지 파일 제한 (기존 이미지 + 새 이미지)
-    const existingCount = keepImageUrls ? keepImageUrls.length : 0;
+    // 최대 5개 이미지 파일 제한 (기존 유지 이미지 + 새 이미지)
+    const existingCount = keepImageIds ? keepImageIds.length : 0;
     const newCount = productData.images ? productData.images.length : 0;
     const totalImages = existingCount + newCount + files.length;
 
@@ -213,7 +205,7 @@ const ProductEdit = () => {
       return;
     }
 
-    // 새 이미지 파일 추가
+    // 새 이미지 파일 추가 (기존 이미지 유지)
     setProductData(prev => ({
       ...prev,
       images: [...(prev.images || []), ...files]
@@ -226,12 +218,15 @@ const ProductEdit = () => {
   };
 
   // 기존 이미지 제거 핸들러
-  const handleRemoveExistingImage = (imageUrl) => {
-    if (!imageUrl) return;
+  const handleRemoveExistingImage = (imageId) => {
+    if (imageId === undefined || imageId === null) return;
 
-    // keepImageUrls에서 해당 URL 제거
-    setKeepImageUrls(prev => prev.filter(url => url !== imageUrl));
-    console.log(`이미지 URL '${imageUrl}' 제거됨`);
+    // 디버깅용 로그
+    console.log(`이미지 ID '${imageId}' (타입: ${typeof imageId}) 제거 시도`);
+
+    // keepImageIds에서 해당 ID 제거
+    setKeepImageIds(prev => prev.filter(id => id !== imageId));
+    console.log(`이미지 ID '${imageId}' 제거됨, 남은 ID:`, keepImageIds.filter(id => id !== imageId));
   };
 
   // 새 이미지 제거 핸들러
@@ -246,32 +241,22 @@ const ProductEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 필수 입력값 검증
+    // 기본 검증...
     if (!productData.name || !productData.price) {
       setError('상품명과 가격은 필수 입력 항목입니다.');
       return;
     }
 
-    // 옵션 검증
+    // 옵션 검증...
     for (const option of productData.options) {
-      if (!option.size) {
-        setError('모든 옵션의 사이즈를 입력해주세요.');
-        return;
-      }
-
-      if (!option.color) {
-        setError('모든 옵션의 색상을 입력해주세요.');
-        return;
-      }
-
-      if (!option.amount || parseInt(option.amount) <= 0) {
-        setError('모든 옵션의 수량을 1개 이상 입력해주세요.');
+      if (!option.size || !option.color || !option.amount || parseInt(option.amount) <= 0) {
+        setError('모든 옵션 정보를 올바르게 입력해주세요.');
         return;
       }
     }
 
-    // 이미지 검증 - 최소 1개 이상
-    if (keepImageUrls.length === 0 && productData.images.length === 0) {
+    // 이미지 검증
+    if (keepImageIds.length === 0 && productData.images.length === 0) {
       setError('상품 이미지를 최소 1개 이상 등록해주세요.');
       return;
     }
@@ -283,10 +268,10 @@ const ProductEdit = () => {
     setError(null);
 
     try {
-      // 요청 데이터 생성
+      // 1. FormData 생성
       const formData = new FormData();
 
-      // 상품 수정 정보를 JSON 문자열로 변환하여 update 파트에 추가
+      // 2. update 필드 추가 (JSON)
       const itemUpdate = {
         name: productData.name,
         content: productData.content,
@@ -299,47 +284,36 @@ const ProductEdit = () => {
           amount: parseInt(option.amount) || 1
         }))
       };
-
-      console.log('요청 데이터:', itemUpdate);
-
-      // JSON 문자열로 변환하여 FormData에 추가
       const updateBlob = new Blob([JSON.stringify(itemUpdate)], { type: 'application/json' });
       formData.append('update', updateBlob);
 
-      // 새 이미지 파일 추가
+      // 3. keepImageIds 필드 추가 (JSON 배열)
+      // 중요: 항상 keepImageIds 추가 (빈 배열이라도)
+      const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds || [])], { type: 'application/json' });
+      formData.append('keepImageIds', keepImageIdsBlob);
+
+      // 4. 새 이미지가 있는 경우에만 추가
       if (productData.images && productData.images.length > 0) {
         productData.images.forEach(image => {
           formData.append('images', image);
         });
       }
+      // 새 이미지가 없는 경우에는 아무것도 추가할 필요 없음 - 백엔드가 수정되었으므로
 
-      // 유지할 이미지 URL 목록 추가
-      console.log('유지할 이미지 URL 목록:', keepImageUrls);
-      if (keepImageUrls && keepImageUrls.length > 0) {
-        // 서버에서 기대하는 방식에 따라 수정
-        // 방법 1: 각 URL을 별도의 항목으로 추가
-        keepImageUrls.forEach(url => {
-          formData.append('keepImageUrls', url);
-        });
-
-        // 방법 2: 배열을 JSON 문자열로 변환하여 추가
-        // formData.append('keepImageUrls', JSON.stringify(keepImageUrls));
-      }
-
-      // 디버깅용 FormData 내용 출력
-      console.log('---FormData 내용---');
+      // 디버깅용
+      console.log('FormData 구성:');
       for (let [key, value] of formData.entries()) {
         if (value instanceof Blob) {
-          console.log(`${key}: Blob 데이터`);
+          console.log(`${key}: Blob 데이터 (type: ${value.type})`);
         } else {
           console.log(`${key}: ${value}`);
         }
       }
 
-      // API 요청
+      // 5. API 요청
       const res = await API.patch(`/items/${itemId}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          "Content-Type": "multipart/form-data",
         }
       });
 
@@ -350,9 +324,9 @@ const ProductEdit = () => {
         setError('상품 수정에 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
       }
     } catch (err) {
+      // 에러 처리 코드는 그대로 유지
       console.error('상품 수정 오류:', err);
 
-      // 오류 응답 상세 내용 출력
       if (err.response) {
         console.error('오류 상태:', err.response.status);
         console.error('오류 데이터:', err.response.data);
@@ -373,8 +347,8 @@ const ProductEdit = () => {
   // 디버깅용 이미지 정보 출력 함수
   const debugImages = () => {
     console.log('현재 existingImages:', existingImages);
-    console.log('현재 keepImageUrls:', keepImageUrls);
-    alert(`기존 이미지 수: ${existingImages.length}, 유지할 이미지 URL 수: ${keepImageUrls.length}`);
+    console.log('현재 keepImageIds:', keepImageIds);
+    alert(`기존 이미지 수: ${existingImages.length}, 유지할 이미지 ID 수: ${keepImageIds.length}, ID 목록: ${keepImageIds.join(', ')}`);
   };
 
   if (initialLoading) {
@@ -572,27 +546,29 @@ const ProductEdit = () => {
                     <h5>기존 이미지 ({existingImages.length}개)</h5>
                     <div className="image-preview-container">
                       {existingImages.length > 0 ? (
-                          existingImages.map((imageUrl, index) => (
-                              keepImageUrls.includes(imageUrl) && (
-                                  <div key={`existing-${index}`} className="image-preview">
-                                    <img
-                                        src={imageUrl}
-                                        alt={`상품 이미지 ${index + 1}`}
-                                        onError={(e) => {
-                                          console.error('이미지 로드 실패:', imageUrl);
-                                          e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
-                                        }}
-                                    />
-                                    <div className="image-tag">기존</div>
+                          existingImages.map((image, index) => (
+                              <div key={`existing-${index}`} className="image-preview">
+                                <img
+                                    src={image.url}
+                                    alt={`상품 이미지 ${index + 1}`}
+                                    onError={(e) => {
+                                      console.error('이미지 로드 실패:', image.url);
+                                      e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
+                                    }}
+                                />
+                                <div className="image-tag">기존 [{image.id}]</div>
+                                {keepImageIds.includes(image.id) ? (
                                     <button
                                         type="button"
                                         className="remove-image"
-                                        onClick={() => handleRemoveExistingImage(imageUrl)}
+                                        onClick={() => handleRemoveExistingImage(image.id)}
                                     >
                                       ✕
                                     </button>
-                                  </div>
-                              )
+                                ) : (
+                                    <div className="removed-tag">삭제됨</div>
+                                )}
+                              </div>
                           ))
                       ) : (
                           <div>기존 이미지가 없습니다.</div>

@@ -62,9 +62,10 @@ public class SkillController {
       @Valid @RequestPart("update") SkillUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    skillService.updateSkill(update, userId, skillId, images);
+    skillService.updateSkill(update, userId, skillId, images, keepImageIds);
     return ApiResponse.success("기술 게시물 수정 성공", null);
   }
 

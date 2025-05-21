@@ -64,9 +64,10 @@ public class NewsController {
       @RequestPart("update") @Valid NewsUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("newsId") Long newsId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
   ) {
-    newsService.updateNews(update, userId, newsId, images);
+    newsService.updateNews(update, userId, newsId, images, keepImageIds);
     return ApiResponse.success("뉴스 수정 성공", null);
   }
 

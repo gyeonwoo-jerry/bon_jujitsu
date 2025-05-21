@@ -1,4 +1,4 @@
-/* branchForm.css */
+/* branchForm.css 수정 버전 - 가시성 향상 */
 .branch-form-container {
   width: 100%;
   max-width: 1200px;
@@ -7,10 +7,11 @@
 }
 
 .title {
-  font-size: 24px;
+  font-size: 28px; /* 글자 크기 증가 */
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 30px; /* 여백 증가 */
   text-align: center;
+  color: #2c3e50; /* 진한 색상으로 변경 */
 }
 
 .error-message {
@@ -19,54 +20,71 @@
   padding: 12px;
   border-radius: 4px;
   margin-bottom: 20px;
+  font-weight: bold; /* 강조 */
 }
 
 .branch-form {
   background-color: #fff;
-  border-radius: 5px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px; /* 둥근 모서리 증가 */
+  padding: 25px; /* 내부 여백 증가 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 그림자 강화 */
 }
 
 .input-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 20px;
+  margin-bottom: 25px; /* 여백 증가 */
+  border: 2px solid #ddd; /* 테이블 테두리 강화 */
 }
 
 .input-table th {
-  width: 150px;
-  padding: 12px;
-  text-align: right;
-  vertical-align: top;
+  width: 180px; /* 너비 증가 */
+  padding: 15px; /* 내부 여백 증가 */
+  text-align: center; /* 중앙 정렬로 변경 */
+  vertical-align: middle; /* 세로 가운데 정렬 */
   font-weight: bold;
-  background-color: #f8f9fa;
+  background-color: #3498db; /* 파란색 배경으로 변경 */
+  color: white; /* 흰색 글자 */
   border: 1px solid #ddd;
+  font-size: 16px; /* 글자 크기 증가 */
 }
 
 .input-table td {
-  padding: 12px;
+  padding: 15px; /* 내부 여백 증가 */
   border: 1px solid #ddd;
+  background-color: #fff; /* 항상 흰 배경 */
+}
+
+/* 테이블 행에 호버 효과 추가 */
+.input-table tr:hover td {
+  background-color: #f5f9ff;
 }
 
 .input-table input[type="text"],
 .input-table textarea {
   width: 100%;
-  padding: 8px;
+  padding: 10px; /* 내부 여백 증가 */
   border: 1px solid #ddd;
   border-radius: 4px;
   box-sizing: border-box;
-  font-size: 14px;
+  font-size: 15px; /* 글자 크기 증가 */
+}
+
+.input-table input[type="text"]:focus,
+.input-table textarea:focus {
+  border-color: #3498db; /* 포커스 시 테두리 색상 변경 */
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3); /* 포커스 효과 */
 }
 
 .input-table textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px; /* 높이 증가 */
 }
 
 .region-check-container {
   display: flex;
-  gap: 10px;
+  gap: 12px; /* 간격 증가 */
 }
 
 .region-input {
@@ -74,13 +92,15 @@
 }
 
 .region-check-button {
-  padding: 8px 12px;
+  padding: 10px 16px; /* 크기 증가 */
   background-color: #3498db;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
+  font-weight: bold; /* 글자 강조 */
+  transition: background-color 0.2s; /* 부드러운 전환 효과 */
 }
 
 .region-check-button:hover {
@@ -93,8 +113,9 @@
 }
 
 .region-check-message {
-  margin-top: 5px;
+  margin-top: 8px;
   font-size: 14px;
+  font-weight: bold; /* 글자 강조 */
 }
 
 .region-check-message.success {
@@ -110,13 +131,15 @@
 }
 
 .image-upload-button {
-  padding: 8px 16px;
+  padding: 10px 18px; /* 크기 증가 */
   background-color: #3498db;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  font-weight: bold; /* 글자 강조 */
+  transition: background-color 0.2s; /* 부드러운 전환 효과 */
 }
 
 .image-upload-button:hover {
@@ -126,104 +149,19 @@
 .image-preview-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.image-preview {
-  position: relative;
-  width: 150px;
-  height: 150px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.image-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.remove-image {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 24px;
-  height: 24px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.form-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.register-button {
-  padding: 10px 20px;
-  background-color: #27ae60;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.register-button:hover {
-  background-color: #219653;
-}
-
-.register-button:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
-}
-
-.input-help-text {
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-  margin-bottom: 0;
-}
-
-.image-management-section {
-  margin-top: 20px;
-}
-
-.image-management-section h4 {
-  font-size: 16px;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.image-management-section h5 {
-  font-size: 14px;
-  margin-bottom: 10px;
-  color: #555;
-}
-
-.image-preview-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 15px; /* 간격 증가 */
+  margin-top: 15px;
   margin-bottom: 20px;
 }
 
 .image-preview {
   position: relative;
-  width: 150px;
-  height: 150px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  width: 160px; /* 크기 증가 */
+  height: 160px; /* 크기 증가 */
+  border: 2px solid #ddd; /* 테두리 강화 */
+  border-radius: 6px; /* 둥근 모서리 증가 */
   overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 그림자 추가 */
 }
 
 .image-preview img {
@@ -234,23 +172,24 @@
 
 .image-tag {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  padding: 2px 6px;
-  background-color: rgba(0, 0, 0, 0.6);
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  background-color: rgba(0, 0, 0, 0.7); /* 배경 어둡게 */
   color: white;
   font-size: 12px;
   border-radius: 3px;
   z-index: 1;
+  font-weight: bold; /* 글자 강조 */
 }
 
 .remove-image {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 24px;
-  height: 24px;
-  background-color: rgba(231, 76, 60, 0.8);
+  top: 8px;
+  right: 8px;
+  width: 28px; /* 크기 증가 */
+  height: 28px; /* 크기 증가 */
+  background-color: rgba(231, 76, 60, 0.9); /* 투명도 감소 */
   color: white;
   border: none;
   border-radius: 50%;
@@ -258,19 +197,126 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px; /* 글자 크기 증가 */
   z-index: 1;
+  transition: background-color 0.2s; /* 부드러운 전환 효과 */
 }
 
 .remove-image:hover {
-  background-color: rgba(192, 57, 43, 0.9);
+  background-color: #c0392b;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px; /* 여백 증가 */
+}
+
+.register-button {
+  padding: 12px 30px; /* 크기 증가 */
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px; /* 둥근 모서리 증가 */
+  cursor: pointer;
+  font-size: 18px; /* 글자 크기 증가 */
+  font-weight: bold; /* 글자 강조 */
+  transition: background-color 0.2s; /* 부드러운 전환 효과 */
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1); /* 그림자 추가 */
+}
+
+.register-button:hover {
+  background-color: #219653;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 호버 시 그림자 강화 */
+}
+
+.register-button:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.input-help-text {
+  font-size: 13px; /* 글자 크기 증가 */
+  color: #666;
+  margin-top: 6px;
+  margin-bottom: 0;
+  font-style: italic; /* 이탤릭체 */
+}
+
+.image-management-section {
+  margin-top: 25px;
+  border: 1px solid #e0e0e0; /* 테두리 추가 */
+  padding: 20px; /* 여백 추가 */
+  border-radius: 8px; /* 둥근 모서리 */
+  background-color: #f9f9f9; /* 배경색 추가 */
+}
+
+.image-management-section h4 {
+  font-size: 18px; /* 글자 크기 증가 */
+  margin-bottom: 15px;
+  color: #2c3e50; /* 색상 변경 */
+  border-bottom: 2px solid #3498db; /* 밑줄 추가 */
+  padding-bottom: 8px; /* 밑줄과의 간격 */
+}
+
+.image-management-section h5 {
+  font-size: 16px; /* 글자 크기 증가 */
+  margin-bottom: 12px;
+  color: #34495e; /* 색상 변경 */
+  margin-top: 20px; /* 위쪽 여백 추가 */
 }
 
 .loading-indicator {
   text-align: center;
-  padding: 30px;
+  padding: 40px; /* 여백 증가 */
   background-color: #f9f9f9;
-  border-radius: 4px;
-  font-size: 16px;
+  border-radius: 8px; /* 둥근 모서리 증가 */
+  font-size: 18px; /* 글자 크기 증가 */
   color: #555;
+  border: 1px solid #ddd; /* 테두리 추가 */
+  margin: 30px 0; /* 여백 추가 */
+}
+
+.image-item {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.image-item.deleted .image-preview {
+  opacity: 0.5;
+  border-color: #e74c3c;
+}
+
+.image-tag.deleted {
+  background-color: rgba(231, 76, 60, 0.9);
+}
+
+.image-tag.new {
+  background-color: rgba(39, 174, 96, 0.9);
+}
+
+.image-summary {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px dashed #ccc;
+}
+
+.image-summary p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.image-summary strong {
+  color: #2980b9;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
 }

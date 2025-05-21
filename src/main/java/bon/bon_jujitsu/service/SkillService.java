@@ -6,6 +6,7 @@ import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SkillRequest;
+import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.response.SkillResponse;
 import bon.bon_jujitsu.dto.update.SkillUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
@@ -70,9 +71,16 @@ public class SkillService {
     }
 
     Page<SkillResponse> skillResponses = skills.map(skill -> {
-      List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId())
+      // 이미지 경로를 ImageResponse 객체 리스트로 변환
+      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId())
           .stream()
-          .map(postImage -> Optional.ofNullable(postImage.getImagePath()).orElse(""))
+          .map(postImage -> {
+            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+            return ImageResponse.builder()
+                .id(postImage.getId()) // PostImage의 ID 사용
+                .url(path)
+                .build();
+          })
           .collect(Collectors.toList());
 
       return new SkillResponse(
@@ -80,7 +88,7 @@ public class SkillService {
           skill.getTitle(),
           skill.getContent(),
           skill.getUser().getName(),
-          imagePaths,
+          imageResponses,
           skill.getViewCount(),
           skill.getCreatedAt(),
           skill.getModifiedAt()
@@ -114,7 +122,7 @@ public class SkillService {
     return SkillResponse.fromEntity(skill, imagePaths);
   }
 
-  public void updateSkill(SkillUpdate update, Long userId, Long skillId, List<MultipartFile> images) {
+  public void updateSkill(SkillUpdate update, Long userId, Long skillId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -134,9 +142,7 @@ public class SkillService {
 
     skill.updateSkill(update);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.updateImages(skill.getId(), PostType.SKILL, images);
-    }
+    postImageService.updateImages(skill.getId(), PostType.SKILL, images, keepImageIds);
   }
 
 

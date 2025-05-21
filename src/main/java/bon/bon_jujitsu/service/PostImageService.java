@@ -4,6 +4,7 @@ import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import jakarta.transaction.Transactional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -77,24 +78,27 @@ public class PostImageService {
         return filePath; // DB에 저장할 파일 경로 반환
     }
 
-    public void updateImages(Long postId, PostType postType, List<MultipartFile> newImages) {
-        if (newImages == null || newImages.isEmpty()) {
-            return;
-        }
-
-        // 1. 기존 이미지 조회 (soft delete 대상)
+    public void updateImages(Long postId, PostType postType, List<MultipartFile> newImages, List<Long> keepImageIds) {
+        // 1. 기존 이미지 조회
         List<PostImage> existingImages = postImageRepository.findByPostTypeAndPostId(postType, postId);
 
-        // 2. 기존 이미지 삭제 (soft delete)
-        for (PostImage existingImage : existingImages) {
+        // 2. 삭제 대상 선별: keepImageIds에 없는 기존 이미지
+        List<PostImage> toDelete = existingImages.stream()
+            .filter(img -> keepImageIds == null || !keepImageIds.contains(img.getId()))
+            .collect(Collectors.toList());
+
+        // 3. 삭제 대상 이미지 처리
+        for (PostImage image : toDelete) {
             // 물리적 파일 삭제
-            deletePhysicalFile(existingImage.getImagePath(), existingImage.getOriginalFileName());
+            deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
             // 엔티티 삭제
-            postImageRepository.delete(existingImage);
+            postImageRepository.delete(image);
         }
 
-        // 3. 새로운 이미지 업로드
-        uploadImage(postId, postType, newImages);
+        // 4. 새 이미지 업로드 (있는 경우)
+        if (newImages != null && !newImages.isEmpty()) {
+            uploadImage(postId, postType, newImages);
+        }
     }
 
     private void deletePhysicalFile(String dbDirPath, String originalFileName) {
