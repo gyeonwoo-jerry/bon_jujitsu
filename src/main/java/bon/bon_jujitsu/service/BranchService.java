@@ -115,9 +115,7 @@ public class BranchService {
 
     branch.updateBranch(update);
 
-    if (images != null && !images.isEmpty()) {
-      branchImageService.updateImages(branch, images, keepImageIds);
-    }
+    branchImageService.updateImages(branch, images, keepImageIds);
   }
 
 
