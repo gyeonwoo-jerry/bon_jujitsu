@@ -1,15 +1,13 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Item;
-import bon.bon_jujitsu.domain.ItemImage;
-import lombok.Builder;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Builder;
 
 @Builder
 public record ItemResponse(
@@ -20,7 +18,7 @@ public record ItemResponse(
     int price,
     int sale,
     List<ReviewResponse> reviews,
-    List<ItemImageResponse> images,
+    List<ImageResponse> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
@@ -42,7 +40,7 @@ public record ItemResponse(
             .map(review -> new ReviewResponse(review, new ArrayList<>()))
             .collect(Collectors.toList()))
         .images(item.getImages().stream()
-            .map(img -> new ItemImageResponse(img.getId(), img.getImagePath()))
+            .map(img -> new ImageResponse(img.getId(), img.getImagePath()))
             .toList())
         .createdAt(item.getCreatedAt())
         .modifiedAt(item.getModifiedAt())

@@ -4,6 +4,7 @@ import bon.bon_jujitsu.domain.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public record BranchResponse (
     Long id,
@@ -11,7 +12,7 @@ public record BranchResponse (
     String address,
     String area,
     String content,
-    List<String> images,
+    List<ImageResponse> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT,
     OwnerInfo owner,
@@ -64,13 +65,21 @@ public record BranchResponse (
         ))
         .toList();
 
+    // BranchImage를 ImageResponse로 변환
+    List<ImageResponse> imageResponses = branch.getImages().stream()
+        .map(branchImage -> new ImageResponse(
+            branchImage.getId(),
+            branchImage.getImagePath()
+        ))
+        .collect(Collectors.toList());
+
     return new BranchResponse(
         branch.getId(),
         branch.getRegion(),
         branch.getAddress(),
         branch.getArea(),
         branch.getContent(),
-        branch.getImages().stream().map(BranchImage::getImagePath).toList(),
+        imageResponses,
         branch.getCreatedAt(),
         branch.getModifiedAt(),
         ownerInfo,
@@ -78,4 +87,3 @@ public record BranchResponse (
     );
   }
 }
-
