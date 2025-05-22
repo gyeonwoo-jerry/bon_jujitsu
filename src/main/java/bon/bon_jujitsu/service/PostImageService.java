@@ -83,37 +83,50 @@ public class PostImageService {
     public void updateImages(Long postId, PostType postType, List<MultipartFile> newImages, List<Long> keepImageIds) {
         log.info("=== 이미지 업데이트 시작 ===");
         log.info("postId: {}, postType: {}", postId, postType);
-        log.info("keepImageIds: {}", keepImageIds);
+        log.info("받은 keepImageIds: {}", keepImageIds);
         log.info("새 이미지 개수: {}", newImages != null ? newImages.size() : 0);
+
         // 1. 기존 이미지 조회
         List<PostImage> existingImages = postImageRepository.findByPostTypeAndPostId(postType, postId);
-        log.info("기존 이미지 개수: {}, IDs: {}",
-            existingImages.size(),
-            existingImages.stream().map(PostImage::getId).collect(Collectors.toList()));
+        log.info("기존 이미지 개수: {}", existingImages.size());
+        log.info("기존 이미지 ID 목록: {}", existingImages.stream().map(PostImage::getId).collect(Collectors.toList()));
 
         // 2. 삭제 대상 선별: keepImageIds에 없는 기존 이미지
         List<PostImage> toDelete = existingImages.stream()
             .filter(img -> keepImageIds == null || !keepImageIds.contains(img.getId()))
             .collect(Collectors.toList());
 
+        log.info("삭제 대상 이미지 개수: {}", toDelete.size());
+        log.info("삭제 대상 이미지 ID 목록: {}", toDelete.stream().map(PostImage::getId).collect(Collectors.toList()));
+
         // 3. 삭제 대상 이미지 처리
         for (PostImage image : toDelete) {
-            log.info("이미지 삭제 중: ID={}, Path={}", image.getId(), image.getImagePath());
+            log.info("이미지 삭제 시작 - ID: {}, 경로: {}, 원본파일명: {}",
+                image.getId(), image.getImagePath(), image.getOriginalFileName());
+
             // 물리적 파일 삭제
             deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
             // 엔티티 삭제
             postImageRepository.delete(image);
+
+            log.info("이미지 삭제 완료 - ID: {}", image.getId());
         }
 
         // 4. 새 이미지 업로드 (있는 경우)
         if (newImages != null && !newImages.isEmpty()) {
             log.info("새 이미지 업로드 시작: {} 개", newImages.size());
             uploadImage(postId, postType, newImages);
+            log.info("새 이미지 업로드 완료");
+        } else {
+            log.info("새 이미지 없음 - 업로드 스킵");
         }
+
         log.info("=== 이미지 업데이트 완료 ===");
     }
 
     private void deletePhysicalFile(String dbDirPath, String originalFileName) {
+        log.info("물리적 파일 삭제 시작 - dbDirPath: {}, originalFileName: {}", dbDirPath, originalFileName);
+
         try {
             // 기존의 확장자 추출 로직 유지
             String extension = "";
@@ -123,16 +136,20 @@ public class PostImageService {
 
             // 디렉토리 경로에서 마지막에 저장된 파일 찾기
             Path dirPath = Paths.get(dbDirPath);
+            log.info("디렉토리 경로: {}", dirPath);
 
             // 해당 디렉토리에서 날짜_UUID + 확장자 패턴의 파일 찾기
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath,
-                    "*_*" + extension)) {
+                "*_*" + extension)) {
                 for (Path entry : stream) {
+                    log.info("삭제할 물리적 파일: {}", entry);
                     Files.deleteIfExists(entry);
+                    log.info("물리적 파일 삭제 완료: {}", entry);
                     break; // 첫 번째 매칭되는 파일만 삭제
                 }
             }
         } catch (IOException e) {
+            log.error("물리적 파일 삭제 실패 - dbDirPath: {}, originalFileName: {}", dbDirPath, originalFileName, e);
             e.printStackTrace();
         }
     }
