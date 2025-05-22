@@ -32,7 +32,7 @@ const AdminMain = () => {
     { title: "상품관리", path: "/admin/products", roles: ["ADMIN"] },
     { title: "주문관리", path: "/admin/orders", roles: ["ADMIN"] },
     { title: "지부관리", path: "/admin/branches", roles: ["ADMIN", "OWNER"] },
-    { title: "게시판관리", path: "/admin/boards", roles: ["ADMIN"] },
+    { title: "게시판관리", path: "/admin/boards", roles: ["ADMIN", "OWNER"] },
   ];
 
   // 사용자 역할에 맞는 퀵링크만 필터링

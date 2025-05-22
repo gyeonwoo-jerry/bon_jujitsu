@@ -34,6 +34,8 @@ import ProductEdit from "./pages/admin/ProductEdit";
 import BranchManagement from "./pages/admin/BranchManagement";
 import BranchCreate from "./pages/admin/BranchCreate";
 import BranchEdit from "./pages/admin/BranchEdit";
+import PostManagement from "./pages/admin/PostManagement";
+import PostCreate from "./pages/admin/PostCreate";
 
 
 function App() {
@@ -75,6 +77,8 @@ function App() {
           <Route path="/admin/branches" element={<BranchManagement />} />
           <Route path="/admin/branches/create" element={<BranchCreate />} />
           <Route path="/admin/branches/edit/:branchId" element={<BranchEdit />} />
+          <Route path="/admin/boards" element={<PostManagement />} />
+          <Route path="/admin/posts/create" element={<PostCreate />} />
         </Routes>
         <Footer />
       </div>
