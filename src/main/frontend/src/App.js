@@ -36,6 +36,7 @@ import BranchCreate from "./pages/admin/BranchCreate";
 import BranchEdit from "./pages/admin/BranchEdit";
 import PostManagement from "./pages/admin/PostManagement";
 import PostCreate from "./pages/admin/PostCreate";
+import PostEdit from "./pages/admin/PostEdit";
 
 
 function App() {
@@ -79,6 +80,7 @@ function App() {
           <Route path="/admin/branches/edit/:branchId" element={<BranchEdit />} />
           <Route path="/admin/boards" element={<PostManagement />} />
           <Route path="/admin/posts/create" element={<PostCreate />} />
+          <Route path="/admin/posts/edit/:category/:id" element={<PostEdit />} />
         </Routes>
         <Footer />
       </div>

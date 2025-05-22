@@ -6,6 +6,7 @@ import bon.bon_jujitsu.repository.PostImageRepository;
 import jakarta.transaction.Transactional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class PostImageService {
 
     @Value("${filepath}")
@@ -79,8 +81,15 @@ public class PostImageService {
     }
 
     public void updateImages(Long postId, PostType postType, List<MultipartFile> newImages, List<Long> keepImageIds) {
+        log.info("=== 이미지 업데이트 시작 ===");
+        log.info("postId: {}, postType: {}", postId, postType);
+        log.info("keepImageIds: {}", keepImageIds);
+        log.info("새 이미지 개수: {}", newImages != null ? newImages.size() : 0);
         // 1. 기존 이미지 조회
         List<PostImage> existingImages = postImageRepository.findByPostTypeAndPostId(postType, postId);
+        log.info("기존 이미지 개수: {}, IDs: {}",
+            existingImages.size(),
+            existingImages.stream().map(PostImage::getId).collect(Collectors.toList()));
 
         // 2. 삭제 대상 선별: keepImageIds에 없는 기존 이미지
         List<PostImage> toDelete = existingImages.stream()
@@ -89,6 +98,7 @@ public class PostImageService {
 
         // 3. 삭제 대상 이미지 처리
         for (PostImage image : toDelete) {
+            log.info("이미지 삭제 중: ID={}, Path={}", image.getId(), image.getImagePath());
             // 물리적 파일 삭제
             deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
             // 엔티티 삭제
@@ -97,8 +107,10 @@ public class PostImageService {
 
         // 4. 새 이미지 업로드 (있는 경우)
         if (newImages != null && !newImages.isEmpty()) {
+            log.info("새 이미지 업로드 시작: {} 개", newImages.size());
             uploadImage(postId, postType, newImages);
         }
+        log.info("=== 이미지 업데이트 완료 ===");
     }
 
     private void deletePhysicalFile(String dbDirPath, String originalFileName) {

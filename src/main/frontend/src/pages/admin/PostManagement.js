@@ -335,7 +335,7 @@ const PostManagement = () => {
 
   // 게시글 수정 페이지 이동 핸들러
   const handleEdit = (id) => {
-    navigate(`/admin/${selectedCategory.toLowerCase()}s/edit/${id}`);
+    navigate(`/admin/posts/edit/${selectedCategory.toLowerCase()}/${id}`);
   };
 
   // 게시글 상세 페이지 이동 핸들러
