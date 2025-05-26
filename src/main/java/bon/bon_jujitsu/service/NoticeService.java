@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.Notice;
+import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -118,15 +119,10 @@ public class NoticeService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
-            .stream()
-            .map(postImage -> {
-              // 파일 경로 안전하게 조합
-              return Optional.ofNullable(postImage.getImagePath()).orElse("");
-            })
-            .toList();
+    // PostImage 엔티티 리스트를 직접 가져옴
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
 
-    return NoticeResponse.fromEntity(notice, imagePaths);
+    return NoticeResponse.fromEntity(notice, postImages);
   }
 
 
@@ -190,16 +186,11 @@ public class NoticeService {
     Branch branch = branchRepository.findById(branchId).orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
     Notice notice = noticeRepository.findTopByBranchOrderByCreatedAtDesc(branch)
-            .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
+        .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
-            .stream()
-            .map(postImage -> {
-              // 파일 경로 안전하게 조합
-              return Optional.ofNullable(postImage.getImagePath()).orElse("");
-            })
-            .toList();
+    // PostImage 엔티티 리스트를 직접 가져옴
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
 
-    return NoticeResponse.fromEntity(notice, imagePaths);
+    return NoticeResponse.fromEntity(notice, postImages);
   }
 }

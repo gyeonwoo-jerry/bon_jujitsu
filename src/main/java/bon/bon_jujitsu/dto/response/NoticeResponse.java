@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Notice;
+import bon.bon_jujitsu.domain.PostImage;
 import java.util.stream.Collectors;
 import lombok.Builder;
 
@@ -20,12 +21,12 @@ public record NoticeResponse(
     LocalDateTime modifiedAT
 ) {
 
-  public static NoticeResponse fromEntity(Notice notice, List<String> imagePaths) {
-    // imagePaths를 ImageResponse 리스트로 변환
-    List<ImageResponse> imageResponses = imagePaths.stream()
-        .map(path -> ImageResponse.builder()
-            .id(null) // 이미지 ID가 없는 경우 null로 설정
-            .url(path)
+  public static NoticeResponse fromEntity(Notice notice, List<PostImage> postImages) {
+    // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
+    List<ImageResponse> imageResponses = postImages.stream()
+        .map(postImage -> ImageResponse.builder()
+            .id(postImage.getId()) // 실제 이미지 ID 사용
+            .url(postImage.getImagePath()) // 실제 이미지 경로 사용
             .build())
         .collect(Collectors.toList());
 
@@ -41,5 +42,4 @@ public record NoticeResponse(
         .modifiedAT(notice.getModifiedAt())
         .build();
   }
-
 }

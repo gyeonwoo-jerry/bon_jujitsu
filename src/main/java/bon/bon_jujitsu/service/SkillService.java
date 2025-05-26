@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.service;
 
+import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.Skill;
 import bon.bon_jujitsu.domain.User;
@@ -110,16 +111,9 @@ public class SkillService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId())
-            .stream()
-            .map(postImage -> {
-              // 파일 경로 안전하게 조합
-              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              return path;
-            })
-            .toList();
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId());
 
-    return SkillResponse.fromEntity(skill, imagePaths);
+    return SkillResponse.fromEntity(skill, postImages);
   }
 
   public void updateSkill(SkillUpdate update, Long userId, Long skillId, List<MultipartFile> images, List<Long> keepImageIds) {

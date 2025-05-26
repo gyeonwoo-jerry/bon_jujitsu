@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.News;
+import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -108,16 +109,10 @@ public class NewsService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId())
-            .stream()
-            .map(postImage -> {
-              // 파일 경로 안전하게 조합
-              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              return path;
-            })
-            .toList();
+    // PostImage 엔티티 리스트를 직접 가져옴
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId());
 
-    return NewsResponse.fromEntity(news, imagePaths);
+    return NewsResponse.fromEntity(news, postImages);
   }
 
   public void updateNews(NewsUpdate update, Long userId, Long newsId, List<MultipartFile> images, List<Long> keepImageIds) {

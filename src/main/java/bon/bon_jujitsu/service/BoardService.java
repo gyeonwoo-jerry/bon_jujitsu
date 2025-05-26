@@ -5,7 +5,6 @@ import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.BoardRequest;
 import bon.bon_jujitsu.dto.response.BoardResponse;
@@ -18,6 +17,9 @@ import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.BoardSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,10 +28,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -120,15 +118,9 @@ public class BoardService {
     }
 
     // 해당 게시글의 이미지 조회
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId())
-            .stream()
-            .map(postImage -> {
-              String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-              return path;
-            })
-            .toList();
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
 
-    return BoardResponse.fromEntity(board, imagePaths);
+    return BoardResponse.fromEntity(board, postImages);
   }
 
   public void updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images, List<Long> keepImageIds) {

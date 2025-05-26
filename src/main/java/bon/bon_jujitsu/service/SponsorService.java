@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.service;
 
+import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.Sponsor;
 import bon.bon_jujitsu.domain.User;
@@ -109,17 +110,9 @@ public class SponsorService {
       session.setMaxInactiveInterval(60 * 60); // 1시간 유지
     }
 
-    List<String> imagePaths = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR,
-            sponsor.getId())
-        .stream()
-        .map(postImage -> {
-          // 파일 경로 안전하게 조합
-          String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-          return path;
-        })
-        .collect(Collectors.toList());
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId());
 
-    return SponsorResponse.fromEntity(sponsor, imagePaths);
+    return SponsorResponse.fromEntity(sponsor, postImages);
   }
 
 
