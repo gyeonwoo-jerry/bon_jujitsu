@@ -89,8 +89,14 @@ public class BranchService {
           .findFirst()
           .orElse(null);
 
-      // OWNER 정보를 포함한 응답 생성
-      return BranchResponse.from(branch, owner);
+      // 각 지부마다 COACH들 찾기
+      List<User> coaches = branch.getBranchUsers().stream()
+              .filter(bu -> bu.getUserRole() == UserRole.COACH)
+              .map(BranchUser::getUser)
+              .toList();
+
+      // OWNER와 COACH 정보를 포함한 응답 생성
+      return BranchResponse.from(branch, owner, coaches);
     });
 
     return PageResponse.fromPage(branchResponses);
