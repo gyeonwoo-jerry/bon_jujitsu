@@ -163,19 +163,19 @@ public class UserService {
 
   public void assignRole(Long loggedInUserId, UserRoleRequest request) {
     User loggedInUser = userRepository.findById(loggedInUserId)
-        .orElseThrow(() -> new IllegalArgumentException("로그인한 회원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("로그인한 회원을 찾을 수 없습니다."));
 
     User targetUser = userRepository.findByIdAndIsDeletedFalse(request.targetUserId())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
     Branch branch = branchRepository.findById(request.branchId())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지부입니다."));
-
-    BranchUser loginBranchUser = branchUserRepository.findByUserAndBranch(loggedInUser, branch)
-        .orElseThrow(() -> new IllegalArgumentException("해당 지부에 소속되지 않은 사용자입니다."));
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지부입니다."));
 
     // 권한 체크
     if (!loggedInUser.isAdmin()) {
+      BranchUser loginBranchUser = branchUserRepository.findByUserAndBranch(loggedInUser, branch)
+              .orElseThrow(() -> new IllegalArgumentException("해당 지부에 소속되지 않은 사용자입니다."));
+
       if (loginBranchUser.getUserRole() != UserRole.OWNER) {
         throw new IllegalArgumentException("권한이 없습니다.");
       }
@@ -188,8 +188,7 @@ public class UserService {
     }
 
     // 대상 유저가 이미 해당 지부에 소속되어 있는지 확인
-    Optional<BranchUser> optionalBranchUser = branchUserRepository.findByUserAndBranch(targetUser,
-        branch);
+    Optional<BranchUser> optionalBranchUser = branchUserRepository.findByUserAndBranch(targetUser, branch);
 
     if (optionalBranchUser.isPresent()) {
       BranchUser targetBranchUser = optionalBranchUser.get();
@@ -201,16 +200,17 @@ public class UserService {
       // 역할 업데이트
       targetBranchUser.updateUserRole(request.role());
     } else {
-      // 소속이 없다면 새롭게 등록
+      // 소속이 없다면 새롭게 등록 (어드민이거나 OWNER인 경우 허용)
       BranchUser newBranchUser = BranchUser.builder()
-          .user(targetUser)
-          .branch(branch)
-          .userRole(request.role())
-          .build();
+              .user(targetUser)
+              .branch(branch)
+              .userRole(request.role())
+              .build();
 
       branchUserRepository.save(newBranchUser);
     }
   }
+
 
   @Transactional(readOnly = true)
   public PageResponse<UserResponse> getUsers(int page, int size, Long userId,
