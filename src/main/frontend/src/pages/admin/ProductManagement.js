@@ -3,6 +3,7 @@ import API from '../../utils/api';
 import ProductTable from '../../components/admin/ProductTable';
 import SearchBar from '../../components/admin/SearchBar';
 import Pagination from '../../components/admin/Pagination';
+import AdminHeader from '../../components/admin/AdminHeader';
 import { getWithExpiry } from '../../utils/storage';
 import { Link } from 'react-router-dom';
 import '../../styles/admin/productManagement.css';
@@ -125,6 +126,8 @@ const ProductManagement = () => {
 
   return (
       <div className="product-management">
+        <AdminHeader />
+
         <h2 className="title">상품관리(상품리스트)</h2>
 
         {error && (

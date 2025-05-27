@@ -3,6 +3,7 @@ import API from '../../utils/api';
 import BranchTable from '../../components/admin/BranchTable';
 import SearchBar from '../../components/admin/SearchBar';
 import Pagination from '../../components/admin/Pagination';
+import AdminHeader from '../../components/admin/AdminHeader';
 import { getWithExpiry } from '../../utils/storage';
 import { Link } from 'react-router-dom';
 import '../../styles/admin/branchManagement.css';
@@ -138,6 +139,8 @@ const BranchManagement = () => {
 
   return (
       <div className="branch-management">
+        <AdminHeader />
+
         <h2 className="title">지부관리(지부리스트)</h2>
 
         {error && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../../utils/api';
 import OrderTable from '../../components/admin/OrderTable';
+import AdminHeader from '../../components/admin/AdminHeader';
 import '../../styles/admin/orderManagement.css';
 import Pagination from "../../components/admin/Pagination";
 import { getWithExpiry } from '../../utils/storage'; // storage 유틸리티 임포트
@@ -220,6 +221,8 @@ const OrderManagement = () => {
 
   return (
       <div className="order-management">
+        <AdminHeader />
+
         <h2 className="title">주문관리(주문리스트)</h2>
 
         {error && (

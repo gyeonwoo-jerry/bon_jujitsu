@@ -21,8 +21,12 @@ import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.BranchUserRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.UserSpecification;
+
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -78,36 +82,51 @@ public class UserService {
       throw new IllegalArgumentException("중복된 전화번호입니다.");
     }
 
-    // 지사 확인
-    Branch branch = branchRepository.findById(req.branchId())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지사입니다."));
+    // 지점 중복 방지 검증
+    List<Long> branchIds = req.branchIds();
+    Set<Long> uniqueBranchIds = new HashSet<>(branchIds);
+
+    if (uniqueBranchIds.size() != branchIds.size()) {
+      throw new IllegalArgumentException("같은 지점에 중복으로 가입할 수 없습니다.");
+    }
+
+    // 선택된 지점들이 모두 존재하는지 확인
+    List<Branch> branches = branchRepository.findAllById(branchIds);
+
+    if (branches.size() != branchIds.size()) {
+      throw new IllegalArgumentException("존재하지 않는 지점이 포함되어 있습니다.");
+    }
 
     // 유저를 빌더로 저장
     User user = User.builder()
-        .name(req.name())
-        .memberId(req.memberId())
-        .password(password)
-        .email(email)
-        .phoneNum(phoneNum)
-        .address(req.address())
-        .birthday(req.birthday())
-        .gender(req.gender())
-        .level(req.level())
-        .sns1(req.sns1())
-        .sns2(req.sns2())
-        .sns3(req.sns3())
-        .sns4(req.sns4())
-        .sns5(req.sns5())
-        .stripe(req.stripe())
-        .build();
+            .name(req.name())
+            .memberId(req.memberId())
+            .password(password)
+            .email(email)
+            .phoneNum(phoneNum)
+            .address(req.address())
+            .birthday(req.birthday())
+            .gender(req.gender())
+            .level(req.level())
+            .sns1(req.sns1())
+            .sns2(req.sns2())
+            .sns3(req.sns3())
+            .sns4(req.sns4())
+            .sns5(req.sns5())
+            .stripe(req.stripe())
+            .build();
     userRepository.save(user);
 
-    BranchUser branchUser = BranchUser.builder()
-        .user(user)
-        .branch(branch)
-        .userRole(UserRole.PENDING)
-        .build();
-    branchUserRepository.save(branchUser);
+    // 선택된 모든 지점에 대해 BranchUser 생성
+    List<BranchUser> branchUsers = branches.stream()
+            .map(branch -> BranchUser.builder()
+                    .user(user)
+                    .branch(branch)
+                    .userRole(UserRole.PENDING)
+                    .build())
+            .toList();
+
+    branchUserRepository.saveAll(branchUsers);
 
     userImageService.uploadImage(user, images);
   }

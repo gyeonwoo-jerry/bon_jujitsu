@@ -78,7 +78,7 @@ function App() {
           <Route path="/admin/branches" element={<BranchManagement />} />
           <Route path="/admin/branches/create" element={<BranchCreate />} />
           <Route path="/admin/branches/edit/:branchId" element={<BranchEdit />} />
-          <Route path="/admin/boards" element={<PostManagement />} />
+          <Route path="/admin/posts" element={<PostManagement />} />
           <Route path="/admin/posts/create" element={<PostCreate />} />
           <Route path="/admin/posts/edit/:category/:id" element={<PostEdit />} />
         </Routes>

@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import API from '../../utils/api';
 import Pagination from '../../components/admin/Pagination';
 import PostTable from '../../components/admin/PostTable';
+import AdminHeader from '../../components/admin/AdminHeader';
 import { getWithExpiry } from '../../utils/storage';
 import '../../styles/admin/postManagement.css';
 
@@ -361,6 +362,8 @@ const PostManagement = () => {
 
   return (
       <div className="post-management">
+        <AdminHeader />
+
         <h2 className="title">게시판관리(게시판리스트)</h2>
 
         {error && (
