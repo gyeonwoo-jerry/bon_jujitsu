@@ -22,10 +22,8 @@ import bon.bon_jujitsu.repository.BranchUserRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.UserSpecification;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -293,10 +291,10 @@ public class UserService {
     return UserResponse.fromEntity(profile);
   }
 
-  public void updateProfile(Long userId, ProfileUpdate request, List<MultipartFile> images) {
+  public void updateProfile(Long userId, ProfileUpdate request, List<MultipartFile> images, List<Long> keepImageIds) {
 
     User profile = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
     profile.updateProfile(request);
 
@@ -308,39 +306,76 @@ public class UserService {
     });
 
     // 지부 변경
-    request.branchId().ifPresent(branchId -> {
-      Branch newBranch = branchRepository.findById(branchId)
-          .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지사입니다."));
-
-      // 유저가 이미 새 지부에 소속되어 있는지 확인
-      boolean alreadyInBranch = profile.getBranchUsers().stream()
-          .anyMatch(bu -> bu.getBranch().getId().equals(branchId));
-
-      if (!alreadyInBranch) {
-        // 유저의 첫 번째 지부 기준으로 역할 확인 (대표 지부 기준이 없으므로)
-        BranchUser currentBranchUser = profile.getBranchUsers().stream()
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("지부 소속 정보가 없습니다."));
-
-        UserRole currentRole = currentBranchUser.getUserRole();
-
-        if (currentRole == UserRole.OWNER || currentRole == UserRole.COACH) {
-          throw new IllegalArgumentException("OWNER 또는 COACH는 지부를 변경할 수 없습니다.");
-        }
-
-        // 새 지부 등록 + 역할 PENDING 부여
-        BranchUser newBranchUser = BranchUser.builder()
-            .user(profile)
-            .branch(newBranch)
-            .userRole(UserRole.PENDING)
-            .build();
-
-        branchUserRepository.save(newBranchUser);
+    request.branchIds().ifPresent(newBranchIds -> {
+      if (newBranchIds != null && !newBranchIds.isEmpty()) {
+        updateUserBranches(profile, newBranchIds);
       }
     });
 
-    if (images != null && !images.isEmpty()) {
-      userImageService.updateImages(profile, images);
+      userImageService.updateImages(profile, images, keepImageIds);
+  }
+
+  // 지부 업데이트 로직을 별도 메서드로 분리
+  private void updateUserBranches(User user, List<Long> newBranchIds) {
+    // 중복 지부 ID 제거
+    Set<Long> uniqueBranchIds = new HashSet<>(newBranchIds);
+    if (uniqueBranchIds.size() != newBranchIds.size()) {
+      throw new IllegalArgumentException("같은 지부에 중복으로 가입할 수 없습니다.");
+    }
+
+    // 새로운 지부들이 모두 존재하는지 확인
+    List<Branch> newBranches = branchRepository.findAllById(newBranchIds);
+    if (newBranches.size() != newBranchIds.size()) {
+      throw new IllegalArgumentException("존재하지 않는 지부가 포함되어 있습니다.");
+    }
+
+    // 현재 사용자의 지부 소속 정보
+    List<BranchUser> currentBranchUsers = user.getBranchUsers();
+    Set<Long> currentBranchIds = currentBranchUsers.stream()
+            .map(bu -> bu.getBranch().getId())
+            .collect(Collectors.toSet());
+
+    // OWNER 또는 COACH 역할을 가진 지부가 있는지 확인
+    boolean hasSpecialRole = currentBranchUsers.stream()
+            .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER || bu.getUserRole() == UserRole.COACH);
+
+    if (hasSpecialRole) {
+      throw new IllegalArgumentException("OWNER 또는 COACH 역할을 가진 사용자는 지부를 변경할 수 없습니다.");
+    }
+
+    // 추가할 지부들 (새로운 지부 중 현재 소속되지 않은 지부들)
+    Set<Long> branchesToAdd = new HashSet<>(uniqueBranchIds);
+    branchesToAdd.removeAll(currentBranchIds);
+
+    // 제거할 지부들 (현재 소속 지부 중 새로운 목록에 없는 지부들)
+    Set<Long> branchesToRemove = new HashSet<>(currentBranchIds);
+    branchesToRemove.removeAll(uniqueBranchIds);
+
+    // 지부 제거
+    if (!branchesToRemove.isEmpty()) {
+      List<BranchUser> branchUsersToRemove = currentBranchUsers.stream()
+              .filter(bu -> branchesToRemove.contains(bu.getBranch().getId()))
+              .toList();
+      branchUserRepository.deleteAll(branchUsersToRemove);
+    }
+
+    // 지부 추가
+    if (!branchesToAdd.isEmpty()) {
+      Map<Long, Branch> branchMap = newBranches.stream()
+              .collect(Collectors.toMap(Branch::getId, branch -> branch));
+
+      List<BranchUser> newBranchUsers = branchesToAdd.stream()
+              .map(branchId -> {
+                Branch branch = branchMap.get(branchId);
+                return BranchUser.builder()
+                        .user(user)
+                        .branch(branch)
+                        .userRole(UserRole.PENDING) // 새로 추가되는 지부에서는 PENDING 상태로 시작
+                        .build();
+              })
+              .toList();
+
+      branchUserRepository.saveAll(newBranchUsers);
     }
   }
 

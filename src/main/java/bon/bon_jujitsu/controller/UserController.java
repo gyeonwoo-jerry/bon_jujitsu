@@ -85,8 +85,9 @@ public class UserController {
   public ApiResponse<Void> updateProfile(
       @AuthenticationUserId Long userId,
       @RequestPart("update") @Valid ProfileUpdate update,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-    usersService.updateProfile(userId, update, images);
+      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds) {
+    usersService.updateProfile(userId, update, images, keepImageIds);
     return ApiResponse.success("프로필 수정 성공", null);
   }
 
