@@ -20,8 +20,16 @@ function BranchList() {
           if (response.data.success) {
             const branchData = response.data.content.list || [];
             console.log("Data fetched:", branchData);
-            setBranches(branchData);
-            setFilteredBranches(branchData); // 초기에 모든 지부 데이터로 필터링된 목록 설정
+            
+            // null 값들을 필터링하고 안전한 데이터만 사용
+            const safeBranchData = branchData.filter(branch => 
+              branch !== null && 
+              branch !== undefined && 
+              typeof branch === 'object'
+            );
+            
+            setBranches(safeBranchData);
+            setFilteredBranches(safeBranchData);
           } else {
             throw new Error("지부 정보를 불러오는데 실패했습니다.");
           }
@@ -51,14 +59,19 @@ function BranchList() {
     if (area === "전체") {
       setFilteredBranches(branches);
     } else {
-      setFilteredBranches(branches.filter((branch) => branch.area === area));
+      setFilteredBranches(branches.filter((branch) => 
+        branch && branch.area === area
+      ));
     }
   };
 
   // branches가 로드된 후에만 uniqueAreas를 계산합니다.
   const uniqueAreas =
     branches.length > 0
-      ? ["전체", ...new Set(branches.map((branch) => branch.area))]
+      ? ["전체", ...new Set(branches
+          .filter(branch => branch && branch.area)
+          .map((branch) => branch.area)
+        )]
       : ["전체"];
 
   // 로딩 중 표시
@@ -106,16 +119,18 @@ function BranchList() {
           <div className="no-branches">표시할 지부가 없습니다.</div>
         ) : (
           <ul>
-            {filteredBranches.map((branch) => (
-              <li className="branch_item" key={branch.id}>
+            {filteredBranches
+              .filter(branch => branch !== null && branch !== undefined)
+              .map((branch) => (
+              <li className="branch_item" key={branch?.id || Math.random()}>
                 <div className="branch_item_title">
                   <div className="branch_item_title_tit">
-                    <div className="gym_name">{branch.region}</div>
-                    <div className="gym_area">{branch.area}</div>
+                    <div className="gym_name">{branch?.region || "지역 정보 없음"}</div>
+                    <div className="gym_area">{branch?.area || "지역 정보 없음"}</div>
                   </div>
                   <button
                     className="branch_item_title_more"
-                    onClick={() => handleMoreClick(branch.id)}
+                    onClick={() => branch?.id && handleMoreClick(branch.id)}
                   >
                     <img src="/images/icon_click_wt.png" alt="더보기" />
                   </button>
@@ -123,23 +138,23 @@ function BranchList() {
                 <div className="branch_info">
                   <div className="owner_name">
                     <font className="accent">Prof.</font>
-                    {branch.owner.name}
+                    {branch?.owner?.name || "이름 정보 없음"}
                   </div>
                   <div className="address">
                     <font className="accent">A.</font>
-                    {branch.address}
+                    {branch?.address || "주소 정보 없음"}
                   </div>
                   <div className="phone">
                     <font className="accent">T.</font>
-                    {branch.owner.phoneNum}
+                    {branch?.owner?.phoneNum || "전화번호 정보 없음"}
                   </div>
                   <div className="sns">
                     <ul>
                       <li
-                        className={`${branch.owner.sns1 ? "" : "display_none"}`}
+                        className={`${branch?.owner?.sns1 ? "" : "display_none"}`}
                       >
                         <a
-                          href={branch.owner.sns1}
+                          href={branch?.owner?.sns1}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -147,10 +162,10 @@ function BranchList() {
                         </a>
                       </li>
                       <li
-                        className={`${branch.owner.sns2 ? "" : "display_none"}`}
+                        className={`${branch?.owner?.sns2 ? "" : "display_none"}`}
                       >
                         <a
-                          href={branch.owner.sns2}
+                          href={branch?.owner?.sns2}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -158,10 +173,10 @@ function BranchList() {
                         </a>
                       </li>
                       <li
-                        className={`${branch.owner.sns3 ? "" : "display_none"}`}
+                        className={`${branch?.owner?.sns3 ? "" : "display_none"}`}
                       >
                         <a
-                          href={branch.owner.sns3}
+                          href={branch?.owner?.sns3}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -169,10 +184,10 @@ function BranchList() {
                         </a>
                       </li>
                       <li
-                        className={`${branch.owner.sns4 ? "" : "display_none"}`}
+                        className={`${branch?.owner?.sns4 ? "" : "display_none"}`}
                       >
                         <a
-                          href={branch.owner.sns4}
+                          href={branch?.owner?.sns4}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -180,10 +195,10 @@ function BranchList() {
                         </a>
                       </li>
                       <li
-                        className={`${branch.owner.sns5 ? "" : "display_none"}`}
+                        className={`${branch?.owner?.sns5 ? "" : "display_none"}`}
                       >
                         <a
-                          href={branch.owner.sns5}
+                          href={branch?.owner?.sns5}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
