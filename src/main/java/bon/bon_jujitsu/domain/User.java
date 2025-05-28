@@ -14,6 +14,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -166,6 +168,16 @@ public class User extends Timestamped {
 
   public boolean isAdminUser() {
     return Boolean.TRUE.equals(this.isAdmin);
+  }
+
+  public void updateLevel(int level) {
+    if (level >= 0) {
+      this.level = level;
+    }
+  }
+
+  public void updateStripe(Stripe stripe) {
+    this.stripe = stripe;
   }
 }
 

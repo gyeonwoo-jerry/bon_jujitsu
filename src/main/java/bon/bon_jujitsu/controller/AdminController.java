@@ -6,16 +6,13 @@ import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.GetAllUserRequest;
 import bon.bon_jujitsu.dto.response.UserResponse;
+import bon.bon_jujitsu.dto.update.UserBranchUpdate;
+import bon.bon_jujitsu.dto.update.UserInfoUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -55,5 +52,23 @@ public class AdminController {
   ) {
     PageResponse<UserResponse> response = userService.getDeletedUsers(page, size, userId);
     return ApiResponse.success("삭제된 회원 조회 성공", response);
+  }
+
+  @PatchMapping("/users/branches")
+  public ApiResponse<Void> updateBranch(
+          @AuthenticationUserId Long userId,
+          @RequestBody @Valid UserBranchUpdate update
+  ) {
+    userService.updateBranch(userId, update);
+    return ApiResponse.success("지부 업데이트 완료", null);
+  }
+
+  @PatchMapping("/users/info")
+  public ApiResponse<Void> updateUserInfo(
+          @AuthenticationUserId Long userId,
+          @RequestBody @Valid UserInfoUpdate update
+  ) {
+    userService.updateUserInfo(userId, update);
+    return ApiResponse.success("회원 정보 업데이트 완료", null);
   }
 }

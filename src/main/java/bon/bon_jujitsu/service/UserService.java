@@ -16,6 +16,8 @@ import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.LogoutResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdate;
+import bon.bon_jujitsu.dto.update.UserBranchUpdate;
+import bon.bon_jujitsu.dto.update.UserInfoUpdate;
 import bon.bon_jujitsu.jwt.JwtUtil;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.BranchUserRepository;
@@ -25,6 +27,7 @@ import bon.bon_jujitsu.specification.UserSpecification;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -428,5 +431,90 @@ public class UserService {
 
   public String refreshAccessToken(String refreshToken) {
     return jwtUtil.refreshAccessToken(refreshToken);
+  }
+
+  public void updateBranch(Long adminUserId, UserBranchUpdate update) {
+    // 관리자 권한 확인
+    User adminUser = userRepository.findById(adminUserId)
+            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    if (!adminUser.isAdminUser()) {
+      throw new IllegalArgumentException("관리자만 가능한 기능입니다.");
+    }
+
+    // 대상 사용자 조회
+    User targetUser = userRepository.findById(update.targetUserId())
+            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    // 브랜치 추가
+    if (update.branchesToAdd() != null && !update.branchesToAdd().isEmpty()) {
+      addUserToBranches(targetUser, update.branchesToAdd());
+    }
+
+    // 브랜치 제거
+    if (update.branchesToRemove() != null && !update.branchesToRemove().isEmpty()) {
+      removeUserFromBranches(targetUser, update.branchesToRemove());
+    }
+  }
+
+  private void addUserToBranches(User user, List<Long> branchesToAdd) {
+    for (Long branchId : branchesToAdd) {
+      // 브랜치 존재 여부 확인
+      Branch branch = branchRepository.findById(branchId)
+              .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+
+      // 이미 해당 브랜치에 속해있는지 확인
+      boolean alreadyExists = branchUserRepository.existsByUserIdAndBranchId(
+              user.getId(), branch.getId());
+
+      if (!alreadyExists) {
+        // 새로운 BranchUser 생성 (기본 역할은 PENDING로 설정)
+        BranchUser branchUser = BranchUser.builder()
+                .user(user)
+                .branch(branch)
+                .userRole(UserRole.PENDING)
+                .build();
+        branchUserRepository.save(branchUser);
+      }
+    }
+  }
+
+  private void removeUserFromBranches(User user, List<Long> branchesToRemove) {
+    for (Long branchId : branchesToRemove) {
+      // 브랜치 존재 여부 확인
+      Branch branch = branchRepository.findById(branchId)
+              .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+
+      // BranchUser 관계 삭제
+      BranchUser branchUser = branchUserRepository
+              .findByUserIdAndBranchId(user.getId(), branch.getId())
+              .orElseThrow(() -> new IllegalArgumentException("해당 정보가 없습니다."));
+
+      branchUserRepository.delete(branchUser);
+    }
+  }
+
+  public void updateUserInfo(Long adminUserId, UserInfoUpdate update) {
+    // 관리자 권한 확인
+    User adminUser = userRepository.findById(adminUserId)
+            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    if (!adminUser.isAdminUser()) {
+      throw new IllegalArgumentException("관리자만 가능한 기능입니다.");
+    }
+
+    // 대상 사용자 조회
+    User targetUser = userRepository.findById(update.targetUserId())
+            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    // 레벨 업데이트
+    if (update.level().isPresent()) {
+      targetUser.updateLevel(update.level().get());
+    }
+
+    // 스트라이프 업데이트
+    if (update.stripe().isPresent()) {
+      targetUser.updateStripe(update.stripe().get());
+    }
   }
 }

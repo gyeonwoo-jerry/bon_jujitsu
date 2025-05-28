@@ -9,4 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface BranchUserRepository extends JpaRepository<BranchUser, Long> {
 
   Optional<BranchUser> findByUserAndBranch(User loggedInUser, Branch branch);
+
+  boolean existsByUserIdAndBranchId(Long userId, Long branchId);
+
+  Optional<BranchUser> findByUserIdAndBranchId(Long userId, Long branchId);
 }

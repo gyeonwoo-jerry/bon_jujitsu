@@ -163,7 +163,7 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false, userRole, a
           <th>아이디</th>
           <th>이메일</th>
           <th>연락처</th>
-          <th>레벨/띠</th>
+          <th>띠/그랄</th>
           <th>소속 지부</th>
           <th>회원 등급</th>
           <th>가입일</th>
@@ -192,9 +192,9 @@ const MemberTable = ({ members, fetchMembers, isDeletedView = false, userRole, a
                 <td>{member.email}</td>
                 <td>{member.phoneNum}</td>
                 <td>
-                  {member.level && `Lv.${member.level}`}
-                  {member.level && member.stripe && ' / '}
-                  {member.stripe}
+                  {member.level && member.stripe }
+                  {member.stripe && ' / '}
+                  {member.level && `grau.${member.level}`}
                 </td>
                 <td>
                   {branchUser ? branchUser.region : '-'}
