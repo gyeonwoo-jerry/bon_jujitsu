@@ -12,6 +12,7 @@ import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import bon.bon_jujitsu.specification.BranchSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ public class BranchService {
     branchImageService.uploadImage(branch, images);
   }
 
+  @Transactional(readOnly = true)
   public BranchResponse getBranch(Long branchId) {
     Branch branch = branchRepository.findById(branchId)
         .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
@@ -72,22 +74,24 @@ public class BranchService {
     return BranchResponse.from(branch, owner, coaches);
   }
 
-
-  public PageResponse<BranchResponse> getAllBranch(int page, int size, String region, String area) {
+  @Transactional(readOnly = true)
+  public PageResponse<BranchResponse> getAllBranch(int page, int size, String region, String area, List<Long> branchIds) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "region"));
 
-    Specification<Branch> spec = Specification.where(regionContains(region))
-        .and(areaContains(area));
+    // BranchSpecification 사용
+    Specification<Branch> spec = Specification.where(BranchSpecification.regionContains(region))
+            .and(BranchSpecification.areaContains(area))
+            .and(BranchSpecification.branchIdIn(branchIds)); // BranchSpecification에서 가져오기
 
     Page<Branch> branches = branchRepository.findAll(spec, pageRequest);
 
     Page<BranchResponse> branchResponses = branches.map(branch -> {
       // 각 지부마다 OWNER 찾기
       User owner = branch.getBranchUsers().stream()
-          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
-          .map(BranchUser::getUser)
-          .findFirst()
-          .orElse(null);
+              .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+              .map(BranchUser::getUser)
+              .findFirst()
+              .orElse(null);
 
       // 각 지부마다 COACH들 찾기
       List<User> coaches = branch.getBranchUsers().stream()

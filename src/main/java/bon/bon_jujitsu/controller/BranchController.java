@@ -51,9 +51,10 @@ public class BranchController {
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
       @RequestParam(required = false) String region,
-      @RequestParam(required = false, name = "area") String area
+      @RequestParam(required = false, name = "area") String area,
+      @RequestParam(required = false) List<Long> branchIds
   ) {
-    PageResponse<BranchResponse> branchList = branchService.getAllBranch(page, size, region, area);
+    PageResponse<BranchResponse> branchList = branchService.getAllBranch(page, size, region, area, branchIds);
     return ApiResponse.success("지부 목록 조회 성공", branchList);
   }
 
