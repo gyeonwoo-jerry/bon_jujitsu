@@ -9,6 +9,7 @@
   padding: 0.75rem;
   font-size: 14px;
   border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
 }
 
 .member-table thead th {
@@ -49,22 +50,207 @@
   color: #92400e;
 }
 
-/* 역할 컨트롤 스타일 */
+/* 역할 섹션 스타일 */
+.roles-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.role-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background-color: #f9fafb;
+}
+
+.role-branch-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.no-role {
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.75rem;
+}
+
+.role-update-button {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  background-color: #3b82f6;
+  color: white;
+}
+
+.role-update-button:hover {
+  background-color: #2563eb;
+}
+
+/* 역할 컨트롤 스타일 수정 */
 .role-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .role-select {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background-color: #fff;
+  font-size: 0.75rem;
+  width: auto;
+  min-width: 80px;
+  flex: 1;
+}
+
+/* 사용자 정보 컨트롤 스타일 */
+.info-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.info-select {
   padding: 0.25rem 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 0.25rem;
   background-color: #fff;
   font-size: 0.875rem;
-  width: auto;
+  flex: 1;
+  min-width: 90px;
 }
 
+.stripe-select {
+  flex: 1.2;
+}
+
+.info-input {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background-color: #fff;
+  font-size: 0.875rem;
+  width: 60px;
+  text-align: center;
+}
+
+.level-input {
+  flex: 0.8;
+}
+
+.info-update-button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.info-update-button:hover {
+  background-color: #059669;
+}
+
+/* 브랜치 컨트롤 스타일 */
+.branch-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.current-branches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.branch-item {
+  display: flex;
+  align-items: center;
+  background-color: #e0f2fe;
+  border: 1px solid #0891b2;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+}
+
+.branch-name {
+  color: #0c4a6e;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.remove-branch-button {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 0;
+  margin-left: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-branch-button:hover {
+  background-color: #fecaca;
+}
+
+.no-branch {
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.75rem;
+}
+
+.add-branch-section {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.branch-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background-color: #fff;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.branch-add-button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #059669;
+  border-color: #059669;
+  color: white;
+  white-space: nowrap;
+}
+
+.branch-add-button:hover {
+  background-color: #047857;
+}
+
+/* 공통 업데이트 버튼 스타일 */
 .update-button {
   padding: 0.25rem 0.5rem;
   background-color: #3b82f6;
@@ -74,6 +260,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .update-button:hover {
@@ -87,4 +274,102 @@
 
 .update-button.updating {
   opacity: 0.75;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .member-table th,
+  .member-table td {
+    padding: 0.5rem;
+    font-size: 13px;
+  }
+
+  .info-controls {
+    min-width: 160px;
+  }
+
+  .branch-controls {
+    min-width: 160px;
+  }
+
+  .roles-section {
+    min-width: 180px;
+  }
+
+  .info-select,
+  .branch-select {
+    font-size: 0.75rem;
+  }
+
+  .update-button {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .member-table {
+    font-size: 12px;
+  }
+
+  .member-table th,
+  .member-table td {
+    padding: 0.4rem;
+  }
+
+  .info-controls,
+  .branch-controls,
+  .roles-section {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .info-select,
+  .info-input,
+  .branch-select,
+  .role-select {
+    width: 100%;
+  }
+
+  .update-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .current-branches {
+    margin-bottom: 6px;
+  }
+
+  .branch-item {
+    font-size: 0.7rem;
+  }
+
+  .add-branch-section {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .role-item {
+    padding: 6px;
+  }
+
+  .role-branch-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* 테이블 스크롤 처리 */
+@media (max-width: 992px) {
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .member-table {
+    min-width: 1000px;
+  }
 }

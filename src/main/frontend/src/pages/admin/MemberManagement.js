@@ -58,6 +58,20 @@ const MemberManagement = () => {
     }
   };
 
+  // 모든 지부 정보 가져오기 (OWNER도 사용)
+  const fetchAllBranches = async () => {
+    try {
+      const res = await API.get("/branch/all?page=1&size=1000");
+      if (res.data?.success) {
+        const branches = res.data.content?.list || [];
+        setAllBranches(branches);
+        console.log("모든 지부 정보 로드:", branches);
+      }
+    } catch (err) {
+      console.error("전체 지부 정보 조회 오류:", err);
+    }
+  };
+
   // 사용자 정보 로드 및 초기 데이터 로드
   useEffect(() => {
     const loadUserInfo = () => {
@@ -77,6 +91,9 @@ const MemberManagement = () => {
             setUserBranches(branches);
 
             console.log("OWNER 지부 정보:", { branchIds, branches });
+
+            // 모든 지부 정보도 로드
+            fetchAllBranches();
 
             // OWNER인 경우 초기 로드 시 바로 PENDING 회원 조회
             setTimeout(() => {
@@ -144,15 +161,19 @@ const MemberManagement = () => {
 
         // 지부 검색
         if (userRole === "OWNER") {
-          if (userBranches.length === 1) {
-            // 하나의 지부만 관리하는 경우
-            params.append("branchId", userBranches[0].id);
-          } else if (userBranches.length > 1) {
-            // 여러 지부를 관리하는 경우
-            if (selectedOwnerBranch) {
-              params.append("branchId", selectedOwnerBranch);
-            }
-            // 전체 선택인 경우 특별한 처리가 필요하면 여기에 추가
+          // OWNER는 자신이 관리하는 모든 지부의 회원 조회
+          const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+          const branchRoles = userInfo.branchRoles || [];
+          const ownerBranches = branchRoles.filter(br => br.role === "OWNER");
+
+          if (selectedOwnerBranch) {
+            // 특정 지부를 선택한 경우
+            params.append("branchId", selectedOwnerBranch);
+          } else if (ownerBranches.length > 0) {
+            // 전체 선택인 경우 모든 관리 지부 조회
+            ownerBranches.forEach(branch => {
+              params.append("branchIds", branch.branchId);
+            });
           }
         } else if (userRole === "ADMIN" && selectedRegion) {
           // ADMIN인 경우 선택된 region에 해당하는 지부들의 ID를 찾아서 전송
@@ -263,6 +284,33 @@ const MemberManagement = () => {
     { key: "USER", label: "회원" },
     { key: "COACH", label: "코치" },
   ];
+
+  // OWNER가 현재 선택한 지부 ID 계산
+  const getCurrentUserBranchId = () => {
+    if (userRole !== "OWNER") return null;
+
+    // branchRoles에서 OWNER 역할의 지부 찾기
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const branchRoles = userInfo.branchRoles || [];
+    const ownerBranch = branchRoles.find(br => br.role === "OWNER");
+
+    if (ownerBranch) {
+      return ownerBranch.branchId;
+    }
+
+    // 기존 로직 (하위 호환성)
+    if (userBranches.length === 1) {
+      return userBranches[0].id;
+    } else if (userBranches.length > 1) {
+      if (selectedOwnerBranch) {
+        return parseInt(selectedOwnerBranch);
+      } else {
+        return userBranches[0].id;
+      }
+    }
+
+    return null;
+  };
 
   return (
       <div className="member-manage-container">
@@ -411,8 +459,8 @@ const MemberManagement = () => {
               </div>
           )}
 
-          {/* 회원 테이블 */}
-          <div className="table-container">
+          {/* 회원 테이블 - 컴팩트 컨테이너 사용 */}
+          <div className="table-container-compact">
             {isLoading ? (
                 <div className="loading-state">
                   <div className="spinner"></div>
@@ -426,6 +474,8 @@ const MemberManagement = () => {
                       isDeletedView={showDeleted}
                       userRole={userRole}
                       allowedRoles={userRole === "OWNER" ? ["PENDING", "USER", "COACH"] : ["PENDING", "USER", "COACH", "OWNER"]}
+                      allBranches={allBranches}
+                      userBranchId={getCurrentUserBranchId()}
                   />
                   <div className="pagination-container">
                     <Pagination

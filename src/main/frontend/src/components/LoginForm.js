@@ -25,24 +25,38 @@ function LoginForm({ onLoginSuccess }) {
 
           // 토큰 저장
           setWithExpiry(
-            "accessToken",
-            response.data.content.accessToken,
-            1000 * 60 * 60
+              "accessToken",
+              response.data.content.accessToken,
+              1000 * 60 * 60
           );
           setWithExpiry(
-            "refreshToken",
-            response.data.content.refreshToken,
-            1000 * 60 * 60 * 24
+              "refreshToken",
+              response.data.content.refreshToken,
+              1000 * 60 * 60 * 24
           );
 
-          // 사용자 정보 저장 (response.data에서 데이터 추출)
-          const parsedBranchRole = response.data.content.branchRoles?.[0]?.role?.replace("ROLE_", "").toUpperCase() || "USER";
+          // branchRoles 정보 추출
+          const branchRoles = response.data.content.branchRoles || [];
+          console.log("branchRoles 정보:", branchRoles);
 
+          // 사용자 역할 결정
+          const parsedBranchRole = branchRoles[0]?.role?.replace("ROLE_", "").toUpperCase() || "USER";
+          const userRole = response.data.content.isAdmin ? "ADMIN" : parsedBranchRole;
+
+          // 사용자 정보 저장 (branchRoles 포함)
           const userInfo = {
             id: response.data.content.id || response.data.content.userId || "",
-            name: response.data.content.name || username, // 서버에서 이름이 없으면 아이디를 사용
+            name: response.data.content.name || username,
             email: response.data.content.email || "",
-            role: response.data.content.isAdmin ? "ADMIN" : parsedBranchRole, // userRole로 저장
+            role: userRole,
+            branchRoles: branchRoles, // branchRoles 정보 추가
+            // 하위 호환성을 위한 기존 필드들
+            branchIds: branchRoles.map(br => br.branchId),
+            branches: branchRoles.map(br => ({
+              id: br.branchId,
+              region: br.region,
+              role: br.role
+            }))
           };
 
           console.log("저장할 사용자 정보:", userInfo);
@@ -71,9 +85,9 @@ function LoginForm({ onLoginSuccess }) {
     } catch (error) {
       console.error("로그인 실패:", error);
       if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
+          error.response &&
+          error.response.data &&
+          error.response.data.message
       ) {
         alert(error.response.data.message);
       } else {
@@ -93,55 +107,55 @@ function LoginForm({ onLoginSuccess }) {
   };
 
   return (
-    <div className="login-form">
-      <div className="loginleft">
-        <img src="/images/bon_login@3x.png" alt="login_image" />
-      </div>
-      <div className="loginright">
-        <div className="login_title">
-          <h2>로그인</h2>
-          <p>아이디와 비밀번호를 입력해주세요.</p>
+      <div className="login-form">
+        <div className="loginleft">
+          <img src="/images/bon_login@3x.png" alt="login_image" />
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="login_form_input">
-            <label
-              htmlFor="username"
-              style={{ display: username ? "none" : "block" }}
-            >
-              아이디
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={handleUsernameChange}
-              required
-            />
+        <div className="loginright">
+          <div className="login_title">
+            <h2>로그인</h2>
+            <p>아이디와 비밀번호를 입력해주세요.</p>
           </div>
-          <div className="login_form_input">
-            <label
-              htmlFor="password"
-              style={{ display: password ? "none" : "block" }}
-            >
-              비밀번호
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={handlePasswordChange}
-              required
-            />
+          <form onSubmit={handleSubmit}>
+            <div className="login_form_input">
+              <label
+                  htmlFor="username"
+                  style={{ display: username ? "none" : "block" }}
+              >
+                아이디
+              </label>
+              <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={handleUsernameChange}
+                  required
+              />
+            </div>
+            <div className="login_form_input">
+              <label
+                  htmlFor="password"
+                  style={{ display: password ? "none" : "block" }}
+              >
+                비밀번호
+              </label>
+              <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  required
+              />
+            </div>
+            <button type="submit" className="login_form_button">
+              로그인
+            </button>
+          </form>
+          <div className="join_btn">
+            <Link to="/join">회원가입</Link>
           </div>
-          <button type="submit" className="login_form_button">
-            로그인
-          </button>
-        </form>
-        <div className="join_btn">
-          <Link to="/join">회원가입</Link>
         </div>
       </div>
-    </div>
   );
 }
 
