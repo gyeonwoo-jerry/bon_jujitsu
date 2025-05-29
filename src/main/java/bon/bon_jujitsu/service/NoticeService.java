@@ -19,10 +19,13 @@ import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.NoticeSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class NoticeService {
 
   private final NoticeRepository noticeRepository;
@@ -73,58 +77,133 @@ public class NoticeService {
   public PageResponse<NoticeResponse> getNotices(int page, int size, String name, Long branchId) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Specification<Notice> spec = Specification.where(NoticeSpecification.hasUserName(name))
-        .and(NoticeSpecification.hasBranchId(branchId));
+    Page<Notice> notices;
 
-    Page<Notice> notices = noticeRepository.findAll(spec, pageRequest);
+    try {
+      // 🔥 방법 1: 수정된 Specification 사용
+      Specification<Notice> spec = Specification.where(NoticeSpecification.includeDeletedUsers())
+              .and(NoticeSpecification.hasUserName(name))
+              .and(NoticeSpecification.hasBranchId(branchId));
+
+      notices = noticeRepository.findAll(spec, pageRequest);
+
+    } catch (Exception e) {
+      // 🔥 방법 2: Specification 실패 시 안전한 쿼리로 폴백
+      log.warn("Notice Specification 조회 실패, 안전한 쿼리로 폴백: {}", e.getMessage());
+      notices = noticeRepository.findNoticesSafely(name, branchId, pageRequest);
+    }
 
     Page<NoticeResponse> noticeResponses = notices.map(notice -> {
-      // 이미지 경로를 ImageResponse 객체 리스트로 변환
-      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
-          .stream()
-          .map(postImage -> {
-            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-            return ImageResponse.builder()
-                .id(postImage.getId()) // PostImage의 ID 사용
-                .url(path)
-                .build();
-          })
-          .collect(Collectors.toList());
+      try {
+        List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
+                .stream()
+                .map(postImage -> {
+                  String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
+                  return ImageResponse.builder()
+                          .id(postImage.getId())
+                          .url(path)
+                          .build();
+                })
+                .collect(Collectors.toList());
 
-      return new NoticeResponse(
-          notice.getId(),
-          notice.getTitle(),
-          notice.getContent(),
-          notice.getBranch().getRegion(),
-          notice.getUser().getName(),
-          imageResponses, // imagePaths 대신 imageResponses 사용
-          notice.getViewCount(),
-          notice.getCreatedAt(),
-          notice.getModifiedAt()
-      );
+        // 🔥 안전한 작성자명 처리
+        String authorName;
+        try {
+          if (notice.getUser() != null) {
+            authorName = notice.getUser().getName();
+          } else {
+            authorName = "탈퇴한 회원";
+          }
+        } catch (Exception ex) {
+          authorName = "탈퇴한 회원";
+        }
+
+        return new NoticeResponse(
+                notice.getId(),
+                notice.getTitle(),
+                notice.getContent(),
+                notice.getBranch().getRegion(),
+                authorName, // 🔥 안전하게 처리된 작성자명
+                imageResponses,
+                notice.getViewCount(),
+                notice.getCreatedAt(),
+                notice.getModifiedAt()
+        );
+
+      } catch (Exception e) {
+        // 🔥 개별 공지사항 처리 실패 시 안전한 응답 생성
+        log.warn("공지사항 {} 처리 중 오류: {}", notice.getId(), e.getMessage());
+        return createSafeNoticeResponse(notice);
+      }
     });
 
     return PageResponse.fromPage(noticeResponses);
   }
 
+  @Transactional(readOnly = true)
   public NoticeResponse getNotice(Long noticeId, HttpServletRequest request) {
-    Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+    Notice notice;
+
+    try {
+      // 🔥 방법 1: 기본 조회 시도
+      notice = noticeRepository.findById(noticeId)
+              .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+    } catch (Exception e) {
+      // 🔥 방법 2: 안전한 조회로 폴백
+      log.warn("기본 조회 실패, 안전한 조회로 폴백: {}", e.getMessage());
+      notice = noticeRepository.findByIdSafely(noticeId)
+              .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+    }
 
     HttpSession session = request.getSession();
     String sessionKey = "viewed_notice_" + noticeId;
 
     if (session.getAttribute(sessionKey) == null) {
-      notice.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+      notice.increaseViewCount();
       session.setAttribute(sessionKey, true);
-      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+      session.setMaxInactiveInterval(60 * 60);
     }
 
-    // PostImage 엔티티 리스트를 직접 가져옴
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
-
-    return NoticeResponse.fromEntity(notice, postImages);
+    try {
+      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
+      return NoticeResponse.fromEntity(notice, postImages);
+    } catch (Exception e) {
+      // 🔥 NoticeResponse 생성 실패 시 안전한 응답
+      log.warn("NoticeResponse 생성 실패: {}", e.getMessage());
+      return createSafeNoticeResponse(notice);
+    }
   }
 
+  // 🔥 안전한 NoticeResponse 생성 헬퍼 메서드
+  private NoticeResponse createSafeNoticeResponse(Notice notice) {
+    List<ImageResponse> emptyImages = Collections.emptyList();
+
+    String authorName;
+    try {
+      authorName = (notice.getUser() != null) ? notice.getUser().getName() : "탈퇴한 회원";
+    } catch (Exception e) {
+      authorName = "탈퇴한 회원";
+    }
+
+    String region;
+    try {
+      region = notice.getBranch().getRegion();
+    } catch (Exception e) {
+      region = "지부 정보 없음";
+    }
+
+    return new NoticeResponse(
+            notice.getId(),
+            notice.getTitle(),
+            notice.getContent(),
+            region,
+            authorName,
+            emptyImages,
+            notice.getViewCount(),
+            notice.getCreatedAt(),
+            notice.getModifiedAt()
+    );
+  }
 
   public void updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
