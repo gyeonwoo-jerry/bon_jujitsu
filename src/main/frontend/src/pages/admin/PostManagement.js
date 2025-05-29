@@ -934,7 +934,7 @@ const PostManagement = () => {
                               className={`region-button ${selectedOwnerBranch === branch.id.toString() ? 'active' : ''}`}
                               onClick={() => handleOwnerBranchClick(branch.id.toString())}
                           >
-                            {branch.region} ({branch.area})
+                            {branch.region}
                           </button>
                       ))}
                     </div>

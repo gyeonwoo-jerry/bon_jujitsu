@@ -186,13 +186,10 @@ const MemberManagement = () => {
           const selectedBranches = allBranches.filter(branch => branch.region === region);
           console.log(`선택된 region "${region}"에 해당하는 지부들:`, selectedBranches);
 
-          if (selectedBranches.length === 1) {
-            params.append("branchId", selectedBranches[0].id);
-          } else if (selectedBranches.length > 1) {
-            selectedBranches.forEach(branch => {
-              params.append("branchIds", branch.id);
-            });
-          }
+          // 🔥 수정: 단일/다중 지부 모두 branchIds로 통일
+          selectedBranches.forEach(branch => {
+            params.append("branchIds", branch.id);
+          });
         }
         // 🔥 region이 빈 문자열이거나 "전체"인 경우 지부 조건을 추가하지 않음 (전체 조회)
         console.log("전체 조회 - 지부 조건 없이 API 호출");
@@ -248,9 +245,9 @@ const MemberManagement = () => {
         // 역할 검색 (OWNER는 activeTab 사용)
         params.append("role", activeTab);
 
-        // 특정 지부 ID로 조회
+        // 🔥 수정: branchId 대신 branchIds 사용
         if (branchId) {
-          params.append("branchId", branchId);
+          params.append("branchIds", branchId);
         }
       }
 
@@ -309,18 +306,18 @@ const MemberManagement = () => {
 
         // 지부 검색
         if (userRole === "OWNER") {
-          // OWNER는 자신이 관리하는 모든 지부의 회원 조회
+          // OWNER는 자신이 관리하는 지부의 회원 조회
           if (selectedOwnerBranch) {
-            // 특정 지부를 선택한 경우
-            params.append("branchId", selectedOwnerBranch);
+            // 🔥 수정: branchId 대신 branchIds 사용
+            params.append("branchIds", selectedOwnerBranch);
           } else {
             // 선택하지 않은 경우 - 단일 지부면 자동 선택, 다중 지부면 빈 결과
             if (userBranches.length === 1) {
-              // 단일 지부인 경우 해당 지부 ID 사용
-              params.append("branchId", userBranches[0].id);
+              // 🔥 수정: branchId 대신 branchIds 사용
+              params.append("branchIds", userBranches[0].id);
             } else if (userBranches.length > 1) {
               // 다중 지부 관리자가 지부를 선택하지 않은 경우 빈 결과
-              params.append("branchId", "-1");
+              params.append("branchIds", "-1");
             }
           }
         } else if (userRole === "ADMIN") {
@@ -330,13 +327,10 @@ const MemberManagement = () => {
             const selectedBranches = allBranches.filter(branch => branch.region === selectedRegion);
             console.log(`선택된 region "${selectedRegion}"에 해당하는 지부들:`, selectedBranches);
 
-            if (selectedBranches.length === 1) {
-              params.append("branchId", selectedBranches[0].id);
-            } else if (selectedBranches.length > 1) {
-              selectedBranches.forEach(branch => {
-                params.append("branchIds", branch.id);
-              });
-            }
+            // 🔥 수정: 단일/다중 지부 모두 branchIds로 통일
+            selectedBranches.forEach(branch => {
+              params.append("branchIds", branch.id);
+            });
           }
           // 🔥 selectedRegion이 빈 문자열이거나 "전체"인 경우 지부 조건을 추가하지 않음 (전체 조회)
           console.log("ADMIN 전체 조회 또는 특정 region 조회, selectedRegion:", selectedRegion);
