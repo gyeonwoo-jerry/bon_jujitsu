@@ -36,6 +36,9 @@ public class Sponsor extends Timestamped {
   @Column(nullable = false)
   private String content;
 
+  @Column(nullable = false)
+  private String url;
+
   @Builder.Default
   @Column(nullable = false)
   private boolean isDeleted = false;
@@ -55,6 +58,10 @@ public class Sponsor extends Timestamped {
 
     sponsorUpdate.content().ifPresent(content -> {
       if (!content.isBlank()) this.content = content;
+    });
+
+    sponsorUpdate.url().ifPresent(url -> {
+      if (!url.isBlank()) this.url = url;
     });
   }
 

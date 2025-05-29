@@ -14,6 +14,7 @@ public record SponsorResponse(
     String title,
     String content,
     String name,
+    String url,
     List<ImageResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
@@ -33,6 +34,7 @@ public record SponsorResponse(
         .title(sponsor.getTitle())
         .content(sponsor.getContent())
         .name(sponsor.getUser().getName())
+        .url(sponsor.getUrl())
         .images(imageResponses)
         .viewCount(sponsor.getViewCount())
         .createdAt(sponsor.getCreatedAt())

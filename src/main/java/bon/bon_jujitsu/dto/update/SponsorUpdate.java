@@ -4,7 +4,8 @@ import java.util.Optional;
 
 public record SponsorUpdate(
     Optional<String> title,
-    Optional<String> content
+    Optional<String> content,
+    Optional<String> url
 ) {
 
 }

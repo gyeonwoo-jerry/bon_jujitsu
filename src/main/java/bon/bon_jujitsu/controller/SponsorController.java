@@ -46,7 +46,7 @@ public class SponsorController {
       @RequestParam(defaultValue = "10", name = "size") int size,
       @RequestParam(required = false) String name
   ) {
-    return ApiResponse.success("스폰서 목록 조회 성공", sponsorService.getNotices(page, size, name));
+    return ApiResponse.success("스폰서 목록 조회 성공", sponsorService.getSponsors(page, size, name));
   }
 
   @GetMapping("/sponsor/{sponsorId}")

@@ -47,6 +47,7 @@ public class SponsorService {
     Sponsor sponsor = Sponsor.builder()
         .title(request.title())
         .content(request.content())
+        .url(request.url())
         .user(user)
         .build();
 
@@ -56,7 +57,7 @@ public class SponsorService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<SponsorResponse> getNotices(int page, int size, String name) {
+  public PageResponse<SponsorResponse> getSponsors(int page, int size, String name) {
     PageRequest pageRequest = PageRequest.of(page - 1, size);
 
     Page<Sponsor> sponsors;
@@ -87,6 +88,7 @@ public class SponsorService {
           sponsor.getTitle(),
           sponsor.getContent(),
           sponsor.getUser().getName(),
+          sponsor.getUrl(),
           imageResponses, // imagePaths 대신 imageResponses 사용
           sponsor.getViewCount(),
           sponsor.getCreatedAt(),

@@ -24,7 +24,7 @@ const BranchTable = ({ branches, onDelete }) => {
                     <td>{branch.address}</td>
                     <td>
                       <Link
-                          to={`/storeDetail/branch/${branch.id}`}
+                          to={`/branches/${branch.id}`}
                           className="detail-button"
                           target="_blank"
                           rel="noopener noreferrer"
