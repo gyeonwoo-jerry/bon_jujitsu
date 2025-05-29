@@ -11,6 +11,7 @@ import bon.bon_jujitsu.dto.request.BranchRequest;
 import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
+import bon.bon_jujitsu.repository.BranchUserRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.BranchSpecification;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class BranchService {
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
   private final BranchImageService branchImageService;
+  private final BranchUserRepository branchUserRepository;
 
   public void createBranch(Long userId, BranchRequest request, List<MultipartFile> images) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
@@ -130,15 +132,21 @@ public class BranchService {
 
 
   public void deleteBranch(Long userId, Long branchId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     if (!user.isAdmin()) {
       throw new IllegalArgumentException("관리자만 지부 삭제가 가능합니다.");
     }
 
-    Branch branch = branchRepository.findById(branchId).orElseThrow(()
-        -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+    Branch branch = branchRepository.findById(branchId)
+            .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
 
+    // 해당 브랜치에 속한 모든 BranchUser 관계 제거
+    List<BranchUser> branchUsers = branchUserRepository.findByBranch(branch);
+    branchUserRepository.deleteAll(branchUsers);
+
+    // 브랜치 soft delete
     branch.softDelete();
   }
 
