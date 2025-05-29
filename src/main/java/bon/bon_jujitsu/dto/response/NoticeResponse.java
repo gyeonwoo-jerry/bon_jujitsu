@@ -30,12 +30,23 @@ public record NoticeResponse(
             .build())
         .collect(Collectors.toList());
 
+    String authorName;
+    try {
+      if (notice.getUser() != null) {
+        authorName = notice.getUser().getName();
+      } else {
+        authorName = "탈퇴한 회원";
+      }
+    } catch (Exception e) {
+      authorName = "탈퇴한 회원";
+    }
+
     return NoticeResponse.builder()
         .id(notice.getId())
         .title(notice.getTitle())
         .content(notice.getContent())
         .region(notice.getBranch().getRegion())
-        .name(notice.getUser().getName())
+        .name(authorName)
         .images(imageResponses)
         .viewCount(notice.getViewCount())
         .createdAt(notice.getCreatedAt())

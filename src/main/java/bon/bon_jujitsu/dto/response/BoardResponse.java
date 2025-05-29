@@ -29,12 +29,24 @@ public record BoardResponse(
             .build())
         .collect(Collectors.toList());
 
+    String authorName;
+    try {
+      if (board.getUser() != null) {
+        authorName = board.getUser().getName();
+      } else {
+        authorName = "탈퇴한 회원";
+      }
+    } catch (Exception e) {
+      // LazyInitializationException이나 기타 예외 발생 시
+      authorName = "탈퇴한 회원";
+    }
+
     return BoardResponse.builder()
         .id(board.getId())
         .title(board.getTitle())
         .content(board.getContent())
         .region(board.getBranch().getRegion())
-        .author(board.getUser().getName())
+        .author(authorName)
         .images(imageResponses)
         .viewCount(board.getViewCount())
         .createdAt(board.getCreatedAt())
