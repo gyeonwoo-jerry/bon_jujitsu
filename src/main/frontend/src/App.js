@@ -20,7 +20,11 @@ import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
 import NewsWrite from './pages/newsWrite';
 import Qna from './pages/qna';
+import QnaDetail from './pages/qnaDetail';
+import QnaWrite from './pages/qnaWrite';
 import Sponsor from './pages/sponsor';
+import SponsorDetail from './pages/sponsorDetail';  
+import SponsorWrite from './pages/sponsorWrite';
 import Join from './pages/join';
 import Cart from './pages/cart';
 import Order from './pages/order';
@@ -71,7 +75,11 @@ function App() {
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
           <Route path="/newsWrite" element={<NewsWrite />} />
           <Route path="/qna" element={<Qna />} />
+          <Route path="/qnaDetail/:id" element={<QnaDetail />} />
+          <Route path="/qnaWrite" element={<QnaWrite />} />
           <Route path="/sponsor" element={<Sponsor />} />
+          <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
+          <Route path="/sponsorWrite" element={<SponsorWrite />} />
           <Route path="/join" element={<Join />} />
           <Route path="/admin" element={<AdminMain />} />
           <Route path="/admin/members" element={<MemberManagement />} />

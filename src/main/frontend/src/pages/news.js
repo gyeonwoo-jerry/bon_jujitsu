@@ -45,7 +45,7 @@ function News() {
       <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
       <div className="news-container">
         <div className="inner">
-            <div className="section_title">본주짓수 <font className='thin small'>in</font> MEDIA</div>
+            <div className="section_title">BON <font className='thin small'>in</font> MEDIA</div>
             <BoardList
               apiEndpoint="/news"
               title=""

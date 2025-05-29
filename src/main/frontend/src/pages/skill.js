@@ -45,7 +45,7 @@ function Skill() {
       <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
       <div className="skill-container">
         <div className="inner">
-            <div className="section_title">본주짓수 <font className='thin small'>in</font> SKILL</div>
+            <div className="section_title">BON <font className='thin small'>in</font> SKILL</div>
             <BoardList
               apiEndpoint="/skill"
               title=""
