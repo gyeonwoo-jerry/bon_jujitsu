@@ -14,6 +14,8 @@ import Comunity from './pages/comunity';
 import Store from './pages/store';
 import StoreDetail from './pages/storeDetail';
 import Skill from './pages/skill';
+import SkillDetail from './pages/skillDetail';
+import SkillWrite from './pages/skillWrite';
 import News from './pages/news';
 import NewsDetail from './pages/newsDetail';
 import NewsWrite from './pages/newsWrite';
@@ -63,6 +65,8 @@ function App() {
           <Route path="/order/new" element={<Order />} />
           <Route path="/order/:id" element={<Order />} />
           <Route path="/skill" element={<Skill />} />
+          <Route path="/skillDetail/:id" element={<SkillDetail />} />
+          <Route path="/skillWrite" element={<SkillWrite />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
           <Route path="/newsWrite" element={<NewsWrite />} />

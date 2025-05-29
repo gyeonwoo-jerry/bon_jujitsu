@@ -8,6 +8,7 @@ function News() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   
   useEffect(() => { 
@@ -18,6 +19,21 @@ function News() {
     setDescName(descName);
     const backgroundImage = '';
     setBackgroundImage(backgroundImage);
+
+    // 사용자 권한 확인
+    const checkUserRole = () => {
+      try {
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          setIsAdmin(userInfo.role === 'ADMIN');
+        }
+      } catch (error) {
+        console.error('사용자 권한 확인 오류:', error);
+        setIsAdmin(false);
+      }
+    };
+    checkUserRole();
   }, []);
 
   const handleWriteClick = () => {
@@ -35,12 +51,14 @@ function News() {
               title=""
               detailPathPrefix="/newsDetail"
             />
-            <button 
-              className="write-button"
-              onClick={handleWriteClick}
-            >
-              글쓰기
-            </button>
+            {isAdmin && (
+              <button 
+                className="write-button"
+                onClick={handleWriteClick}
+              >
+                글쓰기
+              </button>
+            )}
         </div>
       </div>
     </div>

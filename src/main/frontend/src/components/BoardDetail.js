@@ -17,8 +17,19 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     : `/${apiEndpoint}`;
 
   // 이미지 URL 정규화 함수
-  const normalizeImageUrl = (url) => {
-    if (!url) return "/images/blank_img.png";
+  const normalizeImageUrl = (imageData) => {
+    // 빈 값이면 기본 이미지 반환
+    if (!imageData) return "/images/blank_img.png";
+
+    let url = imageData;
+    
+    // 객체인 경우 URL 추출
+    if (typeof imageData === 'object') {
+      url = imageData.url || imageData.imagePath || imageData.src;
+    }
+    
+    // URL이 여전히 문자열이 아니면 기본 이미지 반환
+    if (!url || typeof url !== 'string') return "/images/blank_img.png";
 
     // 이미 절대 URL인 경우 그대로 반환
     if (url.startsWith("http://") || url.startsWith("https://")) {
@@ -41,7 +52,7 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
   // fetchPostDetail 함수를 useCallback으로 메모이제이션
   const fetchPostDetail = useCallback(async () => {
     // ID가 유효한지 확인
-    if (!id || id === "undefined") {
+    if (!id || id === "undefined" || id === undefined || id === null) {
       setError("유효하지 않은 게시글 ID입니다.");
       setLoading(false);
       return;
@@ -66,17 +77,30 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
             onPostLoad(postData.title);
           }
         } else {
-          throw new Error("게시글을 불러오는데 실패했습니다.");
+          throw new Error(response.data.message || "게시글을 불러오는데 실패했습니다.");
         }
       } else {
         throw new Error("게시글을 불러오는데 실패했습니다.");
       }
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
-        alert(err.response.data.message);
-      } else {
-        alert("게시글을 불러오는데 중 오류가 발생했습니다.");
+      console.error("게시글 로딩 오류:", err);
+      let errorMessage = "게시글을 불러오는 중 오류가 발생했습니다.";
+      
+      if (err.response) {
+        if (err.response.status === 500) {
+          errorMessage = "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+        } else if (err.response.status === 404) {
+          errorMessage = "게시글을 찾을 수 없습니다.";
+        } else if (err.response.data && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else {
+          errorMessage = `서버 오류 (${err.response.status}): ${errorMessage}`;
+        }
+      } else if (err.request) {
+        errorMessage = "네트워크 연결을 확인해주세요.";
       }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -239,7 +263,12 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
                       className="post-detail-image"
                       onError={(e) => {
                         console.log("이미지 로딩 오류, 기본 이미지로 대체:", image);
+                        console.log("원본 src:", e.target.src);
                         e.target.src = "/images/blank_img.png";
+                        e.target.onerror = null; // 무한 루프 방지
+                      }}
+                      onLoad={() => {
+                        console.log("이미지 로드 성공:", normalizeImageUrl(image));
                       }}
                     />
                   </div>

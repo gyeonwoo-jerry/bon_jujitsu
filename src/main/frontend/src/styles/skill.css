@@ -1,0 +1,17 @@
+
+.skill-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.skill-container .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: calc(100% - 100px);
+    margin: 0 auto;
+    gap: 30px;
+}

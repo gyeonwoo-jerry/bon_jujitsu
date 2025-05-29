@@ -162,9 +162,15 @@ const NoticeBoardList = () => {
 
   if (dataLoaded && posts.length === 0) {
     return <div className="empty-posts-container">
+      <div className="branch-board-container">
+        
+      <h1 className="board-title">지부 공지사항</h1>
+      <div className="board_empty">
       <div className="empty-posts-icon">📭</div>
       <p className="empty-posts-message">등록된 게시글이 없습니다.</p>
       <p className="empty-posts-submessage">첫 번째 게시물을 작성해보세요!</p>
+      </div>
+      </div>
     </div>;
   }
 

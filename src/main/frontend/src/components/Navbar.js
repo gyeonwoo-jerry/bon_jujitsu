@@ -97,7 +97,12 @@ function Navbar() {
 
   return (
       <nav className={`main_nav ${isFixed ? "fixed" : ""}`}>
-        <ul>
+        <div className="logo">
+            <Link to="/">
+              <img src="/images/logo.png" alt="logo" />
+            </Link>
+        </div>
+        <ul className="nav_menu">
           <li>
             <Link to="/">홈</Link>
           </li>
@@ -109,11 +114,6 @@ function Navbar() {
           </li>
           <li>
             <Link to="/store">스토어</Link>
-          </li>
-          <li className="logo">
-            <Link to="/">
-              <img src="/images/logo.png" alt="logo" />
-            </Link>
           </li>
           <li>
             <Link to="/skill">기술</Link>
@@ -131,7 +131,7 @@ function Navbar() {
 
         {isLoggedIn ? (
             // 로그인 상태일 때 사용자 정보와 로그아웃 버튼 표시
-            <div className="user_status">
+        <div className="user_status">
           <span className="user_name">
             {userName}{" "}
             {userRole === "USER" && "님,"}
@@ -145,7 +145,6 @@ function Navbar() {
                   <button
                       className="admin_btn"
                       onClick={() => navigate("/admin")}
-                      style={{ marginLeft: "12px" }}
                   >
                     관리자 페이지
                   </button>

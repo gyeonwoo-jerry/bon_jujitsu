@@ -35,21 +35,29 @@ function BoardList({
               setPosts(response.data.content.list || []);
               setTotalPages(response.data.content.totalPage || 1);
             } else {
-              alert(response.data.message);
+              console.error("API 응답 오류:", response.data.message);
+              setError(response.data.message || "데이터를 불러올 수 없습니다.");
+              setPosts([]);
             }
           }
         })
         .catch((error) => {
-          if (
-            error.response &&
-            error.response.data &&
-            error.response.data.message
-          ) {
-            alert(error.response.data.message);
+          console.error("API 호출 오류:", error);
+          if (error.response) {
+            if (error.response.status === 500) {
+              setError("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+            } else if (error.response.status === 404) {
+              setError("요청한 페이지를 찾을 수 없습니다.");
+            } else if (error.response.data && error.response.data.message) {
+              setError(error.response.data.message);
+            } else {
+              setError(`서버 오류 (${error.response.status}): 데이터를 불러올 수 없습니다.`);
+            }
+          } else if (error.request) {
+            setError("네트워크 연결을 확인해주세요.");
           } else {
-            alert("로그인 처리 중 오류가 발생했습니다.");
+            setError("요청 처리 중 오류가 발생했습니다.");
           }
-          setError("게시물을 불러오는 중 오류가 발생했습니다.");
           setPosts([]);
         })
         .finally(() => {
@@ -65,8 +73,10 @@ function BoardList({
   }, [currentPage, title, fetchPosts]);
 
   const handlePostClick = (id) => {
-    if (!id) {
-      console.error("유효하지 않은 게시물 ID입니다");
+    // ID 유효성 검사 강화
+    if (!id || id === 'undefined' || id === undefined || id === null) {
+      console.error("유효하지 않은 게시물 ID입니다:", id);
+      alert("게시물 정보가 올바르지 않습니다.");
       return;
     }
 
@@ -114,7 +124,7 @@ function BoardList({
 
   return (
     <div className="board-container">
-      <h1 className="board-title">{title || "게시판"}</h1>
+      
 
       {loading ? (
         <div className="loading-container">

@@ -2,11 +2,13 @@ nav.main_nav {
     transition: all 0.3s ease;
     position: relative;
     background-color: var(--white-color);
-    height: 95px;
+    height: 84px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     z-index: 10;
+    width: 100%;
+    padding: 0 60px;
 }
 nav.main_nav.fixed {
     position: fixed;
@@ -24,6 +26,7 @@ nav.main_nav ul {
     align-items: center;
     list-style-type: none;
     padding: 0;
+    
 }
 
 nav.main_nav ul li {
@@ -36,6 +39,8 @@ nav.main_nav ul li a {
     color: var(--black-color);
     text-decoration: none;
     font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -.5px;
 } 
 nav.main_nav ul li a:hover {
     transition: all 0.3s ease;
@@ -45,14 +50,16 @@ nav.main_nav ul li a:active {
     transform: translateY(10px) 
 }
 
-nav.main_nav ul li.logo {
-    padding: 0 80px;
+nav.main_nav .logo {
+    
 }
-nav.main_nav ul li.logo a {
+nav.main_nav .logo a {
+    display: block;
     padding: 0;
+    max-width: 120px;
 }
 
-nav.main_nav ul li.logo img {
+nav.main_nav .logo img {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -60,10 +67,9 @@ nav.main_nav ul li.logo img {
 
 
 .login_btn {
-    position: absolute; 
-    right: 100px;
-    top: 50%;
-    transform: translateY(-50%);
+    
+    display: flex;
+    justify-content: flex-end;
     font-family: 'Pretendard', sans-serif;
     font-size: 14px;
     letter-spacing: -.5px;
@@ -71,6 +77,7 @@ nav.main_nav ul li.logo img {
     padding: 7px 20px;
     border-radius: 20px;
     border: 1px solid var(--black-color);
+    max-width: fit-content;
 }
 
 .login_btn:hover {
@@ -84,17 +91,16 @@ nav.main_nav ul li.logo img {
 }
 
 .user_status {
-    position: absolute;
-    right: 100px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 10px;
+    
 }
 
 .user_status span {
-    font-size: 16px;
+    font-size: 14px;
+    color: var(--black-color);
     font-weight: 500;
 }   
 
@@ -114,14 +120,13 @@ nav.main_nav ul li.logo img {
 }
 
 .admin_btn {
-    background-color: #1f2937; /* 진한 그레이 */
-    color: white;
+    background-color: var(--black-color); /* 진한 그레이 */
+    color: var(--white-color);
     border: none;
-    padding: 6px 12px;
-    margin-left: 8px;
-    border-radius: 4px;
+    padding: 8px 14px;
+    border-radius: 15px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 14px;
 }
 
 .admin_btn:hover {
