@@ -142,7 +142,7 @@ const NoticeBoardList = () => {
 
   // 이미지 URL 정규화 함수
   const normalizeImageUrl = (url) => {
-    if (!url) return "/images/blank_img.png";
+    if (!url || typeof url !== 'string') return "/images/blank_img.png";
 
     // 이미 절대 URL인 경우 그대로 반환
     if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
@@ -246,7 +246,7 @@ const NoticeBoardList = () => {
                 {post.region || ""}
             </td>
             <td className="post-author">
-                {post.writer || post.name || "작성자 없음"}
+                {post?.owner?.name || post.writer || post.name || "작성자 없음"}
             </td>
             <td className="post-date">
                 {post.date || (post.createdAt 

@@ -25,7 +25,8 @@ function BranchList() {
             const safeBranchData = branchData.filter(branch => 
               branch !== null && 
               branch !== undefined && 
-              typeof branch === 'object'
+              typeof branch === 'object' &&
+              branch?.owner?.name // owner.name이 있는 지부만 표시
             );
             
             setBranches(safeBranchData);
@@ -60,7 +61,7 @@ function BranchList() {
       setFilteredBranches(branches);
     } else {
       setFilteredBranches(branches.filter((branch) => 
-        branch && branch.area === area
+        branch && branch.area === area && branch?.owner?.name
       ));
     }
   };

@@ -11,7 +11,7 @@ function BranchDetail() {
 
   return (
     <div className="branchDetail">
-      <BranchesDetail />
+      <BranchesDetail pageName={pageName}/>
     </div>
   );
 }

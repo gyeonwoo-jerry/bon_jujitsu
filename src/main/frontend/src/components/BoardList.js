@@ -97,7 +97,7 @@ function BoardList({
 
   // 이미지 URL 정규화 함수
   const normalizeImageUrl = (url) => {
-    if (!url) return "/images/blank_img.png";
+    if (!url || typeof url !== 'string') return "/images/blank_img.png";
 
     // 이미 절대 URL인 경우 그대로 반환
     if (
@@ -189,7 +189,7 @@ function BoardList({
                 <div className="post-desc">{truncateContent(post.content)}</div>
                 <div className="post-footer">
                   <span className="post-author">
-                    {post.name || "작성자 없음"}
+                    {post?.owner?.name || post.name || "작성자 없음"}
                   </span>
                   <span className="post-date">
                     {post.createdAt
