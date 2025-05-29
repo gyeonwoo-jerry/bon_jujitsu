@@ -212,7 +212,7 @@ const BranchCreate = () => {
 
   return (
       <div className="branch-form-container">
-        <h2 className="title">지부관리(지부등록)</h2>
+        <h2 className="branch_form_title">지부관리(지부등록)</h2>
 
         {error && (
             <div className="error-message">

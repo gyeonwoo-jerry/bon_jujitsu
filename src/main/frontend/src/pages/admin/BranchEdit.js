@@ -322,7 +322,7 @@ const BranchEdit = () => {
   if (initialLoading) {
     return (
         <div className="branch-form-container">
-          <h2 className="title">지부관리(지부수정)</h2>
+          <h2 className="branch_form_title">지부관리(지부수정)</h2>
           <div className="loading-indicator">지부 정보를 불러오는 중입니다...</div>
         </div>
     );
@@ -330,7 +330,7 @@ const BranchEdit = () => {
 
   return (
       <div className="branch-form-container">
-        <h2 className="title">지부관리(지부수정)</h2>
+        <h2 className="branch_form_title">지부관리(지부수정)</h2>
 
         {error && (
             <div className="error-message">

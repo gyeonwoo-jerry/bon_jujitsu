@@ -504,7 +504,7 @@ const PostManagement = () => {
       <div className="post-management">
         <AdminHeader />
 
-        <h2 className="title">게시판관리(게시판리스트)</h2>
+        <h2 className="post_title">게시판관리(게시판리스트)</h2>
 
         {error && (
             <div className="error-message" style={{
