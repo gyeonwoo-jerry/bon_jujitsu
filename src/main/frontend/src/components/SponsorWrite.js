@@ -3,13 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/boardWrite.css";
 
-function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" }) {
+function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" }) {
   const { id } = useParams(); // 수정 모드일 경우 게시글 ID
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    region: "",
     images: [], 
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -29,7 +28,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
     };
   }, []);
 
-  // 사용자 권한 확인 (관리자만 가능)
+  // 사용자 권한 확인
   useEffect(() => {
     const checkUserAuth = () => {
       try {
@@ -43,14 +42,14 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
         }
 
         const user = JSON.parse(userInfoStr);
-        if (user.role !== 'ADMIN') {
-          setError('관리자만 제휴업체를 등록할 수 있습니다.');
-          setAuthLoading(false);
-          return;
-        }
-
         setUserInfo(user);
-        setIsAdmin(true);
+        
+        // ADMIN 권한 체크
+        if (user.role === 'ADMIN') {
+          setIsAdmin(true);
+        } else {
+          setError('관리자 권한이 필요합니다.');
+        }
       } catch (error) {
         console.error('사용자 정보 확인 오류:', error);
         setError('사용자 정보를 확인할 수 없습니다.');
@@ -69,7 +68,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
       // 에러 메시지 표시 후 error 상태 초기화
       setError(null);
       // 권한이 없거나 로그인이 필요한 경우 이전 페이지로 이동
-      if (error.includes('로그인') || error.includes('권한') || error.includes('관리자')) {
+      if (error.includes('로그인') || error.includes('권한')) {
         navigate(-1);
       }
     }
@@ -84,11 +83,10 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
       if (!isMounted.current) return;
 
       if (response.status === 200) {
-        const postData = response.data.content;
+        const postData = response.data.dataBody;
         setFormData({
           title: postData.title || "",
           content: postData.content || "",
-          region: postData.region || "",
           images: postData.images || [],
         });
         // 기존 이미지 미리보기 설정
@@ -107,7 +105,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
   }, [apiEndpoint, id]);
 
   useEffect(() => {
-    document.title = id ? "제휴업체 수정" : title;
+    document.title = id ? "게시글 수정" : title;
 
     // 수정 모드인 경우 기존 게시글 데이터 불러오기
     if (id) {
@@ -175,54 +173,100 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
 
       let response;
 
-      // SPONSOR API 데이터 전송
-      const sponsorFormData = new FormData();
+      // 뉴스 API는 다른 형식으로 데이터 전송
+      if (apiEndpoint === "/sponsor") {
+        const sponsorFormData = new FormData();
 
-      // JSON 데이터를 Blob으로 변환하여 추가
-      const jsonBlob = new Blob(
-        [
-          JSON.stringify({
-            title: formData.title,
-            content: formData.content,
-            region: formData.region,
-          }),
-        ],
-        { type: "application/json" }
-      );
-      sponsorFormData.append("request", jsonBlob);
-      
-      // 선택한 파일이 있는 경우 FormData에 추가
-      if (selectedFiles.length > 0) {
-        selectedFiles.forEach((file) => {
-          sponsorFormData.append("images", file); // 'images' 키로 파일 추가
-        });
-      }
+        // JSON 데이터를 Blob으로 변환하여 추가
+        const jsonBlob = new Blob(
+          [
+            JSON.stringify({
+              title: formData.title,
+              content: formData.content,
+            }),
+          ],
+          { type: "application/json" }
+        );
+        sponsorFormData.append("request", jsonBlob);
+        // 선택한 파일이 있는 경우 FormData에 추가
+        if (selectedFiles.length > 0) {
+          selectedFiles.forEach((file) => {
+            sponsorFormData.append("images", file); // 'images' 키로 파일 추가
+          });
+        }
 
-      console.log("제휴업체 등록 요청 데이터:", sponsorFormData);
+        console.log("제휴업체 등록 요청 데이터:", sponsorFormData);
 
-      if (isEditMode) {
-        response = await API.put(`${apiEndpoint}/${id}`, sponsorFormData, {
+        // 백엔드 API 서버 URL 직접 지정 (CORS 이슈가 있을 수 있음)
+        // 개발환경 프록시 설정 확인 필요
+
+        response = await API.post(`${apiEndpoint}`, sponsorFormData, {
           headers: {
             "Content-Type": "multipart/form-data",
-          }
+          },
         });
       } else {
-        response = await API.post(apiEndpoint, sponsorFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          }
-        });
-      }
+        // 일반 게시글 등록/수정 로직
+        const sponsorFormData = new FormData();
 
+        // JSON 데이터를 Blob으로 변환하여 추가
+        const jsonBlob = new Blob(
+          [
+            JSON.stringify({
+              title: formData.title,
+              content: formData.content,
+            }),
+          ],
+          { type: "application/json" }
+        );
+        sponsorFormData.append("request", jsonBlob);
+        // 선택한 파일이 있는 경우 FormData에 추가
+        if (selectedFiles.length > 0) {
+          selectedFiles.forEach((file) => {
+            sponsorFormData.append("images", file); // 'images' 키로 파일 추가
+          });
+        }
+
+        if (isEditMode) {
+          response = await API.put(`${apiEndpoint}/${id}`, sponsorFormData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            }
+        });
+        } else {
+            response = await API.post(apiEndpoint, sponsorFormData, {
+                headers: {
+                "Content-Type": "multipart/form-data",
+                }
+            });
+        }
+      }
       if (response.status === 200 || response.status === 201) {
         if (response.data.success) {
-          // 성공 시 제휴업체 목록으로 이동
-          navigate("/sponsor");
+          // 성공 시 게시글 목록 또는 상세 페이지로 이동
+          if (apiEndpoint === "/sponsor") {
+            // 제휴업체 목록으로 이동
+            navigate(apiEndpoint);
+          } else {
+            // ID가 있으면 해당 게시글의 상세 페이지로, 없으면 목록으로 이동
+            const redirectId = isEditMode ? id : response.data.id;
+            if (redirectId) {
+              // 수정 모드일 경우 해당 게시글의 상세 페이지로 이동
+              navigate(
+                `${
+                  apiEndpoint.startsWith("/") ? apiEndpoint : "/" + apiEndpoint
+                }/${redirectId}`
+              );
+            } else {
+              // 등록 모드일 경우 게시글 목록으로 이동
+              navigate(apiEndpoint);
+            }
+          }
         } else {
           if (response.data.message) {
             setError(response.data.message);
           } else {
-            setError("제휴업체 등록에 실패했습니다.");
+            setError("글 등록에 실패했습니다.");
           }
         }
       }
@@ -235,7 +279,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
         ) {
           setError(error.response.data.message);
         } else {
-          setError("제휴업체 정보를 저장하는 중 오류가 발생했습니다.");
+          setError("게시글을 저장하는 중 오류가 발생했습니다.");
         }
       }
     } finally {
@@ -260,43 +304,43 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
   }
 
   if (!isAdmin) {
-    return <div className="error-message">관리자만 제휴업체를 등록할 수 있습니다.</div>;
+    return <div className="error-message">접근 권한이 없습니다.</div>;
   }
 
   if (loading && isEditMode) {
-    return <div className="loading">제휴업체 정보를 불러오는 중...</div>;
+    return <div className="loading">게시글 정보를 불러오는 중...</div>;
   }
 
   return (
     <div className="board-write-container">
       <h1 className="board-write-title">
-        {isEditMode ? "제휴업체 수정" : title}
+        {isEditMode ? "게시글 수정" : title}
       </h1>
 
       {error && <div className="error-message">{error}</div>}
 
       <form className="board-write-form" onSubmit={handleSubmit}>
+
         <div className="form-group">
-          <label htmlFor="title">제휴업체명</label>
+          <label htmlFor="title">제목</label>
           <input
             type="text"
             id="title"
             name="title"
             value={formData.title}
             onChange={handleInputChange}
-            placeholder="제휴업체명을 입력하세요"
+            placeholder="제목을 입력하세요"
           />
         </div>
 
-
         <div className="form-group">
-          <label htmlFor="content">제휴업체 설명</label>
+          <label htmlFor="content">내용</label>
           <textarea
             id="content"
             name="content"
             value={formData.content}
             onChange={handleInputChange}
-            placeholder="제휴업체 설명을 입력하세요"
+            placeholder="내용을 입력하세요"
             rows="10"
           ></textarea>
         </div>
@@ -344,4 +388,4 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 등록" 
   );
 }
 
-export default SponsorWrite; 
+export default SponsorWrite;

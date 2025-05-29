@@ -32,8 +32,6 @@ import StoreWritePage from './pages/storeWrite';
 import AdminMain from "./pages/admin/AdminMain";
 import MemberManagement from "./pages/admin/MemberManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
-import './styles/main.css';
-import './styles/response.css';
 import ProductManagement from "./pages/admin/ProductManagement";
 import ProductCreate from "./pages/admin/ProductCreate";
 import ProductEdit from "./pages/admin/ProductEdit";
@@ -43,6 +41,8 @@ import BranchEdit from "./pages/admin/BranchEdit";
 import PostManagement from "./pages/admin/PostManagement";
 import PostCreate from "./pages/admin/PostCreate";
 import PostEdit from "./pages/admin/PostEdit";
+import './styles/main.css';
+import './styles/response.css';
 
 
 function App() {
@@ -71,15 +71,19 @@ function App() {
           <Route path="/skill" element={<Skill />} />
           <Route path="/skillDetail/:id" element={<SkillDetail />} />
           <Route path="/skillWrite" element={<SkillWrite />} />
+          <Route path="/skillWrite/:id" element={<SkillWrite />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
           <Route path="/newsWrite" element={<NewsWrite />} />
+          <Route path="/newsWrite/:id" element={<NewsWrite />} />
           <Route path="/qna" element={<Qna />} />
           <Route path="/qnaDetail/:id" element={<QnaDetail />} />
           <Route path="/qnaWrite" element={<QnaWrite />} />
+          <Route path="/qnaWrite/:id" element={<QnaWrite />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
           <Route path="/sponsorWrite" element={<SponsorWrite />} />
+          <Route path="/sponsorWrite/:id" element={<SponsorWrite />} />
           <Route path="/join" element={<Join />} />
           <Route path="/admin" element={<AdminMain />} />
           <Route path="/admin/members" element={<MemberManagement />} />

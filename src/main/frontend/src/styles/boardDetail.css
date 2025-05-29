@@ -41,6 +41,32 @@
     padding: 10px 20px;
     font-size: 16px;
     font-weight: 600;
+    color: var(--white-color);
+    border: 1px solid var(--black-color);
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: var(--black-color);
+}
+.board-detail-container .detail_header .delete-button:hover {
+    background-color: var(--point-color);
+    color: var(--white-color);
+    border: 1px solid var(--point-color);
+}
+
+.board-detail-container .detail_header .admin-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.board-detail-container .detail_header .edit-button {
+    transition: all 0.3s ease;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
     color: var(--black-color);
     border: 1px solid var(--black-color);
     border-radius: 30px;
@@ -48,8 +74,9 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    background-color: #f8f9fa;
 }
-.board-detail-container .detail_header .delete-button:hover {
+.board-detail-container .detail_header .edit-button:hover {
     background-color: var(--point-color);
     color: var(--white-color);
     border: 1px solid var(--point-color);

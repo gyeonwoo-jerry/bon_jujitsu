@@ -18,35 +18,49 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
   // 이미지 URL 정규화 함수
   const normalizeImageUrl = (imageData) => {
+    console.log("normalizeImageUrl - 입력:", imageData);
+    
     // 빈 값이면 기본 이미지 반환
-    if (!imageData) return "/images/blank_img.png";
+    if (!imageData) {
+      console.log("normalizeImageUrl - 빈 값, 기본 이미지 반환");
+      return "/images/blank_img.png";
+    }
 
     let url = imageData;
     
     // 객체인 경우 URL 추출
     if (typeof imageData === 'object') {
       url = imageData.url || imageData.imagePath || imageData.src;
+      console.log("normalizeImageUrl - 객체에서 URL 추출:", url);
     }
     
     // URL이 여전히 문자열이 아니면 기본 이미지 반환
-    if (!url || typeof url !== 'string') return "/images/blank_img.png";
+    if (!url || typeof url !== 'string') {
+      console.log("normalizeImageUrl - 유효하지 않은 URL, 기본 이미지 반환");
+      return "/images/blank_img.png";
+    }
 
     // 이미 절대 URL인 경우 그대로 반환
     if (url.startsWith("http://") || url.startsWith("https://")) {
+      console.log("normalizeImageUrl - 절대 URL:", url);
       return url;
     }
 
     // 상대 URL인 경우 경로 정리
     if (url.includes("%")) {
       try {
-        return decodeURIComponent(url);
+        const decodedUrl = decodeURIComponent(url);
+        console.log("normalizeImageUrl - 디코딩된 URL:", decodedUrl);
+        return decodedUrl;
       } catch (e) {
         console.error("URL 디코딩 오류:", e);
       }
     }
 
     // 슬래시로 시작하는지 확인하고 조정
-    return url.startsWith("/") ? url : `/${url}`;
+    const finalUrl = url.startsWith("/") ? url : `/${url}`;
+    console.log("normalizeImageUrl - 최종 URL:", finalUrl);
+    return finalUrl;
   };
 
   // fetchPostDetail 함수를 useCallback으로 메모이제이션
@@ -132,6 +146,37 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
   const handleGoBack = () => {
     navigate(-1); // 이전 페이지로 이동
+  };
+
+  // 게시물 수정 함수
+  const handleEdit = () => {
+    // ID 유효성 확인 및 디버깅 로그
+    console.log("BoardDetail - handleEdit ID:", id);
+    console.log("BoardDetail - apiEndpoint:", normalizedApiEndpoint);
+    
+    if (!id || id === "undefined") {
+      alert("유효하지 않은 게시글입니다.");
+      return;
+    }
+
+    // API 엔드포인트에 따라 수정 페이지 경로 결정
+    let editPath = "";
+    
+    if (normalizedApiEndpoint.includes("/skill")) {
+      editPath = `/skillWrite/${id}`;
+    } else if (normalizedApiEndpoint.includes("/news")) {
+      editPath = `/newsWrite/${id}`;
+    } else if (normalizedApiEndpoint.includes("/qna")) {
+      editPath = `/qnaWrite/${id}`;
+    } else if (normalizedApiEndpoint.includes("/sponsor")) {
+      editPath = `/sponsorWrite/${id}`;
+    } else {
+      // 기본 게시판
+      editPath = `/boardWrite/${id}`;
+    }
+
+    console.log("BoardDetail - editPath:", editPath);
+    navigate(editPath);
   };
 
   // 게시물 삭제 함수
@@ -222,11 +267,15 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
             &larr;
           </button>
           {isAdmin && (
-          <button className="delete-button" onClick={handleDelete}>
-            삭제
-          </button>
+            <div className="admin-buttons">
+              <button className="edit-button" onClick={handleEdit}>
+                수정
+              </button>
+              <button className="delete-button" onClick={handleDelete}>
+                삭제
+              </button>
+            </div>
           )}
-          
         </div>
 
         <div className="detail_content">
