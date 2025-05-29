@@ -14,6 +14,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -37,9 +39,9 @@ public class AdminController {
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String name,
       @RequestParam(required = false) UserRole role,
-      @RequestParam(required = false) Long branchId
+      @RequestParam(required = false) List<Long> branchIds
   ) {
-    GetAllUserRequest request = new GetAllUserRequest(name, role, branchId);
+    GetAllUserRequest request = new GetAllUserRequest(name, role, branchIds);
     PageResponse<UserResponse> response = userService.getUsers(page, size, userId, request);
     return ApiResponse.success("회원 조회 성공", response);
   }

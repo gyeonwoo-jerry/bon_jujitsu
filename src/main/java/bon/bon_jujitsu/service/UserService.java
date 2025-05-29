@@ -231,19 +231,17 @@ public class UserService {
     }
   }
 
-
   @Transactional(readOnly = true)
-  public PageResponse<UserResponse> getUsers(int page, int size, Long userId,
-      GetAllUserRequest request) {
+  public PageResponse<UserResponse> getUsers(int page, int size, Long userId, GetAllUserRequest request) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
     // ADMIN or OWNER 권한 체크
     boolean isAdmin = user.isAdmin();
     List<Long> ownerBranchIds = user.getBranchUsers().stream()
-        .filter(bu -> bu.getUserRole() == UserRole.OWNER)
-        .map(bu -> bu.getBranch().getId())
-        .toList();
+            .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+            .map(bu -> bu.getBranch().getId())
+            .toList();
     boolean isOwner = !ownerBranchIds.isEmpty();
 
     // 권한 체크
@@ -257,31 +255,43 @@ public class UserService {
     }
 
     PageRequest pageRequest = PageRequest.of(page - 1, size,
-        Sort.by(Sort.Direction.DESC, "createdAt"));
+            Sort.by(Sort.Direction.DESC, "createdAt"));
 
     String name = (request != null) ? request.name() : null;
     UserRole role = (request != null) ? request.role() : null;
-    Long branchId = (request != null) ? request.branchId() : null;
+    List<Long> branchIds = (request != null) ? request.branchIds() : null;
 
-    // 검색 조건 없는 경우
-    if (name == null && role == null && branchId == null) {
+    // OWNER 권한 검증 - 요청된 branchIds가 자신이 관리하는 지부에 포함되는지 확인
+    if (!isAdmin && isOwner && branchIds != null && !branchIds.isEmpty()) {
+      List<Long> unauthorizedBranches = branchIds.stream()
+              .filter(branchId -> !ownerBranchIds.contains(branchId))
+              .toList();
+
+      if (!unauthorizedBranches.isEmpty()) {
+        throw new IllegalArgumentException("해당 지부의 회원을 조회할 권한이 없습니다: " + unauthorizedBranches);
+      }
+    }
+
+    // 검색 조건 없는 경우 (전체 조회)
+    if (name == null && role == null && (branchIds == null || branchIds.isEmpty())) {
       Page<User> userPage = isAdmin
-          ? userRepository.findAllByIsDeletedFalse(pageRequest)
-          : userRepository.findAllByBranchIdInAndIsDeletedFalse(ownerBranchIds, pageRequest);
+              ? userRepository.findAllByIsDeletedFalse(pageRequest)
+              : userRepository.findAllByBranchIdInAndIsDeletedFalse(ownerBranchIds, pageRequest);
 
       return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
     }
 
-    // 검색 조건 있는 경우
+    // 검색 조건이 있는 경우
+    List<Long> finalBranchIds;
     if (!isAdmin && isOwner) {
-      // Owner는 검색 조건이 있더라도 자신의 지부들 안에서만 필터링
-      Specification<User> spec = UserSpecification.withFilters(name, role, ownerBranchIds);
-      Page<User> userPage = userRepository.findAll(spec, pageRequest);
-      return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
+      // OWNER인 경우: branchIds가 지정되면 해당 지부들, 없으면 자신이 관리하는 모든 지부
+      finalBranchIds = (branchIds != null && !branchIds.isEmpty()) ? branchIds : ownerBranchIds;
+    } else {
+      // ADMIN인 경우: branchIds가 지정되면 해당 지부들, 없으면 null (전체 조회)
+      finalBranchIds = branchIds;
     }
 
-    // Admin인 경우 전체 필터링 가능
-    Specification<User> spec = UserSpecification.withFilters(name, role, branchId);
+    Specification<User> spec = UserSpecification.withFilters(name, role, finalBranchIds);
     Page<User> userPage = userRepository.findAll(spec, pageRequest);
     return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }
