@@ -33,10 +33,8 @@ public class Sponsor extends Timestamped {
   @Column(nullable = false)
   private String title;
 
-  @Column(nullable = false)
   private String content;
 
-  @Column(nullable = false)
   private String url;
 
   @Builder.Default

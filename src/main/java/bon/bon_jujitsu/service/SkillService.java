@@ -1,10 +1,6 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.PostImage;
-import bon.bon_jujitsu.domain.PostType;
-import bon.bon_jujitsu.domain.Skill;
-import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
+import bon.bon_jujitsu.domain.*;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SkillRequest;
 import bon.bon_jujitsu.dto.response.ImageResponse;
@@ -16,9 +12,6 @@ import bon.bon_jujitsu.repository.SkillRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,13 +20,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class SkillService {
 
   private final SkillRepository skillRepository;
-  private final BranchRepository branchRepository;
   private final UserRepository userRepository;
   private final PostImageService postImageService;
   private final PostImageRepository postImageRepository;
@@ -61,43 +57,18 @@ public class SkillService {
   public PageResponse<SkillResponse> getSkills(int page, int size, String name) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Skill> skills;
-
-    if (name != null && !name.isBlank()) {
-      // 작성자 이름으로 필터링
-      skills = skillRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
-    } else {
-      // 전체 스킬 조회
-      skills = skillRepository.findAll(pageRequest);
-    }
+    Page<Skill> skills = (name != null && !name.isBlank())
+            ? skillRepository.findByUser_NameContainingIgnoreCase(name, pageRequest)
+            : skillRepository.findAll(pageRequest);
 
     Page<SkillResponse> skillResponses = skills.map(skill -> {
-      // 이미지 경로를 ImageResponse 객체 리스트로 변환
-      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId())
-          .stream()
-          .map(postImage -> {
-            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-            return ImageResponse.builder()
-                .id(postImage.getId()) // PostImage의 ID 사용
-                .url(path)
-                .build();
-          })
-          .collect(Collectors.toList());
-
-      return new SkillResponse(
-          skill.getId(),
-          skill.getTitle(),
-          skill.getContent(),
-          skill.getUser().getName(),
-          imageResponses,
-          skill.getViewCount(),
-          skill.getCreatedAt(),
-          skill.getModifiedAt()
-      );
+      List<PostImage> images = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId());
+      return SkillResponse.fromEntity(skill, images);
     });
 
     return PageResponse.fromPage(skillResponses);
   }
+
 
   public SkillResponse getSkill(Long skillId, HttpServletRequest request) {
     Skill skill = skillRepository.findById(skillId).orElseThrow(()-> new IllegalArgumentException("스킬게시물을 찾을 수 없습니다."));

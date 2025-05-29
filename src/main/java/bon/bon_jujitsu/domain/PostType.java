@@ -5,5 +5,6 @@ public enum PostType {
   SKILL,
   NEWS,
   NOTICE,
-  SPONSOR
+  SPONSOR,
+  QNA
 }
