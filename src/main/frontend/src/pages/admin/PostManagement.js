@@ -59,7 +59,7 @@ const PostManagement = () => {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [regionsLoading, setRegionsLoading] = useState(false);
 
-  // OWNER용 지부 관리 (MemberManagement와 동일)
+  // OWNER용 지부 관리 (수정된 부분)
   const [userBranchIds, setUserBranchIds] = useState([]);
   const [userBranches, setUserBranches] = useState([]);
   const [selectedOwnerBranch, setSelectedOwnerBranch] = useState('');
@@ -118,15 +118,16 @@ const PostManagement = () => {
 
   // region 선택 핸들러 (ADMIN용) - 클릭 즉시 데이터 로드
   const handleRegionClick = (region) => {
-    setSelectedRegion(prevRegion => prevRegion === region ? "" : region);
+    setSelectedRegion(region);
     setCurrentPage(0);
 
     // Board, Notice 카테고리이고 선택된 카테고리가 있을 때만 즉시 검색
     if (selectedCategory && getCurrentCategoryInfo()?.needsBranch) {
       setSearchPerformed(true);
-      // 약간의 지연 후 검색 실행 (상태 업데이트 후)
+      // 상태 업데이트 후 바로 검색 실행
       setTimeout(() => {
-        fetchPosts();
+        // region을 직접 사용하여 API 호출
+        fetchPostsWithRegion(region);
       }, 100);
     } else {
       setSearchPerformed(false);
@@ -134,7 +135,26 @@ const PostManagement = () => {
     }
   };
 
-  // OWNER 지부 선택 핸들러 - 선택 즉시 데이터 로드
+  // OWNER 지부 선택 핸들러 (수정된 부분 - 버튼 클릭용)
+  const handleOwnerBranchClick = (branchId) => {
+    setSelectedOwnerBranch(branchId);
+    setCurrentPage(0);
+
+    // Board, Notice 카테고리이고 선택된 카테고리가 있을 때만 즉시 검색
+    if (selectedCategory && getCurrentCategoryInfo()?.needsBranch) {
+      setSearchPerformed(true);
+      // 상태 업데이트 후 바로 검색 실행
+      setTimeout(() => {
+        // branchId를 직접 사용하여 API 호출
+        fetchPostsWithBranch(branchId);
+      }, 100);
+    } else {
+      setSearchPerformed(false);
+      setPosts([]);
+    }
+  };
+
+  // OWNER 지부 선택 핸들러 (드롭다운용 - 단일 지부일 때만 사용)
   const handleOwnerBranchChange = (e) => {
     setSelectedOwnerBranch(e.target.value);
     setCurrentPage(0);
@@ -187,6 +207,14 @@ const PostManagement = () => {
           setUserBranchIds(branchIds);
           setUserBranches(branches);
           console.log("OWNER 지부 정보:", { branchIds, branches });
+
+          // 🔥 단일 지부 관리자인 경우 자동으로 해당 지부 선택
+          if (branches.length === 1) {
+            setSelectedOwnerBranch(branches[0].id.toString());
+            console.log("단일 지부 자동 선택:", branches[0].id);
+          } else if (branches.length > 1) {
+            console.log("다중 지부 관리자 - 사용자 선택 대기");
+          }
 
           // 모든 지부 정보도 로드
           fetchAllBranches();
@@ -253,21 +281,262 @@ const PostManagement = () => {
     }
   }, [selectedCategory]);
 
-  // region 변경 시 데이터 로드 제거 (handleRegionClick에서 직접 처리)
-  // useEffect(() => {
-  //   if (userRole === "ADMIN" && selectedCategory && getCurrentCategoryInfo()?.needsBranch && searchPerformed) {
-  //     setCurrentPage(0);
-  //     fetchPosts();
-  //   }
-  // }, [selectedRegion]);
+  // 특정 region으로 게시글 데이터 가져오기 (ADMIN 버튼 클릭용)
+  const fetchPostsWithRegion = async (region) => {
+    // 이미 API 호출 중이면 중복 호출 방지
+    if (apiCallInProgress.current || loading) {
+      console.log('이미 API 호출 중입니다. 중복 호출 방지.');
+      return;
+    }
 
-  // OWNER 지부 선택 변경 시 데이터 로드 제거 (handleOwnerBranchChange에서 직접 처리)
-  // useEffect(() => {
-  //   if (userRole === "OWNER" && selectedCategory && getCurrentCategoryInfo()?.needsBranch && searchPerformed && userBranches.length > 1) {
-  //     setCurrentPage(0);
-  //     fetchPosts();
-  //   }
-  // }, [selectedOwnerBranch]);
+    // 토큰 확인
+    if (!checkToken()) return;
+
+    setLoading(true);
+    apiCallInProgress.current = true;
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.append('page', 1); // 새로운 검색이므로 첫 페이지
+      params.append('size', postsPerPage);
+
+      // 현재 선택된 카테고리 정보 가져오기
+      const categoryInfo = allCategories.find(cat => cat.id === selectedCategory);
+
+      if (!categoryInfo) {
+        setError('선택된 카테고리 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      // 작성자 검색
+      if (searchQuery.trim()) {
+        params.append('name', searchQuery.trim());
+      }
+
+      // region에 따른 지부 조회
+      if (region === "" || region === "전체") {
+        // 전체 조회 - 아무 지부 조건 없이 조회
+        // params에 branchId나 branchIds를 추가하지 않음
+      } else {
+        // 특정 region 선택된 경우 해당 region의 지부들 ID를 찾아서 전송
+        const selectedBranches = allBranches.filter(branch => branch.region === region);
+        console.log(`선택된 region "${region}"에 해당하는 지부들:`, selectedBranches);
+
+        if (selectedBranches.length === 1) {
+          params.append("branchId", selectedBranches[0].id);
+        } else if (selectedBranches.length > 1) {
+          selectedBranches.forEach(branch => {
+            params.append("branchIds", branch.id);
+          });
+        }
+      }
+
+      console.log('API 요청 시작:', `${categoryInfo.apiPath}?${params.toString()}`);
+
+      const res = await API.get(categoryInfo.apiPath, { params });
+
+      console.log('API 응답:', res.data);
+
+      // HTML 응답 체크
+      if (typeof res.data === 'string') {
+        console.error('HTML 응답 감지. 인증 문제일 수 있습니다.');
+        setError('서버에서 올바른 응답을 받지 못했습니다. 다시 로그인해주세요.');
+        return;
+      }
+
+      if (res.data?.success) {
+        const data = res.data?.content;
+
+        const transformedPosts = data?.list?.map(item => {
+          // 작성자 정보 안전하게 처리
+          let authorName = '관리자'; // 기본값
+
+          if (item.author) {
+            // author 필드가 있는 경우
+            authorName = item.author;
+          } else if (item.creator) {
+            // creator 객체가 있는 경우
+            if (item.creator.name) {
+              authorName = item.creator.name;
+            } else if (item.creator.deleted || item.creator.status === 'DELETED') {
+              // 탈퇴한 회원인 경우 명시적으로 표시
+              authorName = '탈퇴한 회원';
+            } else {
+              authorName = '알 수 없음';
+            }
+          } else if (item.creator === null) {
+            // creator가 명시적으로 null인 경우 (탈퇴한 회원)
+            authorName = '탈퇴한 회원';
+          }
+
+          return {
+            id: item.id,
+            title: item.title || item.name,
+            author: authorName,
+            date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
+            // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
+            isDeletedAuthor: authorName === '탈퇴한 회원'
+          };
+        }) || [];
+
+        setPosts(transformedPosts);
+        setTotalPages(data?.totalPage || 0);
+        setTotalPosts(data?.totalElements || data?.totalCount || 0);
+        setCurrentPage(0); // 첫 페이지로 설정
+      } else {
+        console.error('조회 실패:', res.data?.message);
+        setError('게시글 목록을 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
+        setPosts([]);
+        setTotalPages(0);
+        setTotalPosts(0);
+      }
+    } catch (err) {
+      console.error('API 호출 오류:', err);
+
+      if (err.response) {
+        console.error('오류 상태:', err.response.status);
+
+        if (err.response.status === 401) {
+          setError('인증에 실패했습니다. 다시 로그인해주세요.');
+        } else {
+          setError(`서버 오류가 발생했습니다 (${err.response.status}): ${err.message || '알 수 없는 오류'}`);
+        }
+      } else if (err.request) {
+        setError('서버로부터 응답이 없습니다. 네트워크 연결을 확인해주세요.');
+      } else {
+        setError('요청 설정 중 오류가 발생했습니다: ' + err.message);
+      }
+
+      setPosts([]);
+      setTotalPages(0);
+      setTotalPosts(0);
+    } finally {
+      setLoading(false);
+      apiCallInProgress.current = false;
+    }
+  };
+
+  // 특정 지부로 게시글 데이터 가져오기 (버튼 클릭용)
+  const fetchPostsWithBranch = async (branchId) => {
+    // 이미 API 호출 중이면 중복 호출 방지
+    if (apiCallInProgress.current || loading) {
+      console.log('이미 API 호출 중입니다. 중복 호출 방지.');
+      return;
+    }
+
+    // 토큰 확인
+    if (!checkToken()) return;
+
+    setLoading(true);
+    apiCallInProgress.current = true;
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.append('page', 1); // 새로운 검색이므로 첫 페이지
+      params.append('size', postsPerPage);
+
+      // 현재 선택된 카테고리 정보 가져오기
+      const categoryInfo = allCategories.find(cat => cat.id === selectedCategory);
+
+      if (!categoryInfo) {
+        setError('선택된 카테고리 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      // 작성자 검색
+      if (searchQuery.trim()) {
+        params.append('name', searchQuery.trim());
+      }
+
+      // 특정 지부 ID로 조회
+      params.append("branchId", branchId);
+
+      console.log('API 요청 시작:', `${categoryInfo.apiPath}?${params.toString()}`);
+
+      const res = await API.get(categoryInfo.apiPath, { params });
+
+      console.log('API 응답:', res.data);
+
+      // HTML 응답 체크
+      if (typeof res.data === 'string') {
+        console.error('HTML 응답 감지. 인증 문제일 수 있습니다.');
+        setError('서버에서 올바른 응답을 받지 못했습니다. 다시 로그인해주세요.');
+        return;
+      }
+
+      if (res.data?.success) {
+        const data = res.data?.content;
+
+        const transformedPosts = data?.list?.map(item => {
+          // 작성자 정보 안전하게 처리
+          let authorName = '관리자'; // 기본값
+
+          if (item.author) {
+            // author 필드가 있는 경우
+            authorName = item.author;
+          } else if (item.creator) {
+            // creator 객체가 있는 경우
+            if (item.creator.name) {
+              authorName = item.creator.name;
+            } else if (item.creator.deleted || item.creator.status === 'DELETED') {
+              // 탈퇴한 회원인 경우 명시적으로 표시
+              authorName = '탈퇴한 회원';
+            } else {
+              authorName = '알 수 없음';
+            }
+          } else if (item.creator === null) {
+            // creator가 명시적으로 null인 경우 (탈퇴한 회원)
+            authorName = '탈퇴한 회원';
+          }
+
+          return {
+            id: item.id,
+            title: item.title || item.name,
+            author: authorName,
+            date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
+            // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
+            isDeletedAuthor: authorName === '탈퇴한 회원'
+          };
+        }) || [];
+
+        setPosts(transformedPosts);
+        setTotalPages(data?.totalPage || 0);
+        setTotalPosts(data?.totalElements || data?.totalCount || 0);
+        setCurrentPage(0); // 첫 페이지로 설정
+      } else {
+        console.error('조회 실패:', res.data?.message);
+        setError('게시글 목록을 불러오는데 실패했습니다: ' + (res.data?.message || '알 수 없는 오류'));
+        setPosts([]);
+        setTotalPages(0);
+        setTotalPosts(0);
+      }
+    } catch (err) {
+      console.error('API 호출 오류:', err);
+
+      if (err.response) {
+        console.error('오류 상태:', err.response.status);
+
+        if (err.response.status === 401) {
+          setError('인증에 실패했습니다. 다시 로그인해주세요.');
+        } else {
+          setError(`서버 오류가 발생했습니다 (${err.response.status}): ${err.message || '알 수 없는 오류'}`);
+        }
+      } else if (err.request) {
+        setError('서버로부터 응답이 없습니다. 네트워크 연결을 확인해주세요.');
+      } else {
+        setError('요청 설정 중 오류가 발생했습니다: ' + err.message);
+      }
+
+      setPosts([]);
+      setTotalPages(0);
+      setTotalPosts(0);
+    } finally {
+      setLoading(false);
+      apiCallInProgress.current = false;
+    }
+  };
 
   // 게시글 데이터 가져오기
   const fetchPosts = async () => {
@@ -314,18 +583,12 @@ const PostManagement = () => {
         // 지부 검색 (MemberManagement 방식 적용)
         if (userRole === "OWNER") {
           // OWNER는 자신이 관리하는 지부의 게시글 조회
-          const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-          const branchRoles = userInfo.branchRoles || [];
-          const ownerBranches = branchRoles.filter(br => br.role === "OWNER");
-
           if (selectedOwnerBranch) {
             // 특정 지부를 선택한 경우
             params.append("branchId", selectedOwnerBranch);
-          } else if (ownerBranches.length > 0) {
-            // 전체 선택인 경우 모든 관리 지부 조회
-            ownerBranches.forEach(branch => {
-              params.append("branchIds", branch.branchId);
-            });
+          } else {
+            // 지부가 선택되지 않은 경우 - 빈 결과 반환을 위해 존재하지 않는 branchId 전송
+            params.append("branchId", "-1");
           }
         } else if (userRole === "ADMIN" && selectedRegion) {
           // ADMIN인 경우 선택된 region에 해당하는 지부들의 ID를 찾아서 전송
@@ -364,11 +627,34 @@ const PostManagement = () => {
         const data = res.data?.content;
 
         const transformedPosts = data?.list?.map(item => {
+          // 작성자 정보 안전하게 처리
+          let authorName = '관리자'; // 기본값
+
+          if (item.author) {
+            // author 필드가 있는 경우
+            authorName = item.author;
+          } else if (item.creator) {
+            // creator 객체가 있는 경우
+            if (item.creator.name) {
+              authorName = item.creator.name;
+            } else if (item.creator.deleted || item.creator.status === 'DELETED') {
+              // 탈퇴한 회원인 경우 명시적으로 표시
+              authorName = '탈퇴한 회원';
+            } else {
+              authorName = '알 수 없음';
+            }
+          } else if (item.creator === null) {
+            // creator가 명시적으로 null인 경우 (탈퇴한 회원)
+            authorName = '탈퇴한 회원';
+          }
+
           return {
             id: item.id,
             title: item.title || item.name,
-            author: item.author || item.creator?.name || '관리자',
-            date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0]
+            author: authorName,
+            date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
+            // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
+            isDeletedAuthor: authorName === '탈퇴한 회원'
           };
         }) || [];
 
@@ -415,6 +701,12 @@ const PostManagement = () => {
 
     if (!selectedCategory) {
       alert("카테고리를 선택해주세요.");
+      return;
+    }
+
+    // OWNER가 Board, Notice 카테고리에서 지부를 선택하지 않고 검색하는 경우 차단
+    if (userRole === "OWNER" && categoryInfo?.needsBranch && !selectedOwnerBranch) {
+      alert("지부를 선택해주세요.");
       return;
     }
 
@@ -498,6 +790,12 @@ const PostManagement = () => {
   // 현재 카테고리 정보 가져오기
   const getCurrentCategoryInfo = () => {
     return allCategories.find(cat => cat.id === selectedCategory);
+  };
+
+  // OWNER의 지부 정보를 버튼으로 표시할지 결정하는 함수
+  const getSelectedOwnerBranchInfo = () => {
+    if (!selectedOwnerBranch || userBranches.length === 0) return null;
+    return userBranches.find(branch => branch.id.toString() === selectedOwnerBranch);
   };
 
   return (
@@ -620,23 +918,46 @@ const PostManagement = () => {
             </div>
         )}
 
-        {/* OWNER인 경우 지부 선택 드롭다운 (Board, Notice 카테고리이고 여러 지부 관리 시에만) */}
-        {userRole === "OWNER" && getCurrentCategoryInfo()?.needsBranch && userBranches.length > 1 && (
-            <div className="owner-branch-selector">
-              <label className="branch-selector-label">관리 지부 선택:</label>
-              <select
-                  value={selectedOwnerBranch}
-                  onChange={handleOwnerBranchChange}
-                  className="form-select"
-              >
-                <option value="">전체 관리 지부</option>
-                {userBranches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.region} ({branch.area})
-                    </option>
-                ))}
-              </select>
-            </div>
+        {/* OWNER인 경우 지부 선택 (Board, Notice 카테고리에서만) */}
+        {userRole === "OWNER" && getCurrentCategoryInfo()?.needsBranch && (
+            <>
+              {/* 다중 지부 관리자인 경우 버튼 형태 (전체 버튼 없음) */}
+              {userBranches.length > 1 && (
+                  <div className="region-tabs">
+                    <div className="region-tabs-header">
+                      <span className="region-tabs-label">관리 지부 선택:</span>
+                    </div>
+                    <div className="region-buttons">
+                      {userBranches.map((branch) => (
+                          <button
+                              key={branch.id}
+                              className={`region-button ${selectedOwnerBranch === branch.id.toString() ? 'active' : ''}`}
+                              onClick={() => handleOwnerBranchClick(branch.id.toString())}
+                          >
+                            {branch.region} ({branch.area})
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+              )}
+
+              {/* 단일 지부 관리자인 경우 드롭다운 형태 (기존 유지) */}
+              {userBranches.length === 1 && (
+                  <div className="owner-branch-selector">
+                    <label className="branch-selector-label">관리 지부 선택:</label>
+                    <select
+                        value={selectedOwnerBranch}
+                        onChange={handleOwnerBranchChange}
+                        className="form-select"
+                    >
+                      <option value={userBranches[0].id}>
+                        {userBranches[0].region} ({userBranches[0].area}) - 관리 지부
+                      </option>
+                    </select>
+                    <span className="single-branch-note">* 단일 지부 관리자입니다</span>
+                  </div>
+              )}
+            </>
         )}
 
         {/* 현재 선택된 조건 표시 */}
@@ -644,6 +965,16 @@ const PostManagement = () => {
             <div className="current-filter">
               <span className="filter-label">현재 조회 중:</span>
               <span className="filter-value">{selectedRegion} 지부</span>
+            </div>
+        )}
+
+        {/* OWNER 다중 지부 관리자의 현재 선택된 지부 표시 */}
+        {userRole === "OWNER" && userBranches.length > 1 && selectedOwnerBranch && getCurrentCategoryInfo()?.needsBranch && (
+            <div className="current-filter">
+              <span className="filter-label">현재 조회 중:</span>
+              <span className="filter-value">
+                {getSelectedOwnerBranchInfo()?.region} ({getSelectedOwnerBranchInfo()?.area}) 지부
+              </span>
             </div>
         )}
 

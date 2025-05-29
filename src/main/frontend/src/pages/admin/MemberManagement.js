@@ -92,6 +92,12 @@ const MemberManagement = () => {
 
             console.log("OWNER 지부 정보:", { branchIds, branches });
 
+            // 🔥 단일 지부 관리자인 경우 자동으로 해당 지부 선택
+            if (branches.length === 1) {
+              setSelectedOwnerBranch(branches[0].id.toString());
+              console.log("단일 지부 자동 선택:", branches[0].id);
+            }
+
             // 모든 지부 정보도 로드
             fetchAllBranches();
 
@@ -105,7 +111,8 @@ const MemberManagement = () => {
             setTimeout(() => {
               fetchRegions();
               setIsSearched(true);
-              fetchMembers(1);
+              // 🔥 ADMIN 초기 로드시 전체 조회를 위해 fetchMembersWithRegion 사용
+              fetchMembersWithRegion(""); // 빈 문자열로 전체 조회
             }, 200);
           }
         }
@@ -117,16 +124,32 @@ const MemberManagement = () => {
     loadUserInfo();
   }, []);
 
-  // region 선택 핸들러 (ADMIN용)
+  // region 선택 핸들러 (ADMIN용) - 버튼 클릭 시 즉시 조회
   const handleRegionClick = (region) => {
-    setSelectedRegion(prevRegion => prevRegion === region ? "" : region);
+    setSelectedRegion(region);
     setCurrentPage(1);
+
+    // 즉시 회원 조회 실행
+    setTimeout(() => {
+      fetchMembersWithRegion(region);
+    }, 100);
   };
 
-  // OWNER 지부 선택 핸들러
+  // OWNER 지부 선택 핸들러 (드롭다운용 - 단일 지부일 때만 사용)
   const handleOwnerBranchChange = (e) => {
     setSelectedOwnerBranch(e.target.value);
     setCurrentPage(1);
+  };
+
+  // OWNER 지부 선택 핸들러 (버튼 클릭용 - 다중 지부일 때 사용)
+  const handleOwnerBranchClick = (branchId) => {
+    setSelectedOwnerBranch(branchId);
+    setCurrentPage(1);
+
+    // 즉시 회원 조회 실행
+    setTimeout(() => {
+      fetchMembersWithBranch(branchId);
+    }, 100);
   };
 
   // 검색 조건 변경 핸들러
@@ -134,7 +157,132 @@ const MemberManagement = () => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  // 회원 데이터 가져오기
+  // 특정 region으로 회원 데이터 가져오기 (ADMIN 버튼 클릭용)
+  const fetchMembersWithRegion = async (region, page = 1) => {
+    try {
+      setIsLoading(true);
+      const endpoint = showDeleted ? "/admin/users/deleted" : "/admin/users";
+
+      const params = new URLSearchParams({
+        page: page,
+        size: 10,
+      });
+
+      // 삭제된 회원 보기가 아닌 경우에만 검색 조건 추가
+      if (!showDeleted) {
+        // 이름 검색
+        if (filters.name && filters.name.trim() !== "") {
+          params.append("name", filters.name.trim());
+        }
+
+        // 역할 검색 (ADMIN만)
+        if (filters.role && filters.role.trim() !== "") {
+          params.append("role", filters.role.trim());
+        }
+
+        // 지부 검색 - region별 조회
+        if (region && region !== "" && region !== "전체") {
+          // 특정 region 선택된 경우 해당 region의 지부들 ID를 찾아서 전송
+          const selectedBranches = allBranches.filter(branch => branch.region === region);
+          console.log(`선택된 region "${region}"에 해당하는 지부들:`, selectedBranches);
+
+          if (selectedBranches.length === 1) {
+            params.append("branchId", selectedBranches[0].id);
+          } else if (selectedBranches.length > 1) {
+            selectedBranches.forEach(branch => {
+              params.append("branchIds", branch.id);
+            });
+          }
+        }
+        // 🔥 region이 빈 문자열이거나 "전체"인 경우 지부 조건을 추가하지 않음 (전체 조회)
+        console.log("전체 조회 - 지부 조건 없이 API 호출");
+      }
+
+      console.log(`API 요청 URL: ${endpoint}?${params.toString()}`);
+      console.log("전송될 파라미터:", Object.fromEntries(params.entries()));
+
+      const res = await API.get(`${endpoint}?${params.toString()}`);
+      console.log("API 응답 데이터:", res.data);
+
+      if (res.data && res.data.success && res.data.content) {
+        const { list, totalPage, page: currentPageFromServer } = res.data.content;
+        setMembers(list || []);
+        setTotalPages(totalPage || 0);
+        setCurrentPage(currentPageFromServer || page);
+        setIsSearched(true);
+      } else {
+        console.error("예상치 못한 응답 구조:", res.data);
+        setMembers([]);
+        setTotalPages(0);
+        setIsSearched(true);
+      }
+    } catch (err) {
+      console.error("회원 조회 실패:", err);
+      console.error("에러 세부 정보:", err.response?.data || err.message);
+      setMembers([]);
+      setTotalPages(0);
+      setIsSearched(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 특정 지부로 회원 데이터 가져오기 (OWNER 버튼 클릭용)
+  const fetchMembersWithBranch = async (branchId, page = 1) => {
+    try {
+      setIsLoading(true);
+      const endpoint = showDeleted ? "/admin/users/deleted" : "/admin/users";
+
+      const params = new URLSearchParams({
+        page: page,
+        size: 10,
+      });
+
+      // 삭제된 회원 보기가 아닌 경우에만 검색 조건 추가
+      if (!showDeleted) {
+        // 이름 검색
+        if (filters.name && filters.name.trim() !== "") {
+          params.append("name", filters.name.trim());
+        }
+
+        // 역할 검색 (OWNER는 activeTab 사용)
+        params.append("role", activeTab);
+
+        // 특정 지부 ID로 조회
+        if (branchId) {
+          params.append("branchId", branchId);
+        }
+      }
+
+      console.log(`API 요청 URL: ${endpoint}?${params.toString()}`);
+
+      const res = await API.get(`${endpoint}?${params.toString()}`);
+      console.log("API 응답 데이터:", res.data);
+
+      if (res.data && res.data.success && res.data.content) {
+        const { list, totalPage, page: currentPageFromServer } = res.data.content;
+        setMembers(list || []);
+        setTotalPages(totalPage || 0);
+        setCurrentPage(currentPageFromServer || page);
+        setIsSearched(true);
+      } else {
+        console.error("예상치 못한 응답 구조:", res.data);
+        setMembers([]);
+        setTotalPages(0);
+        setIsSearched(true);
+      }
+    } catch (err) {
+      console.error("회원 조회 실패:", err);
+      console.error("에러 세부 정보:", err.response?.data || err.message);
+      setMembers([]);
+      setTotalPages(0);
+      setIsSearched(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 회원 데이터 가져오기 (기존 함수 - 검색 버튼용)
   const fetchMembers = async (page = 1) => {
     try {
       setIsLoading(true);
@@ -162,34 +310,36 @@ const MemberManagement = () => {
         // 지부 검색
         if (userRole === "OWNER") {
           // OWNER는 자신이 관리하는 모든 지부의 회원 조회
-          const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-          const branchRoles = userInfo.branchRoles || [];
-          const ownerBranches = branchRoles.filter(br => br.role === "OWNER");
-
           if (selectedOwnerBranch) {
             // 특정 지부를 선택한 경우
             params.append("branchId", selectedOwnerBranch);
-          } else if (ownerBranches.length > 0) {
-            // 전체 선택인 경우 모든 관리 지부 조회
-            ownerBranches.forEach(branch => {
-              params.append("branchIds", branch.branchId);
-            });
+          } else {
+            // 선택하지 않은 경우 - 단일 지부면 자동 선택, 다중 지부면 빈 결과
+            if (userBranches.length === 1) {
+              // 단일 지부인 경우 해당 지부 ID 사용
+              params.append("branchId", userBranches[0].id);
+            } else if (userBranches.length > 1) {
+              // 다중 지부 관리자가 지부를 선택하지 않은 경우 빈 결과
+              params.append("branchId", "-1");
+            }
           }
-        } else if (userRole === "ADMIN" && selectedRegion) {
-          // ADMIN인 경우 선택된 region에 해당하는 지부들의 ID를 찾아서 전송
-          const selectedBranches = allBranches.filter(branch => branch.region === selectedRegion);
-          console.log(`선택된 region "${selectedRegion}"에 해당하는 지부들:`, selectedBranches);
+        } else if (userRole === "ADMIN") {
+          // ADMIN인 경우 선택된 region에 따른 조회
+          if (selectedRegion && selectedRegion !== "" && selectedRegion !== "전체") {
+            // 특정 region 선택된 경우
+            const selectedBranches = allBranches.filter(branch => branch.region === selectedRegion);
+            console.log(`선택된 region "${selectedRegion}"에 해당하는 지부들:`, selectedBranches);
 
-          if (selectedBranches.length === 1) {
-            // 해당 region에 지부가 하나만 있는 경우
-            params.append("branchId", selectedBranches[0].id);
-          } else if (selectedBranches.length > 1) {
-            // 해당 region에 여러 지부가 있는 경우 (같은 region명을 가진 지부들)
-            // 백엔드가 branchIds 배열을 지원하는지 확인 필요
-            selectedBranches.forEach(branch => {
-              params.append("branchIds", branch.id);
-            });
+            if (selectedBranches.length === 1) {
+              params.append("branchId", selectedBranches[0].id);
+            } else if (selectedBranches.length > 1) {
+              selectedBranches.forEach(branch => {
+                params.append("branchIds", branch.id);
+              });
+            }
           }
+          // 🔥 selectedRegion이 빈 문자열이거나 "전체"인 경우 지부 조건을 추가하지 않음 (전체 조회)
+          console.log("ADMIN 전체 조회 또는 특정 region 조회, selectedRegion:", selectedRegion);
         }
       }
 
@@ -224,14 +374,26 @@ const MemberManagement = () => {
   // 삭제된 회원 토글 시 데이터 로드
   useEffect(() => {
     if (showDeleted || isSearched) {
-      fetchMembers(1);
+      if (userRole === "ADMIN") {
+        // ADMIN인 경우 현재 selectedRegion 상태에 따라 조회
+        fetchMembersWithRegion(selectedRegion, 1);
+      } else {
+        // OWNER인 경우 기존 방식 사용
+        fetchMembers(1);
+      }
     }
   }, [showDeleted]);
 
   // 페이지 변경 시 데이터 로드
   useEffect(() => {
     if (isSearched) {
-      fetchMembers(currentPage);
+      if (userRole === "ADMIN") {
+        // ADMIN인 경우 현재 selectedRegion 상태에 따라 조회
+        fetchMembersWithRegion(selectedRegion, currentPage);
+      } else {
+        // OWNER인 경우 기존 방식 사용
+        fetchMembers(currentPage);
+      }
     }
   }, [currentPage]);
 
@@ -243,24 +405,16 @@ const MemberManagement = () => {
     }
   }, [activeTab]);
 
-  // ADMIN region 변경 시 데이터 로드
-  useEffect(() => {
-    if (userRole === "ADMIN" && isSearched) {
-      fetchMembers(1);
-    }
-  }, [selectedRegion]);
-
-  // OWNER 지부 선택 변경 시 데이터 로드
-  useEffect(() => {
-    if (userRole === "OWNER" && isSearched && userBranches.length > 1) {
-      fetchMembers(1);
-    }
-  }, [selectedOwnerBranch]);
-
   // 검색 버튼 핸들러
   const handleSearch = () => {
     setCurrentPage(1);
-    fetchMembers(1);
+    if (userRole === "ADMIN") {
+      // ADMIN인 경우 현재 selectedRegion 상태에 따라 조회
+      fetchMembersWithRegion(selectedRegion, 1);
+    } else {
+      // OWNER인 경우 기존 방식 사용
+      fetchMembers(1);
+    }
   };
 
   // 필터 초기화
@@ -312,6 +466,12 @@ const MemberManagement = () => {
     return null;
   };
 
+  // OWNER의 지부 정보를 버튼으로 표시할지 결정하는 함수
+  const getSelectedOwnerBranchInfo = () => {
+    if (!selectedOwnerBranch || userBranches.length === 0) return null;
+    return userBranches.find(branch => branch.id.toString() === selectedOwnerBranch);
+  };
+
   return (
       <div className="member-manage-container">
         <AdminHeader />
@@ -361,25 +521,36 @@ const MemberManagement = () => {
               </div>
           )}
 
-          {/* OWNER인 경우 지부 선택 및 탭 UI */}
+          {/* OWNER인 경우 지부 선택 */}
           {userRole === "OWNER" && !showDeleted && (
               <>
-                {/* OWNER가 여러 지부를 관리하는 경우에만 지부 선택 드롭다운 표시 */}
+                {/* 다중 지부 관리자인 경우 버튼 형태 (전체 버튼 없음) */}
                 {userBranches.length > 1 && (
-                    <div className="owner-branch-selector">
-                      <label className="branch-selector-label">관리 지부 선택:</label>
-                      <select
-                          value={selectedOwnerBranch}
-                          onChange={handleOwnerBranchChange}
-                          className="form-select"
-                      >
-                        <option value="">전체 관리 지부</option>
+                    <div className="region-tabs">
+                      <div className="region-tabs-header">
+                        <span className="region-tabs-label">관리 지부 선택:</span>
+                      </div>
+                      <div className="region-buttons">
                         {userBranches.map((branch) => (
-                            <option key={branch.id} value={branch.id}>
-                              {branch.region} ({branch.area})
-                            </option>
+                            <button
+                                key={branch.id}
+                                className={`region-button ${selectedOwnerBranch === branch.id.toString() ? 'active' : ''}`}
+                                onClick={() => handleOwnerBranchClick(branch.id.toString())}
+                            >
+                              {branch.region} {branch.area}
+                            </button>
                         ))}
-                      </select>
+                      </div>
+                    </div>
+                )}
+
+                {/* 단일 지부 관리자인 경우 간단한 정보 표시 */}
+                {userBranches.length === 1 && (
+                    <div className="single-branch-info">
+                      <span className="branch-info-label">관리 지부:</span>
+                      <span className="branch-info-value">
+                        {userBranches[0].region} {userBranches[0].area}
+                      </span>
                     </div>
                 )}
 
@@ -456,6 +627,16 @@ const MemberManagement = () => {
               <div className="current-filter">
                 <span className="filter-label">현재 조회 중:</span>
                 <span className="filter-value">{selectedRegion} 지부</span>
+              </div>
+          )}
+
+          {/* OWNER 다중 지부 관리자의 현재 선택된 지부 표시 */}
+          {userRole === "OWNER" && userBranches.length > 1 && selectedOwnerBranch && !showDeleted && (
+              <div className="current-filter">
+                <span className="filter-label">현재 조회 중:</span>
+                <span className="filter-value">
+                {getSelectedOwnerBranchInfo()?.region} {getSelectedOwnerBranchInfo()?.area} 지부
+              </span>
               </div>
           )}
 
