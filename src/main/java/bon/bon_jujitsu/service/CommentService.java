@@ -42,6 +42,11 @@ public class CommentService {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 댓글을 이용할 수 없습니다.");
     }
 
+    // QnA 댓글은 관리자만 가능
+    if (request.commentType() == CommentType.QNA && !user.isAdmin()) {
+      throw new IllegalArgumentException("QnA 댓글은 관리자만 작성할 수 있습니다.");
+    }
+
     Comment parentComment = null;
     if (request.parentId() != null) {
       parentComment = commentRepository.findById(request.parentId())
@@ -73,6 +78,9 @@ public class CommentService {
     } else if (commentType == CommentType.NOTICE) {
       noticeRepository.findById(targetId)
           .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+    } else if (commentType == CommentType.QNA) {
+      noticeRepository.findById(targetId)
+              .orElseThrow(() -> new IllegalArgumentException("QNA를 찾을 수 없습니다."));
     } else {
       throw new IllegalArgumentException("올바르지 않은 댓글 타입입니다.");
     }
