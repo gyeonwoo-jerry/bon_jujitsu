@@ -24,13 +24,27 @@ public class QnA extends Timestamped {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "guest_name")
+    private String guestName;
+
+    @Column(name = "guest_password")
+    private String guestPassword;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean isDeleted = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Builder.Default
     @Column(nullable = false)
     private Long viewCount = 0L;
+
+    public boolean isGuestPost() {
+        return user == null;
+    }
 
     public void softDelete() {
         this.isDeleted = true;
@@ -38,5 +52,14 @@ public class QnA extends Timestamped {
 
     public void increaseViewCount() {
         this.viewCount += 1;
+    }
+
+    public void update(String title, String content) {
+        if (title != null && !title.trim().isEmpty()) {
+            this.title = title;
+        }
+        if (content != null && !content.trim().isEmpty()) {
+            this.content = content;
+        }
     }
 }

@@ -58,7 +58,7 @@ public class SkillController {
   }
 
   @PatchMapping("/skill/{skillId}")
-  public ApiResponse<Status> updateSkill(
+  public ApiResponse<Void> updateSkill(
       @Valid @RequestPart("update") SkillUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId,

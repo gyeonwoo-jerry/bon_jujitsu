@@ -1,13 +1,18 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.PostImage;
-import bon.bon_jujitsu.domain.PostType;
-import bon.bon_jujitsu.domain.QnA;
+import bon.bon_jujitsu.config.PasswordEncoder;
+import bon.bon_jujitsu.domain.*;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.QnaRequest;
 import bon.bon_jujitsu.dto.response.QnAResponse;
+import bon.bon_jujitsu.dto.response.SkillResponse;
+import bon.bon_jujitsu.dto.update.QnAUpdate;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.QnARepository;
+import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,20 +31,45 @@ public class QnaService {
     private final QnARepository qnaRepository;
     private final PostImageService postImageService;
     private final PostImageRepository postImageRepository;
+    private final QnARepository qnARepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public void createQna(QnaRequest request, List<MultipartFile> images) {
-
-        QnA qna = QnA.builder()
+    public void createQna(QnaRequest request, Long userId, List<MultipartFile> images) {
+        QnA.QnABuilder qnaBuilder = QnA.builder()
                 .title(request.title())
-                .content(request.content())
-                .build();
+                .content(request.content());
 
+        // 회원/비회원 구분하여 처리
+        if (request.isGuestPost()) {
+            // 비회원 작성
+            if (userId != null) {
+                throw new IllegalArgumentException("로그인된 상태에서는 비회원 작성을 할 수 없습니다.");
+            }
+
+            qnaBuilder
+                    .guestName(request.guestName())
+                    .guestPassword(passwordEncoder.encode(request.guestPassword()));
+        } else {
+            // 회원 작성
+            if (userId == null) {
+                throw new IllegalArgumentException("회원 작성시 로그인이 필요합니다.");
+            }
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+
+            qnaBuilder.user(user);
+        }
+
+        QnA qna = qnaBuilder.build();
         qnaRepository.save(qna);
 
         postImageService.uploadImage(qna.getId(), PostType.QNA, images);
     }
 
-    public PageResponse<QnAResponse> getQnas(int page, int size) {
+    @Transactional(readOnly = true)
+    public PageResponse<QnAResponse> getQnAs(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<QnA> qnaPage = qnaRepository.findAll(pageRequest);
@@ -52,5 +82,88 @@ public class QnaService {
         return PageResponse.fromPage(qnaResponses);
     }
 
+    @Transactional(readOnly = true)
+    public QnAResponse getQnA(Long qnaId, HttpServletRequest request) {
+        QnA qna = qnARepository.findById(qnaId).orElseThrow(()-> new IllegalArgumentException("QNA를 찾을수 없습니다."));
 
+        HttpSession session = request.getSession();
+        String sessionKey = "viewed_QnA_" + qnaId;
+
+        if (session.getAttribute(sessionKey) == null) {
+            qna.increaseViewCount(); // 처음 본 경우에만 조회수 증가
+            session.setAttribute(sessionKey, true);
+            session.setMaxInactiveInterval(60 * 60); // 1시간 유지
+        }
+
+        List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
+
+        return QnAResponse.from(qna, postImages);
+    }
+
+
+    public void updateQnA(QnAUpdate update, Long userId, Long qnaId, List<MultipartFile> images, List<Long> keepImageIds) {
+        QnA qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다."));
+
+        // 권한 확인 로직 (기존과 동일)
+        if (qna.isGuestPost()) {
+            if (userId != null) {
+                throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 수정해주세요.");
+            }
+            if (!update.hasGuestPassword()) {
+                throw new IllegalArgumentException("비회원 수정시 비밀번호가 필요합니다.");
+            }
+            String inputPassword = update.guestPassword().orElse("");
+            if (!passwordEncoder.matches(inputPassword, qna.getGuestPassword())) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
+        } else {
+            if (userId == null) {
+                throw new IllegalArgumentException("로그인이 필요합니다.");
+            }
+            if (!qna.getUser().getId().equals(userId)) {
+                throw new IllegalArgumentException("본인의 글만 수정할 수 있습니다.");
+            }
+        }
+
+        // 수정할 내용이 있을 때만 업데이트
+        if (update != null && update.hasContentToUpdate()) {
+            qna.update(
+                    update.title().orElse(qna.getTitle()),
+                    update.content().orElse(qna.getContent())
+            );
+        }
+
+        postImageService.updateImages(qnaId, PostType.QNA, images, keepImageIds);
+    }
+
+    public void deleteQnA(Long qnaId, Long userId, String guestPassword) {
+        QnA qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다."));
+
+        // 회원/비회원 구분하여 권한 확인
+        if (qna.isGuestPost()) {
+            // 비회원 글 삭제
+            if (userId != null) {
+                throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 삭제해주세요.");
+            }
+            if (guestPassword == null || guestPassword.trim().isEmpty()) {
+                throw new IllegalArgumentException("비회원 삭제시 비밀번호가 필요합니다.");
+            }
+            if (!passwordEncoder.matches(guestPassword, qna.getGuestPassword())) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
+        } else {
+            // 회원 글 삭제
+            if (userId == null) {
+                throw new IllegalArgumentException("로그인이 필요합니다.");
+            }
+            if (!qna.getUser().getId().equals(userId)) {
+                throw new IllegalArgumentException("본인의 글만 삭제할 수 있습니다.");
+            }
+        }
+
+        // 소프트 삭제 실행
+        qna.softDelete();
+    }
 }

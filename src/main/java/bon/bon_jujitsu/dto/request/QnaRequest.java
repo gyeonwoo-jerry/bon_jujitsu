@@ -6,6 +6,11 @@ public record QnaRequest(
         @NotBlank(message = "제목을 입력해주세요")
         String title,
         @NotBlank(message = "내용을 입력해주세요")
-        String content
+        String content,
+        String guestName,
+        String guestPassword
 ) {
+        public boolean isGuestPost() {
+                return guestName != null && guestPassword != null;
+        }
 }
