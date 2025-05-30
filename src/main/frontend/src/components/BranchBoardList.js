@@ -142,7 +142,10 @@ const BranchBoardList = () => {
 
   // 이미지 URL 정규화 함수
   const normalizeImageUrl = (url) => {
-    if (!url) return "/images/blank_img.png";
+    // url이 없거나 문자열이 아닌 경우 기본 이미지 반환
+    if (!url || typeof url !== 'string') {
+      return "/images/blank_img.png";
+    }
 
     // 이미 절대 URL인 경우 그대로 반환
     if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
