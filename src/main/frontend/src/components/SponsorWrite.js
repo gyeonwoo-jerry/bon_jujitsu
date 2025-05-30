@@ -1,29 +1,39 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/boardWrite.css";
 
 function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" }) {
-  const { id } = useParams(); // 수정 모드일 경우 게시글 ID
-  const [isEditMode, setIsEditMode] = useState(false);
+  const { id } = useParams(); // URL에서 ID 파라미터 가져오기
+  const location = useLocation(); // 현재 경로 정보
+  const navigate = useNavigate();
+  
+  // URL 경로를 확인하여 수정 모드 결정
+  const isEditMode = Boolean(location.pathname.includes('/edit/') && id);
+  
   const [formData, setFormData] = useState({
     title: "",
     content: "",
+    url: "",
     images: [], 
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const navigate = useNavigate();
   const isMounted = useRef(true);
+
+  console.log('SponsorWrite 렌더링 - isEditMode:', isEditMode, 'id:', id);
 
   // 컴포넌트 언마운트 시 isMounted 플래그 업데이트
   useEffect(() => {
+    console.log('Mount useEffect 실행 - isMounted를 true로 설정');
+    isMounted.current = true;
+    
     return () => {
+      console.log('컴포넌트 언마운트 - isMounted를 false로 설정');
       isMounted.current = false;
     };
   }, []);
@@ -42,7 +52,6 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
         }
 
         const user = JSON.parse(userInfoStr);
-        setUserInfo(user);
         
         // ADMIN 권한 체크
         if (user.role === 'ADMIN') {
@@ -76,43 +85,64 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
 
   // fetchPostData 함수를 useCallback으로 메모이제이션
   const fetchPostData = useCallback(async () => {
+
+    
     try {
       setLoading(true);
       const response = await API.get(`${apiEndpoint}/${id}`);
+      
       // 컴포넌트가 마운트된 상태인지 확인
-      if (!isMounted.current) return;
+      if (!isMounted.current) {
+        return;
+      }
 
       if (response.status === 200) {
         const postData = response.data.content;
+        
         setFormData({
           title: postData.title || "",
           content: postData.content || "",
+          url: postData.url || "",
           images: postData.images || [],
         });
-        // 기존 이미지 미리보기 설정
-        setPreviewImages(postData.images || []);
+        
+        // 기존 이미지 미리보기 설정 - images 배열의 url 사용
+        if (postData.images && postData.images.length > 0) {
+          const imageUrls = postData.images.map(img => {
+            // 상대 경로를 절대 경로로 변환
+            return img.url.startsWith('http') ? img.url : `http://211.110.44.79:58080${img.url}`;
+          });
+          setPreviewImages(imageUrls);
+        } else {
+          setPreviewImages([]);
+        }
       }
     } catch (error) {
       if (isMounted.current) {
-        console.error("게시글 데이터 불러오기 실패:", error);
         setError("게시글 데이터를 불러오는 중 오류가 발생했습니다.");
       }
     } finally {
+
       if (isMounted.current) {
         setLoading(false);
+
+      } else {
+
       }
     }
   }, [apiEndpoint, id]);
 
   useEffect(() => {
-    document.title = id ? "게시글 수정" : title;
+    
+    document.title = isEditMode ? "제휴업체 수정" : title;
 
     // 수정 모드인 경우 기존 게시글 데이터 불러오기
-    if (id) {
-      setIsEditMode(true);
+    if (isEditMode && id) {
       fetchPostData();
+    } else {
+      
     }
-  }, [id, title, fetchPostData]);
+  }, [isEditMode, id, title, fetchPostData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -165,11 +195,6 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
         return;
       }
 
-      if (!formData.content.trim()) {
-        setError("내용을 입력해주세요.");
-        setLoading(false);
-        return;
-      }
 
       let response;
 
@@ -183,6 +208,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
             JSON.stringify({
               title: formData.title,
               content: formData.content,
+              url: formData.url,
             }),
           ],
           { type: "application/json" }
@@ -203,7 +229,16 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
           });
         }
 
-        console.log("제휴업체 등록 요청 데이터:", sponsorFormData);
+        // 수정 모드에서 기존 이미지 보존을 위한 keepImageIds 추가
+        if (isEditMode && formData.images && formData.images.length > 0) {
+          const keepImageIds = formData.images.map(img => img.id).filter(id => id);
+          
+          if (keepImageIds.length > 0) {
+            // keepImageIds를 JSON 배열로 추가
+            const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds)], { type: "application/json" });
+            sponsorFormData.append("keepImageIds", keepImageIdsBlob);
+          }
+        }
 
         if (isEditMode) {
           // 수정 모드: PATCH 메서드 사용
@@ -230,6 +265,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
             JSON.stringify({
               title: formData.title,
               content: formData.content,
+              url: formData.url,
             }),
           ],
           { type: "application/json" }
@@ -258,30 +294,19 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
       }
       if (response.status === 200 || response.status === 201) {
         if (response.data.success) {
-          // 성공 시 게시글 목록 또는 상세 페이지로 이동
-          if (apiEndpoint === "/sponsor") {
-            // 제휴업체 목록으로 이동
-            navigate(apiEndpoint);
+          // 성공 시 제휴업체 상세 페이지로 이동
+          if (isEditMode) {
+            // 수정 후에는 해당 제휴업체 상세 페이지로
+            navigate(`/sponsorDetail/${id}`);
           } else {
-            // ID가 있으면 해당 게시글의 상세 페이지로, 없으면 목록으로 이동
-            const redirectId = isEditMode ? id : response.data.id;
-            if (redirectId) {
-              // 수정 모드일 경우 해당 게시글의 상세 페이지로 이동
-              navigate(
-                `${
-                  apiEndpoint.startsWith("/") ? apiEndpoint : "/" + apiEndpoint
-                }/${redirectId}`
-              );
-            } else {
-              // 등록 모드일 경우 게시글 목록으로 이동
-              navigate(apiEndpoint);
-            }
+            // 신규 등록 후에는 제휴업체 목록으로
+            navigate("/sponsor");
           }
         } else {
           if (response.data.message) {
             setError(response.data.message);
           } else {
-            setError("글 등록에 실패했습니다.");
+            setError("제휴업체 처리에 실패했습니다.");
           }
         }
       }
@@ -329,7 +354,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
   return (
     <div className="board-write-container">
       <h1 className="board-write-title">
-        {isEditMode ? "게시글 수정" : title}
+        {isEditMode ? "제휴업체 수정" : title}
       </h1>
 
       {error && <div className="error-message">{error}</div>}
@@ -359,6 +384,19 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
             rows="10"
           ></textarea>
         </div>
+
+        <div className="form-group">
+          <label htmlFor="url">URL</label>
+          <input
+            type="text"
+            id="url"
+            name="url"
+            value={formData.url}
+            onChange={handleInputChange}
+            placeholder="URL을 입력하세요"
+          />
+        </div>
+
 
         <div className="form-group">
           <label htmlFor="images">이미지 첨부</label>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../utils/api";
+import { loggedNavigate } from "../utils/navigationLogger";
 import "../styles/boardList.css";
 
 function BoardList({
@@ -11,10 +12,11 @@ function BoardList({
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(12);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const rawNavigate = useNavigate();
+  const navigate = loggedNavigate(rawNavigate);
 
   // API 엔드포인트 확인 및 정규화
   const normalizedApiEndpoint = apiEndpoint || "/board";
@@ -23,26 +25,21 @@ function BoardList({
   const fetchPosts = useCallback(
     (page) => {
       setLoading(true);
-      console.log(
-        `API 요청: ${normalizedApiEndpoint}?page=${page}&size=${pageSize}`
-      );
 
       API.get(`${normalizedApiEndpoint}?page=${page}&size=${pageSize}`)
         .then((response) => {
           if (response.status === 200) {
-            console.log("Posts fetched:", response.data);
             if (response.data.success) {
-              setPosts(response.data.content.list || []);
+              const postList = response.data.content.list || [];
+              setPosts(postList);
               setTotalPages(response.data.content.totalPage || 1);
             } else {
-              console.error("API 응답 오류:", response.data.message);
               setError(response.data.message || "데이터를 불러올 수 없습니다.");
               setPosts([]);
             }
           }
         })
         .catch((error) => {
-          console.error("API 호출 오류:", error);
           if (error.response) {
             if (error.response.status === 500) {
               setError("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
@@ -73,16 +70,20 @@ function BoardList({
   }, [currentPage, title, fetchPosts]);
 
   const handlePostClick = (id) => {
-    // ID 유효성 검사 강화
-    if (!id || id === 'undefined' || id === undefined || id === null) {
-      console.error("유효하지 않은 게시물 ID입니다:", id);
-      alert("게시물 정보가 올바르지 않습니다.");
-      return;
+    // ID 유효성 검사
+    if (!id || id === 'undefined' || id === 'null') {
+      return false;
     }
 
     // 상세 페이지 경로 정규화
     const normalizedDetailPath = detailPathPrefix || "/board";
-    navigate(`${normalizedDetailPath}/${id}`);
+    const finalPath = `${normalizedDetailPath}/${id}`;
+    
+    try {
+      navigate(finalPath);
+    } catch (error) {
+      console.error("navigation 오류:", error);
+    }
   };
 
   const handlePageChange = (page) => {
@@ -106,26 +107,32 @@ function BoardList({
   const safePostsArray = Array.isArray(posts) ? posts : [];
 
   // 이미지 URL 정규화 함수
-  const normalizeImageUrl = (url) => {
-    if (!url || typeof url !== 'string') return "/images/blank_img.png";
+  const normalizeImageUrl = (imageData) => {
+    if (!imageData) return "/images/blank_img.png";
 
-    // 이미 절대 URL인 경우 그대로 반환
-    if (
-      url.startsWith("http://") ||
-      url.startsWith("https://") ||
-      url.startsWith("/")
-    ) {
-      return url;
+    // 문자열인 경우
+    if (typeof imageData === 'string') {
+      if (imageData.startsWith("http://") || imageData.startsWith("https://") || imageData.startsWith("/")) {
+        return imageData;
+      }
+      return `/${imageData}`;
     }
 
-    // 상대 URL인 경우 '/'를 앞에 추가
-    return `/${url}`;
+    // 객체인 경우 (sponsor API 응답 형태)
+    if (typeof imageData === 'object' && imageData.url) {
+      const url = imageData.url;
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url;
+      }
+      // 상대 경로를 절대 경로로 변환
+      return url.startsWith("/") ? `http://211.110.44.79:58080${url}` : `http://211.110.44.79:58080/${url}`;
+    }
+
+    return "/images/blank_img.png";
   };
 
   return (
     <div className="board-container">
-      
-
       {loading ? (
         <div className="loading-container">
           <div className="loading-spinner"></div>
@@ -151,65 +158,76 @@ function BoardList({
         </div>
       ) : (
         <div className="board-list">
-          {safePostsArray.map((post) => (
-            <div
-              key={post.id || `post-${Math.random()}`}
-              className="post-item"
-              onClick={() => post.id && handlePostClick(post.id)}
-            >
-              <div className="thumbnail">
-                <div className="post-images">
-                  {Array.isArray(post.images) && post.images.length > 0 ? (
-                    <>
+          {safePostsArray.map((post) => {
+            const postId = post.id || post.sponsorId || post.postId;
+            
+            return (
+              <div
+                key={postId || `post-${Math.random()}`}
+                className="post-item"
+                onClick={() => {
+                  // ID가 숫자인 경우 문자열로 변환
+                  const finalId = postId ? String(postId) : null;
+                  
+                  if (finalId && finalId !== 'undefined' && finalId !== 'null') {
+                    handlePostClick(finalId);
+                  }
+                }}
+              >
+                <div className="thumbnail">
+                  <div className="post-images">
+                    {Array.isArray(post.images) && post.images.length > 0 ? (
+                      <>
+                        <img
+                          src={normalizeImageUrl(post.images[0])}
+                          alt={`${post.title || "게시물"} 이미지`}
+                          className="post-thumbnail"
+                          onError={(e) => {
+                            e.target.src = "/images/blank_img.png";
+                            e.target.classList.add("blank");
+                          }}
+                        />
+                        {post.images.length > 1 && (
+                          <span className="image-count">
+                            +{post.images.length - 1}
+                          </span>
+                        )}
+                      </>
+                    ) : (
                       <img
-                        src={normalizeImageUrl(post.images[0])}
-                        alt={`${post.title || "게시물"} 이미지`}
-                        className="post-thumbnail"
-                        onError={(e) => {
-                          e.target.src = "/images/blank_img.png";
-                          e.target.classList.add("blank");
-                        }}
+                        src="/images/blank_img.png"
+                        alt="기본 이미지"
+                        className="post-thumbnail blank"
                       />
-                      {post.images.length > 1 && (
-                        <span className="image-count">
-                          +{post.images.length - 1}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <img
-                      src="/images/blank_img.png"
-                      alt="기본 이미지"
-                      className="post-thumbnail blank"
-                    />
-                  )}
+                    )}
+                  </div>
+                </div>
+                <div className="post-contents">
+                  <div className="post-header">
+                    <h2 className="post-title">{post.title || "제목 없음"}</h2>
+                    <span
+                      className={`post-region ${
+                        !post.region ? "display_none" : ""
+                      }`}
+                    >
+                      {post.region || ""}
+                    </span>
+                  </div>
+                  <div className="post-desc">{truncateContent(post.content)}</div>
+                  <div className="post-footer">
+                    <span className="post-author">
+                      {post?.owner?.name || post.name || "작성자 없음"}
+                    </span>
+                    <span className="post-date">
+                      {post.createdAt
+                        ? new Date(post.createdAt).toLocaleDateString()
+                        : "날짜 정보 없음"}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="post-contents">
-                <div className="post-header">
-                  <h2 className="post-title">{post.title || "제목 없음"}</h2>
-                  <span
-                    className={`post-region ${
-                      !post.region ? "display_none" : ""
-                    }`}
-                  >
-                    {post.region || ""}
-                  </span>
-                </div>
-                <div className="post-desc">{truncateContent(post.content)}</div>
-                <div className="post-footer">
-                  <span className="post-author">
-                    {post?.owner?.name || post.name || "작성자 없음"}
-                  </span>
-                  <span className="post-date">
-                    {post.createdAt
-                      ? new Date(post.createdAt).toLocaleDateString()
-                      : "날짜 정보 없음"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

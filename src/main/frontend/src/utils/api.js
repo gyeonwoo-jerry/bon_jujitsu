@@ -21,6 +21,12 @@ API.interceptors.request.use(
 
     config.headers["Content-Type"] =
       config.headers["Content-Type"] || "application/json";
+    
+    // undefined가 포함된 URL 요청 감지
+    if (config.url?.includes('undefined')) {
+      console.error("🚨 요청에서 UNDEFINED URL 감지:", config.url);
+      console.trace("요청 호출 스택:");
+    }
 
     console.log("Axios Request Headers:", config.headers); // 디버깅용 로그
     return config;
@@ -36,6 +42,17 @@ API.interceptors.response.use(
     return response;
   },
   async (error) => {
+    console.log("=== API 오류 인터셉터 ===");
+    console.log("요청 URL:", error.config?.url);
+    console.log("오류 상태:", error.response?.status);
+    console.log("오류 메시지:", error.message);
+    
+    // undefined가 포함된 URL 요청 감지
+    if (error.config?.url?.includes('undefined')) {
+      console.error("🚨 UNDEFINED URL 감지:", error.config.url);
+      console.trace("호출 스택:");
+    }
+
     const originalRequest = error.config;
     if (
       error.response &&

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../utils/api";
+import { loggedNavigate } from "../utils/navigationLogger";
 import "../styles/boardDetail.css";
 
 function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
@@ -8,7 +9,8 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const rawNavigate = useNavigate();
+  const navigate = loggedNavigate(rawNavigate);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // API 엔드포인트 정규화
@@ -18,11 +20,8 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
   // 이미지 URL 정규화 함수
   const normalizeImageUrl = (imageData) => {
-    console.log("normalizeImageUrl - 입력:", imageData);
-    
     // 빈 값이면 기본 이미지 반환
     if (!imageData) {
-      console.log("normalizeImageUrl - 빈 값, 기본 이미지 반환");
       return "/images/blank_img.png";
     }
 
@@ -31,26 +30,28 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     // 객체인 경우 URL 추출
     if (typeof imageData === 'object') {
       url = imageData.url || imageData.imagePath || imageData.src;
-      console.log("normalizeImageUrl - 객체에서 URL 추출:", url);
     }
     
     // URL이 여전히 문자열이 아니면 기본 이미지 반환
     if (!url || typeof url !== 'string') {
-      console.log("normalizeImageUrl - 유효하지 않은 URL, 기본 이미지 반환");
       return "/images/blank_img.png";
     }
 
     // 이미 절대 URL인 경우 그대로 반환
     if (url.startsWith("http://") || url.startsWith("https://")) {
-      console.log("normalizeImageUrl - 절대 URL:", url);
       return url;
+    }
+
+    // 상대 URL인 경우 백엔드 서버 경로로 변환
+    if (url.startsWith("/uploads/")) {
+      const finalUrl = `http://211.110.44.79:58080${url}`;
+      return finalUrl;
     }
 
     // 상대 URL인 경우 경로 정리
     if (url.includes("%")) {
       try {
         const decodedUrl = decodeURIComponent(url);
-        console.log("normalizeImageUrl - 디코딩된 URL:", decodedUrl);
         return decodedUrl;
       } catch (e) {
         console.error("URL 디코딩 오류:", e);
@@ -59,14 +60,13 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
     // 슬래시로 시작하는지 확인하고 조정
     const finalUrl = url.startsWith("/") ? url : `/${url}`;
-    console.log("normalizeImageUrl - 최종 URL:", finalUrl);
     return finalUrl;
   };
 
   // fetchPostDetail 함수를 useCallback으로 메모이제이션
   const fetchPostDetail = useCallback(async () => {
     // ID가 유효한지 확인
-    if (!id || id === "undefined" || id === undefined || id === null) {
+    if (!id || id === "undefined" || id === undefined || id === null || typeof id !== 'string') {
       setError("유효하지 않은 게시글 ID입니다.");
       setLoading(false);
       return;
@@ -74,13 +74,11 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
     try {
       setLoading(true);
-      console.log(`게시물 상세 정보 요청: ${normalizedApiEndpoint}/${id}`);
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const response = await API.get(`${normalizedApiEndpoint}/${id}`, { headers });
 
       if (response.status === 200) {
-        console.log("Post detail fetched:", response.data);
         if (response.data.success) {
           const postData = response.data.content;
           setPost(postData);
@@ -135,13 +133,74 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     };
     checkUserRole();
 
-    // 게시글 ID가 있을 때만 API를 호출합니다.
-    if (id && id !== "undefined") {
+    // DOM 감시 함수
+    const checkUndefinedAttributes = () => {
+      const allElements = document.querySelectorAll('*');
+      let foundUndefined = false;
+      
+      allElements.forEach(element => {
+        // href 속성 확인
+        if (element.href && element.href.includes('undefined')) {
+          console.error('🚨 UNDEFINED HREF 발견:', element);
+          console.log('Element:', element);
+          console.log('href:', element.href);
+          console.log('outerHTML:', element.outerHTML);
+          foundUndefined = true;
+          
+          // undefined href 제거
+          element.removeAttribute('href');
+          element.style.pointerEvents = 'none';
+          element.style.color = '#ccc';
+        }
+        
+        // src 속성 확인
+        if (element.src && element.src.includes('undefined')) {
+          console.error('🚨 UNDEFINED SRC 발견:', element);
+          console.log('Element:', element);
+          console.log('src:', element.src);
+          foundUndefined = true;
+          
+          // undefined src를 기본 이미지로 변경
+          element.src = '/images/blank_img.png';
+        }
+        
+        // action 속성 확인
+        if (element.action && element.action.includes('undefined')) {
+          console.error('🚨 UNDEFINED ACTION 발견:', element);
+          console.log('Element:', element);
+          console.log('action:', element.action);
+          foundUndefined = true;
+          
+          // undefined action 제거
+          element.removeAttribute('action');
+        }
+      });
+      
+      if (foundUndefined) {
+        console.log('🔧 UNDEFINED 속성들을 수정했습니다.');
+      }
+    };
+
+    // 초기 검사
+    setTimeout(checkUndefinedAttributes, 500);
+    
+    // 주기적 검사
+    const interval = setInterval(checkUndefinedAttributes, 2000);
+
+    // 게시글 ID가 유효할 때만 API를 호출합니다.
+    if (id && id !== "undefined" && id !== undefined && id !== null && typeof id === 'string') {
       fetchPostDetail();
     } else {
-      setError("유효하지 않은 게시글 ID입니다.");
-      setLoading(false);
+      if (id) {
+        setError("유효하지 않은 게시글 ID입니다.");
+        setLoading(false);
+      }
     }
+
+    // cleanup
+    return () => {
+      clearInterval(interval);
+    };
   }, [id, fetchPostDetail]);
 
   const handleGoBack = () => {
@@ -150,10 +209,6 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
   // 게시물 수정 함수
   const handleEdit = () => {
-    // ID 유효성 확인 및 디버깅 로그
-    console.log("BoardDetail - handleEdit ID:", id);
-    console.log("BoardDetail - apiEndpoint:", normalizedApiEndpoint);
-    
     if (!id || id === "undefined") {
       alert("유효하지 않은 게시글입니다.");
       return;
@@ -163,19 +218,18 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     let editPath = "";
     
     if (normalizedApiEndpoint.includes("/skill")) {
-      editPath = `/skillWrite/${id}`;
+      editPath = `/skillWrite/edit/${id}`;
     } else if (normalizedApiEndpoint.includes("/news")) {
-      editPath = `/newsWrite/${id}`;
+      editPath = `/newsWrite/edit/${id}`;
     } else if (normalizedApiEndpoint.includes("/qna")) {
-      editPath = `/qnaWrite/${id}`;
+      editPath = `/qnaWrite/edit/${id}`;
     } else if (normalizedApiEndpoint.includes("/sponsor")) {
-      editPath = `/sponsorWrite/${id}`;
+      editPath = `/sponsorWrite/edit/${id}`;
     } else {
       // 기본 게시판
-      editPath = `/boardWrite/${id}`;
+      editPath = `/boardWrite/edit/${id}`;
     }
 
-    console.log("BoardDetail - editPath:", editPath);
     navigate(editPath);
   };
 
@@ -205,12 +259,8 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
       // 빈 문자열 체크하여 기본값 설정
       const finalEndpoint = deleteEndpoint || "";
 
-      console.log(`삭제 API 호출: ${finalEndpoint}/${id}?id=${userId}`);
-
       // 삭제 API 호출
       const response = await API.delete(`${finalEndpoint}/${id}?id=${userId}`);
-
-      console.log("삭제 응답:", response);
 
       if (response.status === 200) {
         alert("게시물이 성공적으로 삭제되었습니다.");
@@ -294,14 +344,6 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
             </span>
           </div>
           <div className="post-detail-content">
-            {post.content && (
-              <div className="post-detail-text">
-                {post.content.split("\n").map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            )}
-
             {Array.isArray(post.images) && post.images.length > 0 && (
               <div className="post_detail_images">
                 {post.images.map((image, index) => (
@@ -311,23 +353,40 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
                       alt={`${post.title || "게시글"} 이미지 ${index + 1}`}
                       className="post-detail-image"
                       onError={(e) => {
-                        console.log("이미지 로딩 오류, 기본 이미지로 대체:", image);
-                        console.log("원본 src:", e.target.src);
                         e.target.src = "/images/blank_img.png";
                         e.target.onerror = null; // 무한 루프 방지
-                      }}
-                      onLoad={() => {
-                        console.log("이미지 로드 성공:", normalizeImageUrl(image));
                       }}
                     />
                   </div>
                 ))}
               </div>
             )}
+            
+            {post.content && (
+              <div className="post-detail-text">
+                {post.content.split("\n").map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            )}
+
+            {/* 제휴업체 URL이 있는 경우 링크 표시 */}
+            {post.url && post.url.trim() && (
+              <div className="post-external-link">
+                <a 
+                  href={post.url.startsWith('http') ? post.url : `https://${post.url}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="external-link-button"
+                >
+                  공식 웹사이트 방문하기
+                </a>
+              </div>
+            )}
+
+            
           </div>
         </div>
-
-        
       </div>
     </div>
   );

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
 import SponsorWrite from '../components/SponsorWrite';
 
 function SponsorWritePage() {
   const [pageName, setPageName] = useState('');
-  const location = useLocation();
   const { id } = useParams(); // URL에서 ID 파라미터 가져오기
   const navigate = useNavigate();
   

@@ -44,7 +44,6 @@ import PostEdit from "./pages/admin/PostEdit";
 import './styles/main.css';
 import './styles/response.css';
 
-
 function App() {
   return (
     <BrowserRouter>
@@ -71,19 +70,19 @@ function App() {
           <Route path="/skill" element={<Skill />} />
           <Route path="/skillDetail/:id" element={<SkillDetail />} />
           <Route path="/skillWrite" element={<SkillWrite />} />
-          <Route path="/skillWrite/:id" element={<SkillWrite />} />
+          <Route path="/skillWrite/edit/:id" element={<SkillWrite />} />
           <Route path="/news" element={<News />} />
           <Route path="/newsDetail/:id" element={<NewsDetail />} /> 
           <Route path="/newsWrite" element={<NewsWrite />} />
-          <Route path="/newsWrite/:id" element={<NewsWrite />} />
+          <Route path="/newsWrite/edit/:id" element={<NewsWrite />} />
           <Route path="/qna" element={<Qna />} />
           <Route path="/qnaDetail/:id" element={<QnaDetail />} />
           <Route path="/qnaWrite" element={<QnaWrite />} />
-          <Route path="/qnaWrite/:id" element={<QnaWrite />} />
+          <Route path="/qnaWrite/edit/:id" element={<QnaWrite />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
           <Route path="/sponsorWrite" element={<SponsorWrite />} />
-          <Route path="/sponsorWrite/:id" element={<SponsorWrite />} />
+          <Route path="/sponsorWrite/edit/:id" element={<SponsorWrite />} />
           <Route path="/join" element={<Join />} />
           <Route path="/admin" element={<AdminMain />} />
           <Route path="/admin/members" element={<MemberManagement />} />

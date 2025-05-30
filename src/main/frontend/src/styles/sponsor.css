@@ -13,3 +13,103 @@
     margin: 0 auto;
     gap: 30px;
  }
+
+.sponsor-container .inner .board-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sponsor-container .inner .board-container .board-list {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    justify-content: start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.sponsor-container .inner .board-container .board-list .post-item {
+    width: 32%;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid #ececec;
+}
+
+.sponsor-container .inner .board-container .board-list .post-item .thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    border:0;
+}
+
+.sponsor-container .inner .board-container .board-list .post-item .thumbnail .post-images {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sponsor-container .inner .board-container .board-list .post-item .post-contents {
+    width: 100%;
+    height: 100%;
+    padding: 24px 15px;
+    object-fit: cover;
+}
+
+.sponsor-container .inner .board-container .board-list .post-item .post-contents .post-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.44;
+    letter-spacing: -0.3px;
+}
+
+.sponsor-container .inner .board-container .board-list .post-footer {
+    display: none;
+}
+
+.sponsorDetail .board-detail-container .detail_content .title { 
+    font-size: 44px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #ececec;
+ }
+.sponsorDetail .board-detail-container .detail_content .meta_data { 
+    display: none;
+}
+
+.sponsorDetail .board-detail-container .detail_content .post-detail-content .post-detail-text {
+    font-size: 18px;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+}
+
+.post-external-link {
+    border-top: 1px solid #ececec;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 18px;
+    line-height: 1.5;
+    letter-spacing: -0.3px;
+    padding: 44px 0;
+    margin-top: 44px;
+}
+.post-external-link a {
+    transition: all 0.3s ease;
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background-color: var(--point-color);
+    color: #fff;
+    text-decoration: none;
+}
+.post-external-link a:hover {
+    background-color: var(--black-color);
+    color: #fff;
+    text-decoration: none;
+}
