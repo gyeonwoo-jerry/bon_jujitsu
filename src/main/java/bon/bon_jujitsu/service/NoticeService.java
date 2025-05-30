@@ -248,7 +248,7 @@ public class NoticeService {
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
 
-    // 관리자이거나 해당 지점의 관장인 경우에만 수정 가능
+    // 관리자이거나 해당 지점의 관장인 경우에만 삭제 가능
     if (!(user.isAdmin() || branchUser.getUserRole() == UserRole.OWNER)) {
       throw new IllegalArgumentException("공지사항은 관장이나 관리자만 삭제할 수 있습니다.");
     }

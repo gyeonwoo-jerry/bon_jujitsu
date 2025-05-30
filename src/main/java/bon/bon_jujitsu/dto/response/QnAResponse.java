@@ -35,7 +35,7 @@ public record QnAResponse(
 
         if (isGuestPost) {
             // 비회원 작성글인 경우
-            authorName = qna.getGuestName();
+            authorName = qna.getGuestName() != null ? qna.getGuestName() : "익명";
         } else {
             // 회원 작성글인 경우
             authorName = qna.getUser().getName(); // 또는 getNickname()

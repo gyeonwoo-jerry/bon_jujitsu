@@ -169,11 +169,12 @@ public class BoardService {
   }
 
   public void updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images, List<Long> keepImageIds) {
-    userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-    if (!board.getUser().getId().equals(userId)) {
+    // 관리자가 아닌 경우에만 권한 체크
+    if (!user.isAdmin() && !board.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
     }
 
@@ -187,6 +188,7 @@ public class BoardService {
 
     Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
+    // 관리자이거나 본인 글인 경우 삭제 가능 (기존 로직과 동일)
     if (!user.isAdmin() && !board.getUser().getId().equals(userId)) {
       throw new IllegalArgumentException("삭제 권한이 없습니다.");
     }

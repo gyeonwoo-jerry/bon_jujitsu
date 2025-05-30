@@ -105,26 +105,38 @@ public class QnaService {
         QnA qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다."));
 
-        // 권한 확인 로직 (기존과 동일)
-        if (qna.isGuestPost()) {
-            if (userId != null) {
-                throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 수정해주세요.");
-            }
-            if (!update.hasGuestPassword()) {
-                throw new IllegalArgumentException("비회원 수정시 비밀번호가 필요합니다.");
-            }
-            String inputPassword = update.guestPassword().orElse("");
-            if (!passwordEncoder.matches(inputPassword, qna.getGuestPassword())) {
-                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-            }
-        } else {
-            if (userId == null) {
-                throw new IllegalArgumentException("로그인이 필요합니다.");
-            }
-            if (!qna.getUser().getId().equals(userId)) {
-                throw new IllegalArgumentException("본인의 글만 수정할 수 있습니다.");
+        // 관리자 권한 확인 (관리자면 모든 글 수정 가능)
+        User user = null;
+        boolean isAdmin = false;
+
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+            isAdmin = user != null && user.isAdmin();
+        }
+
+        // 관리자가 아닌 경우에만 기존 권한 체크 수행
+        if (!isAdmin) {
+            if (qna.isGuestPost()) {
+                if (userId != null) {
+                    throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 수정해주세요.");
+                }
+                if (!update.hasGuestPassword()) {
+                    throw new IllegalArgumentException("비회원 수정시 비밀번호가 필요합니다.");
+                }
+                String inputPassword = update.guestPassword().orElse("");
+                if (!passwordEncoder.matches(inputPassword, qna.getGuestPassword())) {
+                    throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+                }
+            } else {
+                if (userId == null) {
+                    throw new IllegalArgumentException("로그인이 필요합니다.");
+                }
+                if (!qna.getUser().getId().equals(userId)) {
+                    throw new IllegalArgumentException("본인의 글만 수정할 수 있습니다.");
+                }
             }
         }
+        // 관리자는 위의 모든 체크를 스킵하고 바로 수정
 
         // 수정할 내용이 있을 때만 업데이트
         if (update != null && update.hasContentToUpdate()) {
@@ -141,27 +153,39 @@ public class QnaService {
         QnA qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다."));
 
-        // 회원/비회원 구분하여 권한 확인
-        if (qna.isGuestPost()) {
-            // 비회원 글 삭제
-            if (userId != null) {
-                throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 삭제해주세요.");
-            }
-            if (guestPassword == null || guestPassword.trim().isEmpty()) {
-                throw new IllegalArgumentException("비회원 삭제시 비밀번호가 필요합니다.");
-            }
-            if (!passwordEncoder.matches(guestPassword, qna.getGuestPassword())) {
-                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-            }
-        } else {
-            // 회원 글 삭제
-            if (userId == null) {
-                throw new IllegalArgumentException("로그인이 필요합니다.");
-            }
-            if (!qna.getUser().getId().equals(userId)) {
-                throw new IllegalArgumentException("본인의 글만 삭제할 수 있습니다.");
+        // 관리자 권한 확인 (관리자면 모든 글 삭제 가능)
+        User user = null;
+        boolean isAdmin = false;
+
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+            isAdmin = user != null && user.isAdmin();
+        }
+
+        // 관리자가 아닌 경우에만 기존 권한 체크 수행
+        if (!isAdmin) {
+            if (qna.isGuestPost()) {
+                // 비회원 글 삭제
+                if (userId != null) {
+                    throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 삭제해주세요.");
+                }
+                if (guestPassword == null || guestPassword.trim().isEmpty()) {
+                    throw new IllegalArgumentException("비회원 삭제시 비밀번호가 필요합니다.");
+                }
+                if (!passwordEncoder.matches(guestPassword, qna.getGuestPassword())) {
+                    throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+                }
+            } else {
+                // 회원 글 삭제
+                if (userId == null) {
+                    throw new IllegalArgumentException("로그인이 필요합니다.");
+                }
+                if (!qna.getUser().getId().equals(userId)) {
+                    throw new IllegalArgumentException("본인의 글만 삭제할 수 있습니다.");
+                }
             }
         }
+        // 관리자는 위의 모든 체크를 스킵하고 바로 삭제
 
         // 소프트 삭제 실행
         qna.softDelete();
