@@ -77,6 +77,7 @@ public class AuthenticationFilter implements Filter {
             requestUri.startsWith("/order") ||
             requestUri.startsWith("/storeWrite") ||
             requestUri.startsWith("/uploads/images/") || // 이미지 업로드 경로 예외 처리
+            requestUri.startsWith("/api/qna") ||
             (isDevelopment && "OPTIONS".equalsIgnoreCase(httpMethod)) || // OPTIONS 메서드 추가
             (requestUri.startsWith("/api/board") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/board 예외 처리 추가
             (requestUri.startsWith("/api/branch") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/branch 예외 처리 추가

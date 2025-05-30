@@ -4,7 +4,6 @@ import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.QnaRequest;
 import bon.bon_jujitsu.dto.response.QnAResponse;
-import bon.bon_jujitsu.dto.update.GuestQnAUpdate;
 import bon.bon_jujitsu.dto.update.QnAUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.QnaService;
