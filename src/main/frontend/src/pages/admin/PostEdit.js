@@ -12,11 +12,14 @@ const PostEdit = () => {
   const fileInputRef = useRef(null);
   const originalImageIds = useRef([]);
 
-  // 카테고리 정보
+  // 카테고리 정보 - Board, Notice, QnA 추가
   const [categories] = useState([
+    { id: 'board', name: 'Board', apiPath: '/board' },
+    { id: 'notice', name: 'Notice', apiPath: '/notice' },
     { id: 'skill', name: 'Skill', apiPath: '/skill' },
     { id: 'sponsor', name: 'Sponsor', apiPath: '/sponsor' },
-    { id: 'news', name: 'News', apiPath: '/news' }
+    { id: 'news', name: 'News', apiPath: '/news' },
+    { id: 'qna', name: 'QnA', apiPath: '/qna' }
   ]);
 
   // 폼 상태
@@ -42,6 +45,12 @@ const PostEdit = () => {
       return false;
     }
     return true;
+  };
+
+  // 카테고리별 이미지 필요 여부 확인 함수
+  const isImageRequired = () => {
+    // 모든 카테고리에서 이미지는 선택사항
+    return false;
   };
 
   // 권한 체크
@@ -226,10 +235,11 @@ const PostEdit = () => {
       return;
     }
 
-    if (keepImageIds.length === 0 && newImages.length === 0) {
-      setError('이미지를 최소 1개 이상 등록해주세요.');
-      return;
-    }
+    // 이미지는 모든 카테고리에서 선택사항이므로 검증 제거
+    // if (isImageRequired() && keepImageIds.length === 0 && newImages.length === 0) {
+    //   setError('이미지를 최소 1개 이상 등록해주세요.');
+    //   return;
+    // }
 
     setLoading(true);
     setError(null);
@@ -270,7 +280,8 @@ const PostEdit = () => {
         title,
         content,
         keepImageIds: keepImageIds.length,
-        newImageCount: newImages.length
+        newImageCount: newImages.length,
+        isImageRequired: isImageRequired()
       });
 
       const response = await API.patch(`${categoryInfo.apiPath}/${id}`, formData, {
@@ -281,8 +292,7 @@ const PostEdit = () => {
 
       if (response.data?.success) {
         alert('게시글이 성공적으로 수정되었습니다.');
-        const categoryParam = selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1);
-        navigate(`/admin/boards?category=${categoryParam}`);
+        navigate('/admin/posts');
       } else {
         setError('게시글 수정에 실패했습니다: ' + (response.data?.message || '알 수 없는 오류'));
       }
@@ -319,6 +329,7 @@ const PostEdit = () => {
 - 유지할 이미지 ID 수: ${keepImageIds.length}개
 - 유지할 이미지 ID 목록: ${keepImageIds.join(', ') || '없음'}
 - 새 이미지 수: ${newImages.length}개
+- 이미지 필수 여부: ${isImageRequired() ? '필수' : '선택사항'}
     `);
   };
 
@@ -448,6 +459,7 @@ const PostEdit = () => {
 
                   <div className="file-info">
                     최대 4개까지 업로드 가능합니다. (JPG, PNG, GIF)
+                    <span className="optional-notice"> - 이미지는 선택사항입니다.</span>
                   </div>
 
                   <div className="image-management-section">
@@ -542,8 +554,7 @@ const PostEdit = () => {
             <button
                 type="button"
                 onClick={() => {
-                  const categoryParam = selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1);
-                  navigate(`/admin/boards?category=${categoryParam}`);
+                  navigate('/admin/posts');
                 }}
                 className="cancel-button"
                 disabled={loading}

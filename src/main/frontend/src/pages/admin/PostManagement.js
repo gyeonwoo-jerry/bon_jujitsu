@@ -349,7 +349,6 @@ const PostManagement = () => {
       if (res.data?.success) {
         const data = res.data?.content;
 
-        // PostManagement.js의 transformedPosts 부분 수정
         const transformedPosts = data?.list?.map(item => {
           // 작성자 정보 처리
           let authorName = '관리자'; // 기본값
@@ -482,12 +481,9 @@ const PostManagement = () => {
           let authorName = '관리자'; // 기본값
 
           if (selectedCategory === 'QnA') {
-            console.log('QnA item:', item); // 전체 item 객체 확인
-            console.log('item.authorName:', item.authorName); // authorName 필드 확인
             // QnA의 경우 QnAResponse에서 이미 authorName으로 처리됨
             // (회원: user.name, 비회원: guestName)
             authorName = item.authorName || '알 수 없음';
-            console.log('최종 authorName:', authorName);
           } else if (item.author) {
             // author 필드가 있는 경우
             authorName = item.author;
@@ -647,7 +643,10 @@ const PostManagement = () => {
           // 작성자 정보 안전하게 처리
           let authorName = '관리자'; // 기본값
 
-          if (item.author) {
+          if (selectedCategory === 'QnA') {
+            // QnA의 경우 백엔드에서 이미 authorName으로 처리되어 옴
+            authorName = item.authorName || '알 수 없음';
+          } else if (item.author) {
             // author 필드가 있는 경우
             authorName = item.author;
           } else if (item.creator) {
@@ -663,15 +662,6 @@ const PostManagement = () => {
           } else if (item.creator === null) {
             // creator가 명시적으로 null인 경우 (탈퇴한 회원)
             authorName = '탈퇴한 회원';
-          } else if (selectedCategory === 'QnA') {
-            // QnA의 경우 회원/비회원 구분
-            if (item.guestName) {
-              authorName = item.guestName;
-            } else if (item.user && item.user.name) {
-              authorName = item.user.name;
-            } else {
-              authorName = '알 수 없음';
-            }
           }
 
           return {
@@ -680,7 +670,9 @@ const PostManagement = () => {
             author: authorName,
             date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
             // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
-            isDeletedAuthor: authorName === '탈퇴한 회원'
+            isDeletedAuthor: authorName === '탈퇴한 회원',
+            // QnA 전용 필드 추가
+            isGuestPost: selectedCategory === 'QnA' ? item.isGuestPost : false
           };
         }) || [];
 
