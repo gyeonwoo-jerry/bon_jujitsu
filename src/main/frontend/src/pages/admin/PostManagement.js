@@ -24,7 +24,8 @@ const PostManagement = () => {
     { id: 'Notice', name: 'Notice', apiPath: '/notice', needsBranch: true, needsAuthor: true },
     { id: 'News', name: 'News', apiPath: '/news', needsBranch: false, needsAuthor: false },
     { id: 'Skill', name: 'Skill', apiPath: '/skill', needsBranch: false, needsAuthor: false },
-    { id: 'Sponsor', name: 'Sponsor', apiPath: '/sponsor', needsBranch: false, needsAuthor: false }
+    { id: 'Sponsor', name: 'Sponsor', apiPath: '/sponsor', needsBranch: false, needsAuthor: false },
+    { id: 'QnA', name: 'QnA', apiPath: '/qna', needsBranch: false, needsAuthor: true } // QnA 추가
   ]);
 
   // 현재 사용자가 볼 수 있는 카테고리
@@ -196,7 +197,7 @@ const PostManagement = () => {
           // ADMIN인 경우 지부 region 목록 로드
           fetchRegions();
         } else if (role === "OWNER") {
-          // 관장은 Board, Notice만 접근 가능
+          // 관장은 Board, Notice만 접근 가능 (QnA는 ADMIN만)
           filteredCategories = allCategories.filter(cat =>
               cat.id === 'Board' || cat.id === 'Notice'
           );
@@ -352,7 +353,10 @@ const PostManagement = () => {
           // 작성자 정보 안전하게 처리
           let authorName = '관리자'; // 기본값
 
-          if (item.author) {
+          if (selectedCategory === 'QnA') {
+            // QnA의 경우 authorName 필드 직접 사용 (QnAResponse에서 이미 처리됨)
+            authorName = item.authorName || '알 수 없음';
+          } else if (item.author) {
             // author 필드가 있는 경우
             authorName = item.author;
           } else if (item.creator) {
@@ -376,7 +380,9 @@ const PostManagement = () => {
             author: authorName,
             date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
             // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
-            isDeletedAuthor: authorName === '탈퇴한 회원'
+            isDeletedAuthor: authorName === '탈퇴한 회원',
+            // QnA 전용 필드 추가
+            isGuestPost: selectedCategory === 'QnA' ? item.isGuestPost : false
           };
         }) || [];
 
@@ -489,6 +495,15 @@ const PostManagement = () => {
           } else if (item.creator === null) {
             // creator가 명시적으로 null인 경우 (탈퇴한 회원)
             authorName = '탈퇴한 회원';
+          } else if (selectedCategory === 'QnA') {
+            // QnA의 경우 회원/비회원 구분
+            if (item.guestName) {
+              authorName = item.guestName;
+            } else if (item.user && item.user.name) {
+              authorName = item.user.name;
+            } else {
+              authorName = '알 수 없음';
+            }
           }
 
           return {
@@ -604,7 +619,7 @@ const PostManagement = () => {
           }
         }
       } else {
-        // News, Skill, Sponsor의 경우 - 검색어가 있으면 name 파라미터로 검색
+        // News, Skill, Sponsor, QnA의 경우 - 검색어가 있으면 name 파라미터로 검색
         if (searchQuery.trim()) {
           params.append('name', searchQuery.trim());
         }
@@ -646,6 +661,15 @@ const PostManagement = () => {
           } else if (item.creator === null) {
             // creator가 명시적으로 null인 경우 (탈퇴한 회원)
             authorName = '탈퇴한 회원';
+          } else if (selectedCategory === 'QnA') {
+            // QnA의 경우 회원/비회원 구분
+            if (item.guestName) {
+              authorName = item.guestName;
+            } else if (item.user && item.user.name) {
+              authorName = item.user.name;
+            } else {
+              authorName = '알 수 없음';
+            }
           }
 
           return {
@@ -779,8 +803,8 @@ const PostManagement = () => {
 
   // 등록하기 버튼 표시 여부 함수
   const shouldShowRegisterButton = () => {
-    // Board, Notice는 role에 상관없이 등록하기 버튼 숨김
-    if (selectedCategory === 'Board' || selectedCategory === 'Notice') {
+    // Board, Notice, QnA는 role에 상관없이 등록하기 버튼 숨김
+    if (selectedCategory === 'Board' || selectedCategory === 'Notice' || selectedCategory === 'QnA') {
       return false;
     }
     // Sponsor, News, Skill은 항상 표시 (해당 카테고리에 접근 가능한 사용자만 볼 수 있으므로)
@@ -805,14 +829,7 @@ const PostManagement = () => {
         <h2 className="post_title">게시판관리(게시판리스트)</h2>
 
         {error && (
-            <div className="error-message" style={{
-              backgroundColor: '#fde2e2',
-              color: '#d32f2f',
-              padding: '10px',
-              borderRadius: '4px',
-              margin: '10px 0',
-              borderLeft: '4px solid #d32f2f'
-            }}>
+            <div className="error-message">
               {error}
             </div>
         )}
@@ -837,7 +854,7 @@ const PostManagement = () => {
               </select>
             </div>
 
-            {/* Board, Notice일 때만 작성자 검색창 표시 */}
+            {/* Board, Notice, QnA일 때만 작성자 검색창 표시 */}
             {getCurrentCategoryInfo()?.needsAuthor && (
                 <div className="form-group">
                   <label htmlFor="search-input">작성자:</label>
@@ -878,12 +895,11 @@ const PostManagement = () => {
             )}
 
             {/* 검색 버튼 */}
-            <div className="form-group">
+            <div className="search-button-container">
               <button
                   onClick={handleSearch}
-                  className="search-button"
+                  className={`search-button ${loading ? 'disabled' : ''}`}
                   disabled={loading}
-                  style={loading ? { backgroundColor: '#cccccc', cursor: 'not-allowed' } : {}}
               >
                 {loading ? '로딩중...' : (getCurrentCategoryInfo()?.needsAuthor ? '검색' : '조회')}
               </button>
@@ -982,7 +998,7 @@ const PostManagement = () => {
         {searchPerformed && (
             <>
               {loading ? (
-                  <div style={{ textAlign: 'center', padding: '20px', fontSize: '14px', color: '#666' }}>
+                  <div className="loading-indicator">
                     데이터를 불러오는 중입니다...
                   </div>
               ) : (
@@ -1023,7 +1039,7 @@ const PostManagement = () => {
 
         {/* 검색을 수행했지만 결과가 없는 경우 */}
         {searchPerformed && !loading && posts.length === 0 && !error && (
-            <div className="no-data-message" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            <div className="no-data-message">
               {getCurrentCategoryInfo()?.needsAuthor ? '검색 결과가 없습니다.' : '데이터가 없습니다.'}
             </div>
         )}

@@ -3,23 +3,19 @@ import React from 'react';
 import '../../styles/admin/postTable.css';
 
 const PostTable = ({
-  posts,
-  loading,
-  selectedCategory,
-  userRole,
-  onDetail,
-  onEdit,
-  onDelete
-}) => {
+                     posts,
+                     loading,
+                     selectedCategory,
+                     userRole,
+                     onDetail,
+                     onEdit,
+                     onDelete
+                   }) => {
 
-  // 수정 버튼 표시 여부 함수
+  // 수정 버튼 표시 여부 함수 (모든 카테고리에서 수정 버튼 표시)
   const shouldShowEditButton = () => {
-    if (userRole === 'ADMIN') {
-      // ADMIN은 Board, Notice 수정 버튼 숨김, 나머지는 표시
-      return selectedCategory !== 'Board' && selectedCategory !== 'Notice';
-    }
-    // OWNER는 모든 수정 버튼 표시 (Board, Notice만 접근 가능하므로)
-    return userRole === 'OWNER';
+    // 모든 카테고리에서 수정 버튼 표시
+    return true;
   };
 
   // 삭제 버튼 표시 여부 함수

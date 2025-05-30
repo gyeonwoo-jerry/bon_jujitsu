@@ -17,13 +17,15 @@
 
 /* 에러 메시지 */
 .error-message {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #fde2e2;
+  color: #d32f2f;
   border: 1px solid #f5c6cb;
+  border-left: 4px solid #d32f2f;
   border-radius: 4px;
   padding: 12px;
-  margin-bottom: 20px;
+  margin: 15px 0;
   font-size: 14px;
+  line-height: 1.4;
 }
 
 /* 검색 컨테이너 */
@@ -81,6 +83,12 @@
   min-width: 200px;
 }
 
+/* 검색 버튼 컨테이너 */
+.search-button-container {
+  display: flex;
+  align-items: flex-end;
+}
+
 .search-button {
   padding: 8px 20px;
   background-color: #007bff;
@@ -100,6 +108,121 @@
 
 .search-button:active {
   background-color: #004085;
+}
+
+/* 검색 버튼 비활성화 상태 */
+.search-button.disabled {
+  background-color: #cccccc !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.search-button.disabled:hover {
+  background-color: #cccccc !important;
+}
+
+/* 지부 region 탭 스타일 */
+.region-tabs {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.region-tabs-header {
+  margin-bottom: 10px;
+}
+
+.region-tabs-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin-right: 10px;
+}
+
+.loading-text {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.region-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.region-button {
+  padding: 8px 16px;
+  background-color: white;
+  color: #495057;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.region-button:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.region-button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.region-button.active:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* OWNER 지부 선택 스타일 */
+.owner-branch-selector {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.branch-selector-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin-right: 10px;
+}
+
+.single-branch-note {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+  margin-left: 10px;
+}
+
+/* 현재 필터 표시 */
+.current-filter {
+  margin: 15px 0;
+  padding: 10px 15px;
+  background-color: #e7f1ff;
+  border: 1px solid #b3d7ff;
+  border-radius: 4px;
+}
+
+.filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0056b3;
+  margin-right: 8px;
+}
+
+.filter-value {
+  font-size: 14px;
+  color: #0056b3;
+  font-weight: 500;
 }
 
 /* 액션 버튼 */
@@ -144,6 +267,10 @@
   padding: 40px 20px;
   color: #007bff;
   font-size: 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  margin: 20px 0;
 }
 
 /* 반응형 디자인 */
@@ -152,7 +279,7 @@
     padding: 15px;
   }
 
-  .title {
+  .post_title {
     font-size: 20px;
     margin-bottom: 20px;
   }
@@ -172,6 +299,10 @@
     width: 100%;
   }
 
+  .search-button-container {
+    width: 100%;
+  }
+
   .search-button {
     width: 100%;
     margin-top: 10px;
@@ -179,6 +310,25 @@
 
   .action-buttons {
     justify-content: center;
+  }
+
+  .region-buttons {
+    flex-direction: column;
+  }
+
+  .region-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .current-filter {
+    text-align: center;
+  }
+
+  .filter-label,
+  .filter-value {
+    display: block;
+    margin: 0;
   }
 }
 
@@ -191,7 +341,31 @@
     padding: 15px;
   }
 
-  .title {
+  .post_title {
     font-size: 18px;
+  }
+
+  .region-tabs,
+  .owner-branch-selector {
+    padding: 10px;
+  }
+
+  .region-tabs-label,
+  .branch-selector-label {
+    font-size: 13px;
+  }
+
+  .region-button {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .current-filter {
+    padding: 8px 12px;
+  }
+
+  .filter-label,
+  .filter-value {
+    font-size: 13px;
   }
 }
