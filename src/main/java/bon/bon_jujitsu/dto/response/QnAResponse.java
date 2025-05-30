@@ -37,8 +37,12 @@ public record QnAResponse(
             // 비회원 작성글인 경우
             authorName = qna.getGuestName() != null ? qna.getGuestName() : "익명";
         } else {
-            // 회원 작성글인 경우
-            authorName = qna.getUser().getName(); // 또는 getNickname()
+            // 회원 작성글인 경우 - null 체크 추가
+            if (qna.getUser() != null && qna.getUser().getName() != null) {
+                authorName = qna.getUser().getName();
+            } else {
+                authorName = "탈퇴한 회원"; // 또는 "알 수 없음"
+            }
         }
 
         return QnAResponse.builder()

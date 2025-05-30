@@ -72,7 +72,8 @@ public class QnaService {
     public PageResponse<QnAResponse> getQnAs(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<QnA> qnaPage = qnaRepository.findAll(pageRequest);
+        // User 정보를 함께 조회
+        Page<QnA> qnaPage = qnaRepository.findAllWithUser(pageRequest);
 
         Page<QnAResponse> qnaResponses = qnaPage.map(qna -> {
             List<PostImage> images = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
@@ -84,7 +85,9 @@ public class QnaService {
 
     @Transactional(readOnly = true)
     public QnAResponse getQnA(Long qnaId, HttpServletRequest request) {
-        QnA qna = qnARepository.findById(qnaId).orElseThrow(()-> new IllegalArgumentException("QNA를 찾을수 없습니다."));
+        // User 정보를 함께 조회
+        QnA qna = qnARepository.findByIdWithUser(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("QNA를 찾을수 없습니다."));
 
         HttpSession session = request.getSession();
         String sessionKey = "viewed_QnA_" + qnaId;

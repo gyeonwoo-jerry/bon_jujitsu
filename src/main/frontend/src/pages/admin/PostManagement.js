@@ -349,6 +349,7 @@ const PostManagement = () => {
       if (res.data?.success) {
         const data = res.data?.content;
 
+        // PostManagement.js의 transformedPosts 부분 수정
         const transformedPosts = data?.list?.map(item => {
           // 작성자 정보 처리
           let authorName = '관리자'; // 기본값
