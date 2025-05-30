@@ -83,7 +83,7 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
       if (!isMounted.current) return;
 
       if (response.status === 200) {
-        const postData = response.data.dataBody;
+        const postData = response.data.content;
         setFormData({
           title: postData.title || "",
           content: postData.content || "",
@@ -187,7 +187,15 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
           ],
           { type: "application/json" }
         );
-        sponsorFormData.append("request", jsonBlob);
+
+        if (isEditMode) {
+          // 수정 모드에서는 "update" 키 사용
+          sponsorFormData.append("update", jsonBlob);
+        } else {
+          // 생성 모드에서는 "request" 키 사용
+          sponsorFormData.append("request", jsonBlob);
+        }
+
         // 선택한 파일이 있는 경우 FormData에 추가
         if (selectedFiles.length > 0) {
           selectedFiles.forEach((file) => {
@@ -197,14 +205,21 @@ function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" 
 
         console.log("제휴업체 등록 요청 데이터:", sponsorFormData);
 
-        // 백엔드 API 서버 URL 직접 지정 (CORS 이슈가 있을 수 있음)
-        // 개발환경 프록시 설정 확인 필요
-
-        response = await API.post(`${apiEndpoint}`, sponsorFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        if (isEditMode) {
+          // 수정 모드: PATCH 메서드 사용
+          response = await API.patch(`${apiEndpoint}/${id}`, sponsorFormData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+        } else {
+          // 생성 모드: POST 메서드 사용
+          response = await API.post(`${apiEndpoint}`, sponsorFormData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+        }
       } else {
         // 일반 게시글 등록/수정 로직
         const sponsorFormData = new FormData();
