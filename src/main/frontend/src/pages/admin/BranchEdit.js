@@ -321,16 +321,23 @@ const BranchEdit = () => {
 
   if (initialLoading) {
     return (
-        <div className="branch-form-container">
-          <h2 className="branch_form_title">지부관리(지부수정)</h2>
+      <div className="admin_main">
+        <div className="admin_contents">
+          <div className="page-header">
+            <div className="title">지부관리(지부수정)</div>
+          </div>
           <div className="loading-indicator">지부 정보를 불러오는 중입니다...</div>
         </div>
+      </div>
     );
   }
 
   return (
-      <div className="branch-form-container">
-        <h2 className="branch_form_title">지부관리(지부수정)</h2>
+    <div className="admin_main">
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">지부관리(지부수정)</div>
+        </div>
 
         {error && (
             <div className="error-message">
@@ -338,7 +345,7 @@ const BranchEdit = () => {
             </div>
         )}
 
-        <form onSubmit={handleSubmit} className="branch-form">
+        <form onSubmit={handleSubmit} className="form-container branch-form">
           <table className="input-table">
             <tbody>
             <tr>
@@ -357,7 +364,7 @@ const BranchEdit = () => {
             </tr>
             <tr>
               <th>주소</th>
-              <td>
+              <td className="addr_input">
                 <AddressSearch
                     onAddressSelect={(address, area) => {
                       setBranchData(prev => ({
@@ -420,7 +427,7 @@ const BranchEdit = () => {
                     ref={fileInputRef}
                     className="hidden-file-input"
                 />
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <div className="image-info-section">
                   <button
                       type="button"
                       className="image-upload-button"
@@ -517,7 +524,7 @@ const BranchEdit = () => {
                   </div>
 
                   {/* 이미지 개수 요약 표시 */}
-                  <div className="image-summary" style={{ marginTop: '15px', padding: '10px', backgroundColor: '#e8f4fd', borderRadius: '4px' }}>
+                  <div className="image-summary">
                     <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {branchData.images.length}개 = 총 {keepImageIds.length + branchData.images.length}개
                     {(keepImageIds.length + branchData.images.length > 5) &&
                         <div style={{ color: 'red', marginTop: '5px' }}>⚠️ 이미지는 최대 5개까지만 가능합니다!</div>
@@ -547,6 +554,7 @@ const BranchEdit = () => {
           </div>
         </form>
       </div>
+    </div>
   );
 };
 

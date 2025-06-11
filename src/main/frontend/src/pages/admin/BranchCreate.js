@@ -211,8 +211,11 @@ const BranchCreate = () => {
   };
 
   return (
-      <div className="branch-form-container">
-        <h2 className="branch_form_title">지부관리(지부등록)</h2>
+    <div className="admin_main">
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">지부관리(지부등록)</div>
+        </div>
 
         {error && (
             <div className="error-message">
@@ -220,7 +223,7 @@ const BranchCreate = () => {
             </div>
         )}
 
-        <form onSubmit={handleSubmit} className="branch-form">
+        <form onSubmit={handleSubmit} className="form-container branch-form">
           <table className="input-table">
             <tbody>
             <tr>
@@ -254,11 +257,12 @@ const BranchCreate = () => {
             </tr>
             <tr>
               <th>주소</th>
-              <td>
+              <td className="addr_input">
                 <AddressSearch
                     onAddressSelect={handleAddressSelect}
                     selectedAddress={branchData.address}
                 />
+                <p className="input-help-text">* 주소를 등록하시려면 주소 검색 버튼을 클릭하세요.</p>
               </td>
             </tr>
             <tr>
@@ -333,6 +337,7 @@ const BranchCreate = () => {
           </div>
         </form>
       </div>
+    </div>
   );
 };
 
