@@ -294,27 +294,34 @@ const BranchManagement = () => {
   }
 
   return (
-      <div className="branch-management">
+      <div className="admin_main">
         <AdminHeader />
 
-        <h2 className="title">지부관리(지부리스트)</h2>
+        <div className="admin_contents">
+          {/* 헤더 섹션 */}
+          <div className="page-header">
+            <div className="title">지부관리(지부리스트)</div>
+          </div>
 
-        {error && (
-            <div className="error-message">
-              {error}
-            </div>
-        )}
+          {/* 검색 섹션 */}
+          <div className="search-panel">
+          {error && (
+              <div className="error-message">
+                {error}
+              </div>
+          )}
 
-        <div className="search-container">
-          <SearchBar
-              searchKeyword={searchKeyword}
-              onSearchInputChange={handleSearchInputChange}
-              onSearch={handleSearch}
-              placeholder="지부명을 입력하세요"
-              showRegionDropdown={true}
-              selectedRegion={selectedRegion}
-              onRegionChange={handleRegionChange}
-          />
+          <div className="search-container">
+            <SearchBar
+                searchKeyword={searchKeyword}
+                onSearchInputChange={handleSearchInputChange}
+                onSearch={handleSearch}
+                placeholder="지부명을 입력하세요"
+                showRegionDropdown={true}
+                selectedRegion={selectedRegion}
+                onRegionChange={handleRegionChange}
+            />
+          </div>
         </div>
 
         {loading ? (
@@ -343,6 +350,7 @@ const BranchManagement = () => {
               )}
             </>
         )}
+        </div>
       </div>
   );
 };
