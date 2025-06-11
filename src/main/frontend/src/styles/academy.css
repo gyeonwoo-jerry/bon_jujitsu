@@ -1,0 +1,242 @@
+/* academy.css */
+
+/* 전체 컨테이너 */
+.academy_container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #fff;
+}
+
+.academy_content {
+  padding: 60px 40px;
+  line-height: 1.8;
+  color: #333;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 제목 스타일 */
+.academy_content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 40px;
+  text-align: center;
+  border-bottom: 3px solid #e74c3c;
+  padding-bottom: 20px;
+  position: relative;
+}
+
+.academy_content h1::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background-color: #c0392b;
+}
+
+.academy_content h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 50px 0 25px 0;
+  padding-left: 20px;
+  border-left: 5px solid #e74c3c;
+  position: relative;
+}
+
+.academy_content h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #34495e;
+  margin: 40px 0 20px 0;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.academy_content h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 30px 0 15px 0;
+  padding: 12px 16px;
+  background-color: #ecf0f1;
+  border-radius: 6px;
+  border-left: 3px solid #95a5a6;
+}
+
+/* 본문 텍스트 */
+.academy_content p {
+  font-size: 1.1rem;
+  line-height: 1.9;
+  color: #444;
+  margin-bottom: 25px;
+  text-align: justify;
+  word-break: keep-all;
+}
+
+/* 강조 텍스트 */
+.academy_content strong {
+  color: #e74c3c;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+/* 브라질리언 주짓수 첫 번째 문단 특별 스타일 */
+.jiujitsu-intro {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important;
+  padding: 30px;
+  border-radius: 12px;
+  font-size: 1.15rem;
+  margin: 30px 0;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+/* 벨트별 색상 스타일 */
+.white-belt {
+  color: #6c757d !important;
+}
+
+.blue-belt {
+  color: #007bff !important;
+}
+
+.purple-belt {
+  color: #6f42c1 !important;
+}
+
+.brown-belt {
+  color: #795548 !important;
+}
+
+.black-belt {
+  color: #212529 !important;
+  font-weight: 700 !important;
+}
+
+/* 벨트 요구사항 박스 */
+.belt-requirements {
+  background: #fff3cd !important;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border-left: 5px solid #f39c12;
+}
+
+/* 대표 인삿말 페이지 스타일 */
+.greeting-content p {
+  font-size: 1.15rem;
+  line-height: 2;
+}
+
+.greeting-signature {
+  text-align: right !important;
+  font-weight: 600;
+  color: #2c3e50;
+  border-top: 2px solid #ecf0f1;
+  padding-top: 20px;
+  margin-top: 40px;
+}
+
+/* 아이들 벨트 색상 섹션 */
+.kids-belt-section {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%) !important;
+  color: #2c3e50 !important;
+  padding: 25px;
+  border-radius: 12px;
+  font-weight: 500;
+  line-height: 2.2;
+}
+
+/* 호버 효과 */
+.academy_content h2:hover,
+.academy_content h3:hover {
+  transform: translateX(5px);
+  transition: transform 0.3s ease;
+}
+
+/* 특별한 박스 스타일 */
+.info-box {
+  background: #e8f4f8;
+  border-left: 5px solid #17a2b8;
+  padding: 20px;
+  margin: 25px 0;
+  border-radius: 8px;
+}
+
+.highlight-box {
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  padding: 25px;
+  margin: 30px 0;
+  border-radius: 10px;
+  position: relative;
+}
+
+.highlight-box::before {
+  content: '💡';
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background: #fff;
+  padding: 0 10px;
+  font-size: 1.2rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .academy_content {
+    padding: 40px 20px;
+  }
+
+  .academy_content h1 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
+
+  .academy_content h2 {
+    font-size: 1.5rem;
+    margin: 40px 0 20px 0;
+  }
+
+  .academy_content h3 {
+    font-size: 1.3rem;
+    padding: 12px 15px;
+  }
+
+  .academy_content h4 {
+    font-size: 1.1rem;
+    padding: 10px 12px;
+  }
+
+  .academy_content p {
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+}
+
+@media (max-width: 480px) {
+  .academy_content {
+    padding: 30px 15px;
+  }
+
+  .academy_content h1 {
+    font-size: 1.8rem;
+  }
+
+  .academy_content h2 {
+    font-size: 1.4rem;
+    padding-left: 15px;
+  }
+
+  .academy_content h3 {
+    font-size: 1.2rem;
+    padding: 10px 12px;
+  }
+}

@@ -349,13 +349,14 @@ const PostManagement = () => {
       if (res.data?.success) {
         const data = res.data?.content;
 
+        // PostManagement.js의 fetchPosts 함수에서 transformedPosts 부분을 다음과 같이 수정하세요
+
         const transformedPosts = data?.list?.map(item => {
-          // 작성자 정보 처리
+          // 작성자 정보 안전하게 처리
           let authorName = '관리자'; // 기본값
 
           if (selectedCategory === 'QnA') {
-            // QnA의 경우 QnAResponse에서 이미 authorName으로 처리됨
-            // (회원: user.name, 비회원: guestName)
+            // QnA의 경우 백엔드에서 이미 authorName으로 처리되어 옴
             authorName = item.authorName || '알 수 없음';
           } else if (item.author) {
             // author 필드가 있는 경우
@@ -380,6 +381,10 @@ const PostManagement = () => {
             title: item.title || item.name,
             author: authorName,
             date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
+            // 🔥 중요: region 정보 추가 (원본 데이터에서 그대로 가져오기)
+            region: item.region,
+            // 🔥 branchId가 있다면 그것도 포함
+            branchId: item.branchId,
             // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
             isDeletedAuthor: authorName === '탈퇴한 회원',
             // QnA 전용 필드 추가
@@ -477,28 +482,22 @@ const PostManagement = () => {
         const data = res.data?.content;
 
         const transformedPosts = data?.list?.map(item => {
-          // 작성자 정보 처리
+          // 작성자 정보 안전하게 처리
           let authorName = '관리자'; // 기본값
 
           if (selectedCategory === 'QnA') {
-            // QnA의 경우 QnAResponse에서 이미 authorName으로 처리됨
-            // (회원: user.name, 비회원: guestName)
             authorName = item.authorName || '알 수 없음';
           } else if (item.author) {
-            // author 필드가 있는 경우
             authorName = item.author;
           } else if (item.creator) {
-            // creator 객체가 있는 경우
             if (item.creator.name) {
               authorName = item.creator.name;
             } else if (item.creator.deleted || item.creator.status === 'DELETED') {
-              // 탈퇴한 회원인 경우 명시적으로 표시
               authorName = '탈퇴한 회원';
             } else {
               authorName = '알 수 없음';
             }
           } else if (item.creator === null) {
-            // creator가 명시적으로 null인 경우 (탈퇴한 회원)
             authorName = '탈퇴한 회원';
           }
 
@@ -507,7 +506,11 @@ const PostManagement = () => {
             title: item.title || item.name,
             author: authorName,
             date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
-            // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
+            // 🔥 중요: region 정보 추가 (누락되었던 부분)
+            region: item.region,
+            // 🔥 branchId가 있다면 그것도 포함
+            branchId: item.branchId,
+            // 탈퇴한 회원 여부 플래그 추가
             isDeletedAuthor: authorName === '탈퇴한 회원',
             // QnA 전용 필드 추가
             isGuestPost: selectedCategory === 'QnA' ? item.isGuestPost : false
@@ -644,23 +647,18 @@ const PostManagement = () => {
           let authorName = '관리자'; // 기본값
 
           if (selectedCategory === 'QnA') {
-            // QnA의 경우 백엔드에서 이미 authorName으로 처리되어 옴
             authorName = item.authorName || '알 수 없음';
           } else if (item.author) {
-            // author 필드가 있는 경우
             authorName = item.author;
           } else if (item.creator) {
-            // creator 객체가 있는 경우
             if (item.creator.name) {
               authorName = item.creator.name;
             } else if (item.creator.deleted || item.creator.status === 'DELETED') {
-              // 탈퇴한 회원인 경우 명시적으로 표시
               authorName = '탈퇴한 회원';
             } else {
               authorName = '알 수 없음';
             }
           } else if (item.creator === null) {
-            // creator가 명시적으로 null인 경우 (탈퇴한 회원)
             authorName = '탈퇴한 회원';
           }
 
@@ -669,7 +667,11 @@ const PostManagement = () => {
             title: item.title || item.name,
             author: authorName,
             date: item.createdAt || item.createdDate || new Date().toISOString().split('T')[0],
-            // 탈퇴한 회원 여부 플래그 추가 (테이블에서 스타일링 용도)
+            // 🔥 중요: region 정보 추가 (누락되었던 부분)
+            region: item.region,
+            // 🔥 branchId가 있다면 그것도 포함
+            branchId: item.branchId,
+            // 탈퇴한 회원 여부 플래그 추가
             isDeletedAuthor: authorName === '탈퇴한 회원',
             // QnA 전용 필드 추가
             isGuestPost: selectedCategory === 'QnA' ? item.isGuestPost : false
@@ -789,10 +791,108 @@ const PostManagement = () => {
     navigate(`/admin/posts/edit/${selectedCategory.toLowerCase()}/${id}`);
   };
 
-  // 게시글 상세 페이지 이동 핸들러
+  // PostManagement.js에서 handleDetail 함수 수정 (응답 데이터의 region 활용)
+
   const handleDetail = (id) => {
-    const pathSegment = selectedCategory.toLowerCase();
-    window.open(`/${pathSegment}/${id}`, '_blank');
+    let detailPath = '';
+
+    switch(selectedCategory) {
+      case 'Board':
+        if (userRole === 'ADMIN' && selectedRegion === '') {
+          // 전체 브랜치 조회 상태인 경우 - 게시글의 region으로 브랜치 찾기
+          const targetPost = posts.find(post => post.id === id);
+
+          if (targetPost && targetPost.region) {
+            // 게시글의 region으로 해당 브랜치 찾기
+            const branch = allBranches.find(branch => branch.region === targetPost.region);
+            if (branch) {
+              detailPath = `/branches/${branch.id}/board/${id}`;
+            } else {
+              alert(`"${targetPost.region}" 지부 정보를 찾을 수 없습니다.`);
+              return;
+            }
+          } else {
+            alert('게시글의 지부 정보가 없어 상세 페이지로 이동할 수 없습니다.');
+            return;
+          }
+        } else if (userRole === 'ADMIN' && selectedRegion) {
+          // 특정 지부 선택한 경우
+          const selectedBranch = allBranches.find(branch => branch.region === selectedRegion);
+          if (selectedBranch) {
+            detailPath = `/branches/${selectedBranch.id}/board/${id}`;
+          } else {
+            alert('선택된 지부 정보를 찾을 수 없습니다.');
+            return;
+          }
+        } else if (userRole === 'OWNER' && selectedOwnerBranch) {
+          detailPath = `/branches/${selectedOwnerBranch}/board/${id}`;
+        } else {
+          alert('지부를 선택해주세요.');
+          return;
+        }
+        break;
+
+      case 'Notice':
+        if (userRole === 'ADMIN' && selectedRegion === '') {
+          // 전체 브랜치 조회 상태인 경우 - 게시글의 region으로 브랜치 찾기
+          const targetPost = posts.find(post => post.id === id);
+
+          if (targetPost && targetPost.region) {
+            // 게시글의 region으로 해당 브랜치 찾기
+            const branch = allBranches.find(branch => branch.region === targetPost.region);
+            if (branch) {
+              detailPath = `/branches/${branch.id}/notice/${id}`;
+            } else {
+              alert(`"${targetPost.region}" 지부 정보를 찾을 수 없습니다.`);
+              return;
+            }
+          } else {
+            alert('공지사항의 지부 정보가 없어 상세 페이지로 이동할 수 없습니다.');
+            return;
+          }
+        } else if (userRole === 'ADMIN' && selectedRegion) {
+          const selectedBranch = allBranches.find(branch => branch.region === selectedRegion);
+          if (selectedBranch) {
+            detailPath = `/branches/${selectedBranch.id}/notice/${id}`;
+          } else {
+            alert('선택된 지부 정보를 찾을 수 없습니다.');
+            return;
+          }
+        } else if (userRole === 'OWNER' && selectedOwnerBranch) {
+          detailPath = `/branches/${selectedOwnerBranch}/notice/${id}`;
+        } else {
+          alert('지부를 선택해주세요.');
+          return;
+        }
+        break;
+
+      case 'News':
+        detailPath = `/newsDetail/${id}`;
+        break;
+
+      case 'Skill':
+        detailPath = `/skillDetail/${id}`;
+        break;
+
+      case 'Sponsor':
+        detailPath = `/sponsorDetail/${id}`;
+        break;
+
+      case 'QnA':
+        detailPath = `/qnaDetail/${id}`;
+        break;
+
+      default:
+        alert('알 수 없는 카테고리입니다.');
+        return;
+    }
+
+    if (detailPath) {
+      console.log('이동할 경로:', detailPath); // 디버깅용
+      window.open(detailPath, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('상세 페이지 경로를 생성할 수 없습니다.');
+    }
   };
 
   // 등록하기 버튼 표시 여부 함수
