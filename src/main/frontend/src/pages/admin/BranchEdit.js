@@ -159,8 +159,8 @@ const BranchEdit = () => {
     const newCount = branchData.images ? branchData.images.length : 0;
     const totalImages = existingCount + newCount + files.length;
 
-    if (totalImages > 5) {
-      alert(`이미지는 최대 5개까지 업로드할 수 있습니다. (현재 유지 이미지: ${existingCount}개, 신규 이미지: ${newCount}개)`);
+    if (totalImages > 20) {
+      alert(`이미지는 최대 20개까지 업로드할 수 있습니다. (현재 유지 이미지: ${existingCount}개, 신규 이미지: ${newCount}개)`);
       return;
     }
 
@@ -527,7 +527,7 @@ const BranchEdit = () => {
                   <div className="image-summary">
                     <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {branchData.images.length}개 = 총 {keepImageIds.length + branchData.images.length}개
                     {(keepImageIds.length + branchData.images.length > 5) &&
-                        <div style={{ color: 'red', marginTop: '5px' }}>⚠️ 이미지는 최대 5개까지만 가능합니다!</div>
+                        <div style={{ color: 'red', marginTop: '5px' }}>⚠️ 이미지는 최대 20개까지만 가능합니다!</div>
                     }
                   </div>
                 </div>
