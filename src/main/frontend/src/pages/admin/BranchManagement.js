@@ -335,7 +335,7 @@ const BranchManagement = () => {
                   onDelete={handleDeleteBranch}
               />
 
-              <div className="action-buttons">
+              <div className="action-buttons add_branch_button">
                 <Link to="/admin/branches/create" className="register-button">
                   등록하기
                 </Link>

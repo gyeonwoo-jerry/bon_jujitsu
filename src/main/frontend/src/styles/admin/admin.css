@@ -96,4 +96,11 @@
 .admin_contents .branch-table-container .branch-table tbody tr td .update-button:hover { background-color: var(--black-color); }
 .admin_contents .branch-table-container .branch-table tbody tr:last-child td { border-bottom: none; }
 
+.admin_contents .branch-table-container .action-buttons a { cursor: pointer; padding: 5px 10px; border-radius: 10px; background-color: var(--gray-color); color: var(--white-color); }
+.admin_contents .branch-table-container .action-buttons a:hover { background-color: var(--black-color); }
+.admin_contents .branch-table-container .action-buttons button { cursor: pointer; padding: 5px 10px; border-radius: 10px; background-color: var(--black-color); color: var(--white-color); }
+.admin_contents .branch-table-container .action-buttons button:hover { background-color: var(--point-color); }
+.admin_contents .add_branch_button { padding: 30px;  display: flex; justify-content: end; align-items: center; gap: 10px; }
+.admin_contents .add_branch_button a { cursor: pointer; padding: 8px 14px; border-radius: 20px; background-color: var(--black-color); color: var(--white-color); }
+.admin_contents .add_branch_button a:hover { background-color: var(--point-color); }
 
