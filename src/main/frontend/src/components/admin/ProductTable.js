@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../../styles/admin/productTable.css';
+import "../../styles/admin/admin.css";
 
 const ProductTable = ({ products, onDelete }) => {
   // 할인율 계산 함수

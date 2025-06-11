@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
-import '../../styles/admin/productForm.css';
+import "../../styles/admin/admin.css";
 
 const ProductCreate = () => {
   const navigate = useNavigate();

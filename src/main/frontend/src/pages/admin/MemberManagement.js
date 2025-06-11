@@ -3,7 +3,7 @@ import MemberTable from "../../components/admin/MemberTable";
 import Pagination from "../../components/admin/Pagination";
 import AdminHeader from "../../components/admin/AdminHeader";
 import API from "../../utils/api";
-import "../../styles/admin/memberManagement.css"; // CSS 파일 import
+import "../../styles/admin/admin.css";
 
 const MemberManagement = () => {
   const [members, setMembers] = useState([]);
@@ -467,19 +467,19 @@ const MemberManagement = () => {
   };
 
   return (
-      <div className="member-manage-container">
+      <div className="admin_main">
         <AdminHeader />
 
-        <div className="member-manage-wrapper">
+        <div className="admin_contents">
           {/* 헤더 섹션 */}
           <div className="page-header">
-            <h1 className="page-title">회원관리</h1>
+            <div className="title">회원관리</div>
             <button
                 onClick={() => {
                   setShowDeleted(!showDeleted);
                   setCurrentPage(1);
                 }}
-                className={`btn-toggle ${showDeleted ? 'active' : 'inactive'}`}
+                className={`del_mb_list_btn btn-toggle ${showDeleted ? 'active' : 'inactive'}`}
             >
             <span className="btn-icon">
               {showDeleted ? '👥' : '🗑️'}
@@ -490,9 +490,9 @@ const MemberManagement = () => {
 
           {/* ADMIN인 경우 지부 region 탭들 표시 */}
           {userRole === "ADMIN" && !showDeleted && (
-              <div className="region-tabs">
-                <div className="region-tabs-header">
-                  <span className="region-tabs-label">지부별 조회:</span>
+              <div className="region_tabs">
+                <div className="region_tabs_header">
+                  <span className="region-tabs-label">▶ 지부별 조회</span>
                   {regionsLoading && <span className="loading-text">지부 목록 로딩 중...</span>}
                 </div>
                 <div className="region-buttons">
@@ -520,9 +520,9 @@ const MemberManagement = () => {
               <>
                 {/* 다중 지부 관리자인 경우 버튼 형태 (전체 버튼 없음) */}
                 {userBranches.length > 1 && (
-                    <div className="region-tabs">
-                      <div className="region-tabs-header">
-                        <span className="region-tabs-label">관리 지부 선택:</span>
+                    <div className="region_tabs">
+                      <div className="region_tabs_header">
+                        <span className="region-tabs-label">관리 지부 선택</span>
                       </div>
                       <div className="region-buttons">
                         {userBranches.map((branch) => (
@@ -652,7 +652,7 @@ const MemberManagement = () => {
                       allBranches={allBranches}
                       userBranchId={getCurrentUserBranchId()}
                   />
-                  <div className="pagination-container">
+                  <div className="pagination-container-wrapper">
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}

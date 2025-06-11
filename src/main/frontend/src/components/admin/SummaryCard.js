@@ -1,6 +1,6 @@
 // components/admin/SummaryCard.js
 import React from "react";
-import "../../styles/admin/adminMain.css";
+import "../../styles/admin/admin.css";
 
 const SummaryCard = ({ label, value }) => (
     <div className="card">

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
 import AddressSearch from '../../components/admin/AddressSearch';
-import '../../styles/admin/branchForm.css';
+import "../../styles/admin/admin.css";
 
 const BranchCreate = () => {
   const navigate = useNavigate();

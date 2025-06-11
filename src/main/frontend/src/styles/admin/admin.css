@@ -1,0 +1,77 @@
+.admin-header { border-radius: 30px; width: 100%;  background-color: var(--black-color); display: flex; justify-content: center; align-items: center; }
+.admin-header .admin-nav { display: flex; justify-content: start; align-items: center; gap: 44px; }
+.admin-header .admin-nav .nav-link { display: block; padding: 20px 25px; font-size: 18px; font-weight: 600; color: var(--white-color); }
+
+.admin_main { width: 100%; padding: 20px 40px; }
+.admin_contents { margin-top: 30px; padding: 44px 50px; border-radius: 30px; background-color: #f4f4f4; }
+.admin_contents .title { font-size: 32px; font-weight: 800; color: var(--black-color); text-align: left; }
+.admin_contents .summary-cards { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; gap:20px; }
+.admin_contents .summary-cards .card { width: 33%; border-radius: 15px; padding: 44px; background-color: var(--white-color); }
+.admin_contents .summary-cards .card .value { font-size: 44px; font-weight: 300; color: var(--black-color); }
+.admin_contents .summary-cards .card .label { margin-top: 14px; font-size: 18px; font-weight: 600; color: var(--black-color); }
+.admin_contents .quick-links { margin-top: 64px; display: flex; justify-content: space-between; align-items: center; gap:20px; }
+.admin_contents .quick-links .title { font-size: 32px; font-weight: 800; color: var(--black-color); text-align: left; }
+.admin_contents .quick-links button { position: relative; cursor: pointer; font-size: 20px; font-weight: 600; color: var(--black-color); text-align: left; }
+.admin_contents .quick-links button:hover { color: var(--point-color); }
+.admin_contents .quick-links button::after { transition: all 0.3s ease; content: "→"; position: absolute; left: -30px; top: 50%; transform: translateY(-50%); }
+.admin_contents .quick-links button:hover::after { left: -20px; }
+
+.admin_contents .page-header { position: relative;}
+.admin_contents .page-header .del_mb_list_btn { transition: all 0.3s ease; cursor: pointer; padding: 15px 20px 15px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); background-color: var(--white-color); position: absolute; right: 0; top: 0; }
+.admin_contents .page-header .del_mb_list_btn:hover { background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .region_tabs { margin-top: 54px; }
+.admin_contents .region_tabs .region_tabs_header { display: block; text-align: left; }
+.admin_contents .region_tabs .region_tabs_header span { font-size: 18px; font-weight: 600; color: var(--black-color);  }
+.admin_contents .region_tabs .region-buttons { margin-top: 14px; display: flex; justify-content: start; align-items: start; gap: 12px; flex-wrap: wrap; }
+.admin_contents .region_tabs .region-buttons > button.region-button { transition: all 0.3s ease; cursor: pointer; padding: 13px 20px 13px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); background-color: var(--white-color); }
+.admin_contents .region_tabs .region-buttons > button.region-button:hover { background-color: var(--point-color); color: var(--white-color); }
+
+.admin_contents .search-panel { margin-top: 20px; border-top: 1px solid #e0e0e0; padding-top: 20px; display: flex; justify-content: start; align-items: center; gap: 12px; }
+.admin_contents .search-panel .search-form { display: flex; justify-content: start; align-items: center; gap: 12px; }
+.admin_contents .search-panel .search-form .form-group { text-align: left; margin-bottom: 0; }
+.admin_contents .search-panel .search-form .form-group label { padding-left: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); margin-bottom: 4px; }
+.admin_contents .search-panel .search-form .form-group input,
+.admin_contents .search-panel .search-form .form-group select { width: 300px; height: 40px; border-radius: 10px; border: 1px solid #e0e0e0; padding: 10px; }
+
+.admin_contents .search-panel .btn-actions { margin-left: 20px; }
+.admin_contents .search-panel .btn-actions button {
+    transition: all 0.3s ease; cursor: pointer; padding: 13px 20px 13px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; color: var(--white-color); background-color: var(--point-color); }
+.admin_contents .search-panel .btn-actions button.btn-secondary { background-color: var(--white-color); color: var(--black-color); border: 1px solid var(--gray-color); }
+.admin_contents .search-panel .btn-actions button:hover { background-color: var(--black-color); color: var(--white-color); }
+.admin_contents .search-panel .btn-actions button~button { margin-left: 8px; }
+.admin_contents .current-filter { margin-top: 20px; background-color: var(--black-color); font-size: 18px; padding: 15px 20px; border-radius: 30px; color: var(--white-color); }
+.admin_contents .current-filter span~span { margin-left: 10px; }
+
+.admin_contents .table-container-compact { margin-top: 20px; padding: 34px; background-color: var(--white-color); border-radius: 20px; }
+.admin_contents .table-container-compact .member-table { width: 100%; }
+.admin_contents .table-container-compact .member-table thead tr { background-color: var(--white-color); }
+.admin_contents .table-container-compact .member-table thead tr th { padding: 24px 5px 20px; vertical-align: middle; font-size: 14px; font-weight: 600; color: var(--black-color); text-align: left; }
+.admin_contents .table-container-compact .member-table thead tr th { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .table-container-compact .member-table tbody tr { }
+.admin_contents .table-container-compact .member-table tbody tr td { padding: 12px 5px; vertical-align: middle; font-size: 14px; font-weight: 400; color: var(--black-color); text-align: left; }
+.admin_contents .table-container-compact .member-table tbody tr td { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .table-container-compact .member-table tbody tr td .info-controls { display: flex; justify-content: start; align-items: center; gap: 8px; }
+.admin_contents .table-container-compact .member-table tbody tr td .info-controls .info-row { display: flex; justify-content: start; align-items: center; gap: 6px; }
+.admin_contents .table-container-compact .member-table tbody tr td .info-controls .info-row select { width: 80px; border-radius: 10px; border: 1px solid #e0e0e0; padding: 5px; }
+.admin_contents .table-container-compact .member-table tbody tr td .info-controls .info-row input { width: 60px;  border-radius: 10px; border: 1px solid #e0e0e0;  padding: 5px; }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls {  }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .current-branches { display: flex; justify-content: start; align-items: center; gap: 6px; }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .current-branches .branch-item { padding: 4px 10px; border-radius: 10px; background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .add-branch-section { margin-top: 4px; display: flex; justify-content: start; align-items: center; gap: 6px; }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .add-branch-section select { width: 80px;  border-radius: 10px; border: 1px solid #e0e0e0; padding: 5px ; }    
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .no-branch { font-weight: 600; color: var(--point-color); }
+.admin_contents .table-container-compact .member-table tbody tr td .roles-section { margin-top: 4px; display: flex; justify-content: start; align-items: center; gap: 6px; }
+.admin_contents .table-container-compact .member-table tbody tr td .update-button { cursor: pointer; padding: 5px 10px; border-radius: 10px; background-color: var(--gray-color); color: var(--white-color); }
+.admin_contents .table-container-compact .member-table tbody tr td .update-button:hover { background-color: var(--black-color); }
+.admin_contents .table-container-compact .member-table tbody tr:last-child td { border-bottom: none; }
+
+
+.admin_contents .table-container-compact .member-table tbody tr:hover { background-color: #f4f4f4; }
+.admin_contents .pagination-container { padding-top: 34px; border-top: 1px solid var(--gray-color); margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+.admin_contents .pagination-container .pagination-button { margin:0; transition: all 0.3s ease; cursor: pointer; padding: 13px 20px 13px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); background-color: var(--white-color); }
+.admin_contents .pagination-container .pagination-button:hover { background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .pagination-container .pagination-button.disabled { background-color: var(--gray-color); color: var(--white-color); }
+
+
+

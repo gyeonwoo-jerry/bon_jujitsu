@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from "../../utils/api";
-import '../../styles/admin/memberTable.css';
+import "../../styles/admin/admin.css";
 
 // 회원 테이블 컴포넌트
 const MemberTable = ({

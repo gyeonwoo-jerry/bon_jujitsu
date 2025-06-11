@@ -1,6 +1,6 @@
 // AddressSearch.js - 수정된 버전
 import React from 'react';
-import '../../styles/admin/addressSearch.css';
+import "../../styles/admin/admin.css";
 
 const AddressSearch = ({ onAddressSelect, selectedAddress }) => {
   // 주소 검색 팝업 열기

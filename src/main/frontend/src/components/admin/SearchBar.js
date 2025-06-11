@@ -1,7 +1,7 @@
 // 수정된 SearchBar.js - DB에 저장된 지역 기반 드롭다운
 import React, { useState, useEffect } from 'react';
 import API from '../../utils/api';
-import '../../styles/admin/searchBar.css';
+import "../../styles/admin/admin.css";
 
 const SearchBar = ({
   searchKeyword,

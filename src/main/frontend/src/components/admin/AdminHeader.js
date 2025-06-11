@@ -1,7 +1,7 @@
 // components/admin/AdminHeader.js
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import "../../styles/admin/adminHeader.css";
+import "../../styles/admin/admin.css";
 
 const AdminHeader = () => {
     const [userRole, setUserRole] = useState("");

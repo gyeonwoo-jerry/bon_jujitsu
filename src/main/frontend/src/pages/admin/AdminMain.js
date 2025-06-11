@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import SummaryCard from "../../components/admin/SummaryCard";
 import QuickLinkButton from "../../components/admin/QuickLinkButton";
 import AdminHeader from "../../components/admin/AdminHeader";
-import "../../styles/admin/adminMain.css";
+import "../../styles/admin/admin.css";
 
 const AdminMain = () => {
     const [userRole, setUserRole] = useState("");
@@ -42,24 +42,27 @@ const AdminMain = () => {
     );
 
     return (
-        <div className="admin-main">
+        <div className="admin_main">
             <AdminHeader />
 
-            <h2>관리자 MAIN PAGE</h2>
+            <div className="admin_contents"> 
+                <div className="title">ADMIN DASHBOARD</div>
 
-            <div className="summary-cards">
-                {/* ADMIN만 요약 카드를 볼 수 있게 설정 */}
-                {userRole === "ADMIN" &&
-                    summaryCards.map((card, idx) => (
-                        <SummaryCard key={idx} {...card} />
-                    ))
-                }
-            </div>
+                <div className="summary-cards">
+                    {/* ADMIN만 요약 카드를 볼 수 있게 설정 */}
+                    {userRole === "ADMIN" &&
+                        summaryCards.map((card, idx) => (
+                            <SummaryCard key={idx} {...card} />
+                        ))
+                    }
+                </div>
 
-            <div className="quick-links">
-                {filteredQuickLinks.map((link, idx) => (
-                    <QuickLinkButton key={idx} title={link.title} path={link.path} />
-                ))}
+                <div className="quick-links">
+                    <div className="title">QUICK LINKS</div>
+                    {filteredQuickLinks.map((link, idx) => (
+                        <QuickLinkButton key={idx} title={link.title} path={link.path} />
+                    ))}
+                </div>
             </div>
         </div>
     );

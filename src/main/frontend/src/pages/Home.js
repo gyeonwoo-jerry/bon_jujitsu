@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';  
 import ImageSlider from '../components/ImageSlider';
 import NewsLatest from '../components/NewsLatest';
 
 
 function Home() { 
+
+  useEffect(() => {
+    const title = '본주짓수';
+    document.title = title;
+
+  }, []);
   
   return (
     <div className="home">

@@ -6,7 +6,7 @@ import Pagination from '../../components/admin/Pagination';
 import AdminHeader from '../../components/admin/AdminHeader';
 import { getWithExpiry } from '../../utils/storage';
 import { Link } from 'react-router-dom';
-import '../../styles/admin/productManagement.css';
+import "../../styles/admin/admin.css";
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
-import '../../styles/admin/postForm.css';
+import "../../styles/admin/admin.css";
 
 const PostEdit = () => {
   const { category, id } = useParams();

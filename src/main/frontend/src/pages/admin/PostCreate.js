@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
-import '../../styles/admin/postForm.css';
+import "../../styles/admin/admin.css";
 
 const PostCreate = () => {
   const navigate = useNavigate();

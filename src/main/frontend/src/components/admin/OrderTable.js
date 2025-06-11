@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/admin/orderTable.css';
+import "../../styles/admin/admin.css";
 
 const OrderTable = ({
   orders,

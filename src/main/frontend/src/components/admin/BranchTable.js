@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../../styles/admin/branchTable.css';
+import "../../styles/admin/admin.css";
 
 const BranchTable = ({ branches, onDelete }) => {
   return (

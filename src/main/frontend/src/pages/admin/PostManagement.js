@@ -6,7 +6,7 @@ import Pagination from '../../components/admin/Pagination';
 import PostTable from '../../components/admin/PostTable';
 import AdminHeader from '../../components/admin/AdminHeader';
 import { getWithExpiry } from '../../utils/storage';
-import '../../styles/admin/postManagement.css';
+import "../../styles/admin/admin.css";
 
 const PostManagement = () => {
   const navigate = useNavigate();

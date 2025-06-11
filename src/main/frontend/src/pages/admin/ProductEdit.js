@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
-import '../../styles/admin/productForm.css';
+import "../../styles/admin/admin.css";
 
 const ProductEdit = () => {
   const { itemId } = useParams(); // URL에서 itemId 파라미터 가져오기

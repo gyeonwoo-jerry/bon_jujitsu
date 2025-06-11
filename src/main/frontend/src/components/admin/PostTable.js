@@ -1,6 +1,6 @@
 // components/admin/PostTable.js
 import React from 'react';
-import '../../styles/admin/postTable.css';
+import "../../styles/admin/admin.css";
 
 const PostTable = ({
                      posts,

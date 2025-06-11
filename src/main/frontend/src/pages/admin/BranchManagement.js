@@ -7,7 +7,7 @@ import Pagination from '../../components/admin/Pagination';
 import AdminHeader from '../../components/admin/AdminHeader';
 import { getWithExpiry } from '../../utils/storage';
 import { Link } from 'react-router-dom';
-import '../../styles/admin/branchManagement.css';
+import "../../styles/admin/admin.css";
 
 const BranchManagement = () => {
   const [branches, setBranches] = useState([]);
