@@ -22,15 +22,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AuthenticationFilter implements Filter {
 
+  private final JwtUtil jwtUtil;
   @Value("${spring.profiles.active}")
   private String activeProfile;  // 현재 활성화된 프로파일을 가져옵니다.
-
-  private final JwtUtil jwtUtil;
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    HttpServletRequest req = (HttpServletRequest) request;    
+    HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse res = (HttpServletResponse) response;
 
     final String authorizationHeader = req.getHeader(HttpHeaders.AUTHORIZATION);
@@ -44,6 +43,7 @@ public class AuthenticationFilter implements Filter {
     if (
         requestUri.contains("/api/users/signup") ||
             requestUri.contains("/api/users/login") ||
+            requestUri.contains("/api/users/check-member-id") ||
             requestUri.matches("/api/admin/\\d+") ||
             requestUri.contains("/v3/api-docs") ||
             requestUri.contains("/swagger-ui") ||
@@ -64,7 +64,7 @@ public class AuthenticationFilter implements Filter {
             requestUri.startsWith("/store") ||
             requestUri.startsWith("/skill") ||
             requestUri.startsWith("/news") ||
-            requestUri.startsWith("/newsDetail/:id") || 
+            requestUri.startsWith("/newsDetail/:id") ||
             requestUri.startsWith("/newsWrite") ||
             requestUri.startsWith("/qna") ||
             requestUri.startsWith("/sponsor") ||
@@ -79,12 +79,18 @@ public class AuthenticationFilter implements Filter {
             requestUri.startsWith("/uploads/images/") || // 이미지 업로드 경로 예외 처리
             requestUri.startsWith("/api/qna") ||
             (isDevelopment && "OPTIONS".equalsIgnoreCase(httpMethod)) || // OPTIONS 메서드 추가
-            (requestUri.startsWith("/api/board") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/board 예외 처리 추가
-            (requestUri.startsWith("/api/branch") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/branch 예외 처리 추가
-            (requestUri.startsWith("/api/notice") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/notice 예외 처리 추가
-            (requestUri.startsWith("/api/news") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/notice 예외 처리 추가
-            (requestUri.startsWith("/api/skill") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) || //  GET /api/skill 예외 처리 추가
-            (requestUri.startsWith("/api/sponsor") && (isDevelopment || "GET".equalsIgnoreCase(httpMethod))) //  GET /api/sponsor 예외 처리 추가
+            (requestUri.startsWith("/api/board") && (isDevelopment || "GET".equalsIgnoreCase(
+                httpMethod))) || //  GET /api/board 예외 처리 추가
+            (requestUri.startsWith("/api/branch") && (isDevelopment || "GET".equalsIgnoreCase(
+                httpMethod))) || //  GET /api/branch 예외 처리 추가
+            (requestUri.startsWith("/api/notice") && (isDevelopment || "GET".equalsIgnoreCase(
+                httpMethod))) || //  GET /api/notice 예외 처리 추가
+            (requestUri.startsWith("/api/news") && (isDevelopment || "GET".equalsIgnoreCase(
+                httpMethod))) || //  GET /api/notice 예외 처리 추가
+            (requestUri.startsWith("/api/skill") && (isDevelopment || "GET".equalsIgnoreCase(
+                httpMethod))) || //  GET /api/skill 예외 처리 추가
+            (requestUri.startsWith("/api/sponsor") && (isDevelopment || "GET".equalsIgnoreCase(
+                httpMethod))) //  GET /api/sponsor 예외 처리 추가
     ) {
       System.out.println("Skipping authentication for: " + requestUri + ", Method: " + httpMethod);
       chain.doFilter(request, response);
@@ -93,13 +99,14 @@ public class AuthenticationFilter implements Filter {
 
     // 인증 헤더 확인
     if (Objects.isNull(authorizationHeader)) {
-      
+
       log.error("1. 인증헤더 없음.");
 
       // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
-      res.getWriter().write("{\"success\": \"false\", \"message\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
+      res.getWriter()
+          .write("{\"success\": \"false\", \"message\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
       return;
     }
 
@@ -112,12 +119,13 @@ public class AuthenticationFilter implements Filter {
     String token = authorizationHeader.substring(7); // "Bearer " 제거
     System.out.println("추출된 토큰: " + token); // 디버깅용
 
-    if(token.equals("null") || token.equals("undefined")){
+    if (token.equals("null") || token.equals("undefined")) {
       log.error("3. 토큰이 없습니다.");
       // throw new IllegalArgumentException("로그인 후 이용가능 합니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
-      res.getWriter().write("{\"success\": \"false\", \"message\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
+      res.getWriter()
+          .write("{\"success\": \"false\", \"message\": \"로그인 후 이용 가능합니다.\", \"status\": 401}");
       return;
     }
 
@@ -127,19 +135,20 @@ public class AuthenticationFilter implements Filter {
       // throw new IllegalArgumentException("로그인 시간이 만료되었습니다.");
       res.setStatus(HttpStatus.UNAUTHORIZED.value()); // 상태 코드 설정
       res.setContentType("application/json"); // JSON 응답
-      res.getWriter().write("{\"success\": \"false\", \"message\": \"로그인 시간이 만료되었습니다.\", \"status\": 401}");
+      res.getWriter()
+          .write("{\"success\": \"false\", \"message\": \"로그인 시간이 만료되었습니다.\", \"status\": 401}");
       return;
     }
     try {
       // 기존 인증 로직
       chain.doFilter(request, response);
     } catch (IllegalArgumentException e) {
-        log.error("5. 인증 오류 발생: {}", e.getMessage());
-        res.setStatus(HttpStatus.UNAUTHORIZED.value());
-        res.setContentType("application/json");
-        res.getWriter().write(
-            "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
-        );
+      log.error("5. 인증 오류 발생: {}", e.getMessage());
+      res.setStatus(HttpStatus.UNAUTHORIZED.value());
+      res.setContentType("application/json");
+      res.getWriter().write(
+          "{\"error\": \"" + e.getMessage() + "\", \"status\": 401}"
+      );
     }
   }
 }
