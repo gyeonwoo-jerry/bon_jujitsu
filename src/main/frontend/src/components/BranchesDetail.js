@@ -143,7 +143,7 @@ function BranchesDetail() {
                         
                         {branch.images.map((image, index) => (
                           <div className="slide_image" key={index}>
-                            <img src={image} alt={`지점 이미지 ${index + 1}`} />
+                            <img src={image.url} alt={`지점 이미지 ${index + 1}`} />
                           </div>
                         ))}
                       </Slider>
