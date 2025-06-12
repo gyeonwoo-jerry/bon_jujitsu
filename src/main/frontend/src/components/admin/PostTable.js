@@ -44,7 +44,7 @@ const PostTable = ({
             <th className="col-date">등록일</th>
             <th className="col-detail">상세보기</th>
             <th className="col-manage">관리</th>
-            <th className="col-delete">삭제</th>
+
           </tr>
           </thead>
           <tbody>
@@ -74,8 +74,6 @@ const PostTable = ({
                   ) : (
                       <span className="no-action">-</span>
                   )}
-                </td>
-                <td>
                   {shouldShowDeleteButton() ? (
                       <button
                           className="delete-button"

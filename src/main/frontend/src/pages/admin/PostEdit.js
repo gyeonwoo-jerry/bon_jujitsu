@@ -358,15 +358,12 @@ const PostEdit = () => {
             </div>
         )}
 
-        <form onSubmit={handleSubmit} className="create-form">
-          <div className="input-section">
-            <h3>입력</h3>
-
-            <div className="form-table">
-              {/* 구분 */}
-              <div className="form-row">
-                <label className="form-label">구분</label>
-                <div className="form-input-container">
+        <form onSubmit={handleSubmit} className="form-container create-form">
+          <table className="input-table">
+            <tbody>
+              <tr>
+                <th>구분</th>
+                <td>
                   <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
@@ -382,14 +379,12 @@ const PostEdit = () => {
                   <div className="file-info">
                     카테고리는 수정할 수 없습니다.
                   </div>
-                </div>
-              </div>
-
-              {/* 제목 */}
-              <div className="form-row">
-                <label className="form-label">제목</label>
-                <div className="form-input-container">
-                  <input
+                </td>
+              </tr>
+              <tr>
+                <th>제목</th>
+                <td>
+                <input
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -398,13 +393,11 @@ const PostEdit = () => {
                       disabled={loading}
                       maxLength={100}
                   />
-                </div>
-              </div>
-
-              {/* 내용 */}
-              <div className="form-row">
-                <label className="form-label">내용</label>
-                <div className="form-input-container">
+                </td>
+              </tr>
+              <tr>
+                <th>내용</th>
+                <td>
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
@@ -412,15 +405,13 @@ const PostEdit = () => {
                     placeholder="내용을 입력하세요"
                     disabled={loading}
                     rows={6}
-                />
-                </div>
-              </div>
-
-              {/* 이미지 */}
-              <div className="form-row">
-                <label className="form-label">이미지</label>
-                <div className="form-input-container">
-                  <input
+                > </textarea>
+                </td>
+              </tr>
+              <tr>
+                <th>이미지</th>
+                <td>
+                <input
                       type="file"
                       accept="image/*"
                       multiple
@@ -465,12 +456,8 @@ const PostEdit = () => {
                     최대 4개까지 업로드 가능합니다. (JPG, PNG, GIF)
                     <span className="optional-notice"> - 이미지는 선택사항입니다.</span>
                   </div>
-
-                  <div className="image-management-section">
-                    <h4>이미지 관리</h4>
-
-                    {/* 기존 이미지 표시 */}
-                    <div className="image-section">
+                  {/* 기존 이미지 표시 */}
+                  <div className="image-section">
                       <h5>기존 이미지 ({existingImages.length}개)</h5>
                       <div className="image-preview-container">
                         {existingImages.length > 0 ? (
@@ -540,14 +527,14 @@ const PostEdit = () => {
                           <div className="image-warning">⚠️ 이미지는 최대 4개까지만 가능합니다!</div>
                       }
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
 
           {/* 수정하기 버튼 */}
-          <div className="form-actions">
+          <div className="form-buttons">
             <button
                 type="submit"
                 className="submit-button"
