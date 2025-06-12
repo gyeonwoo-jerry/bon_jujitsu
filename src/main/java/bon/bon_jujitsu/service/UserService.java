@@ -14,6 +14,7 @@ import bon.bon_jujitsu.dto.request.SignupRequest;
 import bon.bon_jujitsu.dto.request.UserRoleRequest;
 import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.LogoutResponse;
+import bon.bon_jujitsu.dto.response.MemberIdCheckResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdate;
 import bon.bon_jujitsu.dto.update.UserBranchUpdate;
@@ -24,6 +25,7 @@ import bon.bon_jujitsu.repository.BranchUserRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.UserSpecification;
 
+import jakarta.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -526,5 +528,37 @@ public class UserService {
     if (update.stripe().isPresent()) {
       targetUser.updateStripe(update.stripe().get());
     }
+  }
+
+  public MemberIdCheckResponse checkMemberIdDuplicate(String memberId) {
+    // 아이디 유효성 검사
+    if (memberId == null || memberId.trim().isEmpty()) {
+      throw new IllegalArgumentException("아이디를 입력해주세요.");
+    }
+
+    if (memberId.length() < 4) {
+      throw new IllegalArgumentException("아이디는 4자리 이상 입력해주세요.");
+    }
+
+    // 아이디 패턴 검사 (영문, 숫자, 특수문자 조합 등)
+    if (!isValidMemberIdPattern(memberId)) {
+      throw new IllegalArgumentException("아이디는 영문, 숫자만 사용 가능합니다.");
+    }
+
+    // 데이터베이스에서 중복 확인
+    boolean exists = userRepository.existsByMemberId(memberId);
+
+    if (exists) {
+      return new MemberIdCheckResponse(false, "이미 사용중인 아이디입니다.");
+    } else {
+      return new MemberIdCheckResponse(true, "사용 가능한 아이디입니다.");
+    }
+  }
+
+  // 아이디 패턴 검증 메서드
+  private boolean isValidMemberIdPattern(String memberId) {
+    // 영문, 숫자만 허용하는 정규식 (4-20자)
+    String pattern = "^[a-zA-Z0-9]{4,20}$";
+    return memberId.matches(pattern);
   }
 }

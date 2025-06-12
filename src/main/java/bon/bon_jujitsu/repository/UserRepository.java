@@ -56,4 +56,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
       nativeQuery = true
   )
   Page<User> findDeletedUsersByBranchIdsNative(@Param("branchIds") List<Long> branchIds, Pageable pageable);
+
+  boolean existsByMemberId(String memberId);
 }

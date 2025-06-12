@@ -7,12 +7,14 @@ import bon.bon_jujitsu.dto.request.RefreshTokenRequest;
 import bon.bon_jujitsu.dto.request.SignupRequest;
 import bon.bon_jujitsu.dto.response.LoginResponse;
 import bon.bon_jujitsu.dto.response.LogoutResponse;
+import bon.bon_jujitsu.dto.response.MemberIdCheckResponse;
 import bon.bon_jujitsu.dto.response.RefreshTokenResponse;
 import bon.bon_jujitsu.dto.response.UserResponse;
 import bon.bon_jujitsu.dto.update.ProfileUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -97,6 +100,14 @@ public class UserController {
       @RequestBody @Valid ProfileDeleteRequest request) {
     usersService.deleteUser(userId, request);
     return ApiResponse.success("프로필 삭제 성공", null);
+  }
+
+  @GetMapping("/check-member-id")
+  public ApiResponse<MemberIdCheckResponse> checkMemberIdDuplicate(
+      @RequestParam("memberId") @NotBlank String memberId) {
+
+    MemberIdCheckResponse response = usersService.checkMemberIdDuplicate(memberId);
+    return ApiResponse.success("아이디 중복검사 완료", response);
   }
 }
 
