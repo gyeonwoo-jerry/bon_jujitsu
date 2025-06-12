@@ -125,24 +125,35 @@ const ProductManagement = () => {
   };
 
   return (
-      <div className="product-management">
+      <div className="admin_main product">
         <AdminHeader />
 
-        <h2 className="title">상품관리(상품리스트)</h2>
+        <div className="admin_contents">
+          <div className='page-header'>
+            <div className="title">상품관리(상품리스트)</div>
+            <div className="action-buttons">
+              <Link to="/admin/products/create" className="register-button">
+                등록하기
+              </Link>
+            </div>
+          </div>
 
         {error && (
             <div className="error-message">
               {error}
             </div>
         )}
-
-        <SearchBar
-            searchKeyword={searchKeyword}
-            onSearchInputChange={handleSearchInputChange}
-            onSearch={handleSearch}
-            placeholder="상품명을 입력하세요"
-            // showRegionDropdown 속성을 전달하지 않으면 기본값인 false가 적용되어 드롭박스가 표시되지 않음
-        />
+        <div className="search-container">
+          <div className="search-panel">
+            <SearchBar
+                searchKeyword={searchKeyword}
+                onSearchInputChange={handleSearchInputChange}
+                onSearch={handleSearch}
+                placeholder="상품명을 입력하세요"
+                // showRegionDropdown 속성을 전달하지 않으면 기본값인 false가 적용되어 드롭박스가 표시되지 않음
+            />
+          </div>
+        </div>  
 
         {loading ? (
             <div className="loading-indicator">
@@ -155,11 +166,6 @@ const ProductManagement = () => {
                   onDelete={handleDeleteProduct}
               />
 
-              <div className="action-buttons">
-                <Link to="/admin/products/create" className="register-button">
-                  등록하기
-                </Link>
-              </div>
 
               {products.length > 0 && (
                   <Pagination
@@ -170,6 +176,7 @@ const ProductManagement = () => {
               )}
             </>
         )}
+      </div>
       </div>
   );
 };

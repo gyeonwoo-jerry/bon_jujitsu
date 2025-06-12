@@ -288,8 +288,13 @@ const ProductCreate = () => {
   }, []);
 
   return (
-      <div className="product-form-container">
-        <h2 className="title">상품관리(상품등록)</h2>
+    <div className="admin_main product">
+
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">상품관리(상품등록)</div>
+        </div>
+     
 
         {error && (
             <div className="error-message">
@@ -297,7 +302,7 @@ const ProductCreate = () => {
             </div>
         )}
 
-        <form onSubmit={handleSubmit} className="product-form">
+        <form onSubmit={handleSubmit} className="form-container product-form">
           <table className="input-table">
             <tbody>
             <tr>
@@ -367,7 +372,7 @@ const ProductCreate = () => {
             </tr>
             <tr>
               <th>옵션 관리</th>
-              <td>
+              <td className="option-container">
                 <div className="options-header">
                   <div className="option-header-item">사이즈</div>
                   <div className="option-header-item">색상</div>
@@ -497,6 +502,7 @@ const ProductCreate = () => {
           </div>
         </form>
       </div>
+    </div>
   );
 };
 

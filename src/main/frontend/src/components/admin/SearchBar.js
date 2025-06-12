@@ -99,8 +99,8 @@ const SearchBar = ({
 
   return (
       <div className="search-bar">
-        <form onSubmit={handleSubmit}>
-          <div className="search-inputs">
+        <form onSubmit={handleSubmit} className='search-form'>
+          <div className="form-group search-inputs">
             {/* 지역 드롭박스 (showRegionDropdown이 true일 때만 표시) */}
             {showRegionDropdown && (
                 <select
@@ -131,10 +131,11 @@ const SearchBar = ({
                 placeholder={placeholder}
                 className="search-input"
             />
-
-            <button type="submit" className="search-button">
-              조회
-            </button>
+            <div className="btn-actions">
+              <button type="submit" className="search-button">
+                조회
+              </button>
+            </div>
           </div>
         </form>
       </div>

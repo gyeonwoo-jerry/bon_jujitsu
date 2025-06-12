@@ -361,8 +361,14 @@ const ProductEdit = () => {
   }
 
   return (
-      <div className="product-form-container">
-        <h2 className="title">상품관리(상품수정)</h2>
+    <div className="admin_main product">
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">상품관리(상품수정)</div>
+        </div>
+
+        <div className="product-form-container">
+        
 
         {error && (
             <div className="error-message">
@@ -370,7 +376,7 @@ const ProductEdit = () => {
             </div>
         )}
 
-        <form onSubmit={handleSubmit} className="product-form">
+        <form onSubmit={handleSubmit} className="product-form form-container">
           <table className="input-table">
             <tbody>
             <tr>
@@ -425,17 +431,12 @@ const ProductEdit = () => {
             </tr>
             <tr>
               <th>옵션 관리</th>
-              <td>
-                <div className="options-header">
-                  <div className="option-header-item">사이즈</div>
-                  <div className="option-header-item">색상</div>
-                  <div className="option-header-item">수량</div>
-                  <div className="option-header-item option-actions">작업</div>
-                </div>
-
+              <td className="option-container">
                 {productData.options.map((option, index) => (
                     <div key={index} className="option-row">
+                     
                       <div className="option-item">
+                        <label>사이즈</label>
                         <input
                             type="text"
                             value={option.size}
@@ -444,6 +445,7 @@ const ProductEdit = () => {
                         />
                       </div>
                       <div className="option-item">
+                        <label>색상</label>
                         <input
                             type="text"
                             value={option.color}
@@ -452,6 +454,7 @@ const ProductEdit = () => {
                         />
                       </div>
                       <div className="option-item">
+                        <label>수량</label>
                         <input
                             type="text"
                             value={option.amount}
@@ -460,6 +463,7 @@ const ProductEdit = () => {
                         />
                       </div>
                       <div className="option-item option-actions">
+
                         {index === 0 ? (
                             <button
                                 type="button"
@@ -467,7 +471,7 @@ const ProductEdit = () => {
                                 onClick={handleAddOption}
                                 title="옵션 추가"
                             >
-                              +
+                              + 옵션 추가
                             </button>
                         ) : (
                             <button
@@ -476,37 +480,15 @@ const ProductEdit = () => {
                                 onClick={() => handleRemoveOption(index)}
                                 title="옵션 삭제"
                             >
-                              -
+                              - 옵션 삭제
                             </button>
                         )}
                       </div>
                     </div>
                 ))}
 
-                <div className="color-presets">
-                  <div className="preset-label">자주 사용하는 색상:</div>
-                  <div className="preset-buttons">
-                    {colorPresets.map(color => (
-                        <button
-                            key={color}
-                            type="button"
-                            className="preset-button color-preset-button"
-                            style={{ backgroundColor: color.toLowerCase() }}
-                            onClick={() => {
-                              // 현재 선택된 옵션에 색상 적용 (마지막으로 추가된 옵션)
-                              if (productData.options.length > 0) {
-                                // 마지막 옵션에 색상 적용
-                                const lastIndex = productData.options.length - 1;
-                                applyPresetColor(lastIndex, color);
-                              }
-                            }}
-                            title={color}
-                        >
-                          {color}
-                        </button>
-                    ))}
-                  </div>
-                </div>
+                
+
               </td>
             </tr>
             <tr>
@@ -619,6 +601,8 @@ const ProductEdit = () => {
           </div>
         </form>
       </div>
+      </div>
+    </div>
   );
 };
 

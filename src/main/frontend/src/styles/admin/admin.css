@@ -16,7 +16,7 @@
 .admin_contents .quick-links button::after { transition: all 0.3s ease; content: "→"; position: absolute; left: -30px; top: 50%; transform: translateY(-50%); }
 .admin_contents .quick-links button:hover::after { left: -20px; }
 
-.admin_contents .page-header { position: relative;}
+.admin_contents .page-header { position: relative; display: flex; justify-content: space-between; align-items: center;}
 .admin_contents .page-header .del_mb_list_btn { transition: all 0.3s ease; cursor: pointer; padding: 15px 20px 15px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); background-color: var(--white-color); position: absolute; right: 0; top: 0; }
 .admin_contents .page-header .del_mb_list_btn:hover { background-color: var(--point-color); color: var(--white-color); }
 .admin_contents .region_tabs { margin-top: 54px; }
@@ -57,11 +57,14 @@
 .admin_contents .table-container-compact .member-table tbody tr td .info-controls .info-row input { width: 60px;  border-radius: 10px; border: 1px solid #e0e0e0;  padding: 5px; }
 .admin_contents .table-container-compact .member-table tbody tr td .branch-controls {  }
 .admin_contents .table-container-compact .member-table tbody tr td .branch-controls .current-branches { display: flex; justify-content: start; align-items: center; gap: 6px; }
-.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .current-branches .branch-item { padding: 4px 10px; border-radius: 10px; background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .current-branches .branch-item { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 10px; background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .table-container-compact .member-table tbody tr td .branch-controls .current-branches .branch-name { color: var(--white-color); margin: 0; }
 .admin_contents .table-container-compact .member-table tbody tr td .branch-controls .add-branch-section { margin-top: 4px; display: flex; justify-content: start; align-items: center; gap: 6px; }
 .admin_contents .table-container-compact .member-table tbody tr td .branch-controls .add-branch-section select { width: 80px;  border-radius: 10px; border: 1px solid #e0e0e0; padding: 5px ; }    
 .admin_contents .table-container-compact .member-table tbody tr td .branch-controls .no-branch { font-weight: 600; color: var(--point-color); }
-.admin_contents .table-container-compact .member-table tbody tr td .roles-section { margin-top: 4px; display: flex; justify-content: start; align-items: center; gap: 6px; }
+.admin_contents .table-container-compact .member-table tbody tr td .roles-section { margin-top: 4px; display: flex; justify-content: start; flex-direction: column; align-items: start; gap: 6px; }
+.admin_contents .table-container-compact .member-table tbody tr td .roles-section .role-item { display: flex; align-items: center; gap: 5px; }
+.admin_contents .table-container-compact .member-table tbody tr td .roles-section .role-item .role-controls { display: flex; align-items: center; gap: 5px;}
 .admin_contents .table-container-compact .member-table tbody tr td .update-button { cursor: pointer; padding: 5px 10px; border-radius: 10px; background-color: var(--gray-color); color: var(--white-color); }
 .admin_contents .table-container-compact .member-table tbody tr td .update-button:hover { background-color: var(--black-color); }
 .admin_contents .table-container-compact .member-table tbody tr:last-child td { border-bottom: none; }
@@ -81,6 +84,8 @@
 .admin_contents .branch-table-container .branch-table tbody tr { }
 .admin_contents .branch-table-container .branch-table tbody tr td { padding: 12px 5px; vertical-align: middle; font-size: 14px; font-weight: 400; color: var(--black-color); text-align: left; }
 .admin_contents .branch-table-container .branch-table tbody tr td { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .branch-table-container .branch-table tbody tr td .detail-button { cursor: pointer; padding: 5px 10px; border: 1px solid var(--black-color); color: var(--black-color); border-radius: 5px;}  
+.admin_contents .branch-table-container .branch-table tbody tr td .detail-button:hover { background-color: var(--black-color); color: var(--white-color) }
 .admin_contents .branch-table-container .branch-table tbody tr td .info-controls { display: flex; justify-content: start; align-items: center; gap: 8px; }
 .admin_contents .branch-table-container .branch-table tbody tr td .info-controls .info-row { display: flex; justify-content: start; align-items: center; gap: 6px; }
 .admin_contents .branch-table-container .branch-table tbody tr td .info-controls .info-row select { width: 80px; border-radius: 10px; border: 1px solid #e0e0e0; padding: 5px; }
@@ -178,5 +183,47 @@
 .admin_main .admin_contents .create-form .image-button-group button { margin: 0;}
 .admin_main .admin_contents .create-form .file-info {margin-top: 10px; font-size: 12px; font-weight: 400; color: var(--point-color);  }    
 
+.admin_main .admin_contents .form-group.search-inputs { display: flex; justify-content: start; align-items: center; gap: 10px; }
+.admin_main .admin_contents .form-group.search-inputs .btn-actions { margin: 0;}
+
+.admin_contents .product-table-container { margin-top: 20px; padding: 34px; background-color: var(--white-color); border-radius: 20px; }
+.admin_contents .product-table-container .product-table { width: 100%; }
+.admin_contents .product-table-container .product-table thead tr { background-color: var(--white-color); }
+.admin_contents .product-table-container .product-table thead tr th { padding: 24px 5px 20px; vertical-align: middle; font-size: 14px; font-weight: 600; color: var(--black-color); text-align: left; }
+.admin_contents .product-table-container .product-table thead tr th { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .product-table-container .product-table tbody tr td { padding: 12px 5px; vertical-align: middle; font-size: 14px; font-weight: 400; color: var(--black-color); text-align: left; }
+.admin_contents .product-table-container .product-table tbody tr td { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .product-table-container .product-table tbody tr td .detail-button { cursor: pointer; padding: 5px 10px; border: 1px solid var(--black-color); border-radius: 5px;}  
+.admin_contents .product-table-container .product-table tbody tr td .detail-button:hover { background-color: var(--black-color); color: var(--white-color) }
+.admin_contents .product-table-container .product-table tbody tr td .edit-button { cursor: pointer; background-color: var(--black-color); color: var(--white-color); padding: 5px 10px; border-radius: 20px; }
+.admin_contents .product-table-container .product-table tbody tr td .edit-button:hover { background-color: var(--point-color); }
+.admin_contents .product-table-container .product-table tbody tr td .delete-button { cursor: pointer; background-color: var(--gray-color); color: var(--black-color); padding: 5px 10px; border-radius: 20px; }
+.admin_contents .product-table-container .product-table tbody tr td .delete-button:hover { background-color: var(--black-color); color: var(--white-color); }
+.admin_contents .product-table-container .product-table tbody tr:last-child td { border-bottom: none; }
+.admin_contents .product-table-container .product-table tbody tr td button~button { margin-left: 6px; }
+.product .admin_contents .action-buttons a { cursor: pointer; font-size: 16px; padding: 8px 14px; border-radius: 20px; background-color: var(--black-color); color: var(--white-color); }
 
 
+.admin_contents .order-table-container { margin-top: 20px; padding: 34px; background-color: var(--white-color); border-radius: 20px; }
+.admin_contents .order-table-container .order-table { width: 100%; }
+.admin_contents .order-table-container .order-table thead tr { background-color: var(--white-color); }
+.admin_contents .order-table-container .order-table thead tr th { padding: 24px 5px 20px; vertical-align: middle; font-size: 14px; font-weight: 600; color: var(--black-color); text-align: left; }
+.admin_contents .order-table-container .order-table thead tr th { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .order-table-container .order-table tbody tr td { padding: 12px 5px; vertical-align: middle; font-size: 14px; font-weight: 400; color: var(--black-color); text-align: left; }
+.admin_contents .order-table-container .order-table tbody tr td { border-bottom: 1px solid #e0e0e0; }
+.admin_contents .order-table-container .order-table tbody tr td .detail-button { cursor: pointer; padding: 5px 10px; border: 1px solid var(--black-color); border-radius: 5px;}  
+.admin_contents .order-table-container .order-table tbody tr td .detail-button:hover { background-color: var(--black-color); color: var(--white-color) }
+.admin_contents .order-table-container .order-table tbody tr td .edit-button { cursor: pointer; background-color: var(--black-color); color: var(--white-color); padding: 5px 10px; border-radius: 20px; }
+.admin_contents .order-table-container .order-table tbody tr td .edit-button:hover { background-color: var(--point-color); }
+.admin_contents .order-table-container .order-table tbody tr td .delete-button { cursor: pointer; background-color: var(--gray-color); color: var(--black-color); padding: 5px 10px; border-radius: 20px; }
+.admin_contents .order-table-container .order-table tbody tr td .delete-button:hover { background-color: var(--black-color); color: var(--white-color); }
+.admin_contents .order-table-container .order-table tbody tr:last-child td { border-bottom: none; }
+.admin_contents .order-table-container .order-table tbody tr td button~button { margin-left: 6px; }
+
+.admin_contents .color-presets { margin-top: 10px; }
+.admin_contents .color-presets .preset-buttons { display: flex; align-items: center; justify-content: start; gap: 5px; margin-top: 10px;}
+
+.admin_contents .form-container table tbody tr { border-bottom: 1px solid var(--gray-color); }
+.admin_contents .form-container .option-container  { display: flex; justify-content: start; align-items: start; gap: 15px; }
+.admin_contents .form-container .option-container .option-row { padding: 20px 15px; border-radius: 10px; border: 1px solid var(--gray-color);display: flex; flex-direction: column; justify-content: start; align-items: start; gap: 10px;}
+.admin_contents .form-container .option-container .option-item label { font-size: 12px; font-weight: 600; margin-bottom: 6px; }

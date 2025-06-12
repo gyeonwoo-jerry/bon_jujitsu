@@ -220,10 +220,14 @@ const OrderManagement = () => {
   };
 
   return (
-      <div className="order-management">
-        <AdminHeader />
+    <div className="admin_main">
+      <AdminHeader />
 
-        <h2 className="title">주문관리(주문리스트)</h2>
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">주문관리(주문리스트)</div>
+        </div>
+
 
         {error && (
             <div className="error-message" style={{
@@ -238,31 +242,37 @@ const OrderManagement = () => {
             </div>
         )}
 
-        <div className="search-section">
-          <div className="status-filter">
-            <span>주문상태</span>
-            <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-            >
-              <option value="WAITING">대기중</option>
-              <option value="DELIVERING">배송중</option>
-              <option value="COMPLETE">완료</option>
-              <option value="CANCELLED">취소됨</option>
-              <option value="RETURN_REQUESTED">반품요청</option>
-              <option value="RETURNING">반품중</option>
-              <option value="RETURNED">반품완료</option>
-              <option value="REFUNDED">환불완료</option>
-            </select>
+        <div className="search-container">
+          <div className="search-panel">
+            <div className="search-form">
+              <div className="form-group">
+                <label>주문상태</label>
+                <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                  <option value="WAITING">대기중</option>
+                  <option value="DELIVERING">배송중</option>
+                  <option value="COMPLETE">완료</option>
+                  <option value="CANCELLED">취소됨</option>
+                  <option value="RETURN_REQUESTED">반품요청</option>
+                  <option value="RETURNING">반품중</option>
+                  <option value="RETURNED">반품완료</option>
+                  <option value="REFUNDED">환불완료</option>
+                </select>
+              </div>
+              <div className="btn-actions">
+                <button
+                    className="search-button"
+                    onClick={handleSearch}
+                    disabled={loading}
+                    style={loading ? { backgroundColor: '#cccccc', cursor: 'not-allowed' } : {}}
+                >
+                  {loading ? '로딩중...' : '조회'}
+                </button>
+              </div>
+            </div>
           </div>
-          <button
-              className="search-button"
-              onClick={handleSearch}
-              disabled={loading}
-              style={loading ? { backgroundColor: '#cccccc', cursor: 'not-allowed' } : {}}
-          >
-            {loading ? '로딩중...' : '조회'}
-          </button>
         </div>
 
         {loading ? (
@@ -289,6 +299,7 @@ const OrderManagement = () => {
             </>
         )}
       </div>
+    </div>
   );
 };
 

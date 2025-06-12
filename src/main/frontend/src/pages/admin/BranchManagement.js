@@ -304,14 +304,14 @@ const BranchManagement = () => {
           </div>
 
           {/* 검색 섹션 */}
-          <div className="search-panel">
+          <div className="search-container">
           {error && (
               <div className="error-message">
                 {error}
               </div>
           )}
 
-          <div className="search-container">
+          <div className="search-panel">
             <SearchBar
                 searchKeyword={searchKeyword}
                 onSearchInputChange={handleSearchInputChange}
