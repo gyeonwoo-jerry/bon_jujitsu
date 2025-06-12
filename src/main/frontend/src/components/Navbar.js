@@ -68,26 +68,22 @@ function Navbar() {
 
   const handleLogout = async () => {
     if (window.confirm("로그아웃 하시겠습니까?")) {
-      // 로컬 스토리지에서 토큰과 사용자 정보 삭제
-
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userInfo");
-
-      // 상태 업데이트
-      setIsLoggedIn(false);
-      setUserName("");
-      setUserRole("");
-
-      // 로그 아웃 tr 호출
       try {
-        const response = await API.post("/logout");
-        console.log("로그아웃 응답:", response);
+        // ✅ 먼저 서버에 로그아웃 요청
+        await API.post("/logout");
       } catch (error) {
         console.error("로그아웃 오류:", error);
       }
 
-      // 필요한 경우 홈페이지로 리디렉션
+      // ✅ 그 다음 클라이언트 토큰/정보 제거
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("userInfo");
+
+      setIsLoggedIn(false);
+      setUserName("");
+      setUserRole("");
+
       navigate("/");
     }
   };
