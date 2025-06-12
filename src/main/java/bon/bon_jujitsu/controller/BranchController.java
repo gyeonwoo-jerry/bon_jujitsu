@@ -39,6 +39,18 @@ public class BranchController {
     return ApiResponse.success("지부 생성 완료", null);
   }
 
+  @GetMapping("/branch/areas")
+  public ApiResponse<List<String>> getAllAreas() {
+    List<String> areas = branchService.getAllAreas();
+    return ApiResponse.success("광역 지역 목록 조회 성공", areas);
+  }
+
+  @GetMapping("/branch/regions")
+  public ApiResponse<List<String>> getRegionsByArea(@RequestParam String area) {
+    List<String> regions = branchService.getRegionsByArea(area);
+    return ApiResponse.success("세부 지역 목록 조회 성공", regions);
+  }
+
   @GetMapping("/branch/{branchId}")
   public ApiResponse<BranchResponse> getBranch(
       @PathVariable("branchId") Long branchId

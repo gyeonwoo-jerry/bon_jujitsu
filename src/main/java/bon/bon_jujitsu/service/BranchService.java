@@ -153,4 +153,12 @@ public class BranchService {
   public boolean isRegionDuplicate(String region) {
     return branchRepository.existsByRegion(region);
   }
+
+  public List<String> getAllAreas() {
+    return branchRepository.findDistinctAreas();
+  }
+
+  public List<String> getRegionsByArea(String area) {
+    return branchRepository.findDistinctRegionsByArea(area);
+  }
 }
