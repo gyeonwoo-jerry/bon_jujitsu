@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../utils/api'; // api.js import 추가
+import API from '../utils/api';
 import '../styles/JoinForm.css';
 
 function JoinForm() {
@@ -14,7 +14,7 @@ function JoinForm() {
     birthday: '',
     gender: '',
     branchIds: [],
-    level: 1,
+    gral: 1,
     stripe: '',
     sns1: '',
     sns2: '',
@@ -41,7 +41,7 @@ function JoinForm() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1단계: 광역 지역 목록 로드 (컴포넌트 마운트 시)
+  // 1단계: 광역 지역 목록 로드
   useEffect(() => {
     const fetchAreas = async () => {
       try {
@@ -49,7 +49,6 @@ function JoinForm() {
         const response = await API.get('/branch/areas');
         console.log('🔍 API 응답:', response.data);
         setAreas(response.data.content || []);
-
       } catch (error) {
         console.error('광역 지역 로드 실패:', error);
         setErrors(prev => ({ ...prev, area: '광역 지역을 불러오는데 실패했습니다.' }));
@@ -61,7 +60,7 @@ function JoinForm() {
     fetchAreas();
   }, []);
 
-  // 2단계: 선택된 광역 지역의 세부 지역들 로드
+  // 2단계: 세부 지역 로드
   const fetchRegionsByArea = async (area) => {
     if (!area) {
       setRegions([]);
@@ -73,7 +72,6 @@ function JoinForm() {
       const response = await API.get(`/branch/regions?area=${encodeURIComponent(area)}`);
       console.log('🔍 세부 지역 API 응답:', response.data);
       setRegions(response.data.content || []);
-
     } catch (error) {
       console.error('세부 지역 로드 실패:', error);
       setErrors(prev => ({ ...prev, region: '세부 지역을 불러오는데 실패했습니다.' }));
@@ -83,7 +81,7 @@ function JoinForm() {
     }
   };
 
-  // 3단계: 선택된 지역의 실제 지점들 로드
+  // 3단계: 지점 로드
   const fetchBranchesByRegion = async (area, region) => {
     if (!area || !region) {
       setBranches([]);
@@ -92,21 +90,16 @@ function JoinForm() {
 
     try {
       setBranchesLoading(true);
-
-      // URLSearchParams를 사용해서 안전하게 파라미터 생성
       const params = new URLSearchParams({
         area: area,
         region: region,
-        page: 1,  // 🔧 수정: 1부터 시작 (백엔드가 1-based 페이징)
+        page: 1,
         size: 100
       });
 
       const response = await API.get(`/branch/all?${params.toString()}`);
       console.log('🔍 지점 API 응답:', response.data);
-
-      // 응답 구조: response.data.content.list
       setBranches(response.data.content?.list || []);
-
     } catch (error) {
       console.error('지점 로드 실패:', error);
       console.error('에러 상세:', error.response?.data);
@@ -121,10 +114,19 @@ function JoinForm() {
   const handleChange = (e) => {
     const { name, value, type } = e.target;
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? parseInt(value) || 0 : value
-    }));
+    // 띠 색깔이 변경되면 급수를 초기화
+    if (name === 'stripe') {
+      setFormData(prev => ({
+        ...prev,
+        stripe: value,
+        gral: '' // 급수 초기화
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'number' ? parseInt(value) || 0 : value
+      }));
+    }
 
     // 에러 메시지 초기화
     if (errors[name]) {
@@ -136,17 +138,13 @@ function JoinForm() {
   const handleAreaChange = (e) => {
     const area = e.target.value;
     console.log('🔍 선택된 광역 지역:', area);
-    console.log('🔍 현재 areas 배열:', areas);
 
     setSelectedArea(area);
-    setSelectedRegion(''); // 세부 지역 초기화
-    setRegions([]); // 세부 지역 목록 초기화
-    setBranches([]); // 지점 목록 초기화
-
-    // formData의 branchIds도 초기화
+    setSelectedRegion('');
+    setRegions([]);
+    setBranches([]);
     setFormData(prev => ({ ...prev, branchIds: [] }));
 
-    // 새로운 광역 지역의 세부 지역들 로드
     if (area) {
       fetchRegionsByArea(area);
     }
@@ -156,12 +154,9 @@ function JoinForm() {
   const handleRegionChange = (e) => {
     const region = e.target.value;
     setSelectedRegion(region);
-    setBranches([]); // 지점 목록 초기화
-
-    // formData의 branchIds도 초기화
+    setBranches([]);
     setFormData(prev => ({ ...prev, branchIds: [] }));
 
-    // 새로운 세부 지역의 지점들 로드
     if (region && selectedArea) {
       fetchBranchesByRegion(selectedArea, region);
     }
@@ -200,7 +195,6 @@ function JoinForm() {
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    // 휴대전화 번호 검증
     const phoneRegex = /^(01[0|1|6|7|8|9])\d{7,8}$/;
     if (!formData.phoneNum.trim()) {
       newErrors.phoneNum = '휴대전화 번호를 입력해주세요.';
@@ -211,6 +205,8 @@ function JoinForm() {
     if (!formData.address.trim()) newErrors.address = '주소를 입력해주세요.';
     if (!formData.birthday) newErrors.birthday = '생년월일을 입력해주세요.';
     if (!formData.gender) newErrors.gender = '성별을 선택해주세요.';
+    if (!formData.stripe) newErrors.stripe = '띠 색깔을 선택해주세요.';
+    if (!formData.gral) newErrors.gral = '급수를 선택해주세요.';
     if (formData.branchIds.length === 0) newErrors.branchIds = '최소 하나의 지점을 선택해주세요.';
 
     setErrors(newErrors);
@@ -226,13 +222,11 @@ function JoinForm() {
     try {
       const formDataToSend = new FormData();
 
-      // JSON 데이터를 FormData에 추가
       const { confirmPassword, ...requestData } = formData;
       formDataToSend.append('request', new Blob([JSON.stringify(requestData)], {
         type: 'application/json'
       }));
 
-      // 이미지 파일들 추가
       selectedImages.forEach(image => {
         formDataToSend.append('images', image);
       });
@@ -245,7 +239,7 @@ function JoinForm() {
 
       if (response.data.success) {
         alert('회원가입이 완료되었습니다!');
-        // 성공 후 처리 (예: 로그인 페이지로 이동)
+        window.location.href = '/';
       } else {
         alert(response.data.message || '회원가입에 실패했습니다.');
       }
@@ -258,7 +252,6 @@ function JoinForm() {
     }
   };
 
-  // 선택된 지점들의 정보
   const selectedBranches = branches.filter(branch =>
       formData.branchIds.includes(branch.id)
   );
@@ -267,8 +260,8 @@ function JoinForm() {
       <div className="join-form-container">
         <h2 className="join-form-title">본 주짓수 회원가입</h2>
 
+        {/* 기본 정보 */}
         <div className="form-section">
-          {/* 기본 정보 */}
           <div className="form-grid-2">
             <div>
               <label htmlFor="name" className="form-label">
@@ -304,8 +297,8 @@ function JoinForm() {
           </div>
         </div>
 
+        {/* 비밀번호 */}
         <div className="form-section">
-          {/* 비밀번호 */}
           <div className="form-grid-2">
             <div>
               <label htmlFor="password" className="form-label">
@@ -341,8 +334,8 @@ function JoinForm() {
           </div>
         </div>
 
+        {/* 연락처 정보 */}
         <div className="form-section">
-          {/* 연락처 정보 */}
           <div className="form-grid-2">
             <div>
               <label htmlFor="email" className="form-label">
@@ -379,8 +372,8 @@ function JoinForm() {
           </div>
         </div>
 
+        {/* 주소 */}
         <div className="form-section">
-          {/* 주소 */}
           <div>
             <label htmlFor="address" className="form-label">
               주소 <span className="required-asterisk">*</span>
@@ -398,8 +391,8 @@ function JoinForm() {
           </div>
         </div>
 
+        {/* 개인정보 */}
         <div className="form-section">
-          {/* 개인정보 */}
           <div className="form-grid-3">
             <div>
               <label htmlFor="birthday" className="form-label">
@@ -437,17 +430,101 @@ function JoinForm() {
             </div>
 
             <div>
-              <label htmlFor="level" className="form-label">gral</label>
-              <input
-                  type="number"
-                  id="level"
-                  name="level"
-                  value={formData.level}
+              {/* 빈 공간 */}
+            </div>
+          </div>
+        </div>
+
+        {/* 띠 색깔과 급수 */}
+        <div className="form-section">
+          <div className="form-grid-2">
+            <div>
+              <label htmlFor="stripe" className="form-label">
+                띠 색깔 <span className="required-asterisk">*</span>
+              </label>
+              <select
+                  id="stripe"
+                  name="stripe"
+                  value={formData.stripe}
                   onChange={handleChange}
-                  min="1"
-                  max="10"
-                  className="form-input"
-              />
+                  className={`form-select ${errors.stripe ? 'error' : ''}`}
+                  required
+              >
+                <option value="">띠 색깔을 먼저 선택하세요</option>
+                <option value="WHITE">화이트</option>
+                <option value="BLUE">블루</option>
+                <option value="PURPLE">퍼플</option>
+                <option value="BROWN">브라운</option>
+                <option value="BLACK">블랙</option>
+              </select>
+              {errors.stripe && <p className="error-message">{errors.stripe}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="gral" className="form-label">
+                Gral <span className="required-asterisk">*</span>
+              </label>
+              <select
+                  id="gral"
+                  name="gral"
+                  value={formData.gral}
+                  onChange={handleChange}
+                  className={`form-select ${errors.gral ? 'error' : ''}`}
+                  disabled={!formData.stripe}
+                  required
+              >
+                <option value="">급수를 선택하세요</option>
+                {formData.stripe === 'WHITE' && (
+                    <>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </>
+                )}
+                {formData.stripe === 'BLUE' && (
+                    <>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </>
+                )}
+                {formData.stripe === 'PURPLE' && (
+                    <>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </>
+                )}
+                {formData.stripe === 'BROWN' && (
+                    <>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </>
+                )}
+                {formData.stripe === 'BLACK' && (
+                    <>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                    </>
+                )}
+              </select>
+              {errors.gral && <p className="error-message">{errors.gral}</p>}
+              {!formData.stripe && (
+                  <p className="error-message">띠 색깔을 먼저 선택해주세요.</p>
+              )}
             </div>
           </div>
         </div>
@@ -570,29 +647,8 @@ function JoinForm() {
           {errors.branchIds && <p className="error-message">{errors.branchIds}</p>}
         </div>
 
+        {/* SNS 정보 */}
         <div className="form-section">
-          {/* 띠 색깔 */}
-          <div>
-            <label htmlFor="stripe" className="form-label">띠 색깔</label>
-            <select
-                id="stripe"
-                name="stripe"
-                value={formData.stripe}
-                onChange={handleChange}
-                className="form-select"
-            >
-              <option value="">선택하세요</option>
-              <option value="WHITE">화이트</option>
-              <option value="BLUE">블루</option>
-              <option value="PURPLE">퍼플</option>
-              <option value="BROWN">브라운</option>
-              <option value="BLACK">블랙</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="form-section">
-          {/* SNS 정보 */}
           <div>
             <label className="sns-section-title">SNS 계정 (선택사항)</label>
             <div className="sns-grid">
@@ -611,8 +667,8 @@ function JoinForm() {
           </div>
         </div>
 
+        {/* 이미지 업로드 */}
         <div className="form-section">
-          {/* 이미지 업로드 */}
           <div>
             <label htmlFor="images" className="form-label">
               프로필 이미지 (선택사항)
