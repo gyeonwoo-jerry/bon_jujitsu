@@ -112,9 +112,11 @@ function Navbar() {
           <li>
             <Link to="/branches">지부소개</Link>
           </li>
+          {isLoggedIn && (
           <li>
             <Link to="/store">스토어</Link>
           </li>
+          )}
           <li>
             <Link to="/skill">기술</Link>
           </li>

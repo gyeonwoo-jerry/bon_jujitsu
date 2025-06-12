@@ -345,8 +345,12 @@ const PostEdit = () => {
   }
 
   return (
-      <div className="post-create">
-        <h2 className="title">게시글관리(게시글수정)</h2>
+    <div className="admin_main">
+      
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">게시글관리(게시글수정)</div>
+        </div>
 
         {error && (
             <div className="error-message">
@@ -564,6 +568,7 @@ const PostEdit = () => {
           </div>
         </form>
       </div>
+    </div>
   );
 };
 

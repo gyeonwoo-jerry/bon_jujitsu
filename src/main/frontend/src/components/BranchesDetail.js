@@ -65,7 +65,7 @@ function BranchesDetail() {
   return (
     <div className="branchDetail_container">
       <div className="inner">
-        <div className="branchDetail_header" style={{backgroundImage: `url(${branch.images[0]})`}}>
+        <div className="branchDetail_header" style={{backgroundImage: `url(${branch.images[0].url})`}}>
           <div className="branchInfo">
             <div className="ownerImage">
               <img src={branch.owner.userImages} alt="ownerImage" />
@@ -134,11 +134,13 @@ function BranchesDetail() {
                     branch.images.length === 1 ? (
                       // 이미지가 1장인 경우 단일 이미지로 표시
                       <div className="slide_image">
-                        <img src={branch.images[0]} alt="지점 이미지" />
+                        
+                        <img src={branch.images[0].url} alt="지점 이미지" />
                       </div>
                     ) : (
                       // 이미지가 2장 이상인 경우 슬라이더로 표시
                       <Slider {...sliderSettings} className="image-slider">
+                        
                         {branch.images.map((image, index) => (
                           <div className="slide_image" key={index}>
                             <img src={image} alt={`지점 이미지 ${index + 1}`} />

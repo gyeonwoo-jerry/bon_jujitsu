@@ -38,6 +38,7 @@ const PostTable = ({
           <thead>
           <tr>
             <th className="col-num">번호</th>
+            <th className="col-region">지부</th>
             <th className="col-title">제목</th>
             <th className="col-author">작성자</th>
             <th className="col-date">등록일</th>
@@ -50,6 +51,7 @@ const PostTable = ({
           {posts.map(post => (
               <tr key={post.id}>
                 <td>{post.id}</td>
+                <td>{post.region}</td>
                 <td className="post-title">{post.title}</td>
                 <td>{post.author}</td>
                 <td>{post.date}</td>

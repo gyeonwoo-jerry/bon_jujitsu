@@ -917,22 +917,53 @@ const PostManagement = () => {
   };
 
   return (
-      <div className="post-management">
-        <AdminHeader />
+    <div className="admin_main">
+      <AdminHeader />
+      <div className="admin_contents">
+        <div className="page-header">
+          <div className="title">게시판관리(게시판리스트)</div>
+        </div>
 
-        <h2 className="post_title">게시판관리(게시판리스트)</h2>
+        <div className="page-contents">
+          {error && (
+              <div className="error-message">
+                {error}
+              </div>
+          )}
+        </div>
 
-        {error && (
-            <div className="error-message">
-              {error}
+        {/* ADMIN인 경우 지부 region 탭들 표시 (Board, Notice 카테고리에서만) */}
+        {userRole === "ADMIN" && getCurrentCategoryInfo()?.needsBranch && (
+            <div className="region_tabs">
+              <div className="region_tabs_header">
+                <span className="region-tabs-label">▶ 지부별 조회</span>
+                {regionsLoading && <span className="loading-text">지부 목록 로딩 중...</span>}
+              </div>
+              <div className="region-buttons">
+                <button
+                    className={`region-button ${selectedRegion === "" ? 'active' : ''}`}
+                    onClick={() => handleRegionClick("")}
+                >
+                  전체
+                </button>
+                {regions.map((region) => (
+                    <button
+                        key={region}
+                        className={`region-button ${selectedRegion === region ? 'active' : ''}`}
+                        onClick={() => handleRegionClick(region)}
+                    >
+                      {region}
+                    </button>
+                ))}
+              </div>
             </div>
         )}
 
-        <div className="search-container">
+        <div className="search-panel">
           <div className="search-form">
             {/* 구분 드롭박스 */}
             <div className="form-group">
-              <label htmlFor="category-select">구분:</label>
+              <label htmlFor="category-select">구분</label>
               <select
                   id="category-select"
                   value={selectedCategory}
@@ -951,7 +982,7 @@ const PostManagement = () => {
             {/* Board, Notice, QnA일 때만 작성자 검색창 표시 */}
             {getCurrentCategoryInfo()?.needsAuthor && (
                 <div className="form-group">
-                  <label htmlFor="search-input">작성자:</label>
+                  <label htmlFor="search-input">작성자</label>
                   <input
                       id="search-input"
                       type="text"
@@ -989,10 +1020,10 @@ const PostManagement = () => {
             )}
 
             {/* 검색 버튼 */}
-            <div className="search-button-container">
+            <div className="btn-actions">
               <button
                   onClick={handleSearch}
-                  className={`search-button ${loading ? 'disabled' : ''}`}
+                  className={`btn btn-primary ${loading ? 'disabled' : ''}`}
                   disabled={loading}
               >
                 {loading ? '로딩중...' : (getCurrentCategoryInfo()?.needsAuthor ? '검색' : '조회')}
@@ -1001,32 +1032,7 @@ const PostManagement = () => {
           </div>
         </div>
 
-        {/* ADMIN인 경우 지부 region 탭들 표시 (Board, Notice 카테고리에서만) */}
-        {userRole === "ADMIN" && getCurrentCategoryInfo()?.needsBranch && (
-            <div className="region-tabs">
-              <div className="region-tabs-header">
-                <span className="region-tabs-label">지부별 조회:</span>
-                {regionsLoading && <span className="loading-text">지부 목록 로딩 중...</span>}
-              </div>
-              <div className="region-buttons">
-                <button
-                    className={`region-button ${selectedRegion === "" ? 'active' : ''}`}
-                    onClick={() => handleRegionClick("")}
-                >
-                  전체
-                </button>
-                {regions.map((region) => (
-                    <button
-                        key={region}
-                        className={`region-button ${selectedRegion === region ? 'active' : ''}`}
-                        onClick={() => handleRegionClick(region)}
-                    >
-                      {region}
-                    </button>
-                ))}
-              </div>
-            </div>
-        )}
+        
 
         {/* OWNER인 경우 지부 선택 (Board, Notice 카테고리에서만) */}
         {userRole === "OWNER" && getCurrentCategoryInfo()?.needsBranch && (
@@ -1138,6 +1144,7 @@ const PostManagement = () => {
             </div>
         )}
       </div>
+    </div>
   );
 };
 
