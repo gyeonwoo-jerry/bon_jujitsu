@@ -172,9 +172,14 @@ public class UserService {
 
   public LogoutResponse logout(String accessToken) {
     try {
+      if (jwtUtil.isTokenBlacklisted(accessToken)) {
+        log.info("이미 로그아웃된 토큰으로 요청: {}", accessToken);
+        return new LogoutResponse(null, "이미 로그아웃 처리된 사용자입니다.");
+      }
+
       Long userId = jwtUtil.getPayload(accessToken);
 
-      jwtUtil.logout(userId, accessToken);           // 로그아웃 처리 (ex. Redis 블랙리스트)
+      jwtUtil.logout(userId, accessToken); // 블랙리스트 등록 + refresh 삭제
 
       return new LogoutResponse(userId, "정상적으로 로그아웃되었습니다.");
     } catch (Exception e) {
