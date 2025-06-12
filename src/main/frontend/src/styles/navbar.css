@@ -152,6 +152,61 @@ nav.main_nav .logo img {
     padding: 8px 14px !important;
 }
 
+/* MyPage 버튼 스타일 */
+.mypage_btn {
+    background-color: #3b82f6; /* 파란색 배경 */
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 8px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mypage_btn:hover {
+    background-color: #2563eb; /* 더 진한 파란색 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.mypage_btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+/* 관리자 버튼과 MyPage 버튼이 함께 있을 때 간격 조정 */
+.user_status .admin_btn + .mypage_btn {
+    margin-left: 8px;
+}
+
+.user_status .mypage_btn + .logout_btn {
+    margin-left: 8px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .mypage_btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .user_status {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .user_name {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
 
 
 

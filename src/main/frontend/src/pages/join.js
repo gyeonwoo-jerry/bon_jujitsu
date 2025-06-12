@@ -7,7 +7,7 @@ function Join() {
     <div className="join">
         
       <h1>환영합니다!</h1>
-      <p>이것은 회원가입입니다.</p>
+      <p>회원가입 페이지입니다.</p>
     
       <JoinForm />
     </div>

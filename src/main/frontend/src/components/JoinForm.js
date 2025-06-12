@@ -14,8 +14,8 @@ function JoinForm() {
     birthday: '',
     gender: '',
     branchIds: [],
-    gral: 1,
-    stripe: '',
+    level: 1, // gral 대신 level 사용, 기본값 1
+    stripe: 'WHITE', // 기본값 설정
     sns1: '',
     sns2: '',
     sns3: '',
@@ -40,6 +40,10 @@ function JoinForm() {
   const [selectedImages, setSelectedImages] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 아이디 중복검사 관련 상태
+  const [memberIdCheckStatus, setMemberIdCheckStatus] = useState(''); // 'checking', 'available', 'unavailable', ''
+  const [isCheckingMemberId, setIsCheckingMemberId] = useState(false);
 
   // 1단계: 광역 지역 목록 로드
   useEffect(() => {
@@ -114,17 +118,22 @@ function JoinForm() {
   const handleChange = (e) => {
     const { name, value, type } = e.target;
 
-    // 띠 색깔이 변경되면 급수를 초기화
+    // 아이디가 변경되면 중복검사 상태 초기화
+    if (name === 'memberId') {
+      setMemberIdCheckStatus('');
+    }
+
+    // 띠 색깔이 변경되면 레벨을 초기화
     if (name === 'stripe') {
       setFormData(prev => ({
         ...prev,
         stripe: value,
-        gral: '' // 급수 초기화
+        level: 1 // 레벨 초기화
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'number' ? parseInt(value) || 0 : value
+        [name]: type === 'number' ? parseInt(value) || 1 : value // 최소값 1로 보장
       }));
     }
 
@@ -134,7 +143,53 @@ function JoinForm() {
     }
   };
 
-  // 광역 지역 변경 핸들러
+  // 아이디 중복검사 함수
+  const checkMemberIdDuplicate = async () => {
+    const memberId = formData.memberId.trim();
+
+    if (!memberId) {
+      alert('아이디를 입력해주세요.');
+      return;
+    }
+
+    if (memberId.length < 4) {
+      alert('아이디는 4자리 이상 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsCheckingMemberId(true);
+      setMemberIdCheckStatus('checking');
+
+      const response = await API.get(`/users/check-member-id?memberId=${encodeURIComponent(memberId)}`);
+
+      if (response.data.success) {
+        if (response.data.content.available) {
+          setMemberIdCheckStatus('available');
+          alert('사용 가능한 아이디입니다.');
+        } else {
+          setMemberIdCheckStatus('unavailable');
+          alert('이미 사용중인 아이디입니다.');
+        }
+      } else {
+        alert('중복검사 중 오류가 발생했습니다.');
+        setMemberIdCheckStatus('');
+      }
+    } catch (error) {
+      console.error('아이디 중복검사 오류:', error);
+
+      // 404 오류인 경우 사용 가능한 아이디로 처리 (백엔드에서 존재하지 않는 아이디일 때 404를 반환할 수 있음)
+      if (error.response?.status === 404) {
+        setMemberIdCheckStatus('available');
+        alert('사용 가능한 아이디입니다.');
+      } else {
+        alert('중복검사 중 오류가 발생했습니다.');
+        setMemberIdCheckStatus('');
+      }
+    } finally {
+      setIsCheckingMemberId(false);
+    }
+  };
   const handleAreaChange = (e) => {
     const area = e.target.value;
     console.log('🔍 선택된 광역 지역:', area);
@@ -183,7 +238,12 @@ function JoinForm() {
     const newErrors = {};
 
     if (!formData.name.trim()) newErrors.name = '이름을 입력해주세요.';
-    if (!formData.memberId.trim()) newErrors.memberId = '아이디를 입력해주세요.';
+    if (!formData.memberId.trim()) {
+      newErrors.memberId = '아이디를 입력해주세요.';
+    } else if (memberIdCheckStatus !== 'available') {
+      newErrors.memberId = '아이디 중복검사를 완료해주세요.';
+    }
+
     if (!formData.password) newErrors.password = '비밀번호를 입력해주세요.';
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
@@ -205,8 +265,11 @@ function JoinForm() {
     if (!formData.address.trim()) newErrors.address = '주소를 입력해주세요.';
     if (!formData.birthday) newErrors.birthday = '생년월일을 입력해주세요.';
     if (!formData.gender) newErrors.gender = '성별을 선택해주세요.';
-    if (!formData.stripe) newErrors.stripe = '띠 색깔을 선택해주세요.';
-    if (!formData.gral) newErrors.gral = '급수를 선택해주세요.';
+
+    // 띠와 레벨은 필수값이 아니므로 검증 제거
+    // if (!formData.stripe) newErrors.stripe = '띠 색깔을 선택해주세요.';
+    // if (!formData.level || formData.level < 1) newErrors.level = '레벨을 선택해주세요.';
+
     if (formData.branchIds.length === 0) newErrors.branchIds = '최소 하나의 지점을 선택해주세요.';
 
     setErrors(newErrors);
@@ -222,7 +285,16 @@ function JoinForm() {
     try {
       const formDataToSend = new FormData();
 
+      // confirmPassword 제거하고 level이 최소 1인지 확인
       const { confirmPassword, ...requestData } = formData;
+
+      // level이 0이거나 없으면 1로 설정
+      if (!requestData.level || requestData.level < 1) {
+        requestData.level = 1;
+      }
+
+      console.log('전송할 데이터:', requestData); // 디버깅용
+
       formDataToSend.append('request', new Blob([JSON.stringify(requestData)], {
         type: 'application/json'
       }));
@@ -245,6 +317,7 @@ function JoinForm() {
       }
     } catch (error) {
       console.error('회원가입 오류:', error);
+      console.error('오류 응답:', error.response?.data); // 추가 디버깅
       const errorMessage = error.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
       alert(errorMessage);
     } finally {
@@ -283,15 +356,41 @@ function JoinForm() {
               <label htmlFor="memberId" className="form-label">
                 아이디 <span className="required-asterisk">*</span>
               </label>
-              <input
-                  type="text"
-                  id="memberId"
-                  name="memberId"
-                  value={formData.memberId}
-                  onChange={handleChange}
-                  className={`form-input ${errors.memberId ? 'error' : ''}`}
-                  required
-              />
+              <div className="member-id-container">
+                <input
+                    type="text"
+                    id="memberId"
+                    name="memberId"
+                    value={formData.memberId}
+                    onChange={handleChange}
+                    className={`form-input member-id-input ${errors.memberId ? 'error' : ''} ${
+                        memberIdCheckStatus === 'available' ? 'available' :
+                            memberIdCheckStatus === 'unavailable' ? 'unavailable' : ''
+                    }`}
+                    placeholder="4자리 이상 입력해주세요"
+                    required
+                />
+                <button
+                    type="button"
+                    onClick={checkMemberIdDuplicate}
+                    disabled={isCheckingMemberId || !formData.memberId.trim()}
+                    className="duplicate-check-btn"
+                >
+                  {isCheckingMemberId ? '확인중...' : '중복검사'}
+                </button>
+              </div>
+
+              {/* 중복검사 결과 메시지 */}
+              {memberIdCheckStatus === 'available' && (
+                  <p className="success-message">✓ 사용 가능한 아이디입니다.</p>
+              )}
+              {memberIdCheckStatus === 'unavailable' && (
+                  <p className="error-message">✗ 이미 사용중인 아이디입니다.</p>
+              )}
+              {memberIdCheckStatus === 'checking' && (
+                  <p className="info-message">중복검사 진행중...</p>
+              )}
+
               {errors.memberId && <p className="error-message">{errors.memberId}</p>}
             </div>
           </div>
@@ -435,83 +534,45 @@ function JoinForm() {
           </div>
         </div>
 
-        {/* 띠 색깔과 급수 */}
+        {/* 띠 색깔과 레벨 (선택사항) */}
         <div className="form-section">
           <div className="form-grid-2">
             <div>
               <label htmlFor="stripe" className="form-label">
-                띠 색깔 <span className="required-asterisk">*</span>
+                띠 색깔 (선택사항)
               </label>
               <select
                   id="stripe"
                   name="stripe"
                   value={formData.stripe}
                   onChange={handleChange}
-                  className={`form-select ${errors.stripe ? 'error' : ''}`}
-                  required
+                  className="form-select"
               >
-                <option value="">띠 색깔을 먼저 선택하세요</option>
                 <option value="WHITE">화이트</option>
                 <option value="BLUE">블루</option>
                 <option value="PURPLE">퍼플</option>
                 <option value="BROWN">브라운</option>
                 <option value="BLACK">블랙</option>
               </select>
-              {errors.stripe && <p className="error-message">{errors.stripe}</p>}
             </div>
 
             <div>
-              <label htmlFor="gral" className="form-label">
-                Gral <span className="required-asterisk">*</span>
+              <label htmlFor="level" className="form-label">
+                레벨 (선택사항)
               </label>
               <select
-                  id="gral"
-                  name="gral"
-                  value={formData.gral}
+                  id="level"
+                  name="level"
+                  value={formData.level}
                   onChange={handleChange}
-                  className={`form-select ${errors.gral ? 'error' : ''}`}
-                  disabled={!formData.stripe}
-                  required
+                  className="form-select"
               >
-                <option value="">급수를 선택하세요</option>
-                {formData.stripe === 'WHITE' && (
-                    <>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                    </>
-                )}
-                {formData.stripe === 'BLUE' && (
-                    <>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                    </>
-                )}
-                {formData.stripe === 'PURPLE' && (
-                    <>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                    </>
-                )}
-                {formData.stripe === 'BROWN' && (
-                    <>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                    </>
-                )}
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
                 {formData.stripe === 'BLACK' && (
                     <>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
                       <option value="5">5</option>
                       <option value="6">6</option>
                       <option value="7">7</option>
@@ -521,10 +582,6 @@ function JoinForm() {
                     </>
                 )}
               </select>
-              {errors.gral && <p className="error-message">{errors.gral}</p>}
-              {!formData.stripe && (
-                  <p className="error-message">띠 색깔을 먼저 선택해주세요.</p>
-              )}
             </div>
           </div>
         </div>

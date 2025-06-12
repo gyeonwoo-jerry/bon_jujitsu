@@ -389,3 +389,109 @@
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* 아이디 입력 컨테이너 */
+.member-id-container {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* 아이디 입력 필드 */
+.member-id-input {
+  flex: 1;
+}
+
+/* 중복검사 버튼 */
+.duplicate-check-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.duplicate-check-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.duplicate-check-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* 입력 필드 상태별 스타일 */
+.form-input.available {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.form-input.unavailable {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+/* 메시지 스타일 */
+.success-message {
+  color: #10b981;
+  font-size: 14px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 14px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.info-message {
+  color: #3b82f6;
+  font-size: 14px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .member-id-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .duplicate-check-btn {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* 로딩 애니메이션 */
+.duplicate-check-btn:disabled::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

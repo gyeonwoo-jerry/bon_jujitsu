@@ -95,12 +95,15 @@ function Navbar() {
   // 관리자 페이지 접근 권한 확인 (ADMIN 또는 OWNER만 접근 가능)
   const canAccessAdminPage = userRole === "ADMIN" || userRole === "OWNER";
 
+  // MyPage 접근 권한 확인 (USER 또는 COACH만 접근 가능)
+  const canAccessMyPage = userRole === "USER" || userRole === "COACH";
+
   return (
       <nav className={`main_nav ${isFixed ? "fixed" : ""}`}>
         <div className="logo">
-            <Link to="/">
-              <img src="/images/logo.png" alt="logo" />
-            </Link>
+          <Link to="/">
+            <img src="/images/logo.png" alt="logo" />
+          </Link>
         </div>
         <ul className="nav_menu">
           <li>
@@ -113,9 +116,9 @@ function Navbar() {
             <Link to="/branches">지부소개</Link>
           </li>
           {isLoggedIn && (
-          <li>
-            <Link to="/store">스토어</Link>
-          </li>
+              <li>
+                <Link to="/store">스토어</Link>
+              </li>
           )}
           <li>
             <Link to="/skill">기술</Link>
@@ -133,7 +136,7 @@ function Navbar() {
 
         {isLoggedIn ? (
             // 로그인 상태일 때 사용자 정보와 로그아웃 버튼 표시
-        <div className="user_status">
+            <div className="user_status">
           <span className="user_name">
             {userName}{" "}
             {userRole === "USER" && "님,"}
@@ -149,6 +152,16 @@ function Navbar() {
                       onClick={() => navigate("/admin")}
                   >
                     관리자 페이지
+                  </button>
+              )}
+
+              {/* 일반회원(USER)과 코치(COACH)에게 MyPage 버튼 표시 */}
+              {canAccessMyPage && (
+                  <button
+                      className="mypage_btn"
+                      onClick={() => navigate("/mypage")}
+                  >
+                    MyPage
                   </button>
               )}
 
