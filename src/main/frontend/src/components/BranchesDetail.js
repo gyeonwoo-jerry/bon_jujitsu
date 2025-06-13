@@ -13,7 +13,7 @@ function BranchesDetail() {
   const { id } = useParams(); // URL에서 id 파라미터를 가져옵니다.
   const [branch, setBranch] = useState(null);
   const [textColor, setTextColor] = useState('#1f1f1f');
-  const [colorClass, setColorClass] = useState('white');
+  const [colorClass, setColorClass] = useState('black');
 
   useEffect(() => {
     // API를 통해 특정 branch 데이터를 가져옵니다.
@@ -107,27 +107,27 @@ function BranchesDetail() {
                    <ul>  
                      {branch.owner.sns1 && (
                        <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
+                         <img className={colorClass} src={colorClass === 'white' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
                        </a>
                      )}
                      {branch.owner.sns2 && (
                        <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
+                         <img className={colorClass} src={colorClass === 'white' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
                        </a>
                      )}
                      {branch.owner.sns3 && (
                        <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
+                         <img className={colorClass} src={colorClass === 'white' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
                        </a>
                      )}
                      {branch.owner.sns4 && (
                        <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
+                         <img className={colorClass} src={colorClass === 'white' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
                        </a>
                      )}
                      {branch.owner.sns5 && (
                        <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
+                         <img className={colorClass} src={colorClass === 'white' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
                        </a>
                      )}
                    </ul>
