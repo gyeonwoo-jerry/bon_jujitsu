@@ -312,72 +312,56 @@ public class UserService {
   }
 
   public void updateProfile(Long userId, ProfileUpdate request, List<MultipartFile> images, List<Long> keepImageIds) {
+    System.out.println("=== 디버깅 시작 ===");
+    System.out.println("userId: " + userId);
+    System.out.println("request: " + request);
+    System.out.println("branchesToRemove: " + request.branchesToRemove());
+
     User profile = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-    profile.updateProfile(request);
+    System.out.println("현재 사용자 지부 개수: " + profile.getBranchUsers().size());
 
-    // 비밀번호 변경
-    request.password().ifPresent(password -> {
-      if (!password.isBlank()) {
-        profile.changePassword(passwordEncoder.encode(password));
-      }
-    });
+    // 기존 코드...
 
-    // 지부 변경 - null 체크 방식으로 변경
-    List<Long> branchesToAdd = request.branchesToAdd() != null ? request.branchesToAdd() : Collections.emptyList();
     List<Long> branchesToRemove = request.branchesToRemove() != null ? request.branchesToRemove() : Collections.emptyList();
+    System.out.println("실제 branchesToRemove: " + branchesToRemove);
+    System.out.println("isEmpty: " + branchesToRemove.isEmpty());
 
-    if (!branchesToAdd.isEmpty() || !branchesToRemove.isEmpty()) {
-      updateUserBranches(profile, branchesToAdd, branchesToRemove);
+    if (!branchesToRemove.isEmpty()) {
+      System.out.println("updateUserBranches 호출됨");
+      updateUserBranches(profile, Collections.emptyList(), branchesToRemove);
+    } else {
+      System.out.println("updateUserBranches 호출 안됨");
     }
 
-    userImageService.updateImages(profile, images, keepImageIds);
+    System.out.println("=== 디버깅 끝 ===");
   }
 
   // 기존 updateUserBranches 메서드 그대로 유지
   private void updateUserBranches(User user, List<Long> branchesToAdd, List<Long> branchesToRemove) {
-    // OWNER/COACH 역할 체크
-    List<BranchUser> currentBranchUsers = user.getBranchUsers();
-    boolean hasSpecialRole = currentBranchUsers.stream()
-        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER || bu.getUserRole() == UserRole.COACH);
+    System.out.println("=== updateUserBranches 시작 ===");
+    System.out.println("branchesToRemove: " + branchesToRemove);
 
-    if (hasSpecialRole) {
-      throw new IllegalArgumentException("OWNER 또는 COACH 역할을 가진 사용자는 지부를 변경할 수 없습니다.");
-    }
-
-    // 지부 제거 - Repository 직접 사용
+    // 지부 제거
     if (!branchesToRemove.isEmpty()) {
+      System.out.println("지부 제거 시작");
       for (Long branchId : branchesToRemove) {
+        System.out.println("찾는 중: userId=" + user.getId() + ", branchId=" + branchId);
+
         Optional<BranchUser> branchUser = branchUserRepository
             .findByUserIdAndBranchId(user.getId(), branchId);
 
         if (branchUser.isPresent()) {
+          System.out.println("BranchUser 찾음, 삭제 중...");
           branchUserRepository.delete(branchUser.get());
+          System.out.println("삭제 완료");
+        } else {
+          System.out.println("BranchUser를 찾을 수 없음");
         }
       }
     }
-
-    // 지부 추가 - Repository 직접 사용
-    if (!branchesToAdd.isEmpty()) {
-      for (Long branchId : branchesToAdd) {
-        Branch branch = branchRepository.findById(branchId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지부입니다."));
-
-        // 중복 체크
-        boolean alreadyExists = branchUserRepository.existsByUserIdAndBranchId(
-            user.getId(), branchId);
-
-        if (!alreadyExists) {
-          BranchUser branchUser = BranchUser.builder()
-              .user(user)
-              .branch(branch)
-              .userRole(UserRole.PENDING)
-              .build();
-          branchUserRepository.save(branchUser);
-        }
-      }
-    }
+    System.out.println("=== updateUserBranches 끝 ===");
   }
 
   public void deleteUser(Long userId, ProfileDeleteRequest request) {
