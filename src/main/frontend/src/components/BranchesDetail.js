@@ -89,7 +89,7 @@ function BranchesDetail() {
               <img src={branch.owner.userImages} alt="ownerImage" />
             </div>
             <div className="ownerInfo" style={{ color: textColor }}>
-              <div className="branchName" style={{ color: textColor }}>본주짓수 / {branch.area} {branch.region}</div>
+              <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
               <div className="ownerName" style={{ color: textColor }}>{branch.owner.name} 관장</div>
               <div className={`ownerBelt ${branch.owner.stripe}`}>
                 {branch.owner.stripe} BELT / {branch.owner.level} GRAU
