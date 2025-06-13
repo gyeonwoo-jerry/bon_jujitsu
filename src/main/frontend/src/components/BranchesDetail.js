@@ -7,10 +7,12 @@ import API from "../utils/api";
 import "../styles/branchesDetail.css";
 import BranchBoardList from "./BranchBoardList";
 import NoticeBoardList from "./NoticeBoardList";
+import ColorThief from 'colorthief';
 
 function BranchesDetail() {
   const { id } = useParams(); // URL에서 id 파라미터를 가져옵니다.
   const [branch, setBranch] = useState(null);
+  const [textColor, setTextColor] = useState('#000000');
 
   useEffect(() => {
     // API를 통해 특정 branch 데이터를 가져옵니다.
@@ -36,6 +38,22 @@ function BranchesDetail() {
         }
       });
   }, [id]);
+
+  useEffect(() => {
+    if (branch && branch.images && branch.images.length > 0) {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = branch.images[0].url;
+
+      img.onload = () => {
+        const colorThief = new ColorThief();
+        const dominantColor = colorThief.getColor(img);
+        // 밝은 색상이면 어두운 텍스트, 어두운 색상이면 밝은 텍스트 사용
+        const brightness = (dominantColor[0] * 299 + dominantColor[1] * 587 + dominantColor[2] * 114) / 1000;
+        setTextColor(brightness > 128 ? '#000000' : '#FFFFFF');
+      };
+    }
+  }, [branch]);
 
   // 슬라이더 설정
   const sliderSettings = {
@@ -70,9 +88,9 @@ function BranchesDetail() {
             <div className="ownerImage">
               <img src={branch.owner.userImages} alt="ownerImage" />
             </div>
-            <div className="ownerInfo">
-              <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
-              <div className="ownerName">{branch.owner.name} 관장</div>
+            <div className="ownerInfo" style={{ color: textColor }}>
+              <div className="branchName" style={{ color: textColor }}>본주짓수 / {branch.area} {branch.region}</div>
+              <div className="ownerName" style={{ color: textColor }}>{branch.owner.name} 관장</div>
               <div className={`ownerBelt ${branch.owner.stripe}`}>
                 {branch.owner.stripe} BELT / {branch.owner.level} GRAU
                 <div className="grau">
@@ -81,33 +99,33 @@ function BranchesDetail() {
                   ))}
                 </div>
               </div>
-              <div className="branchAddress">{branch.address}</div>
-              <div className="branchPhone">T. {branch.owner.phoneNum}</div>
+              <div className="branchAddress" style={{ color: textColor }}>{branch.address}</div>
+              <div className="branchPhone" style={{ color: textColor }}>T. {branch.owner.phoneNum}</div>
               <div className="branchSns">
                   <ul>  
                     {branch.owner.sns1 && (
                       <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/insta.png" alt="sns1" />
+                        <img src="/images/icon-facebook-bk.png" alt="sns1" />
                       </a>
                     )}
                     {branch.owner.sns2 && (
                       <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/fb.png" alt="sns2" /> 
+                        <img src="/images/icon-insta-bk.png" alt="sns2" /> 
                       </a>
                     )}
                     {branch.owner.sns3 && (
                       <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/blog.png" alt="sns3" />
+                        <img src="/images/icon-blog-bk.png" alt="sns3" />
                       </a>
                     )}
                     {branch.owner.sns4 && (
                       <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/cafe.png" alt="sns4" />
+                        <img src="/images/icon-cafe-bk.png" alt="sns4" />
                       </a>
                     )}
                     {branch.owner.sns5 && (
                       <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/cafe.png" alt="sns5" />
+                        <img src="/images/icon-you-bk.png" alt="sns5" />
                       </a>
                     )}
                   </ul>
