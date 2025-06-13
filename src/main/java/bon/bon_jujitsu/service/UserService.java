@@ -312,7 +312,6 @@ public class UserService {
   }
 
   public void updateProfile(Long userId, ProfileUpdate request, List<MultipartFile> images, List<Long> keepImageIds) {
-
     User profile = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
@@ -325,9 +324,9 @@ public class UserService {
       }
     });
 
-    // 지부 변경 - 명시적 방식
-    List<Long> branchesToAdd = request.branchesToAdd().orElse(Collections.emptyList());
-    List<Long> branchesToRemove = request.branchesToRemove().orElse(Collections.emptyList());
+    // 지부 변경 - null 체크 방식으로 변경
+    List<Long> branchesToAdd = request.branchesToAdd() != null ? request.branchesToAdd() : Collections.emptyList();
+    List<Long> branchesToRemove = request.branchesToRemove() != null ? request.branchesToRemove() : Collections.emptyList();
 
     if (!branchesToAdd.isEmpty() || !branchesToRemove.isEmpty()) {
       updateUserBranches(profile, branchesToAdd, branchesToRemove);
@@ -336,9 +335,9 @@ public class UserService {
     userImageService.updateImages(profile, images, keepImageIds);
   }
 
-  // 단순해진 메서드
+  // 기존 updateUserBranches 메서드 그대로 유지
   private void updateUserBranches(User user, List<Long> branchesToAdd, List<Long> branchesToRemove) {
-    // OWNER/COACH 역할 체크는 그대로
+    // OWNER/COACH 역할 체크
     List<BranchUser> currentBranchUsers = user.getBranchUsers();
     boolean hasSpecialRole = currentBranchUsers.stream()
         .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER || bu.getUserRole() == UserRole.COACH);
