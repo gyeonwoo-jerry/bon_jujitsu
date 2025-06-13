@@ -107,27 +107,27 @@ function BranchesDetail() {
                    <ul>  
                      {branch.owner.sns1 && (
                        <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'black' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
+                         <img src={colorClass === 'white' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
                        </a>
                      )}
                      {branch.owner.sns2 && (
                        <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'black' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
+                         <img src={colorClass === 'white' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
                        </a>
                      )}
                      {branch.owner.sns3 && (
                        <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'black' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
+                         <img src={colorClass === 'white' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
                        </a>
                      )}
                      {branch.owner.sns4 && (
                        <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'black' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
+                         <img src={colorClass === 'white' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
                        </a>
                      )}
                      {branch.owner.sns5 && (
                        <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'black' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
+                         <img src={colorClass === 'white' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
                        </a>
                      )}
                    </ul>
