@@ -52,7 +52,7 @@ function BranchesDetail() {
         // 밝은 색상이면 어두운 텍스트, 어두운 색상이면 밝은 텍스트 사용
         const brightness = (dominantColor[0] * 299 + dominantColor[1] * 587 + dominantColor[2] * 114) / 1000;
         setTextColor(brightness > 128 ? '#1f1f1f' : '#FFFFFF');
-        setColorClass(brightness > 128 ? 'white' : '');
+        setColorClass(brightness > 128 ? 'black' : 'white');
       };
     }
   }, [branch]);
@@ -90,7 +90,7 @@ function BranchesDetail() {
             <div className="ownerImage">
               <img src={branch.owner.userImages} alt="ownerImage" />
             </div>
-            <div className="ownerInfo" style={{ color: textColor }}>
+            <div className="ownerInfo">
               <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
               <div className="ownerName" style={{ color: textColor }}>{branch.owner.name} 관장</div>
               <div className={`ownerBelt ${branch.owner.stripe}`}>
@@ -107,27 +107,27 @@ function BranchesDetail() {
                    <ul>  
                      {branch.owner.sns1 && (
                        <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
+                         <img src={colorClass === 'black' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
                        </a>
                      )}
                      {branch.owner.sns2 && (
                        <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
+                         <img src={colorClass === 'black' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
                        </a>
                      )}
                      {branch.owner.sns3 && (
                        <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
+                         <img src={colorClass === 'black' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
                        </a>
                      )}
                      {branch.owner.sns4 && (
                        <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
+                         <img src={colorClass === 'black' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
                        </a>
                      )}
                      {branch.owner.sns5 && (
                        <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
-                         <img src={colorClass === 'white' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
+                         <img src={colorClass === 'black' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
                        </a>
                      )}
                    </ul>
