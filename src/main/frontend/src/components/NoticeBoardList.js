@@ -224,10 +224,6 @@ const NoticeBoardList = () => {
                                 src={normalizeImageUrl(post.images[0].url)}
                                 alt={`${post.title || "게시물"} 이미지`}
                                 className="post-thumbnail"
-                                onError={(e) => {
-                                e.target.src = "/images/blank_img.png";
-                                e.target.classList.add("blank");
-                            }}
                             />
                             {post.images.length > 1 && (
                                 <span className="image-count">
