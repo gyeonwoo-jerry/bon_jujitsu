@@ -59,6 +59,11 @@
     color: var(--black-color);
     margin: 14px 0 14px;
 }   
+.branchDetail_header .branchInfo .ownerInfo .ownerName.white,
+.branchDetail_header .branchInfo .ownerInfo .branchAddress.white,
+.branchDetail_header .branchInfo .ownerInfo .branchPhone.white {
+    text-shadow: 0 0 6px rgba(0, 0, 0, .3);
+}
 
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt {
     position: relative;

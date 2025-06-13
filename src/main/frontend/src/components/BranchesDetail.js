@@ -92,7 +92,7 @@ function BranchesDetail() {
             </div>
             <div className="ownerInfo">
               <div className="branchName">본주짓수 / {branch.area} {branch.region}</div>
-              <div className="ownerName" style={{ color: textColor }}>{branch.owner.name} 관장</div>
+              <div className={`ownerName ${colorClass}`} style={{ color: textColor }}>{branch.owner.name} 관장</div>
               <div className={`ownerBelt ${branch.owner.stripe}`}>
                 {branch.owner.stripe} BELT / {branch.owner.level} GRAU
                 <div className="grau">
@@ -101,8 +101,8 @@ function BranchesDetail() {
                   ))}
                 </div>
               </div>
-              <div className="branchAddress" style={{ color: textColor }}>{branch.address}</div>
-              <div className="branchPhone" style={{ color: textColor }}>T. {branch.owner.phoneNum}</div>
+              <div className={`branchAddress ${colorClass}`} style={{ color: textColor }}>{branch.address}</div>
+              <div className={`branchPhone ${colorClass}`} style={{ color: textColor }}>T. {branch.owner.phoneNum}</div>
               <div className="branchSns">
                    <ul>  
                      {branch.owner.sns1 && (
