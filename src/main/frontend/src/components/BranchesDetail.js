@@ -90,10 +90,10 @@ function BranchesDetail() {
                         <img src="/images/insta.png" alt="sns1" />
                       </a>
                     )}
-                      {branch.owner.sns2 && (
-                        <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
-                          <img src="/images/fb.png" alt="sns2" /> 
-                        </a>
+                    {branch.owner.sns2 && (
+                      <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
+                        <img src="/images/fb.png" alt="sns2" /> 
+                      </a>
                     )}
                     {branch.owner.sns3 && (
                       <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
@@ -103,6 +103,11 @@ function BranchesDetail() {
                     {branch.owner.sns4 && (
                       <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
                         <img src="/images/cafe.png" alt="sns4" />
+                      </a>
+                    )}
+                    {branch.owner.sns5 && (
+                      <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
+                        <img src="/images/cafe.png" alt="sns5" />
                       </a>
                     )}
                   </ul>

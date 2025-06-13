@@ -221,7 +221,7 @@ const NoticeBoardList = () => {
                         {Array.isArray(post.images) && post.images.length > 0 ? (
                             <>
                             <img
-                                src={normalizeImageUrl(post.images[0])}
+                                src={normalizeImageUrl(post.images[0].url)}
                                 alt={`${post.title || "게시물"} 이미지`}
                                 className="post-thumbnail"
                                 onError={(e) => {
