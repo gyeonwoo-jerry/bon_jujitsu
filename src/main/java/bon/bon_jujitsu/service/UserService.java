@@ -327,7 +327,7 @@ public class UserService {
 
     // 지부 변경
     request.branchIds().ifPresent(newBranchIds -> {
-      if (newBranchIds != null && !newBranchIds.isEmpty()) {
+      if (newBranchIds != null) {
         updateUserBranches(profile, newBranchIds);
       }
     });
