@@ -324,64 +324,16 @@ public class UserService {
       }
     });
 
-    // 지부 변경 - null 체크 방식으로 변경
-    List<Long> branchesToAdd = request.branchesToAdd() != null ? request.branchesToAdd() : Collections.emptyList();
-    List<Long> branchesToRemove = request.branchesToRemove() != null ? request.branchesToRemove() : Collections.emptyList();
+    // 지부 변경 - 기존 메서드 재활용
+    if (request.branchesToAdd() != null && !request.branchesToAdd().isEmpty()) {
+      addUserToBranches(profile, request.branchesToAdd());
+    }
 
-    if (!branchesToAdd.isEmpty() || !branchesToRemove.isEmpty()) {
-      updateUserBranches(profile, branchesToAdd, branchesToRemove);
+    if (request.branchesToRemove() != null && !request.branchesToRemove().isEmpty()) {
+      removeUserFromBranches(profile, request.branchesToRemove());
     }
 
     userImageService.updateImages(profile, images, keepImageIds);
-  }
-
-  // 기존 updateUserBranches 메서드 그대로 유지
-  private void updateUserBranches(User user, List<Long> branchesToAdd, List<Long> branchesToRemove) {
-    // OWNER/COACH 역할 체크
-    List<BranchUser> currentBranchUsers = user.getBranchUsers();
-    boolean hasSpecialRole = currentBranchUsers.stream()
-        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER || bu.getUserRole() == UserRole.COACH);
-
-    if (hasSpecialRole) {
-      throw new IllegalArgumentException("OWNER 또는 COACH 역할을 가진 사용자는 지부를 변경할 수 없습니다.");
-    }
-
-    // 지부 제거 - updateBranch와 동일한 방식으로 변경
-    if (!branchesToRemove.isEmpty()) {
-      for (Long branchId : branchesToRemove) {
-        // Branch 객체 먼저 조회 (updateBranch와 동일)
-        Branch branch = branchRepository.findById(branchId)
-            .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
-
-        // updateBranch와 똑같은 방식 - 못 찾으면 예외 발생
-        BranchUser branchUser = branchUserRepository
-            .findByUserIdAndBranchId(user.getId(), branch.getId())
-            .orElseThrow(() -> new IllegalArgumentException("해당 정보가 없습니다."));
-
-        branchUserRepository.delete(branchUser);
-      }
-    }
-
-    // 지부 추가 - Repository 직접 사용
-    if (!branchesToAdd.isEmpty()) {
-      for (Long branchId : branchesToAdd) {
-        Branch branch = branchRepository.findById(branchId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지부입니다."));
-
-        // 중복 체크
-        boolean alreadyExists = branchUserRepository.existsByUserIdAndBranchId(
-            user.getId(), branchId);
-
-        if (!alreadyExists) {
-          BranchUser branchUser = BranchUser.builder()
-              .user(user)
-              .branch(branch)
-              .userRole(UserRole.PENDING)
-              .build();
-          branchUserRepository.save(branchUser);
-        }
-      }
-    }
   }
 
   public void deleteUser(Long userId, ProfileDeleteRequest request) {
