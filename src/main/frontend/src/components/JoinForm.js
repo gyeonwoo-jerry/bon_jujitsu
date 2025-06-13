@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../utils/api';
+import AddressSearch from '../components/admin/AddressSearch';
 import '../styles/JoinForm.css';
 
 function JoinForm() {
@@ -11,6 +12,7 @@ function JoinForm() {
     email: '',
     phoneNum: '',
     address: '',
+    addressDetail: '', // 상세 주소 추가
     birthday: '',
     gender: '',
     branchIds: [],
@@ -143,6 +145,19 @@ function JoinForm() {
     }
   };
 
+  // 주소 선택 핸들러 (AddressSearch 컴포넌트에서 호출)
+  const handleAddressSelect = (fullAddress, area) => {
+    setFormData(prev => ({
+      ...prev,
+      address: fullAddress
+    }));
+
+    // 주소 관련 에러 메시지 초기화
+    if (errors.address) {
+      setErrors(prev => ({ ...prev, address: '' }));
+    }
+  };
+
   // 아이디 중복검사 함수
   const checkMemberIdDuplicate = async () => {
     const memberId = formData.memberId.trim();
@@ -190,6 +205,7 @@ function JoinForm() {
       setIsCheckingMemberId(false);
     }
   };
+
   const handleAreaChange = (e) => {
     const area = e.target.value;
     console.log('🔍 선택된 광역 지역:', area);
@@ -266,10 +282,6 @@ function JoinForm() {
     if (!formData.birthday) newErrors.birthday = '생년월일을 입력해주세요.';
     if (!formData.gender) newErrors.gender = '성별을 선택해주세요.';
 
-    // 띠와 레벨은 필수값이 아니므로 검증 제거
-    // if (!formData.stripe) newErrors.stripe = '띠 색깔을 선택해주세요.';
-    // if (!formData.level || formData.level < 1) newErrors.level = '레벨을 선택해주세요.';
-
     if (formData.branchIds.length === 0) newErrors.branchIds = '최소 하나의 지점을 선택해주세요.';
 
     setErrors(newErrors);
@@ -286,7 +298,14 @@ function JoinForm() {
       const formDataToSend = new FormData();
 
       // confirmPassword 제거하고 level이 최소 1인지 확인
-      const { confirmPassword, ...requestData } = formData;
+      const { confirmPassword, addressDetail, ...requestData } = formData;
+
+      // 주소와 상세주소 합치기
+      const fullAddress = addressDetail
+          ? `${formData.address} ${addressDetail}`
+          : formData.address;
+
+      requestData.address = fullAddress;
 
       // level이 0이거나 없으면 1로 설정
       if (!requestData.level || requestData.level < 1) {
@@ -471,22 +490,36 @@ function JoinForm() {
           </div>
         </div>
 
-        {/* 주소 */}
+        {/* 주소 - AddressSearch 컴포넌트 사용 */}
         <div className="form-section">
           <div>
             <label htmlFor="address" className="form-label">
               주소 <span className="required-asterisk">*</span>
             </label>
-            <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className={`form-input ${errors.address ? 'error' : ''}`}
-                required
+            <AddressSearch
+                onAddressSelect={handleAddressSelect}
+                selectedAddress={formData.address}
             />
             {errors.address && <p className="error-message">{errors.address}</p>}
+            <p className="input-help-text">* 주소를 등록하시려면 주소 검색 버튼을 클릭하세요.</p>
+          </div>
+        </div>
+
+        {/* 상세 주소 */}
+        <div className="form-section">
+          <div>
+            <label htmlFor="addressDetail" className="form-label">
+              상세 주소
+            </label>
+            <input
+                type="text"
+                id="addressDetail"
+                name="addressDetail"
+                value={formData.addressDetail}
+                onChange={handleChange}
+                className="form-input"
+                placeholder="상세 주소를 입력하세요 (건물명, 동/호수 등)"
+            />
           </div>
         </div>
 
@@ -704,22 +737,87 @@ function JoinForm() {
           {errors.branchIds && <p className="error-message">{errors.branchIds}</p>}
         </div>
 
-        {/* SNS 정보 */}
+        // JoinForm.js에서 SNS 섹션 부분을 다음과 같이 교체하세요:
+
+        {/* SNS 정보 - 개선된 버전 */}
         <div className="form-section">
-          <div>
+          <div className="sns-section">
             <label className="sns-section-title">SNS 계정 (선택사항)</label>
             <div className="sns-grid">
-              {[1, 2, 3, 4, 5].map(num => (
-                  <input
-                      key={num}
-                      type="text"
-                      name={`sns${num}`}
-                      value={formData[`sns${num}`]}
-                      onChange={handleChange}
-                      placeholder={`SNS ${num}`}
-                      className="form-input"
-                  />
-              ))}
+              <div className="sns-input-container">
+                <label className="sns-input-label">
+                  <span className="sns-icon facebook"></span>
+                  Facebook
+                </label>
+                <input
+                    type="text"
+                    name="sns1"
+                    value={formData.sns1}
+                    onChange={handleChange}
+                    placeholder="Facebook 프로필 URL 또는 사용자명"
+                    className="sns-input"
+                />
+              </div>
+
+              <div className="sns-input-container">
+                <label className="sns-input-label">
+                  <span className="sns-icon instagram"></span>
+                  Instagram
+                </label>
+                <input
+                    type="text"
+                    name="sns2"
+                    value={formData.sns2}
+                    onChange={handleChange}
+                    placeholder="Instagram 사용자명 (@username)"
+                    className="sns-input"
+                />
+              </div>
+
+              <div className="sns-input-container">
+                <label className="sns-input-label">
+                  <span className="sns-icon blog"></span>
+                  Blog
+                </label>
+                <input
+                    type="text"
+                    name="sns3"
+                    value={formData.sns3}
+                    onChange={handleChange}
+                    placeholder="블로그 주소 (네이버, 티스토리 등)"
+                    className="sns-input"
+                />
+              </div>
+
+              <div className="sns-input-container">
+                <label className="sns-input-label">
+                  <span className="sns-icon cafe"></span>
+                  Cafe
+                </label>
+                <input
+                    type="text"
+                    name="sns4"
+                    value={formData.sns4}
+                    onChange={handleChange}
+                    placeholder="카페 활동명 (네이버 카페 등)"
+                    className="sns-input"
+                />
+              </div>
+
+              <div className="sns-input-container">
+                <label className="sns-input-label">
+                  <span className="sns-icon youtube"></span>
+                  YouTube
+                </label>
+                <input
+                    type="text"
+                    name="sns5"
+                    value={formData.sns5}
+                    onChange={handleChange}
+                    placeholder="YouTube 채널명 또는 URL"
+                    className="sns-input"
+                />
+              </div>
             </div>
           </div>
         </div>

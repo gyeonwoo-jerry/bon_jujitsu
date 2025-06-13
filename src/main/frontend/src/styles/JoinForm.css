@@ -275,25 +275,77 @@
   font-size: 14px;
 }
 
-/* SNS 입력 필드 */
+/* SNS 입력 필드 개선 */
 .sns-section-title {
   display: block;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .sns-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: 16px;
 }
 
 @media (min-width: 768px) {
   .sns-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* SNS 입력 필드 개별 컨테이너 */
+.sns-input-container {
+  position: relative;
+}
+
+.sns-input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.sns-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  border-radius: 3px;
+}
+
+.sns-icon.facebook { background-color: #1877f2; }
+.sns-icon.instagram { background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); }
+.sns-icon.blog { background-color: #ff6b35; }
+.sns-icon.cafe { background-color: #03c75a; }
+.sns-icon.youtube { background-color: #ff0000; }
+
+.sns-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background-color: #fafafa;
+}
+
+.sns-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background-color: white;
+}
+
+.sns-input::placeholder {
+  color: #9ca3af;
+  font-size: 13px;
 }
 
 /* 파일 입력 */
@@ -491,7 +543,215 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* 도움말 텍스트 스타일 */
+.input-help-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* ===== 주소 검색 관련 스타일 개선 ===== */
+
+/* 주소 검색 메인 컨테이너 */
+.address-search-container {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+/* 주소 입력 컨테이너 */
+.address-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+/* 주소 입력 필드 */
+.address-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: #f9fafb;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  min-height: 42px;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background-color: white;
+}
+
+.address-input.error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.address-input.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* 주소 검색 버튼 */
+.address-search-button {
+  background-color: #059669;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 90px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.address-search-button:hover:not(:disabled) {
+  background-color: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+}
+
+.address-search-button:active {
+  transform: translateY(0);
+}
+
+.address-search-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 주소 검색 버튼 아이콘 */
+.address-search-button::before {
+  content: "🔍";
+  font-size: 14px;
+}
+
+/* 선택된 주소 표시 스타일 */
+.address-input[value]:not([value=""]) {
+  background-color: #f0f9ff;
+  border-color: #0ea5e9;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+/* 주소 검색 도움말 텍스트 */
+.address-help-text {
+  font-size: 12px;
+  color: #059669;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.address-help-text::before {
+  content: "💡";
+  font-size: 11px;
+}
+
+/* 반응형 디자인 - 모바일 */
+@media (max-width: 768px) {
+  .address-input-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .address-search-button {
+    width: 100%;
+    min-width: auto;
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  .address-input {
+    font-size: 16px; /* iOS에서 줌 방지 */
+  }
+}
+
+/* 주소 입력 섹션 전체 스타일 */
+.form-section .address-section {
+  background-color: #fafafa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+/* 폼 섹션 내 주소 검색 컨테이너 재정의 */
+.form-section .address-search-container {
+  margin-bottom: 0;
+}
+
+/* 주소 관련 에러 메시지 스타일 개선 */
+.address-error-message {
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.address-error-message::before {
+  content: "⚠️";
+  font-size: 12px;
+}
+
+/* 주소 검색 로딩 상태 */
+.address-search-button.loading {
+  background-color: #6b7280;
+  cursor: not-allowed;
+}
+
+.address-search-button.loading::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* SNS 섹션 전체 개선 */
+.sns-section {
+  background-color: #fafafa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+/* SNS 입력 필드 호버 효과 */
+.sns-input:hover {
+  border-color: #9ca3af;
+  background-color: white;
+}
+
+/* 추가 애니메이션 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.success-message,
+.error-message,
+.info-message {
+  animation: fadeIn 0.3s ease-out;
 }
