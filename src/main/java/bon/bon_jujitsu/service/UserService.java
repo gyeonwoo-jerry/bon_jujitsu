@@ -338,8 +338,7 @@ public class UserService {
 
   // 단순해진 메서드
   private void updateUserBranches(User user, List<Long> branchesToAdd, List<Long> branchesToRemove) {
-
-    // OWNER/COACH 역할 체크
+    // OWNER/COACH 역할 체크는 그대로
     List<BranchUser> currentBranchUsers = user.getBranchUsers();
     boolean hasSpecialRole = currentBranchUsers.stream()
         .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER || bu.getUserRole() == UserRole.COACH);
@@ -348,31 +347,37 @@ public class UserService {
       throw new IllegalArgumentException("OWNER 또는 COACH 역할을 가진 사용자는 지부를 변경할 수 없습니다.");
     }
 
-    // 지부 제거
+    // 지부 제거 - Repository 직접 사용
     if (!branchesToRemove.isEmpty()) {
-      List<BranchUser> branchUsersToDelete = currentBranchUsers.stream()
-          .filter(bu -> branchesToRemove.contains(bu.getBranch().getId()))
-          .toList();
+      for (Long branchId : branchesToRemove) {
+        Optional<BranchUser> branchUser = branchUserRepository
+            .findByUserIdAndBranchId(user.getId(), branchId);
 
-      branchUserRepository.deleteAll(branchUsersToDelete);
+        if (branchUser.isPresent()) {
+          branchUserRepository.delete(branchUser.get());
+        }
+      }
     }
 
-    // 지부 추가
+    // 지부 추가 - Repository 직접 사용
     if (!branchesToAdd.isEmpty()) {
-      List<Branch> newBranches = branchRepository.findAllById(branchesToAdd);
-      if (newBranches.size() != branchesToAdd.size()) {
-        throw new IllegalArgumentException("존재하지 않는 지부가 포함되어 있습니다.");
-      }
+      for (Long branchId : branchesToAdd) {
+        Branch branch = branchRepository.findById(branchId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지부입니다."));
 
-      List<BranchUser> newBranchUsers = newBranches.stream()
-          .map(branch -> BranchUser.builder()
+        // 중복 체크
+        boolean alreadyExists = branchUserRepository.existsByUserIdAndBranchId(
+            user.getId(), branchId);
+
+        if (!alreadyExists) {
+          BranchUser branchUser = BranchUser.builder()
               .user(user)
               .branch(branch)
               .userRole(UserRole.PENDING)
-              .build())
-          .toList();
-
-      branchUserRepository.saveAll(newBranchUsers);
+              .build();
+          branchUserRepository.save(branchUser);
+        }
+      }
     }
   }
 
