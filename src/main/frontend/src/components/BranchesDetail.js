@@ -12,7 +12,8 @@ import ColorThief from 'colorthief';
 function BranchesDetail() {
   const { id } = useParams(); // URL에서 id 파라미터를 가져옵니다.
   const [branch, setBranch] = useState(null);
-  const [textColor, setTextColor] = useState('#000000');
+  const [textColor, setTextColor] = useState('#1f1f1f');
+  const [colorClass, setColorClass] = useState('white');
 
   useEffect(() => {
     // API를 통해 특정 branch 데이터를 가져옵니다.
@@ -50,7 +51,8 @@ function BranchesDetail() {
         const dominantColor = colorThief.getColor(img);
         // 밝은 색상이면 어두운 텍스트, 어두운 색상이면 밝은 텍스트 사용
         const brightness = (dominantColor[0] * 299 + dominantColor[1] * 587 + dominantColor[2] * 114) / 1000;
-        setTextColor(brightness > 128 ? '#000000' : '#FFFFFF');
+        setTextColor(brightness > 128 ? '#1f1f1f' : '#FFFFFF');
+        setColorClass(brightness > 128 ? 'white' : '');
       };
     }
   }, [branch]);
@@ -102,34 +104,34 @@ function BranchesDetail() {
               <div className="branchAddress" style={{ color: textColor }}>{branch.address}</div>
               <div className="branchPhone" style={{ color: textColor }}>T. {branch.owner.phoneNum}</div>
               <div className="branchSns">
-                  <ul>  
-                    {branch.owner.sns1 && (
-                      <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/icon-facebook-bk.png" alt="sns1" />
-                      </a>
-                    )}
-                    {branch.owner.sns2 && (
-                      <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/icon-insta-bk.png" alt="sns2" /> 
-                      </a>
-                    )}
-                    {branch.owner.sns3 && (
-                      <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/icon-blog-bk.png" alt="sns3" />
-                      </a>
-                    )}
-                    {branch.owner.sns4 && (
-                      <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/icon-cafe-bk.png" alt="sns4" />
-                      </a>
-                    )}
-                    {branch.owner.sns5 && (
-                      <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
-                        <img src="/images/icon-you-bk.png" alt="sns5" />
-                      </a>
-                    )}
-                  </ul>
-              </div>
+                   <ul>  
+                     {branch.owner.sns1 && (
+                       <a href={branch.owner.sns1} target="_blank" rel="noopener noreferrer">
+                         <img src={colorClass === 'white' ? "/images/icon-facebook-wt.png" : "/images/icon-facebook-bk.png"} alt="sns1" />
+                       </a>
+                     )}
+                     {branch.owner.sns2 && (
+                       <a href={branch.owner.sns2} target="_blank" rel="noopener noreferrer">
+                         <img src={colorClass === 'white' ? "/images/icon-insta-wt.png" : "/images/icon-insta-bk.png"} alt="sns2" /> 
+                       </a>
+                     )}
+                     {branch.owner.sns3 && (
+                       <a href={branch.owner.sns3} target="_blank" rel="noopener noreferrer">
+                         <img src={colorClass === 'white' ? "/images/icon-blog-wt.png" : "/images/icon-blog-bk.png"} alt="sns3" />
+                       </a>
+                     )}
+                     {branch.owner.sns4 && (
+                       <a href={branch.owner.sns4} target="_blank" rel="noopener noreferrer">
+                         <img src={colorClass === 'white' ? "/images/icon-cafe-wt.png" : "/images/icon-cafe-bk.png"} alt="sns4" />
+                       </a>
+                     )}
+                     {branch.owner.sns5 && (
+                       <a href={branch.owner.sns5} target="_blank" rel="noopener noreferrer">
+                         <img src={colorClass === 'white' ? "/images/icon-you-wt.png" : "/images/icon-you-bk.png"} alt="sns5" />
+                       </a>
+                     )}
+                   </ul>
+               </div>
             </div>
             
           </div>
