@@ -156,11 +156,6 @@ public class OrderService {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 주문을 할 수 없습니다.");
     }
 
-    // 상태값이 없으면 기본 조회 (WAITING, DELIVERING)
-    if (status == null || status.isEmpty()) {
-      status = List.of(OrderStatus.WAITING, OrderStatus.DELIVERING);
-    }
-
     PageRequest pageRequest = PageRequest.of(page - 1, size,
         Sort.by(Sort.Direction.DESC, "createdAt"));
 
