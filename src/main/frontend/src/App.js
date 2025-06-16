@@ -45,6 +45,7 @@ import MyPageMain from "./pages/MyPageMain";
 import ProfileEditPage from "./pages/ProfileEditPage";
 import './styles/main.css';
 import './styles/response.css';
+import MyPageCart from "./pages/MyPageCart";
 
 function App() {
   return (
@@ -104,6 +105,7 @@ function App() {
             {/* 마이페이지 라우트 */}
             <Route path="/mypage" element={<MyPageMain />} />
             <Route path="/mypage/profile/edit" element={<ProfileEditPage />} />
+            <Route path="/mypage/cart" element={<MyPageCart />} />
           </Routes>
           <Footer />
         </div>
