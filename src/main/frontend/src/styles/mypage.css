@@ -1835,3 +1835,586 @@
   justify-content: center;
   z-index: 1000;
 }
+
+/* 개선된 모달 스타일 - mypage.css에 추가 */
+
+/* 모던 모달 오버레이 */
+.modern-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: modalOverlayFadeIn 0.2s ease-out;
+}
+
+@keyframes modalOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 모던 모달 컨테이너 */
+.modern-modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalContentSlideIn 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes modalContentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modern-modal-content.return-modal {
+  max-width: 600px;
+}
+
+/* 모던 모달 헤더 */
+.modern-modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modern-modal-header.cancel-header {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom-color: #fecaca;
+}
+
+.modern-modal-header.return-header {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-bottom-color: #fed7aa;
+}
+
+.modal-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.modal-icon.cancel-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.modal-icon.return-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1f2937;
+}
+
+.modern-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.modern-modal-close:hover:not(:disabled) {
+  background: rgba(107, 114, 128, 0.2);
+  color: #374151;
+  transform: scale(1.05);
+}
+
+.modern-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 모던 모달 바디 */
+.modern-modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-description {
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+/* 모던 폼 요소들 */
+.modern-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.modern-form-group:last-child {
+  margin-bottom: 0;
+}
+
+.modern-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.required-mark {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.modern-form-select,
+.modern-form-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+  resize: none;
+}
+
+.modern-form-select:focus,
+.modern-form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modern-form-select:disabled,
+.modern-form-textarea:disabled {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.modern-form-textarea {
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* 파일 업로드 스타일 */
+.modern-file-upload {
+  margin-bottom: 1rem;
+}
+
+.modern-file-input {
+  display: none;
+}
+
+.modern-file-label {
+  display: block;
+  cursor: pointer;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.modern-file-label:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.file-upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-upload-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.file-upload-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.file-upload-help {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* 이미지 미리보기 */
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.image-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.remove-image-btn:hover:not(:disabled) {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.remove-image-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 모던 모달 푸터 */
+.modern-modal-footer {
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* 모던 버튼 스타일 */
+.modern-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  min-width: 100px;
+}
+
+.modern-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.modern-btn-outline {
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.modern-btn-outline:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.modern-btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.modern-btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.modern-btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.modern-btn-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* 버튼 스피너 */
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 로딩 오버레이 개선 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-overlay-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
+
+.loading-overlay-content .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3b82f6;
+}
+
+.loading-overlay-content p {
+  margin: 0;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .modern-modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .modern-modal-content {
+    max-height: 95vh;
+  }
+
+  .modern-modal-header {
+    padding: 1rem;
+  }
+
+  .modern-modal-body {
+    padding: 1rem;
+    max-height: 70vh;
+  }
+
+  .modern-modal-footer {
+    padding: 1rem;
+    flex-direction: column;
+  }
+
+  .modern-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-title-section {
+    gap: 0.75rem;
+  }
+
+  .modal-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .modal-title {
+    font-size: 1.125rem;
+  }
+
+  .image-preview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .modern-file-label {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-modal-content {
+    margin: 0.5rem;
+    max-height: 90vh;
+  }
+
+  .modern-modal-header {
+    padding: 0.75rem;
+  }
+
+  .modern-modal-body {
+    padding: 0.75rem;
+  }
+
+  .modern-modal-footer {
+    padding: 0.75rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .modal-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .modern-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.8rem;
+    min-width: 80px;
+  }
+}
+
+/* 접근성 향상 */
+@media (prefers-reduced-motion: reduce) {
+  .modern-modal-overlay,
+  .modern-modal-content,
+  .modal-icon,
+  .modern-modal-close,
+  .modern-btn,
+  .remove-image-btn {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* 다크 모드 지원 (옵션) */
+@media (prefers-color-scheme: dark) {
+  .modern-modal-content {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  .modern-modal-header.cancel-header {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+  }
+
+  .modern-modal-header.return-header {
+    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+  }
+
+  .modal-title {
+    color: #f9fafb;
+  }
+
+  .modal-description {
+    color: #d1d5db;
+  }
+
+  .modern-form-label {
+    color: #f3f4f6;
+  }
+
+  .modern-form-select,
+  .modern-form-textarea {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .modern-form-select:focus,
+  .modern-form-textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+
+  .modern-modal-footer {
+    background: #111827;
+    border-top-color: #374151;
+  }
+
+  .modern-btn-outline {
+    background: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+
+  .modern-btn-outline:hover:not(:disabled) {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #f3f4f6;
+  }
+}

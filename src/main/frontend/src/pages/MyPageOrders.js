@@ -16,6 +16,12 @@ const MyPageOrders = () => {
   });
   const [selectedStatus, setSelectedStatus] = useState([]);
 
+  // 모달 상태
+  const [showCancelModal, setShowCancelModal] = useState(null);
+  const [showReturnModal, setShowReturnModal] = useState(null);
+  const [cancelForm, setCancelForm] = useState({ reason: "", description: "" });
+  const [returnForm, setReturnForm] = useState({ reason: "", description: "", images: [] });
+
   // 주문 상태 옵션
   const statusOptions = [
     { value: [], label: "전체", color: "gray" },
@@ -26,6 +32,24 @@ const MyPageOrders = () => {
     { value: ["RETURN_REQUESTED"], label: "반품신청", color: "yellow" },
     { value: ["RETURNING"], label: "반품중", color: "yellow" },
     { value: ["RETURNED"], label: "반품완료", color: "gray" },
+  ];
+
+  // 취소 사유 옵션
+  const cancelReasons = [
+    "단순 변심",
+    "다른 상품 주문",
+    "가격 변동",
+    "배송 관련",
+    "기타"
+  ];
+
+  // 반품 사유 옵션
+  const returnReasons = [
+    "상품 불량/하자",
+    "상품 정보 상이",
+    "배송 중 파손",
+    "사이즈/색상 불만족",
+    "기타"
   ];
 
   // 주문 상태별 한글 표시
@@ -87,7 +111,6 @@ const MyPageOrders = () => {
       console.log("주문 목록 응답:", response.data);
 
       const { list, page: currentPage, size, totalPage } = response.data.content;
-
       setOrders(list || []);
       setPagination({ page: currentPage, size, totalPage });
       setError("");
@@ -103,21 +126,27 @@ const MyPageOrders = () => {
     }
   };
 
-  // 주문 취소
-  const cancelOrder = async (orderId) => {
-    if (!window.confirm("정말로 주문을 취소하시겠습니까?")) {
+  // 주문 취소 (사유만 포함)
+  const cancelOrder = async () => {
+    if (!cancelForm.reason) {
+      alert("취소 사유를 선택해주세요.");
       return;
     }
 
     try {
       setActionLoading(true);
 
-      await API.patch(`/orders/cancel/${orderId}`);
+      await API.patch(`/orders/cancel/${showCancelModal}`, {
+        reason: cancelForm.reason,
+        description: cancelForm.description
+      });
 
       // 주문 목록 다시 조회
       await fetchOrders(pagination.page);
 
       alert("주문이 취소되었습니다.");
+      setShowCancelModal(null);
+      setCancelForm({ reason: "", description: "" });
       setError("");
     } catch (err) {
       console.error("주문 취소 오류:", err);
@@ -127,21 +156,50 @@ const MyPageOrders = () => {
     }
   };
 
-  // 반품 신청
-  const returnOrder = async (orderId) => {
-    if (!window.confirm("반품을 신청하시겠습니까?")) {
+  // 반품 신청 (사유 + 이미지 포함)
+  const returnOrder = async () => {
+    if (!returnForm.reason) {
+      alert("반품 사유를 선택해주세요.");
+      return;
+    }
+    if (!returnForm.description.trim()) {
+      alert("상세 사유를 입력해주세요.");
       return;
     }
 
     try {
       setActionLoading(true);
 
-      await API.patch(`/orders/return/${orderId}`);
+      // FormData 생성
+      const formData = new FormData();
+
+      // JSON 데이터를 Blob으로 변환하여 추가
+      const requestData = {
+        reason: returnForm.reason,
+        description: returnForm.description
+      };
+
+      formData.append('request', new Blob([JSON.stringify(requestData)], {
+        type: 'application/json'
+      }));
+
+      // 이미지 파일들 추가
+      returnForm.images.forEach(imageData => {
+        formData.append('images', imageData.file);
+      });
+
+      await API.patch(`/orders/return/${showReturnModal}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       // 주문 목록 다시 조회
       await fetchOrders(pagination.page);
 
       alert("반품 신청이 완료되었습니다.");
+      setShowReturnModal(null);
+      setReturnForm({ reason: "", description: "", images: [] });
       setError("");
     } catch (err) {
       console.error("반품 신청 오류:", err);
@@ -149,6 +207,58 @@ const MyPageOrders = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // 이미지 업로드 처리 (파일 객체 저장)
+  const handleImageUpload = (event) => {
+    const files = Array.from(event.target.files);
+
+    if (files.length === 0) return;
+
+    // 파일 크기 및 타입 검증
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("이미지 크기는 5MB를 초과할 수 없습니다.");
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert("이미지 파일만 업로드 가능합니다.");
+        return;
+      }
+    }
+
+    if (returnForm.images.length + files.length > 5) {
+      alert("이미지는 최대 5장까지 업로드 가능합니다.");
+      return;
+    }
+
+    // 파일 객체와 미리보기 URL을 함께 저장
+    const fileData = files.map(file => ({
+      file: file,
+      previewUrl: URL.createObjectURL(file)
+    }));
+
+    setReturnForm(prev => ({
+      ...prev,
+      images: [...prev.images, ...fileData]
+    }));
+  };
+
+  // 이미지 제거 (반품용)
+  const removeReturnImage = (index) => {
+    setReturnForm(prev => {
+      // 미리보기 URL 메모리 해제
+      const imageToRemove = prev.images[index];
+      if (imageToRemove && imageToRemove.previewUrl) {
+        URL.revokeObjectURL(imageToRemove.previewUrl);
+      }
+
+      return {
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      };
+    });
   };
 
   // 상태 필터 변경
@@ -200,7 +310,7 @@ const MyPageOrders = () => {
         <div className="mypage_contents">
           <div className="page-title-section">
             <h1 className="page-title">📦 주문/배송 내역</h1>
-            <p className="page-description">주문한 상품의 배송 상태를 확인하고 관리하세요</p>
+            <p className="page-description">주문한 상품의 배송 상태를 확인하고 취소/반품을 신청하세요</p>
           </div>
 
           {error && (
@@ -317,7 +427,7 @@ const MyPageOrders = () => {
                             {order.orderStatus === 'WAITING' && (
                                 <button
                                     className="btn-outline cancel-btn"
-                                    onClick={() => cancelOrder(order.id)}
+                                    onClick={() => setShowCancelModal(order.id)}
                                     disabled={actionLoading}
                                 >
                                   주문 취소
@@ -326,7 +436,7 @@ const MyPageOrders = () => {
                             {order.orderStatus === 'COMPLETE' && (
                                 <button
                                     className="btn-outline return-btn"
-                                    onClick={() => returnOrder(order.id)}
+                                    onClick={() => setShowReturnModal(order.id)}
                                     disabled={actionLoading}
                                 >
                                   반품 신청
@@ -382,7 +492,227 @@ const MyPageOrders = () => {
 
           {actionLoading && (
               <div className="loading-overlay">
-                <div className="spinner"></div>
+                <div className="loading-overlay-content">
+                  <div className="spinner"></div>
+                  <p>처리 중...</p>
+                </div>
+              </div>
+          )}
+
+          {/* 개선된 주문 취소 모달 */}
+          {showCancelModal && (
+              <div className="modern-modal-overlay" onClick={() => setShowCancelModal(null)}>
+                <div className="modern-modal-content cancel-modal" onClick={(e) => e.stopPropagation()}>
+                  {/* 모달 헤더 */}
+                  <div className="modern-modal-header cancel-header">
+                    <div className="modal-title-section">
+                      <div className="modal-icon cancel-icon">
+                        <span>⚠️</span>
+                      </div>
+                      <h3 className="modal-title">주문 취소</h3>
+                    </div>
+                    <button
+                        className="modern-modal-close"
+                        onClick={() => setShowCancelModal(null)}
+                        disabled={actionLoading}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* 모달 바디 */}
+                  <div className="modern-modal-body">
+                    <p className="modal-description">
+                      주문을 취소하시겠습니까? 취소된 주문은 복구할 수 없습니다.
+                    </p>
+
+                    <div className="modern-form-group">
+                      <label className="modern-form-label">
+                        취소 사유 <span className="required-mark">*</span>
+                      </label>
+                      <select
+                          value={cancelForm.reason}
+                          onChange={(e) => setCancelForm(prev => ({ ...prev, reason: e.target.value }))}
+                          className="modern-form-select"
+                          disabled={actionLoading}
+                      >
+                        <option value="">사유를 선택해주세요</option>
+                        {cancelReasons.map(reason => (
+                            <option key={reason} value={reason}>{reason}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="modern-form-group">
+                      <label className="modern-form-label">
+                        상세 설명 (선택사항)
+                      </label>
+                      <textarea
+                          value={cancelForm.description}
+                          onChange={(e) => setCancelForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="취소 사유에 대한 상세한 설명을 입력해주세요"
+                          className="modern-form-textarea"
+                          rows="3"
+                          disabled={actionLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 모달 푸터 */}
+                  <div className="modern-modal-footer">
+                    <button
+                        className="modern-btn modern-btn-outline"
+                        onClick={() => setShowCancelModal(null)}
+                        disabled={actionLoading}
+                    >
+                      취소
+                    </button>
+                    <button
+                        className="modern-btn modern-btn-danger"
+                        onClick={cancelOrder}
+                        disabled={!cancelForm.reason || actionLoading}
+                    >
+                      {actionLoading && (
+                          <div className="btn-spinner"></div>
+                      )}
+                      {actionLoading ? "처리중..." : "주문 취소"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+          )}
+
+          {/* 개선된 반품 신청 모달 */}
+          {showReturnModal && (
+              <div className="modern-modal-overlay" onClick={() => setShowReturnModal(null)}>
+                <div className="modern-modal-content return-modal" onClick={(e) => e.stopPropagation()}>
+                  {/* 모달 헤더 */}
+                  <div className="modern-modal-header return-header">
+                    <div className="modal-title-section">
+                      <div className="modal-icon return-icon">
+                        <span>📦</span>
+                      </div>
+                      <h3 className="modal-title">반품 신청</h3>
+                    </div>
+                    <button
+                        className="modern-modal-close"
+                        onClick={() => setShowReturnModal(null)}
+                        disabled={actionLoading}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* 모달 바디 */}
+                  <div className="modern-modal-body">
+                    <p className="modal-description">
+                      상품에 문제가 있으셨나요? 반품 사유와 상세 정보를 입력해주세요.
+                    </p>
+
+                    <div className="modern-form-group">
+                      <label className="modern-form-label">
+                        반품 사유 <span className="required-mark">*</span>
+                      </label>
+                      <select
+                          value={returnForm.reason}
+                          onChange={(e) => setReturnForm(prev => ({ ...prev, reason: e.target.value }))}
+                          className="modern-form-select"
+                          disabled={actionLoading}
+                      >
+                        <option value="">사유를 선택해주세요</option>
+                        {returnReasons.map(reason => (
+                            <option key={reason} value={reason}>{reason}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="modern-form-group">
+                      <label className="modern-form-label">
+                        상세 설명 <span className="required-mark">*</span>
+                      </label>
+                      <textarea
+                          value={returnForm.description}
+                          onChange={(e) => setReturnForm(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="반품 사유에 대한 상세한 설명을 입력해주세요"
+                          className="modern-form-textarea"
+                          rows="4"
+                          disabled={actionLoading}
+                      />
+                    </div>
+
+                    <div className="modern-form-group">
+                      <label className="modern-form-label">
+                        증빙 사진 (권장)
+                      </label>
+                      <div className="modern-file-upload">
+                        <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="modern-file-input"
+                            id="return-images"
+                            disabled={actionLoading}
+                        />
+                        <label htmlFor="return-images" className="modern-file-label">
+                          <div className="file-upload-content">
+                            <div className="file-upload-icon">📷</div>
+                            <span className="file-upload-text">
+                              사진을 클릭하여 추가하세요
+                            </span>
+                            <span className="file-upload-help">
+                              (최대 5장, 각 5MB 이하)
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* 이미지 미리보기 */}
+                      {returnForm.images && returnForm.images.length > 0 && (
+                          <div className="image-preview-grid">
+                            {returnForm.images.map((imageData, index) => (
+                                <div key={index} className="image-preview-item">
+                                  <img
+                                      src={imageData.previewUrl}
+                                      alt={`증빙사진 ${index + 1}`}
+                                      className="preview-image"
+                                  />
+                                  <button
+                                      type="button"
+                                      onClick={() => removeReturnImage(index)}
+                                      className="remove-image-btn"
+                                      disabled={actionLoading}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                            ))}
+                          </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 모달 푸터 */}
+                  <div className="modern-modal-footer">
+                    <button
+                        className="modern-btn modern-btn-outline"
+                        onClick={() => setShowReturnModal(null)}
+                        disabled={actionLoading}
+                    >
+                      취소
+                    </button>
+                    <button
+                        className="modern-btn modern-btn-warning"
+                        onClick={returnOrder}
+                        disabled={!returnForm.reason || !returnForm.description.trim() || actionLoading}
+                    >
+                      {actionLoading && (
+                          <div className="btn-spinner"></div>
+                      )}
+                      {actionLoading ? "처리중..." : "반품 신청"}
+                    </button>
+                  </div>
+                </div>
               </div>
           )}
         </div>

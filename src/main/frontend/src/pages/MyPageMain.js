@@ -100,13 +100,6 @@ const MyPageMain = () => {
       description: "주문 내역과 배송 상태를 확인하세요"
     },
     {
-      title: "취소/반품/교환",
-      path: "/mypage/returns",
-      roles: ["USER", "COACH"],
-      icon: "🔄",
-      description: "주문 취소 및 반품/교환 신청을 관리하세요"
-    },
-    {
       title: "회원 정보 관리",
       path: "/mypage/profile",
       roles: ["USER", "COACH"],
