@@ -46,6 +46,7 @@ import ProfileEditPage from "./pages/ProfileEditPage";
 import './styles/main.css';
 import './styles/response.css';
 import MyPageCart from "./pages/MyPageCart";
+import MyPageOrders from "./pages/MyPageOrders";
 
 function App() {
   return (
@@ -106,6 +107,7 @@ function App() {
             <Route path="/mypage" element={<MyPageMain />} />
             <Route path="/mypage/profile/edit" element={<ProfileEditPage />} />
             <Route path="/mypage/cart" element={<MyPageCart />} />
+            <Route path="/mypage/orders" element={<MyPageOrders />} />
           </Routes>
           <Footer />
         </div>

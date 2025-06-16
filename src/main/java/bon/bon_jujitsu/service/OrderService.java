@@ -5,16 +5,21 @@ import bon.bon_jujitsu.domain.CartItem;
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemOption;
 import bon.bon_jujitsu.domain.Order;
+import bon.bon_jujitsu.domain.OrderAction;
+import bon.bon_jujitsu.domain.OrderActionType;
 import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.OrderCancelRequest;
 import bon.bon_jujitsu.dto.request.OrderRequest;
+import bon.bon_jujitsu.dto.request.OrderReturnRequest;
 import bon.bon_jujitsu.dto.response.OrderResponse;
 import bon.bon_jujitsu.dto.update.OrderUpdate;
 import bon.bon_jujitsu.repository.CartItemRepository;
 import bon.bon_jujitsu.repository.CartRepository;
+import bon.bon_jujitsu.repository.OrderActionRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.List;
@@ -25,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +41,8 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final CartItemRepository cartItemRepository;
   private final CartRepository cartRepository;
+  private final OrderActionRepository orderActionRepository;
+  private final OrderImageService orderImageService;
 
   public void createOrder(Long userId, OrderRequest request) {
     User orderUser = userRepository.findById(userId)
@@ -138,7 +146,8 @@ public class OrderService {
   }
 
 
-  public PageResponse<OrderResponse> getMyOrders(int page, int size, Long userId, List<OrderStatus> status) {
+  public PageResponse<OrderResponse> getMyOrders(int page, int size, Long userId,
+      List<OrderStatus> status) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -152,7 +161,8 @@ public class OrderService {
       status = List.of(OrderStatus.WAITING, OrderStatus.DELIVERING);
     }
 
-    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    PageRequest pageRequest = PageRequest.of(page - 1, size,
+        Sort.by(Sort.Direction.DESC, "createdAt"));
 
     Page<Order> orders = orderRepository.findAllByUserAndOrderStatusIn(user, status, pageRequest);
 
@@ -197,7 +207,7 @@ public class OrderService {
         break;
 
       case DELIVERING:
-        // DELIVERING상태에서 COMPLETED로 변경
+        // DELIVERING상태에서 COMPLETE로 변경
         if (requestedStatus == OrderStatus.COMPLETE) {
           order.UpdateOrderStatus(OrderStatus.COMPLETE);
         } else {
@@ -240,7 +250,7 @@ public class OrderService {
     }
   }
 
-  public void cancelOrder(Long orderId, Long userId) {
+  public void cancelOrder(Long orderId, Long userId, OrderCancelRequest request) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -253,6 +263,13 @@ public class OrderService {
 
     if (order.getOrderStatus() != OrderStatus.WAITING) {
       throw new IllegalArgumentException("주문 취소는 대기중인 주문만 가능합니다.");
+    }
+
+    Optional<OrderAction> existingCancel = orderActionRepository
+        .findFirstByOrderIdAndActionTypeOrderByCreatedAtDesc(orderId, OrderActionType.CANCEL);
+
+    if (existingCancel.isPresent()) {
+      throw new IllegalArgumentException("이미 취소된 주문입니다.");
     }
 
     // 주문 취소 시, 아이템 재고 복구
@@ -268,9 +285,20 @@ public class OrderService {
     }
 
     order.UpdateOrderStatus(OrderStatus.CANCELLED);
+
+    OrderAction cancelAction = OrderAction.builder()
+        .order(order)
+        .actionType(OrderActionType.CANCEL)
+        .reason(request.reason())
+        .description(request.description())
+        .actionBy(userId)
+        .build();
+
+    orderActionRepository.save(cancelAction);
   }
 
-  public void returnOrder(Long orderId, Long userId) {
+  public void returnOrder(Long orderId, Long userId, OrderReturnRequest request,
+      List<MultipartFile> images) {
     userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
 
@@ -282,11 +310,33 @@ public class OrderService {
       throw new IllegalArgumentException("본인의 주문만 반품 신청할 수 있습니다.");
     }
 
-    // COMPLETED 상태인 경우에만 반품 신청 가능
-    if (order.getOrderStatus() == OrderStatus.COMPLETE) {
-      order.UpdateOrderStatus(OrderStatus.RETURN_REQUESTED);
-    } else {
+    // 상태 검증
+    if (order.getOrderStatus() != OrderStatus.COMPLETE) {
       throw new IllegalArgumentException("완료된 주문만 반품 신청이 가능합니다.");
     }
+
+    // 중복 반품 방지
+    Optional<OrderAction> existingReturn = orderActionRepository
+        .findFirstByOrderIdAndActionTypeOrderByCreatedAtDesc(orderId, OrderActionType.RETURN);
+
+    if (existingReturn.isPresent()) {
+      throw new IllegalArgumentException("이미 반품 신청된 주문입니다.");
+    }
+
+    // 주문 상태 변경
+    order.UpdateOrderStatus(OrderStatus.RETURN_REQUESTED);
+
+    // 반품 액션 기록 저장
+    OrderAction returnAction = OrderAction.builder()
+        .order(order)
+        .actionType(OrderActionType.RETURN)
+        .reason(request.reason())
+        .description(request.description())
+        .actionBy(userId)
+        .build();
+
+    orderActionRepository.save(returnAction);
+
+    orderImageService.uploadImage(order, images);
   }
 }

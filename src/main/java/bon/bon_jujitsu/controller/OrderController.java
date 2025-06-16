@@ -3,7 +3,9 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.OrderCancelRequest;
 import bon.bon_jujitsu.dto.request.OrderRequest;
+import bon.bon_jujitsu.dto.request.OrderReturnRequest;
 import bon.bon_jujitsu.dto.response.OrderResponse;
 import bon.bon_jujitsu.dto.update.OrderUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
@@ -18,7 +20,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -68,18 +72,21 @@ public class OrderController {
   @PatchMapping("/orders/cancel/{orderId}")
   public ApiResponse<Void> cancelOrder (
       @PathVariable("orderId") Long orderId,
-      @AuthenticationUserId Long userId
+      @AuthenticationUserId Long userId,
+      @Valid @RequestBody OrderCancelRequest request
   ) {
-    orderService.cancelOrder(orderId, userId);
+    orderService.cancelOrder(orderId, userId, request);
     return ApiResponse.success("주문 취소 완료", null);
   }
 
   @PatchMapping("/orders/return/{orderId}")
-  public ApiResponse<Void> returnOrder (
+  public ApiResponse<Void> returnOrder(
       @PathVariable("orderId") Long orderId,
-      @AuthenticationUserId Long userId
+      @AuthenticationUserId Long userId,
+      @RequestPart("request") @Valid OrderReturnRequest request,  // JSON 부분
+      @RequestPart(value = "images", required = false) List<MultipartFile> images  // 파일 부분
   ) {
-    orderService.returnOrder(orderId, userId);
+    orderService.returnOrder(orderId, userId, request, images);
     return ApiResponse.success("주문 환불 신청 완료", null);
   }
 }

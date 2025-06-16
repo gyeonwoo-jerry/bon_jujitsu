@@ -75,6 +75,10 @@ public class Order extends Timestamped {
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> orderItems = new ArrayList<>();
 
+  @Builder.Default
+  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<OrderImage> images = new ArrayList<>();
+
   public void UpdateOrderStatus(OrderStatus orderStatus) {
     this.orderStatus = orderStatus;
   }
