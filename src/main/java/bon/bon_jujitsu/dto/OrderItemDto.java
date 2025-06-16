@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.dto;
 
 import bon.bon_jujitsu.domain.OrderItem;
+import bon.bon_jujitsu.dto.response.ItemOptionResponse;
 
 public record OrderItemDto(
     Long id,
@@ -10,7 +11,8 @@ public record OrderItemDto(
     int currentPrice,   // 현재 상품 가격 (변동 가능)
     int quantity,
     int totalPrice,
-    boolean isPriceChanged  // 가격 변동 여부
+    boolean isPriceChanged,
+    ItemOptionResponse itemOption// 가격 변동 여부
 ) {
   public OrderItemDto(OrderItem orderItem) {
     this(
@@ -21,7 +23,8 @@ public record OrderItemDto(
         orderItem.getItem().getPrice(),
         orderItem.getQuantity(),
         orderItem.getPrice() * orderItem.getQuantity(),
-        orderItem.getPrice() != orderItem.getItem().getPrice()
+        orderItem.getPrice() != orderItem.getItem().getPrice(),
+        orderItem.getItemOption() != null ? ItemOptionResponse.fromEntity(orderItem.getItemOption()) : null
     );
   }
 }

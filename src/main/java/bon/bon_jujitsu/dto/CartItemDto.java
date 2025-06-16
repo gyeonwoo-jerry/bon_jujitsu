@@ -12,7 +12,7 @@ public record CartItemDto(
     int quantity,
     int totalPrice,
     boolean isPriceChanged,
-    ItemOptionResponse itemOption// 가격 변동 여부,
+    ItemOptionResponse itemOption
 ) {
   public CartItemDto(CartItem cartItem) {
     this(
