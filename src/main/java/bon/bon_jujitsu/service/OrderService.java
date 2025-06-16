@@ -156,6 +156,18 @@ public class OrderService {
       throw new IllegalArgumentException("승인 대기 중인 사용자는 주문을 할 수 없습니다.");
     }
 
+    if (status == null || status.isEmpty()) {
+      status = List.of(
+          OrderStatus.WAITING,
+          OrderStatus.DELIVERING,
+          OrderStatus.COMPLETE,
+          OrderStatus.CANCELLED,
+          OrderStatus.RETURN_REQUESTED,
+          OrderStatus.RETURNING,
+          OrderStatus.RETURNED
+      );
+    }
+
     PageRequest pageRequest = PageRequest.of(page - 1, size,
         Sort.by(Sort.Direction.DESC, "createdAt"));
 
