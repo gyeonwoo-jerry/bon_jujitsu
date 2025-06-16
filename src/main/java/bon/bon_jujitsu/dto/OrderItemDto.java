@@ -11,8 +11,8 @@ public record OrderItemDto(
     int currentPrice,   // 현재 상품 가격 (변동 가능)
     int quantity,
     int totalPrice,
-    boolean isPriceChanged,
-    ItemOptionResponse itemOption// 가격 변동 여부
+    boolean isPriceChanged,// 가격 변동 여부
+    ItemOptionResponse itemOption
 ) {
   public OrderItemDto(OrderItem orderItem) {
     this(
