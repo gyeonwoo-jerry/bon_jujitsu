@@ -4,7 +4,7 @@ import API from "../utils/api";
 import "../styles/LoginForm.css";
 import { setWithExpiry } from "../utils/storage";
 
-function LoginForm({ onLoginSuccess }) {
+function LoginForm({ onLoginSuccess, onCloseModal }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ function LoginForm({ onLoginSuccess }) {
             name: response.data.content.name || username,
             email: response.data.content.email || "",
             role: userRole,
-            branchRoles: branchRoles, // branchRoles 정보 추가
+            branchRoles: branchRoles,
             // 하위 호환성을 위한 기존 필드들
             branchIds: branchRoles.map(br => br.branchId),
             branches: branchRoles.map(br => ({
@@ -98,12 +98,19 @@ function LoginForm({ onLoginSuccess }) {
 
   const handleUsernameChange = (e) => {
     setUsername(e.target.value);
-    console.log("Username:", e.target.value); // 콘솔에 아이디 값 출력
+    console.log("Username:", e.target.value);
   };
 
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
-    console.log("Password:", e.target.value); // 콘솔에 비밀번호 값 출력
+    console.log("Password:", e.target.value);
+  };
+
+  // 회원가입 링크 클릭 시 모달 닫기
+  const handleJoinClick = () => {
+    if (onCloseModal && typeof onCloseModal === "function") {
+      onCloseModal();
+    }
   };
 
   return (
@@ -152,7 +159,7 @@ function LoginForm({ onLoginSuccess }) {
             </button>
           </form>
           <div className="join_btn">
-            <Link to="/join">회원가입</Link>
+            <Link to="/join" onClick={handleJoinClick}>회원가입</Link>
           </div>
         </div>
       </div>

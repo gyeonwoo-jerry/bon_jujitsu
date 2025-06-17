@@ -66,6 +66,11 @@ function Navbar() {
     setShowLoginForm(!showLoginForm);
   };
 
+  // 로그인 모달 닫기 함수 추가
+  const closeLoginForm = () => {
+    setShowLoginForm(false);
+  };
+
   const handleLogout = async () => {
     if (window.confirm("로그아웃 하시겠습니까?")) {
       try {
@@ -189,6 +194,7 @@ function Navbar() {
                     }
                   }
                 }}
+                onCloseModal={closeLoginForm} // 모달 닫기 함수 전달
             />
         )}
       </nav>
