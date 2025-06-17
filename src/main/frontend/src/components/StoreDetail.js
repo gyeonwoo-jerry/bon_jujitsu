@@ -300,7 +300,7 @@ const StoreDetail = ({ itemId }) => {
                 <img
                     src={
                       hasImages
-                          ? getImageUrl(item.images[activeImageIndex])
+                          ? getImageUrl(item.images[activeImageIndex].url)
                           : "/images/blank_img.png"
                     }
                     alt={item.name}
