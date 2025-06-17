@@ -200,7 +200,7 @@ function BranchesDetail() {
                 {branch.coaches.map((coach, index) => (
                 <li key={index}>
                   <div className="thumnail">
-                    <img src='/images/002.png' alt={branch.coaches[index].name} />
+                    <img src={branch.coaches[index].userImages || '/images/default-wt.png'} alt={branch.coaches[index].name} />
                   </div>
                   <div className="coach_info">
                     <div className="coach_name">{branch.coaches[index].name}</div>
