@@ -12,6 +12,25 @@ const API = axios.create({
 let isRefreshing = false;
 let failedQueue = [];
 
+// 로딩 상태 관리를 위한 변수들
+let loadingManager = null;
+
+// 로딩 매니저 설정 함수 (앱 초기화 시 호출)
+export const setLoadingManager = (manager) => {
+  loadingManager = manager;
+};
+
+// 로딩 제외할 URL 패턴들 (필요에 따라 추가)
+const EXCLUDE_LOADING_PATTERNS = [
+  '/users/refresh', // 토큰 갱신 시에는 로딩 표시 안함
+  // 다른 제외할 패턴들을 여기에 추가
+];
+
+// URL이 로딩 제외 대상인지 확인
+const shouldExcludeLoading = (url) => {
+  return EXCLUDE_LOADING_PATTERNS.some(pattern => url?.includes(pattern));
+};
+
 // 대기 중인 요청들을 처리하는 함수
 const processQueue = (error, token = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -28,6 +47,11 @@ const processQueue = (error, token = null) => {
 // 요청 인터셉터 설정
 API.interceptors.request.use(
     (config) => {
+      // 로딩 시작 (제외 대상이 아닌 경우만)
+      if (!shouldExcludeLoading(config.url) && loadingManager) {
+        loadingManager.startLoading();
+      }
+
       // localStorage에서 토큰 가져오기
       const token = getWithExpiry("accessToken");
 
@@ -49,6 +73,10 @@ API.interceptors.request.use(
       return config;
     },
     (error) => {
+      // 요청 오류 시에도 로딩 종료
+      if (loadingManager) {
+        loadingManager.stopLoading();
+      }
       return Promise.reject(error);
     }
 );
@@ -56,6 +84,10 @@ API.interceptors.request.use(
 // 응답 인터셉터 설정
 API.interceptors.response.use(
     (response) => {
+      // 성공 응답 시 로딩 종료 (제외 대상이 아닌 경우만)
+      if (!shouldExcludeLoading(response.config.url) && loadingManager) {
+        loadingManager.stopLoading();
+      }
       return response;
     },
     async (error) => {
@@ -141,6 +173,12 @@ API.interceptors.response.use(
           isRefreshing = false;
         }
       }
+
+      // 오류 응답 시에도 로딩 종료 (제외 대상이 아닌 경우만)
+      if (!shouldExcludeLoading(originalRequest?.url) && loadingManager) {
+        loadingManager.stopLoading();
+      }
+
       return Promise.reject(error);
     }
 );

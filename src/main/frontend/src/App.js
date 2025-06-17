@@ -1,5 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+// 로딩 시스템 import
+import { LoadingProvider, useLoading } from './utils/LoadingContext';
+import { setLoadingManager } from './utils/api';
+import LoadingIndicator from './utils/LoadingIndicator';
+
+// 기존 컴포넌트들 import
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -43,13 +50,23 @@ import PostCreate from "./pages/admin/PostCreate";
 import PostEdit from "./pages/admin/PostEdit";
 import MyPageMain from "./pages/MyPageMain";
 import ProfileEditPage from "./pages/ProfileEditPage";
-import './styles/main.css';
-import './styles/response.css';
 import MyPageCart from "./pages/MyPageCart";
 import MyPageOrders from "./pages/MyPageOrders";
 import MyPageReview from "./pages/MyPageReview";
 
-function App() {
+// 스타일 import
+import './styles/main.css';
+import './styles/response.css';
+
+// 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
+function AppContent() {
+  const loadingManager = useLoading();
+
+  // API에 로딩 매니저 연결
+  useEffect(() => {
+    setLoadingManager(loadingManager);
+  }, [loadingManager]);
+
   return (
       <BrowserRouter>
         <div className="App">
@@ -112,8 +129,20 @@ function App() {
             <Route path="/mypage/reviews" element={<MyPageReview />} />
           </Routes>
           <Footer />
+
+          {/* 로딩 인디케이터 - 앱 최상단에 배치 */}
+          <LoadingIndicator />
         </div>
       </BrowserRouter>
+  );
+}
+
+// 메인 App 컴포넌트
+function App() {
+  return (
+      <LoadingProvider>
+        <AppContent />
+      </LoadingProvider>
   );
 }
 
