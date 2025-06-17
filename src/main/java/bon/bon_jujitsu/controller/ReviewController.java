@@ -4,7 +4,7 @@ import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
-import bon.bon_jujitsu.dto.response.ReviewResponseDTO;
+import bon.bon_jujitsu.dto.response.ReviewableOrderResponse;
 import bon.bon_jujitsu.dto.update.ReviewUpdate;
 import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.ReviewService;
@@ -61,6 +61,16 @@ public class ReviewController {
     return ApiResponse.success(
             "리뷰 리스트 조회 완료",
         reviewService.getMyReviews(userId, PageRequest.of(Math.max(0, page - 1), size, Sort.by(Sort.Direction.DESC, "createdAt"))));
+  }
+
+  @GetMapping("/reviews/reviewable-orders")
+  public ApiResponse<List<ReviewableOrderResponse>> getReviewableOrders(
+      @AuthenticationUserId Long userId
+  ) {
+    return ApiResponse.success(
+        "리뷰 작성 가능한 주문 조회 완료",
+        reviewService.getReviewableOrders(userId)
+    );
   }
 
   @PatchMapping("/reviews/{reviewId}")

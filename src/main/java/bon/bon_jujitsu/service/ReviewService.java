@@ -2,17 +2,20 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.Order;
+import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.ReviewRequest;
 import bon.bon_jujitsu.dto.response.ReviewResponse;
+import bon.bon_jujitsu.dto.response.ReviewableOrderResponse;
 import bon.bon_jujitsu.dto.update.ReviewUpdate;
 import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.ReviewRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -190,14 +193,49 @@ public class ReviewService {
 
 
   public void deleteReview(Long userId, Long reviewId) {
-    Review review = reviewRepository.findById(reviewId).orElseThrow(()->new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+  }
 
-    if (!user.isAdmin() && !review.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("삭제 권한이 없습니다.");
+  @Transactional(readOnly = true)
+  public List<ReviewableOrderResponse> getReviewableOrders(Long userId) {
+    // 사용자 존재 확인
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+    // COMPLETE 상태의 주문들 조회 (최근 6개월 정도로 제한)
+    LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+    List<Order> completedOrders = orderRepository
+        .findRecentCompletedOrdersByUserId(userId, OrderStatus.COMPLETE, sixMonthsAgo);
+
+    List<ReviewableOrderResponse> reviewableItems = new ArrayList<>();
+
+    for (Order order : completedOrders) {
+      for (OrderItem orderItem : order.getOrderItems()) {
+        // 해당 주문-상품에 대한 리뷰가 이미 있는지 확인
+        boolean hasReview = reviewRepository
+            .existsByOrderIdAndItemIdAndUserId(
+                order.getId(),
+                orderItem.getItem().getId(),
+                userId
+            );
+
+        // 리뷰가 없는 경우에만 추가
+        if (!hasReview) {
+          reviewableItems.add(ReviewableOrderResponse.builder()
+              .orderId(order.getId())
+              .itemId(orderItem.getItem().getId())
+              .itemName(orderItem.getItem().getName())
+              .orderDate(order.getCreatedAt())
+              .quantity(orderItem.getQuantity())
+              .price(orderItem.getPrice())
+              .build());
+        }
+      }
     }
 
-    review.softDelete();
+    // 최신 주문순으로 정렬
+    return reviewableItems.stream()
+        .sorted((a, b) -> b.orderDate().compareTo(a.orderDate()))
+        .collect(Collectors.toList());
   }
 }

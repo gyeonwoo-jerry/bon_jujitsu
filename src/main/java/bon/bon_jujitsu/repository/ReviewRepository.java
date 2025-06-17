@@ -20,5 +20,16 @@ public interface ReviewRepository extends JpaRepository <Review, Long>{
       "LEFT JOIN r.order o " + // order는 ManyToOne이라 lazy 유지 가능
       "WHERE r.item.id = :itemId AND r.isDeleted = false")
   Page<Review> findAllByItem_Id(@Param("itemId") Long itemId, Pageable pageable);
+
+  @Query("SELECT COUNT(r) > 0 FROM Review r " +
+      "WHERE r.order.id = :orderId " +
+      "AND r.item.id = :itemId " +
+      "AND r.user.id = :userId " +
+      "AND r.isDeleted = false")
+  boolean existsByOrderIdAndItemIdAndUserId(
+      @Param("orderId") Long orderId,
+      @Param("itemId") Long itemId,
+      @Param("userId") Long userId
+  );
 }
 
