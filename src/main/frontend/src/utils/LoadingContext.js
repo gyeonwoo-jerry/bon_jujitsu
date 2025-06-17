@@ -12,8 +12,10 @@ export const LoadingProvider = ({ children }) => {
   const startLoading = () => {
     setLoadingCount(prev => {
       const newCount = prev + 1;
+      console.log('🟢 Start Loading - Count:', newCount); // 디버깅 로그
       if (newCount === 1) {
         setIsLoading(true);
+        console.log('🟢 Loading Started'); // 디버깅 로그
       }
       return newCount;
     });
@@ -23,8 +25,10 @@ export const LoadingProvider = ({ children }) => {
   const stopLoading = () => {
     setLoadingCount(prev => {
       const newCount = Math.max(0, prev - 1);
+      console.log('🔴 Stop Loading - Count:', newCount); // 디버깅 로그
       if (newCount === 0) {
         setIsLoading(false);
+        console.log('🔴 Loading Stopped'); // 디버깅 로그
       }
       return newCount;
     });

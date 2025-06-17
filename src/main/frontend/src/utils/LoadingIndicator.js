@@ -5,6 +5,8 @@ import '../styles/LoadingIndicator.css';
 const LoadingIndicator = () => {
   const { isLoading } = useLoading();
 
+  return null;
+
   if (!isLoading) return null;
 
   return (

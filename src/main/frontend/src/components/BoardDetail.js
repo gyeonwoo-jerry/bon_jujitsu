@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../utils/api";
 import { loggedNavigate } from "../utils/navigationLogger";
@@ -13,10 +13,10 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
   const navigate = loggedNavigate(rawNavigate);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // API 엔드포인트 정규화
-  const normalizedApiEndpoint = apiEndpoint.startsWith("/")
-    ? apiEndpoint
-    : `/${apiEndpoint}`;
+  // API 엔드포인트 정규화 - useMemo로 메모이제이션
+  const normalizedApiEndpoint = useMemo(() => {
+    return apiEndpoint.startsWith("/") ? apiEndpoint : `/${apiEndpoint}`;
+  }, [apiEndpoint]);
 
   // 이미지 URL 정규화 함수
   const normalizeImageUrl = (imageData) => {
@@ -26,12 +26,12 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     }
 
     let url = imageData;
-    
+
     // 객체인 경우 URL 추출
     if (typeof imageData === 'object') {
       url = imageData.url || imageData.imagePath || imageData.src;
     }
-    
+
     // URL이 여전히 문자열이 아니면 기본 이미지 반환
     if (!url || typeof url !== 'string') {
       return "/images/blank_img.png";
@@ -63,7 +63,7 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     return finalUrl;
   };
 
-  // fetchPostDetail 함수를 useCallback으로 메모이제이션
+  // fetchPostDetail 함수를 useCallback으로 메모이제이션 - 의존성 최소화
   const fetchPostDetail = useCallback(async () => {
     // ID가 유효한지 확인
     if (!id || id === "undefined" || id === undefined || id === null || typeof id !== 'string') {
@@ -83,7 +83,7 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
           const postData = response.data.content;
           setPost(postData);
           document.title = postData?.title || "게시글 상세";
-          
+
           // 게시글 제목을 부모 컴포넌트로 전달
           if (onPostLoad && postData.title) {
             onPostLoad(postData.title);
@@ -97,7 +97,7 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
     } catch (err) {
       console.error("게시글 로딩 오류:", err);
       let errorMessage = "게시글을 불러오는 중 오류가 발생했습니다.";
-      
+
       if (err.response) {
         if (err.response.status === 500) {
           errorMessage = "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
@@ -111,12 +111,19 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
       } else if (err.request) {
         errorMessage = "네트워크 연결을 확인해주세요.";
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [normalizedApiEndpoint, id, onPostLoad]);
+  }, [normalizedApiEndpoint, id]); // onPostLoad 제거
+
+  // onPostLoad 호출을 별도 useEffect로 분리
+  useEffect(() => {
+    if (post && post.title && onPostLoad) {
+      onPostLoad(post.title);
+    }
+  }, [post, onPostLoad]);
 
   useEffect(() => {
     const checkUserRole = () => {
@@ -132,61 +139,60 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
       }
     };
     checkUserRole();
+  }, []); // 한 번만 실행
 
+  // DOM 감시를 별도 useEffect로 분리
+  useEffect(() => {
     // DOM 감시 함수
     const checkUndefinedAttributes = () => {
       const allElements = document.querySelectorAll('*');
       let foundUndefined = false;
-      
+
       allElements.forEach(element => {
         // href 속성 확인
         if (element.href && element.href.includes('undefined')) {
           console.error('🚨 UNDEFINED HREF 발견:', element);
-          console.log('Element:', element);
-          console.log('href:', element.href);
-          console.log('outerHTML:', element.outerHTML);
           foundUndefined = true;
-          
-          // undefined href 제거
           element.removeAttribute('href');
           element.style.pointerEvents = 'none';
           element.style.color = '#ccc';
         }
-        
+
         // src 속성 확인
         if (element.src && element.src.includes('undefined')) {
           console.error('🚨 UNDEFINED SRC 발견:', element);
-          console.log('Element:', element);
-          console.log('src:', element.src);
           foundUndefined = true;
-          
-          // undefined src를 기본 이미지로 변경
           element.src = '/images/blank_img.png';
         }
-        
+
         // action 속성 확인
         if (element.action && element.action.includes('undefined')) {
           console.error('🚨 UNDEFINED ACTION 발견:', element);
-          console.log('Element:', element);
-          console.log('action:', element.action);
           foundUndefined = true;
-          
-          // undefined action 제거
           element.removeAttribute('action');
         }
       });
-      
+
       if (foundUndefined) {
         console.log('🔧 UNDEFINED 속성들을 수정했습니다.');
       }
     };
 
     // 초기 검사
-    setTimeout(checkUndefinedAttributes, 500);
-    
-    // 주기적 검사
-    const interval = setInterval(checkUndefinedAttributes, 2000);
+    const timeoutId = setTimeout(checkUndefinedAttributes, 500);
 
+    // 주기적 검사
+    const intervalId = setInterval(checkUndefinedAttributes, 2000);
+
+    // cleanup
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, []); // 한 번만 설정
+
+  // API 호출을 별도 useEffect로 분리 - fetchPostDetail 의존성 제거
+  useEffect(() => {
     // 게시글 ID가 유효할 때만 API를 호출합니다.
     if (id && id !== "undefined" && id !== undefined && id !== null && typeof id === 'string') {
       fetchPostDetail();
@@ -196,12 +202,7 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
         setLoading(false);
       }
     }
-
-    // cleanup
-    return () => {
-      clearInterval(interval);
-    };
-  }, [id, fetchPostDetail]);
+  }, [id, normalizedApiEndpoint]); // fetchPostDetail 제거, 핵심 의존성만 유지
 
   const handleGoBack = () => {
     navigate(-1); // 이전 페이지로 이동
@@ -216,7 +217,7 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
 
     // API 엔드포인트에 따라 수정 페이지 경로 결정
     let editPath = "";
-    
+
     if (normalizedApiEndpoint.includes("/skill")) {
       editPath = `/skillWrite/edit/${id}`;
     } else if (normalizedApiEndpoint.includes("/news")) {
@@ -253,8 +254,8 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
       // API 엔드포인트 경로 처리
       // '/board' -> '' (비움), '/news' -> '/news' 유지
       const deleteEndpoint = normalizedApiEndpoint.includes("/board")
-        ? normalizedApiEndpoint.replace("/board", "")
-        : normalizedApiEndpoint;
+          ? normalizedApiEndpoint.replace("/board", "")
+          : normalizedApiEndpoint;
 
       // 빈 문자열 체크하여 기본값 설정
       const finalEndpoint = deleteEndpoint || "";
@@ -268,13 +269,13 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
         navigate(-1);
       } else {
         throw new Error(
-          `삭제 요청이 실패했습니다. 상태 코드: ${response.status}`
+            `삭제 요청이 실패했습니다. 상태 코드: ${response.status}`
         );
       }
     } catch (err) {
       console.error("게시물 삭제 중 오류 발생:", err);
       alert(
-        "게시물 삭제 중 오류가 발생했습니다: " +
+          "게시물 삭제 중 오류가 발생했습니다: " +
           (err.message || "알 수 없는 오류")
       );
     }
@@ -288,107 +289,105 @@ function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
   // 오류가 발생한 경우
   if (error) {
     return (
-      <div className="error-container">
-        <p className="error-message">{error}</p>
-        <button className="back-button" onClick={handleGoBack}>
-          목록으로 돌아가기
-        </button>
-      </div>
+        <div className="error-container">
+          <p className="error-message">{error}</p>
+          <button className="back-button" onClick={handleGoBack}>
+            목록으로 돌아가기
+          </button>
+        </div>
     );
   }
 
   // 게시글이 없는 경우
   if (!post) {
     return (
-      <div className="error-container">
-        <p className="error-message">게시글을 찾을 수 없습니다.</p>
-        <button className="back-button" onClick={handleGoBack}>
-          목록으로 돌아가기
-        </button>
-      </div>
+        <div className="error-container">
+          <p className="error-message">게시글을 찾을 수 없습니다.</p>
+          <button className="back-button" onClick={handleGoBack}>
+            목록으로 돌아가기
+          </button>
+        </div>
     );
   }
 
   return (
-    <div className="board-detail-container">
-      <div className="inner">
-        <div className="detail_header">
-          <button className="back-button" onClick={handleGoBack}>
-            &larr;
-          </button>
-          {isAdmin && (
-            <div className="admin-buttons">
-              <button className="edit-button" onClick={handleEdit}>
-                수정
-              </button>
-              <button className="delete-button" onClick={handleDelete}>
-                삭제
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="detail_content">
-          <h1 className="title">{post.title || "제목 없음"}</h1>
-          <div className="meta_data">
-            {post.region && (
-              <span className="post-detail-region">{post.region}</span>
+      <div className="board-detail-container">
+        <div className="inner">
+          <div className="detail_header">
+            <button className="back-button" onClick={handleGoBack}>
+              &larr;
+            </button>
+            {isAdmin && (
+                <div className="admin-buttons">
+                  <button className="edit-button" onClick={handleEdit}>
+                    수정
+                  </button>
+                  <button className="delete-button" onClick={handleDelete}>
+                    삭제
+                  </button>
+                </div>
             )}
-            <span className="post-detail-author">
+          </div>
+
+          <div className="detail_content">
+            <h1 className="title">{post.title || "제목 없음"}</h1>
+            <div className="meta_data">
+              {post.region && (
+                  <span className="post-detail-region">{post.region}</span>
+              )}
+              <span className="post-detail-author">
               {post.name || "작성자 없음"}
             </span>
-            <span className="post-detail-date">
+              <span className="post-detail-date">
               {post.createdAt
-                ? new Date(post.createdAt).toLocaleDateString()
-                : "날짜 정보 없음"}
+                  ? new Date(post.createdAt).toLocaleDateString()
+                  : "날짜 정보 없음"}
             </span>
-          </div>
-          <div className="post-detail-content">
-            {Array.isArray(post.images) && post.images.length > 0 && (
-              <div className="post_detail_images">
-                {post.images.map((image, index) => (
-                  <div key={index} className="post_image">
-                    <img
-                      src={normalizeImageUrl(image)}
-                      alt={`${post.title || "게시글"} 이미지 ${index + 1}`}
-                      className="post-detail-image"
-                      onError={(e) => {
-                        e.target.src = "/images/blank_img.png";
-                        e.target.onerror = null; // 무한 루프 방지
-                      }}
-                    />
+            </div>
+            <div className="post-detail-content">
+              {Array.isArray(post.images) && post.images.length > 0 && (
+                  <div className="post_detail_images">
+                    {post.images.map((image, index) => (
+                        <div key={index} className="post_image">
+                          <img
+                              src={normalizeImageUrl(image)}
+                              alt={`${post.title || "게시글"} 이미지 ${index + 1}`}
+                              className="post-detail-image"
+                              onError={(e) => {
+                                e.target.src = "/images/blank_img.png";
+                                e.target.onerror = null; // 무한 루프 방지
+                              }}
+                          />
+                        </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            
-            {post.content && (
-              <div className="post-detail-text">
-                {post.content.split("\n").map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            )}
+              )}
 
-            {/* 제휴업체 URL이 있는 경우 링크 표시 */}
-            {post.url && post.url.trim() && (
-              <div className="post-external-link">
-                <a 
-                  href={post.url.startsWith('http') ? post.url : `https://${post.url}`}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="external-link-button"
-                >
-                  공식 웹사이트 방문하기
-                </a>
-              </div>
-            )}
+              {post.content && (
+                  <div className="post-detail-text">
+                    {post.content.split("\n").map((paragraph, index) => (
+                        <p key={index}>{paragraph}</p>
+                    ))}
+                  </div>
+              )}
 
-            
+              {/* 제휴업체 URL이 있는 경우 링크 표시 */}
+              {post.url && post.url.trim() && (
+                  <div className="post-external-link">
+                    <a
+                        href={post.url.startsWith('http') ? post.url : `https://${post.url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="external-link-button"
+                    >
+                      공식 웹사이트 방문하기
+                    </a>
+                  </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
