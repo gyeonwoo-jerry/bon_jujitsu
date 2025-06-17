@@ -411,8 +411,8 @@ const StoreItemList = () => {
                       item?.images &&
                       Array.isArray(item.images) &&
                       item.images.length > 0
-                        ? item.images[0]
-                        : "/images/blank_img.png"
+                        ? item.images[0].url
+                        : "/images/default-wt.png"
                     }
                     alt={item?.name || "상품"}
                     className="item-image"

@@ -148,10 +148,8 @@ function BranchesDetail() {
               <div className="branchDetail_content_title">
                 <div className="stit">{branch.area}</div>
                 <div className="btit">본주짓수아카데미 {branch.region}</div>
-                
-                    <div className="divider"></div>
-                    <p>{branch.content}</p>
-                  
+                <div className="divider"></div>
+                <div className="content">{branch.content}</div>
               </div>
               <div className="branchDetail_content_text">
                 <div className="slide_images_container">
@@ -176,7 +174,7 @@ function BranchesDetail() {
                   ) : (
                     // 이미지가 없는 경우 기본 이미지 표시
                     <div className="slide_image no-image">
-                      <img src="/images/no-image.png" alt="이미지 없음" />
+                      <img src="/images/default-wt.png" alt="이미지 없음" />
                     </div>
                   )}
                 </div>
