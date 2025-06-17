@@ -109,14 +109,14 @@ public class UserImageService {
             Path dirPath = Paths.get(dbDirPath);
 
             // 해당 디렉토리에서 날짜_UUID + 확장자 패턴의 파일 찾기
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath,
-                    "*_*" + extension)) {
-                for (Path entry : stream) {
-                    Files.deleteIfExists(entry);
-                    break; // 첫 번째 매칭되는 파일만 삭제
-                }
-            }
-        } catch (IOException e) {
+//            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath,
+//                    "*_*" + extension)) {
+//                for (Path entry : stream) {
+//                    Files.deleteIfExists(entry);
+//                    break; // 첫 번째 매칭되는 파일만 삭제
+//                }
+//            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
