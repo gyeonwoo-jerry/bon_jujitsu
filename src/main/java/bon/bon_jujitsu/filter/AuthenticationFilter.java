@@ -43,6 +43,7 @@ public class AuthenticationFilter implements Filter {
     if (
         requestUri.contains("/api/users/signup") ||
             requestUri.contains("/api/users/login") ||
+            requestUri.contains("/api/users/refresh") ||
             requestUri.contains("/api/users/check-member-id") ||
             requestUri.matches("/api/admin/\\d+") ||
             requestUri.contains("/v3/api-docs") ||
