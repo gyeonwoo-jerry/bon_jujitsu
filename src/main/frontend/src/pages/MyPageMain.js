@@ -101,13 +101,13 @@ const MyPageMain = () => {
     },
     {
       title: "회원 정보 관리",
-      path: "/mypage/profile",
+      path: "/mypage/profile/edit",
       roles: ["USER", "COACH"],
       icon: "👤",
       description: "개인정보와 계정 설정을 변경하세요"
     },
     {
-      title: "리뷰/후기 관리",
+      title: "리뷰 작성/관리",
       path: "/mypage/reviews",
       roles: ["USER", "COACH"],
       icon: "⭐",

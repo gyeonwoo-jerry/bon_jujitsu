@@ -26,7 +26,7 @@ const MyPageHeader = () => {
   const allMyPageLinks = [
     { title: "주문/배송 내역", path: "/mypage/orders", roles: ["USER", "COACH"] },
     { title: "회원 정보 관리", path: "/mypage/profile/edit", roles: ["USER", "COACH"] }, // 경로 수정
-    { title: "리뷰/후기 관리", path: "/mypage/reviews", roles: ["USER", "COACH"] },
+    { title: "리뷰 작성/관리", path: "/mypage/reviews", roles: ["USER", "COACH"] },
     { title: "1:1 문의", path: "/mypage/inquiries", roles: ["USER", "COACH"] },
     { title: "장바구니", path: "/mypage/cart", roles: ["USER", "COACH"] },
   ];
@@ -73,7 +73,7 @@ const MyPageHeader = () => {
                         <span className="nav-icon">
                           {link.title === "주문/배송 내역" && "📦"}
                           {link.title === "회원 정보 관리" && "👤"}
-                          {link.title === "리뷰/후기 관리" && "⭐"}
+                          {link.title === "리뷰 작성/관리" && "⭐"}
                           {link.title === "1:1 문의" && "💬"}
                           {link.title === "장바구니" && "🛒"}
                         </span>
