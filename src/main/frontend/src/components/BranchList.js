@@ -203,7 +203,7 @@ function BranchList() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <img src="/images/icon-cafe.png" alt="카페" />
+                          <img src="/images/icon-you-bk.png" alt="카페" />
                         </a>
                       </li>
                     </ul>
