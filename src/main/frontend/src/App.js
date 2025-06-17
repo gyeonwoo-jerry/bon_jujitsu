@@ -47,6 +47,7 @@ import './styles/main.css';
 import './styles/response.css';
 import MyPageCart from "./pages/MyPageCart";
 import MyPageOrders from "./pages/MyPageOrders";
+import MyPageReview from "./pages/MyPageReview";
 
 function App() {
   return (
@@ -108,6 +109,7 @@ function App() {
             <Route path="/mypage/profile/edit" element={<ProfileEditPage />} />
             <Route path="/mypage/cart" element={<MyPageCart />} />
             <Route path="/mypage/orders" element={<MyPageOrders />} />
+            <Route path="/mypage/reviews" element={<MyPageReview />} />
           </Routes>
           <Footer />
         </div>
