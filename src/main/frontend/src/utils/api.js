@@ -166,7 +166,8 @@ API.interceptors.response.use(
           localStorage.removeItem("userInfo");
 
           alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
-          window.location.href = "/login";
+          localStorage.setItem("showLoginModal", "true");
+          window.location.href = "/"; // 홈으로 이동
 
           return Promise.reject(refreshError);
         } finally {

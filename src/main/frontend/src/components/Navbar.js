@@ -54,6 +54,13 @@ function Navbar() {
 
     checkLoginStatus();
 
+    // 세션 만료로 인한 자동 로그인 모달 표시 확인
+    const showModalFlag = localStorage.getItem("showLoginModal");
+    if (showModalFlag === "true") {
+      setShowLoginForm(true);
+      localStorage.removeItem("showLoginModal"); // 플래그 제거
+    }
+
     // 로그인 상태 변경 시 확인하기 위한 이벤트 리스너
     window.addEventListener("storage", checkLoginStatus);
 
