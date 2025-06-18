@@ -142,7 +142,7 @@ public class User extends Timestamped {
     });
 
     request.level().ifPresent(value -> {
-      if (value > 0) {
+      if (value >= 0) {
         this.level = value;
       }
     });
