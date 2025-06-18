@@ -42,6 +42,23 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+// 로그아웃 처리 함수
+const handleLogout = (message = "로그인 세션이 만료되었습니다. 다시 로그인해주세요.") => {
+  // 토큰 및 사용자 정보 삭제
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("userInfo");
+
+  // 로그인 모달 표시 플래그 설정
+  localStorage.setItem("showLoginModal", "true");
+
+  // 알럿 표시
+  alert(message);
+
+  // 홈으로 이동
+  window.location.href = "/";
+};
+
 // 요청 인터셉터 설정
 API.interceptors.request.use(
     (config) => {
@@ -143,13 +160,8 @@ API.interceptors.response.use(
           console.error("토큰 갱신 실패:", refreshError);
           processQueue(refreshError, null);
 
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("userInfo");
-          localStorage.setItem("showLoginModal", "true");
-
-          alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
-          window.location.href = "/";
+          // 토큰 갱신 실패 시 로그아웃 처리
+          handleLogout("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
 
           return Promise.reject(refreshError);
         } finally {

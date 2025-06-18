@@ -57,9 +57,11 @@ import MyPageReview from "./pages/MyPageReview";
 // 스타일 import
 import './styles/main.css';
 import './styles/response.css';
+import ProtectedRoute from "./components/ProtectedRoute";
+import useSessionCheck from "./hooks/useSessionCheck";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
-function AppContent() {
+function AppRoutes() {
   const loadingManager = useLoading();
 
   // API에 로딩 매니저 연결
@@ -67,8 +69,9 @@ function AppContent() {
     setLoadingManager(loadingManager);
   }, [loadingManager]);
 
+  useSessionCheck();
+
   return (
-      <BrowserRouter>
         <div className="App">
           <Navbar />
           <Routes>
@@ -108,7 +111,7 @@ function AppContent() {
             <Route path="/join" element={<Join />} />
 
             {/* 관리자 페이지 라우트 */}
-            <Route path="/admin" element={<AdminMain />} />
+            <Route path="/admin" element={ <ProtectedRoute><AdminMain /></ProtectedRoute>} />
             <Route path="/admin/members" element={<MemberManagement />} />
             <Route path="/admin/orders" element={<OrderManagement />} />
             <Route path="/admin/products" element={<ProductManagement />} />
@@ -122,7 +125,7 @@ function AppContent() {
             <Route path="/admin/posts/edit/:category/:id" element={<PostEdit />} />
 
             {/* 마이페이지 라우트 */}
-            <Route path="/mypage" element={<MyPageMain />} />
+            <Route path="/mypage" element={<ProtectedRoute><MyPageMain /></ProtectedRoute>} />
             <Route path="/mypage/profile/edit" element={<ProfileEditPage />} />
             <Route path="/mypage/cart" element={<MyPageCart />} />
             <Route path="/mypage/orders" element={<MyPageOrders />} />
@@ -133,6 +136,14 @@ function AppContent() {
           {/* 로딩 인디케이터 - 앱 최상단에 배치 */}
           <LoadingIndicator />
         </div>
+  );
+}
+
+// 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
+function AppContent() {
+  return (
+      <BrowserRouter>
+        <AppRoutes />
       </BrowserRouter>
   );
 }
