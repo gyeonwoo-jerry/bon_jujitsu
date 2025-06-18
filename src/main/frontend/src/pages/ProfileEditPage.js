@@ -342,19 +342,28 @@ const ProfileEditPage = () => {
   };
 
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    setSelectedImages(files);
+    const newFiles = Array.from(e.target.files);
 
-    // 미리보기 생성
-    const previews = files.map(file => ({
+    if (newFiles.length === 0) return;
+
+    // 기존 selectedImages와 새로운 파일들 합치기
+    const updatedSelectedImages = [...selectedImages, ...newFiles];
+    setSelectedImages(updatedSelectedImages);
+
+    // 새로운 미리보기 생성
+    const newPreviews = newFiles.map(file => ({
       url: URL.createObjectURL(file),
       isExisting: false,
-      file: file
+      file: file,
+      name: file.name // 파일명 추가
     }));
 
-    // 기존 이미지와 새 이미지 미리보기 합치기
-    const existingPreviews = previewImages.filter(img => img.isExisting);
-    setPreviewImages([...existingPreviews, ...previews]);
+    // 기존 미리보기와 새로운 미리보기 합치기
+    const updatedPreviewImages = [...previewImages, ...newPreviews];
+    setPreviewImages(updatedPreviewImages);
+
+    // 파일 input 초기화 (같은 파일을 다시 선택할 수 있도록)
+    e.target.value = '';
   };
 
   const removeImage = (index) => {
@@ -373,9 +382,59 @@ const ProfileEditPage = () => {
       // 새로 추가된 이미지인 경우 selectedImages에서 제거
       const newImageIndex = previewImages.slice(0, index).filter(img => !img.isExisting).length;
       setSelectedImages(prev => prev.filter((_, i) => i !== newImageIndex));
+
+      // URL 해제 (메모리 누수 방지)
+      URL.revokeObjectURL(imageToRemove.url);
     }
 
+    // previewImages에서 제거
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 모든 이미지 삭제 핸들러 추가
+  const removeAllImages = () => {
+    // 새로 추가된 이미지들의 URL 해제
+    previewImages.forEach(preview => {
+      if (!preview.isExisting) {
+        URL.revokeObjectURL(preview.url);
+      }
+    });
+
+    // 모든 상태 초기화
+    setSelectedImages([]);
+    setKeepImageIds([]);
+    setPreviewImages([]);
+
+    // 파일 input도 초기화
+    const fileInput = document.getElementById('imageUpload');
+    if (fileInput) fileInput.value = '';
+  };
+
+// 기존 이미지만 삭제하는 핸들러 추가
+  const removeAllExistingImages = () => {
+    // 기존 이미지들만 필터링해서 제거
+    const newPreviewImages = previewImages.filter(img => !img.isExisting);
+    setPreviewImages(newPreviewImages);
+    setKeepImageIds([]);
+  };
+
+/// 새로 추가된 이미지만 삭제하는 핸들러 추가
+  const removeAllNewImages = () => {
+    // 새로 추가된 이미지들의 URL 해제
+    previewImages.forEach(preview => {
+      if (!preview.isExisting) {
+        URL.revokeObjectURL(preview.url);
+      }
+    });
+
+    // 기존 이미지들만 남기기
+    const existingPreviewImages = previewImages.filter(img => img.isExisting);
+    setPreviewImages(existingPreviewImages);
+    setSelectedImages([]);
+
+    // 파일 input 초기화
+    const fileInput = document.getElementById('imageUpload');
+    if (fileInput) fileInput.value = '';
   };
 
   const validateForm = () => {
@@ -425,6 +484,8 @@ const ProfileEditPage = () => {
   };
 
   // ProfileEditPage.js의 handleSubmit 함수를 다음과 같이 수정하세요:
+
+  // ProfileEditPage.js의 handleSubmit 함수 수정 부분
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -537,12 +598,13 @@ const ProfileEditPage = () => {
       const isSuccess = response.data?.success !== false;
 
       if (isSuccess) {
-        showAlert('success', '회원정보 수정이 완료되었습니다!');
+        // 🎯 즉시 알럿 표시하고 확인을 누르면 마이페이지로 이동
+        const userConfirmed = window.confirm('회원정보 수정이 완료되었습니다!\n\n확인을 누르면 마이페이지로 돌아갑니다.');
 
-        // 1.5초 후 마이페이지로 이동
-        setTimeout(() => {
+        if (userConfirmed) {
           window.location.href = '/mypage';
-        }, 1500);
+        }
+        // 사용자가 취소를 눌렀을 경우 현재 페이지에 그대로 남아있음
 
       } else {
         throw new Error(response.data?.message || '프로필 수정 실패');
@@ -563,7 +625,9 @@ const ProfileEditPage = () => {
         errorMessage = error.response.data.message;
       }
 
-      showAlert('error', errorMessage);
+      // 오류 시에도 즉시 알럿 표시
+      window.alert(errorMessage);
+
     } finally {
       setSaving(false);
     }
@@ -745,7 +809,8 @@ const ProfileEditPage = () => {
                       onAddressSelect={handleAddressSelect}
                       selectedAddress={formData.address}
                   />
-                  <p className="input-help-text">* 주소를 변경하시려면 주소 검색 버튼을 클릭하세요.</p>
+                  <p className="input-help-text">* 주소를 변경하시려면 주소 검색 버튼을
+                    클릭하세요.</p>
                 </div>
               </div>
 
@@ -908,7 +973,8 @@ const ProfileEditPage = () => {
                     </label>
                     {regionsLoading ? (
                         <div className="loading-container">
-                          <span className="loading-text">세부 지역 목록을 불러오는 중...</span>
+                          <span
+                              className="loading-text">세부 지역 목록을 불러오는 중...</span>
                         </div>
                     ) : regions.length === 0 ? (
                         <div className="empty-state">
@@ -922,7 +988,8 @@ const ProfileEditPage = () => {
                         >
                           <option value="">세부 지역을 선택하세요</option>
                           {regions.map(region => (
-                              <option key={region} value={region}>{region}</option>
+                              <option key={region}
+                                      value={region}>{region}</option>
                           ))}
                         </select>
                     )}
@@ -952,17 +1019,21 @@ const ProfileEditPage = () => {
                               <label key={branch.id} className="branch-card">
                                 <input
                                     type="checkbox"
-                                    checked={formData.branchIds.includes(branch.id)}
-                                    onChange={() => handleBranchToggle(branch.id)}
+                                    checked={formData.branchIds.includes(
+                                        branch.id)}
+                                    onChange={() => handleBranchToggle(
+                                        branch.id)}
                                     className="branch-card-checkbox"
                                 />
                                 <div className="branch-card-content">
                                   <div className="branch-name">
                                     {branch.area} {branch.region}점
                                   </div>
-                                  <div className="branch-address">{branch.address}</div>
+                                  <div
+                                      className="branch-address">{branch.address}</div>
                                   {branch.content && (
-                                      <div className="branch-description">{branch.content}</div>
+                                      <div
+                                          className="branch-description">{branch.content}</div>
                                   )}
                                 </div>
                               </label>
@@ -977,7 +1048,9 @@ const ProfileEditPage = () => {
                             {selectedBranches.length}개 지점 선택됨
                           </p>
                           <div className="summary-list">
-                            {selectedBranches.map(branch => `${branch.area} ${branch.region}점`).join(', ')}
+                            {selectedBranches.map(
+                                branch => `${branch.area} ${branch.region}점`).join(
+                                ', ')}
                           </div>
                         </div>
                     )}
@@ -987,19 +1060,23 @@ const ProfileEditPage = () => {
               {/* 현재 선택된 모든 지부 표시 - 간단 수정 버전 */}
               {formData.branchIds.length > 0 && (
                   <div className="form-section">
-                    <label className="step-label">선택된 지부 목록 ({formData.branchIds.length}개)</label>
+                    <label className="step-label">선택된 지부 목록
+                      ({formData.branchIds.length}개)</label>
                     <div className="selected-all-branches">
                       {formData.branchIds.map(branchId => {
                         const branch = branches.find(b => b.id === branchId);
-                        const currentBranch = currentBranches.find(cb => cb.branchId === branchId);
+                        const currentBranch = currentBranches.find(
+                            cb => cb.branchId === branchId);
 
                         const displayName = branch
                             ? `${branch.area} ${branch.region}점`
-                            : (currentBranch ? currentBranch.region : `지부 ID: ${branchId}`);
+                            : (currentBranch ? currentBranch.region
+                                : `지부 ID: ${branchId}`);
 
                         return (
                             <div key={branchId} className="selected-branch-tag">
-                              <span className="branch-tag-name">{displayName}</span>
+                              <span
+                                  className="branch-tag-name">{displayName}</span>
                               <button
                                   type="button"
                                   onClick={() => handleBranchRemove(branchId)}
@@ -1033,8 +1110,11 @@ const ProfileEditPage = () => {
                     }}>
                       <strong>🔍 현재 상태:</strong><br/>
                       - 선택된 지부 IDs: {JSON.stringify(formData.branchIds)}<br/>
-                      - 원래 지부 IDs: {JSON.stringify(currentBranches.map(cb => cb.branchId))}<br/>
-                      - 변경 여부: {JSON.stringify(formData.branchIds) !== JSON.stringify(currentBranches.map(cb => cb.branchId)) ? '✅ 변경됨' : '❌ 변경 안됨'}
+                      - 원래 지부 IDs: {JSON.stringify(
+                        currentBranches.map(cb => cb.branchId))}<br/>
+                      - 변경 여부: {JSON.stringify(formData.branchIds)
+                    !== JSON.stringify(currentBranches.map(cb => cb.branchId))
+                        ? '✅ 변경됨' : '❌ 변경 안됨'}
                     </div>
                   </div>
               )}
@@ -1130,16 +1210,29 @@ const ProfileEditPage = () => {
                     accept="image/*"
                     onChange={handleImageChange}
                     className="image-input"
+                    style={{display: 'none'}}
                 />
                 <label htmlFor="imageUpload" className="image-upload-button">
-                  📷 이미지 선택
+                  📷 이미지 추가하기
                 </label>
 
+                {/* 이미지 요약 정보 */}
+                {previewImages.length > 0 && (
+                    <div className="image-summary">
+          <span className="summary-text">
+            총 {previewImages.length}개 이미지
+            (기존: {previewImages.filter(img => img.isExisting).length}개,
+             새로 추가: {previewImages.filter(img => !img.isExisting).length}개)
+          </span>
+                    </div>
+                )}
+
+                {/* 이미지 미리보기 그리드 */}
                 {previewImages.length > 0 && (
                     <div className="image-preview-grid">
                       {previewImages.map((image, index) => (
                           <div key={index} className="image-preview-item">
-                            <img src={image.url} alt={`미리보기 ${index + 1}`} />
+                            <img src={image.url} alt={`미리보기 ${index + 1}`}/>
                             <button
                                 type="button"
                                 onClick={() => removeImage(index)}
@@ -1151,8 +1244,26 @@ const ProfileEditPage = () => {
                             {image.isExisting && (
                                 <span className="existing-image-badge">기존</span>
                             )}
+                            {!image.isExisting && (
+                                <span className="new-image-badge">새 이미지</span>
+                            )}
+                            {image.name && (
+                                <div className="image-name-overlay"
+                                     title={image.name}>
+                                  {image.name}
+                                </div>
+                            )}
                           </div>
                       ))}
+                    </div>
+                )}
+
+                {/* 추가 업로드 안내 */}
+                {previewImages.length > 0 && (
+                    <div className="upload-help">
+                      <p className="help-text">
+                        💡 더 많은 이미지를 추가하려면 위의 "이미지 추가하기" 버튼을 다시 클릭하세요.
+                      </p>
                     </div>
                 )}
               </div>

@@ -40,6 +40,7 @@ function JoinForm() {
 
   // 기타 상태
   const [selectedImages, setSelectedImages] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -245,9 +246,65 @@ function JoinForm() {
 
   // 이미지 파일 선택 핸들러
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    setSelectedImages(files);
+    const newFiles = Array.from(e.target.files);
+
+    if (newFiles.length === 0) return;
+
+    // 기존 이미지와 새로운 이미지 합치기
+    const updatedSelectedImages = [...selectedImages, ...newFiles];
+    setSelectedImages(updatedSelectedImages);
+
+    // 새로운 미리보기 생성
+    const newPreviews = newFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      file: file,
+      name: file.name
+    }));
+
+    // 기존 미리보기와 새로운 미리보기 합치기
+    const updatedPreviewImages = [...previewImages, ...newPreviews];
+    setPreviewImages(updatedPreviewImages);
+
+    // 파일 input 초기화 (같은 파일을 다시 선택할 수 있도록)
+    e.target.value = '';
   };
+
+  // 이미지 제거 핸들러 추가
+  const removeImage = (index) => {
+    // 기존 URL 해제 (메모리 누수 방지)
+    URL.revokeObjectURL(previewImages[index].url);
+
+    // 배열에서 제거
+    const newSelectedImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviewImages = previewImages.filter((_, i) => i !== index);
+
+    setSelectedImages(newSelectedImages);
+    setPreviewImages(newPreviewImages);
+  };
+
+  // 모든 이미지 삭제 핸들러 추가
+  const removeAllImages = () => {
+    // 모든 URL 해제
+    previewImages.forEach(preview => {
+      URL.revokeObjectURL(preview.url);
+    });
+
+    setSelectedImages([]);
+    setPreviewImages([]);
+
+    // 파일 input도 초기화
+    const fileInput = document.getElementById('images');
+    if (fileInput) fileInput.value = '';
+  };
+
+  useEffect(() => {
+    return () => {
+      // 컴포넌트가 언마운트될 때 모든 URL 해제
+      previewImages.forEach(preview => {
+        URL.revokeObjectURL(preview.url);
+      });
+    };
+  }, [previewImages]);
 
   // 유효성 검사
   const validateForm = () => {
@@ -382,9 +439,11 @@ function JoinForm() {
                     name="memberId"
                     value={formData.memberId}
                     onChange={handleChange}
-                    className={`form-input member-id-input ${errors.memberId ? 'error' : ''} ${
+                    className={`form-input member-id-input ${errors.memberId
+                        ? 'error' : ''} ${
                         memberIdCheckStatus === 'available' ? 'available' :
-                            memberIdCheckStatus === 'unavailable' ? 'unavailable' : ''
+                            memberIdCheckStatus === 'unavailable'
+                                ? 'unavailable' : ''
                     }`}
                     placeholder="4자리 이상 입력해주세요"
                     required
@@ -410,7 +469,8 @@ function JoinForm() {
                   <p className="info-message">중복검사 진행중...</p>
               )}
 
-              {errors.memberId && <p className="error-message">{errors.memberId}</p>}
+              {errors.memberId && <p
+                  className="error-message">{errors.memberId}</p>}
             </div>
           </div>
         </div>
@@ -431,7 +491,8 @@ function JoinForm() {
                   className={`form-input ${errors.password ? 'error' : ''}`}
                   required
               />
-              {errors.password && <p className="error-message">{errors.password}</p>}
+              {errors.password && <p
+                  className="error-message">{errors.password}</p>}
             </div>
 
             <div>
@@ -444,10 +505,12 @@ function JoinForm() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                  className={`form-input ${errors.confirmPassword ? 'error'
+                      : ''}`}
                   required
               />
-              {errors.confirmPassword && <p className="error-message">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && <p
+                  className="error-message">{errors.confirmPassword}</p>}
             </div>
           </div>
         </div>
@@ -485,7 +548,8 @@ function JoinForm() {
                   className={`form-input ${errors.phoneNum ? 'error' : ''}`}
                   required
               />
-              {errors.phoneNum && <p className="error-message">{errors.phoneNum}</p>}
+              {errors.phoneNum && <p
+                  className="error-message">{errors.phoneNum}</p>}
             </div>
           </div>
         </div>
@@ -500,7 +564,8 @@ function JoinForm() {
                 onAddressSelect={handleAddressSelect}
                 selectedAddress={formData.address}
             />
-            {errors.address && <p className="error-message">{errors.address}</p>}
+            {errors.address && <p
+                className="error-message">{errors.address}</p>}
             <p className="input-help-text">* 주소를 등록하시려면 주소 검색 버튼을 클릭하세요.</p>
           </div>
         </div>
@@ -539,7 +604,8 @@ function JoinForm() {
                   className={`form-input ${errors.birthday ? 'error' : ''}`}
                   required
               />
-              {errors.birthday && <p className="error-message">{errors.birthday}</p>}
+              {errors.birthday && <p
+                  className="error-message">{errors.birthday}</p>}
             </div>
 
             <div>
@@ -558,7 +624,8 @@ function JoinForm() {
                 <option value="MALE">남성</option>
                 <option value="FEMALE">여성</option>
               </select>
-              {errors.gender && <p className="error-message">{errors.gender}</p>}
+              {errors.gender && <p
+                  className="error-message">{errors.gender}</p>}
             </div>
 
             <div>
@@ -660,7 +727,8 @@ function JoinForm() {
                     </div>
                 ) : regions.length === 0 ? (
                     <div className="empty-state">
-                      <span className="empty-state-text">해당 광역 지역에 세부 지역이 없습니다.</span>
+                      <span
+                          className="empty-state-text">해당 광역 지역에 세부 지역이 없습니다.</span>
                     </div>
                 ) : (
                     <select
@@ -674,7 +742,8 @@ function JoinForm() {
                       ))}
                     </select>
                 )}
-                {errors.region && <p className="error-message">{errors.region}</p>}
+                {errors.region && <p
+                    className="error-message">{errors.region}</p>}
               </div>
           )}
 
@@ -682,13 +751,15 @@ function JoinForm() {
           {selectedRegion && (
               <div className="form-section">
                 <label className="step-label">
-                  3단계: {selectedArea} {selectedRegion} 지점 선택 <span className="required-asterisk">*</span>
+                  3단계: {selectedArea} {selectedRegion} 지점 선택 <span
+                    className="required-asterisk">*</span>
                 </label>
                 {branchesLoading ? (
                     <div className="loading-spinner-container">
                       <div className="loading-spinner-content">
                         <div className="loading-spinner"></div>
-                        <span className="loading-spinner-text">지점 목록을 불러오는 중...</span>
+                        <span
+                            className="loading-spinner-text">지점 목록을 불러오는 중...</span>
                       </div>
                     </div>
                 ) : branches.length === 0 ? (
@@ -709,9 +780,11 @@ function JoinForm() {
                               <div className="branch-name">
                                 {branch.area} {branch.region}점
                               </div>
-                              <div className="branch-address">{branch.address}</div>
+                              <div
+                                  className="branch-address">{branch.address}</div>
                               {branch.content && (
-                                  <div className="branch-description">{branch.content}</div>
+                                  <div
+                                      className="branch-description">{branch.content}</div>
                               )}
                             </div>
                           </label>
@@ -726,19 +799,21 @@ function JoinForm() {
                         {selectedBranches.length}개 지점 선택됨
                       </p>
                       <div className="summary-list">
-                        {selectedBranches.map(branch => `${branch.area} ${branch.region}점`).join(', ')}
+                        {selectedBranches.map(
+                            branch => `${branch.area} ${branch.region}점`).join(
+                            ', ')}
                       </div>
                     </div>
                 )}
 
-                {errors.branches && <p className="error-message">{errors.branches}</p>}
+                {errors.branches && <p
+                    className="error-message">{errors.branches}</p>}
               </div>
           )}
 
-          {errors.branchIds && <p className="error-message">{errors.branchIds}</p>}
+          {errors.branchIds && <p
+              className="error-message">{errors.branchIds}</p>}
         </div>
-
-        // JoinForm.js에서 SNS 섹션 부분을 다음과 같이 교체하세요:
 
         {/* SNS 정보 - 개선된 버전 */}
         <div className="form-section">
@@ -823,24 +898,81 @@ function JoinForm() {
           </div>
         </div>
 
-        {/* 이미지 업로드 */}
         <div className="form-section">
           <div>
             <label htmlFor="images" className="form-label">
               프로필 이미지 (선택사항)
             </label>
-            <input
-                type="file"
-                id="images"
-                multiple
-                accept="image/*"
-                onChange={handleImageChange}
-                className="file-input"
-            />
-            {selectedImages.length > 0 && (
-                <p className="file-count">
-                  {selectedImages.length}개 파일 선택됨
-                </p>
+
+            <div className="image-upload-container">
+              <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="file-input"
+              />
+              <label htmlFor="images" className="file-input-button">
+                📷 이미지 추가하기
+              </label>
+
+              {/* 현재 선택된 파일 개수와 전체 삭제 버튼 */}
+              {selectedImages.length > 0 && (
+                  <div className="file-summary">
+            <span className="file-count">
+              총 {selectedImages.length}개 파일 선택됨
+            </span>
+                    <button
+                        type="button"
+                        onClick={removeAllImages}
+                        className="remove-all-button"
+                        title="모든 이미지 삭제"
+                    >
+                      전체 삭제
+                    </button>
+                  </div>
+              )}
+            </div>
+
+            {/* 이미지 미리보기 */}
+            {previewImages.length > 0 && (
+                <div className="image-preview-section">
+                  <h4 className="preview-title">
+                    선택된 이미지 ({previewImages.length}개)
+                  </h4>
+                  <div className="image-preview-grid">
+                    {previewImages.map((image, index) => (
+                        <div key={index} className="image-preview-item">
+                          <img
+                              src={image.url}
+                              alt={`미리보기 ${index + 1}`}
+                              className="preview-image"
+                          />
+                          <div className="image-info">
+                    <span className="image-name" title={image.name}>
+                      {image.name}
+                    </span>
+                            <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="remove-image-button"
+                                title="이미지 삭제"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+
+                  {/* 추가 업로드 안내 */}
+                  <div className="upload-help">
+                    <p className="help-text">
+                      💡 더 많은 이미지를 추가하려면 위의 "이미지 추가하기" 버튼을 다시 클릭하세요.
+                    </p>
+                  </div>
+                </div>
             )}
           </div>
         </div>
