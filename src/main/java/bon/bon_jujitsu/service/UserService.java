@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.config.PasswordEncoder;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.BranchUser;
+import bon.bon_jujitsu.domain.Stripe;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.BranchRoleDto;
@@ -241,14 +242,14 @@ public class UserService {
   @Transactional(readOnly = true)
   public PageResponse<UserResponse> getUsers(int page, int size, Long userId, GetAllUserRequest request) {
     User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
     // ADMIN or OWNER 권한 체크
     boolean isAdmin = user.isAdmin();
     List<Long> ownerBranchIds = user.getBranchUsers().stream()
-            .filter(bu -> bu.getUserRole() == UserRole.OWNER)
-            .map(bu -> bu.getBranch().getId())
-            .toList();
+        .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+        .map(bu -> bu.getBranch().getId())
+        .toList();
     boolean isOwner = !ownerBranchIds.isEmpty();
 
     // 권한 체크
@@ -262,17 +263,18 @@ public class UserService {
     }
 
     PageRequest pageRequest = PageRequest.of(page - 1, size,
-            Sort.by(Sort.Direction.DESC, "createdAt"));
+        Sort.by(Sort.Direction.DESC, "createdAt"));
 
     String name = (request != null) ? request.name() : null;
     UserRole role = (request != null) ? request.role() : null;
     List<Long> branchIds = (request != null) ? request.branchIds() : null;
+    Stripe stripe = (request != null) ? request.stripe() : null;  // Stripe 필터 추가
 
     // OWNER 권한 검증 - 요청된 branchIds가 자신이 관리하는 지부에 포함되는지 확인
     if (!isAdmin && isOwner && branchIds != null && !branchIds.isEmpty()) {
       List<Long> unauthorizedBranches = branchIds.stream()
-              .filter(branchId -> !ownerBranchIds.contains(branchId))
-              .toList();
+          .filter(branchId -> !ownerBranchIds.contains(branchId))
+          .toList();
 
       if (!unauthorizedBranches.isEmpty()) {
         throw new IllegalArgumentException("해당 지부의 회원을 조회할 권한이 없습니다: " + unauthorizedBranches);
@@ -280,10 +282,10 @@ public class UserService {
     }
 
     // 검색 조건 없는 경우 (전체 조회)
-    if (name == null && role == null && (branchIds == null || branchIds.isEmpty())) {
+    if (name == null && role == null && stripe == null && (branchIds == null || branchIds.isEmpty())) {
       Page<User> userPage = isAdmin
-              ? userRepository.findAllByIsDeletedFalse(pageRequest)
-              : userRepository.findAllByBranchIdInAndIsDeletedFalse(ownerBranchIds, pageRequest);
+          ? userRepository.findAllByIsDeletedFalse(pageRequest)
+          : userRepository.findAllByBranchIdInAndIsDeletedFalse(ownerBranchIds, pageRequest);
 
       return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
     }
@@ -298,7 +300,7 @@ public class UserService {
       finalBranchIds = branchIds;
     }
 
-    Specification<User> spec = UserSpecification.withFilters(name, role, finalBranchIds);
+    Specification<User> spec = UserSpecification.withFilters(name, role, finalBranchIds, stripe);
     Page<User> userPage = userRepository.findAll(spec, pageRequest);
     return PageResponse.fromPage(userPage.map(UserResponse::fromEntity));
   }

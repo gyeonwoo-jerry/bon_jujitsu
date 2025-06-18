@@ -1,5 +1,6 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.domain.Stripe;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.request.UserRoleRequest;
 import bon.bon_jujitsu.dto.common.ApiResponse;
@@ -39,9 +40,10 @@ public class AdminController {
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String name,
       @RequestParam(required = false) UserRole role,
-      @RequestParam(required = false) List<Long> branchIds
+      @RequestParam(required = false) List<Long> branchIds,
+      @RequestParam(required = false) Stripe stripe
   ) {
-    GetAllUserRequest request = new GetAllUserRequest(name, role, branchIds);
+    GetAllUserRequest request = new GetAllUserRequest(name, role, branchIds, stripe);
     PageResponse<UserResponse> response = userService.getUsers(page, size, userId, request);
     return ApiResponse.success("회원 조회 성공", response);
   }
