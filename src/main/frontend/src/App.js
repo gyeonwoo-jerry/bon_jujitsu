@@ -59,6 +59,7 @@ import './styles/main.css';
 import './styles/response.css';
 import ProtectedRoute from "./components/ProtectedRoute";
 import useSessionCheck from "./hooks/useSessionCheck";
+import useAuthGuard from "./hooks/useAuthGuard";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
 function AppRoutes() {
@@ -70,6 +71,7 @@ function AppRoutes() {
   }, [loadingManager]);
 
   useSessionCheck();
+  useAuthGuard();
 
   return (
         <div className="App">
