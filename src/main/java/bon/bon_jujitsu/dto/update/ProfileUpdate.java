@@ -17,7 +17,7 @@ public record ProfileUpdate(
     Optional<String> gender,
     List<Long> branchesToAdd,
     List<Long> branchesToRemove,  // 삭제할 지부들
-    Optional<@Min(1) Integer> level,
+    Optional<@Min(0) Integer> level,
     Optional<Stripe> stripe,
     Optional<String> sns1,
     Optional<String> sns2,

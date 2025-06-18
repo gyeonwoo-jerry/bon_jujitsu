@@ -26,7 +26,7 @@ public record SignupRequest (
         @NotNull(message = "지점을 선택해주세요.")
         @Size(min = 1, message = "최소 하나의 지점을 선택해주세요.")
         List<Long> branchIds,
-        @Min(1)
+        @Min(0)
         int level,
         Stripe stripe,
         String sns1,
