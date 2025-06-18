@@ -16,7 +16,7 @@ function JoinForm() {
     birthday: '',
     gender: '',
     branchIds: [],
-    level: 1, // gral 대신 level 사용, 기본값 1
+    level: 0, // gral 대신 level 사용, 기본값 0
     stripe: 'WHITE', // 기본값 설정
     sns1: '',
     sns2: '',
@@ -130,7 +130,7 @@ function JoinForm() {
       setFormData(prev => ({
         ...prev,
         stripe: value,
-        level: 1 // 레벨 초기화
+        level: 0 // 레벨 초기화
       }));
     } else {
       setFormData(prev => ({
@@ -600,6 +600,7 @@ function JoinForm() {
                   onChange={handleChange}
                   className="form-select"
               >
+                <option value="0">0</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>

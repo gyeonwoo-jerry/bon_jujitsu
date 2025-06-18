@@ -15,37 +15,47 @@ const MemberManagement = () => {
   const [userRole, setUserRole] = useState("");
 
   // OWNER용 지부 관리
-  const [userBranchIds, setUserBranchIds] = useState([]); // OWNER가 관리하는 지부 ID들
-  const [userBranches, setUserBranches] = useState([]); // OWNER가 관리하는 지부 정보들
-  const [selectedOwnerBranch, setSelectedOwnerBranch] = useState(""); // OWNER가 선택한 지부
+  const [userBranchIds, setUserBranchIds] = useState([]);
+  const [userBranches, setUserBranches] = useState([]);
+  const [selectedOwnerBranch, setSelectedOwnerBranch] = useState("");
 
   // ADMIN용 지부 region 목록
   const [regions, setRegions] = useState([]);
-  const [allBranches, setAllBranches] = useState([]); // 모든 지부 정보 저장
+  const [allBranches, setAllBranches] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState("");
   const [regionsLoading, setRegionsLoading] = useState(false);
 
   // OWNER용 활성 탭 상태
   const [activeTab, setActiveTab] = useState("PENDING");
 
-  // 검색 조건 상태
+  // 검색 조건 상태 - Stripe 필터 추가
   const [filters, setFilters] = useState({
     name: "",
     role: "",
+    stripe: ""  // Stripe 필터 추가
   });
+
+  // Stripe 옵션
+  const stripeOptions = [
+    { value: "", label: "전체 띠" },
+    { value: "WHITE", label: "화이트 벨트" },
+    { value: "BLUE", label: "블루 벨트" },
+    { value: "PURPLE", label: "퍼플 벨트" },
+    { value: "BROWN", label: "브라운 벨트" },
+    { value: "BLACK", label: "블랙 벨트" }
+  ];
 
   // 지부 목록을 가져와서 고유한 region 추출 (ADMIN 권한일 때만)
   const fetchRegions = async () => {
     setRegionsLoading(true);
     try {
-      const res = await API.get("/branch/all?page=1&size=1000"); // 모든 브랜치 가져오기
+      const res = await API.get("/branch/all?page=1&size=1000");
       if (res.data?.success) {
         const branches = res.data.content?.list || [];
-        setAllBranches(branches); // 모든 지부 정보 저장
+        setAllBranches(branches);
 
-        // 중복되지 않는 region 값들만 추출
         const uniqueRegions = [...new Set(branches.map(branch => branch.region))];
-        setRegions(uniqueRegions.sort()); // 알파벳 순으로 정렬
+        setRegions(uniqueRegions.sort());
         console.log("고유한 지부 region 목록:", uniqueRegions);
         console.log("모든 지부 정보:", branches);
       } else {
@@ -83,7 +93,6 @@ const MemberManagement = () => {
           setUserRole(role);
 
           if (role === "OWNER") {
-            // OWNER인 경우 지부 정보 처리
             const branchIds = parsedInfo.branchIds || (parsedInfo.branchId ? [parsedInfo.branchId] : []);
             const branches = parsedInfo.branches || [];
 
@@ -92,27 +101,22 @@ const MemberManagement = () => {
 
             console.log("OWNER 지부 정보:", { branchIds, branches });
 
-            // 🔥 단일 지부 관리자인 경우 자동으로 해당 지부 선택
             if (branches.length === 1) {
               setSelectedOwnerBranch(branches[0].id.toString());
               console.log("단일 지부 자동 선택:", branches[0].id);
             }
 
-            // 모든 지부 정보도 로드
             fetchAllBranches();
 
-            // OWNER인 경우 초기 로드 시 바로 PENDING 회원 조회
             setTimeout(() => {
               setIsSearched(true);
               fetchMembers(1);
             }, 200);
           } else if (role === "ADMIN") {
-            // ADMIN인 경우 지부 region 목록 로드 및 전체 회원 조회
             setTimeout(() => {
               fetchRegions();
               setIsSearched(true);
-              // 🔥 ADMIN 초기 로드시 전체 조회를 위해 fetchMembersWithRegion 사용
-              fetchMembersWithRegion(""); // 빈 문자열로 전체 조회
+              fetchMembersWithRegion("");
             }, 200);
           }
         }
@@ -129,7 +133,6 @@ const MemberManagement = () => {
     setSelectedRegion(region);
     setCurrentPage(1);
 
-    // 즉시 회원 조회 실행
     setTimeout(() => {
       fetchMembersWithRegion(region);
     }, 100);
@@ -146,7 +149,6 @@ const MemberManagement = () => {
     setSelectedOwnerBranch(branchId);
     setCurrentPage(1);
 
-    // 즉시 회원 조회 실행
     setTimeout(() => {
       fetchMembersWithBranch(branchId);
     }, 100);
@@ -168,7 +170,6 @@ const MemberManagement = () => {
         size: 10,
       });
 
-      // 삭제된 회원 보기가 아닌 경우에만 검색 조건 추가
       if (!showDeleted) {
         // 이름 검색
         if (filters.name && filters.name.trim() !== "") {
@@ -180,18 +181,20 @@ const MemberManagement = () => {
           params.append("role", filters.role.trim());
         }
 
+        // 🔥 Stripe 검색 추가
+        if (filters.stripe && filters.stripe.trim() !== "") {
+          params.append("stripe", filters.stripe.trim());
+        }
+
         // 지부 검색 - region별 조회
         if (region && region !== "" && region !== "전체") {
-          // 특정 region 선택된 경우 해당 region의 지부들 ID를 찾아서 전송
           const selectedBranches = allBranches.filter(branch => branch.region === region);
           console.log(`선택된 region "${region}"에 해당하는 지부들:`, selectedBranches);
 
-          // 🔥 수정: 단일/다중 지부 모두 branchIds로 통일
           selectedBranches.forEach(branch => {
             params.append("branchIds", branch.id);
           });
         }
-        // 🔥 region이 빈 문자열이거나 "전체"인 경우 지부 조건을 추가하지 않음 (전체 조회)
         console.log("전체 조회 - 지부 조건 없이 API 호출");
       }
 
@@ -235,7 +238,6 @@ const MemberManagement = () => {
         size: 10,
       });
 
-      // 삭제된 회원 보기가 아닌 경우에만 검색 조건 추가
       if (!showDeleted) {
         // 이름 검색
         if (filters.name && filters.name.trim() !== "") {
@@ -245,7 +247,11 @@ const MemberManagement = () => {
         // 역할 검색 (OWNER는 activeTab 사용)
         params.append("role", activeTab);
 
-        // 🔥 수정: branchId 대신 branchIds 사용
+        // 🔥 Stripe 검색 추가
+        if (filters.stripe && filters.stripe.trim() !== "") {
+          params.append("stripe", filters.stripe.trim());
+        }
+
         if (branchId) {
           params.append("branchIds", branchId);
         }
@@ -290,7 +296,6 @@ const MemberManagement = () => {
         size: 10,
       });
 
-      // 삭제된 회원 보기가 아닌 경우에만 검색 조건 추가
       if (!showDeleted) {
         // 이름 검색
         if (filters.name && filters.name.trim() !== "") {
@@ -304,35 +309,31 @@ const MemberManagement = () => {
           params.append("role", filters.role.trim());
         }
 
+        // 🔥 Stripe 검색 추가
+        if (filters.stripe && filters.stripe.trim() !== "") {
+          params.append("stripe", filters.stripe.trim());
+        }
+
         // 지부 검색
         if (userRole === "OWNER") {
-          // OWNER는 자신이 관리하는 지부의 회원 조회
           if (selectedOwnerBranch) {
-            // 🔥 수정: branchId 대신 branchIds 사용
             params.append("branchIds", selectedOwnerBranch);
           } else {
-            // 선택하지 않은 경우 - 단일 지부면 자동 선택, 다중 지부면 빈 결과
             if (userBranches.length === 1) {
-              // 🔥 수정: branchId 대신 branchIds 사용
               params.append("branchIds", userBranches[0].id);
             } else if (userBranches.length > 1) {
-              // 다중 지부 관리자가 지부를 선택하지 않은 경우 빈 결과
               params.append("branchIds", "-1");
             }
           }
         } else if (userRole === "ADMIN") {
-          // ADMIN인 경우 선택된 region에 따른 조회
           if (selectedRegion && selectedRegion !== "" && selectedRegion !== "전체") {
-            // 특정 region 선택된 경우
             const selectedBranches = allBranches.filter(branch => branch.region === selectedRegion);
             console.log(`선택된 region "${selectedRegion}"에 해당하는 지부들:`, selectedBranches);
 
-            // 🔥 수정: 단일/다중 지부 모두 branchIds로 통일
             selectedBranches.forEach(branch => {
               params.append("branchIds", branch.id);
             });
           }
-          // 🔥 selectedRegion이 빈 문자열이거나 "전체"인 경우 지부 조건을 추가하지 않음 (전체 조회)
           console.log("ADMIN 전체 조회 또는 특정 region 조회, selectedRegion:", selectedRegion);
         }
       }
@@ -369,10 +370,8 @@ const MemberManagement = () => {
   useEffect(() => {
     if (showDeleted || isSearched) {
       if (userRole === "ADMIN") {
-        // ADMIN인 경우 현재 selectedRegion 상태에 따라 조회
         fetchMembersWithRegion(selectedRegion, 1);
       } else {
-        // OWNER인 경우 기존 방식 사용
         fetchMembers(1);
       }
     }
@@ -382,10 +381,8 @@ const MemberManagement = () => {
   useEffect(() => {
     if (isSearched) {
       if (userRole === "ADMIN") {
-        // ADMIN인 경우 현재 selectedRegion 상태에 따라 조회
         fetchMembersWithRegion(selectedRegion, currentPage);
       } else {
-        // OWNER인 경우 기존 방식 사용
         fetchMembers(currentPage);
       }
     }
@@ -403,10 +400,8 @@ const MemberManagement = () => {
   const handleSearch = () => {
     setCurrentPage(1);
     if (userRole === "ADMIN") {
-      // ADMIN인 경우 현재 selectedRegion 상태에 따라 조회
       fetchMembersWithRegion(selectedRegion, 1);
     } else {
-      // OWNER인 경우 기존 방식 사용
       fetchMembers(1);
     }
   };
@@ -416,6 +411,7 @@ const MemberManagement = () => {
     setFilters({
       name: "",
       role: "",
+      stripe: ""  // Stripe 필터도 초기화
     });
 
     if (userRole === "OWNER") {
@@ -437,7 +433,6 @@ const MemberManagement = () => {
   const getCurrentUserBranchId = () => {
     if (userRole !== "OWNER") return null;
 
-    // branchRoles에서 OWNER 역할의 지부 찾기
     const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
     const branchRoles = userInfo.branchRoles || [];
     const ownerBranch = branchRoles.find(br => br.role === "OWNER");
@@ -446,7 +441,6 @@ const MemberManagement = () => {
       return ownerBranch.branchId;
     }
 
-    // 기존 로직 (하위 호환성)
     if (userBranches.length === 1) {
       return userBranches[0].id;
     } else if (userBranches.length > 1) {
@@ -518,7 +512,7 @@ const MemberManagement = () => {
           {/* OWNER인 경우 지부 선택 */}
           {userRole === "OWNER" && !showDeleted && (
               <>
-                {/* 다중 지부 관리자인 경우 버튼 형태 (전체 버튼 없음) */}
+                {/* 다중 지부 관리자인 경우 버튼 형태 */}
                 {userBranches.length > 1 && (
                     <div className="region_tabs">
                       <div className="region_tabs_header">
@@ -563,7 +557,7 @@ const MemberManagement = () => {
               </>
           )}
 
-          {/* 검색 영역 */}
+          {/* 검색 영역 - Stripe 필터 추가 */}
           {!showDeleted && (
               <div className="search-panel">
                 <div className="search-form">
@@ -576,6 +570,23 @@ const MemberManagement = () => {
                         onChange={handleChange}
                         className="form-input"
                     />
+                  </div>
+
+                  {/* 🔥 Stripe 필터 추가 */}
+                  <div className="form-group">
+                    <label className="form-label">띠 등급</label>
+                    <select
+                        name="stripe"
+                        value={filters.stripe}
+                        onChange={handleChange}
+                        className="form-select"
+                    >
+                      {stripeOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* 관리자만 회원 등급 필터 표시 */}
@@ -616,25 +627,57 @@ const MemberManagement = () => {
               </div>
           )}
 
-          {/* 현재 선택된 조건 표시 */}
-          {userRole === "ADMIN" && selectedRegion && !showDeleted && (
-              <div className="current-filter">
-                <span className="filter-label">현재 조회 중:</span>
-                <span className="filter-value">{selectedRegion} 지부</span>
+          {/* 현재 선택된 조건 표시 - Stripe 조건 추가 */}
+          {!showDeleted && (
+              <div className="current-filters">
+                {userRole === "ADMIN" && selectedRegion && (
+                    <div className="current-filter">
+                      <span className="filter-label">지부:</span>
+                      <span className="filter-value">{selectedRegion}</span>
+                    </div>
+                )}
+
+                {userRole === "OWNER" && userBranches.length > 1 && selectedOwnerBranch && (
+                    <div className="current-filter">
+                      <span className="filter-label">지부:</span>
+                      <span className="filter-value">
+                        {getSelectedOwnerBranchInfo()?.region} {getSelectedOwnerBranchInfo()?.area}
+                      </span>
+                    </div>
+                )}
+
+                {/* 🔥 Stripe 필터 표시 */}
+                {filters.stripe && (
+                    <div className="current-filter">
+                      <span className="filter-label">띠 등급:</span>
+                      <span className="filter-value">
+                        {stripeOptions.find(option => option.value === filters.stripe)?.label}
+                      </span>
+                    </div>
+                )}
+
+                {filters.name && (
+                    <div className="current-filter">
+                      <span className="filter-label">이름:</span>
+                      <span className="filter-value">{filters.name}</span>
+                    </div>
+                )}
+
+                {userRole === "ADMIN" && filters.role && (
+                    <div className="current-filter">
+                      <span className="filter-label">회원 등급:</span>
+                      <span className="filter-value">
+                        {filters.role === "PENDING" ? "대기중" :
+                            filters.role === "USER" ? "일반 회원" :
+                                filters.role === "COACH" ? "코치" :
+                                    filters.role === "OWNER" ? "지부장" : filters.role}
+                      </span>
+                    </div>
+                )}
               </div>
           )}
 
-          {/* OWNER 다중 지부 관리자의 현재 선택된 지부 표시 */}
-          {userRole === "OWNER" && userBranches.length > 1 && selectedOwnerBranch && !showDeleted && (
-              <div className="current-filter">
-                <span className="filter-label">현재 조회 중:</span>
-                <span className="filter-value">
-                {getSelectedOwnerBranchInfo()?.region} {getSelectedOwnerBranchInfo()?.area} 지부
-              </span>
-              </div>
-          )}
-
-          {/* 회원 테이블 - 컴팩트 컨테이너 사용 */}
+          {/* 회원 테이블 */}
           <div className="table-container-compact">
             {isLoading ? (
                 <div className="loading-state">
