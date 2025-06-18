@@ -74,70 +74,70 @@ function AppRoutes() {
   useAuthGuard();
 
   return (
-        <div className="App">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/academy" element={<Academy />} />
-            <Route path="/introGreeting" element={<IntroGreeting />} />
-            <Route path="/introJiujitsu" element={<IntroJiujitsu />} />
-            <Route path="/introLevel" element={<IntroLevel />} />
-            <Route path="/branches" element={<Branches />} />
-            <Route path="/branches/:id" element={<BranchesDetail />} />
-            <Route path="/branches/:id/board/:id" element={<BoardDetailPage />} />
-            <Route path="/branches/:id/notice/:id" element={<BoardDetailPage />} />
-            <Route path="/comunity" element={<Comunity />} />
-            <Route path="/store" element={<Store />} />
-            <Route path="/storeWrite" element={<StoreWritePage />} />
-            <Route path="/storeDetail/:itemId" element={<StoreDetail />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/order" element={<Order />} />
-            <Route path="/order/new" element={<Order />} />
-            <Route path="/order/:id" element={<Order />} />
-            <Route path="/skill" element={<Skill />} />
-            <Route path="/skillDetail/:id" element={<SkillDetail />} />
-            <Route path="/skillWrite" element={<SkillWrite />} />
-            <Route path="/skillWrite/edit/:id" element={<SkillWrite />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/newsDetail/:id" element={<NewsDetail />} />
-            <Route path="/newsWrite" element={<NewsWrite />} />
-            <Route path="/newsWrite/edit/:id" element={<NewsWrite />} />
-            <Route path="/qna" element={<Qna />} />
-            <Route path="/qnaDetail/:id" element={<QnaDetail />} />
-            <Route path="/qnaWrite" element={<QnaWrite />} />
-            <Route path="/qnaWrite/edit/:id" element={<QnaWrite />} />
-            <Route path="/sponsor" element={<Sponsor />} />
-            <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
-            <Route path="/sponsorWrite" element={<SponsorWrite />} />
-            <Route path="/sponsorWrite/edit/:id" element={<SponsorWrite />} />
-            <Route path="/join" element={<Join />} />
+      <div className="App">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/academy" element={<Academy />} />
+          <Route path="/introGreeting" element={<IntroGreeting />} />
+          <Route path="/introJiujitsu" element={<IntroJiujitsu />} />
+          <Route path="/introLevel" element={<IntroLevel />} />
+          <Route path="/branches" element={<Branches />} />
+          <Route path="/branches/:id" element={<BranchesDetail />} />
+          <Route path="/branches/:id/board/:id" element={<BoardDetailPage />} />
+          <Route path="/branches/:id/notice/:id" element={<BoardDetailPage />} />
+          <Route path="/comunity" element={<Comunity />} />
+          <Route path="/store" element={<Store />} />
+          <Route path="/storeWrite" element={<StoreWritePage />} />
+          <Route path="/storeDetail/:itemId" element={<StoreDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/order" element={<Order />} />
+          <Route path="/order/new" element={<Order />} />
+          <Route path="/order/:id" element={<Order />} />
+          <Route path="/skill" element={<Skill />} />
+          <Route path="/skillDetail/:id" element={<SkillDetail />} />
+          <Route path="/skillWrite" element={<SkillWrite />} />
+          <Route path="/skillWrite/edit/:id" element={<SkillWrite />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/newsDetail/:id" element={<NewsDetail />} />
+          <Route path="/newsWrite" element={<NewsWrite />} />
+          <Route path="/newsWrite/edit/:id" element={<NewsWrite />} />
+          <Route path="/qna" element={<Qna />} />
+          <Route path="/qnaDetail/:id" element={<QnaDetail />} />
+          <Route path="/qnaWrite" element={<QnaWrite />} />
+          <Route path="/qnaWrite/edit/:id" element={<QnaWrite />} />
+          <Route path="/sponsor" element={<Sponsor />} />
+          <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
+          <Route path="/sponsorWrite" element={<SponsorWrite />} />
+          <Route path="/sponsorWrite/edit/:id" element={<SponsorWrite />} />
+          <Route path="/join" element={<Join />} />
 
-            {/* 관리자 페이지 라우트 */}
-            <Route path="/admin" element={ <ProtectedRoute><AdminMain /></ProtectedRoute>} />
-            <Route path="/admin/members" element={<MemberManagement />} />
-            <Route path="/admin/orders" element={<OrderManagement />} />
-            <Route path="/admin/products" element={<ProductManagement />} />
-            <Route path="/admin/products/create" element={<ProductCreate />} />
-            <Route path="/admin/products/edit/:itemId" element={<ProductEdit />} />
-            <Route path="/admin/branches" element={<BranchManagement />} />
-            <Route path="/admin/branches/create" element={<BranchCreate />} />
-            <Route path="/admin/branches/edit/:branchId" element={<BranchEdit />} />
-            <Route path="/admin/posts" element={<PostManagement />} />
-            <Route path="/admin/posts/create" element={<PostCreate />} />
-            <Route path="/admin/posts/edit/:category/:id" element={<PostEdit />} />
+          {/* 관리자 페이지 라우트 - 모두 ProtectedRoute로 보호 */}
+          <Route path="/admin" element={<ProtectedRoute><AdminMain /></ProtectedRoute>} />
+          <Route path="/admin/members" element={<ProtectedRoute><MemberManagement /></ProtectedRoute>} />
+          <Route path="/admin/orders" element={<ProtectedRoute><OrderManagement /></ProtectedRoute>} />
+          <Route path="/admin/products" element={<ProtectedRoute><ProductManagement /></ProtectedRoute>} />
+          <Route path="/admin/products/create" element={<ProtectedRoute><ProductCreate /></ProtectedRoute>} />
+          <Route path="/admin/products/edit/:itemId" element={<ProtectedRoute><ProductEdit /></ProtectedRoute>} />
+          <Route path="/admin/branches" element={<ProtectedRoute><BranchManagement /></ProtectedRoute>} />
+          <Route path="/admin/branches/create" element={<ProtectedRoute><BranchCreate /></ProtectedRoute>} />
+          <Route path="/admin/branches/edit/:branchId" element={<ProtectedRoute><BranchEdit /></ProtectedRoute>} />
+          <Route path="/admin/posts" element={<ProtectedRoute><PostManagement /></ProtectedRoute>} />
+          <Route path="/admin/posts/create" element={<ProtectedRoute><PostCreate /></ProtectedRoute>} />
+          <Route path="/admin/posts/edit/:category/:id" element={<ProtectedRoute><PostEdit /></ProtectedRoute>} />
 
-            {/* 마이페이지 라우트 */}
-            <Route path="/mypage" element={<ProtectedRoute><MyPageMain /></ProtectedRoute>} />
-            <Route path="/mypage/profile/edit" element={<ProfileEditPage />} />
-            <Route path="/mypage/cart" element={<MyPageCart />} />
-            <Route path="/mypage/orders" element={<MyPageOrders />} />
-            <Route path="/mypage/reviews" element={<MyPageReview />} />
-          </Routes>
-          <Footer />
+          {/* 마이페이지 라우트 - 모두 ProtectedRoute로 보호 */}
+          <Route path="/mypage" element={<ProtectedRoute><MyPageMain /></ProtectedRoute>} />
+          <Route path="/mypage/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
+          <Route path="/mypage/cart" element={<ProtectedRoute><MyPageCart /></ProtectedRoute>} />
+          <Route path="/mypage/orders" element={<ProtectedRoute><MyPageOrders /></ProtectedRoute>} />
+          <Route path="/mypage/reviews" element={<ProtectedRoute><MyPageReview /></ProtectedRoute>} />
+        </Routes>
+        <Footer />
 
-          {/* 로딩 인디케이터 - 앱 최상단에 배치 */}
-          <LoadingIndicator />
-        </div>
+        {/* 로딩 인디케이터 - 앱 최상단에 배치 */}
+        <LoadingIndicator />
+      </div>
   );
 }
 
