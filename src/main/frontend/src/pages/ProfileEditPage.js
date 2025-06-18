@@ -99,7 +99,7 @@ const ProfileEditPage = () => {
     password: '',
     confirmPassword: '',
     branchIds: [],
-    level: 1,
+    level: 0,
     stripe: 'WHITE',
     sns1: '',
     sns2: '',
@@ -150,7 +150,7 @@ const ProfileEditPage = () => {
             branchIds: (user.branchUsers && Array.isArray(user.branchUsers))
                 ? user.branchUsers.map(bu => bu.branchId).filter(id => id !== undefined)
                 : [],
-            level: user.level || 1,
+            level: user.level || 0,
             stripe: user.stripe || 'WHITE',
             sns1: user.sns1 || '',
             sns2: user.sns2 || '',
@@ -270,7 +270,7 @@ const ProfileEditPage = () => {
       setFormData(prev => ({
         ...prev,
         stripe: value,
-        level: 1 // 레벨 초기화
+        level: 0 // 레벨 초기화
       }));
     } else {
       setFormData(prev => ({
@@ -456,7 +456,7 @@ const ProfileEditPage = () => {
 
       if (formData.birthday) updateData.birthday = formData.birthday;
       if (formData.gender) updateData.gender = formData.gender;
-      if (formData.level && formData.level >= 1) updateData.level = formData.level;
+      if (formData.level && formData.level >= 0) updateData.level = formData.level;
       if (formData.stripe) updateData.stripe = formData.stripe;
       if (formData.sns1?.trim()) updateData.sns1 = formData.sns1.trim();
       if (formData.sns2?.trim()) updateData.sns2 = formData.sns2.trim();
@@ -850,6 +850,7 @@ const ProfileEditPage = () => {
                       onChange={handleInputChange}
                       className="form-control"
                   >
+                    <option value="0">0</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
