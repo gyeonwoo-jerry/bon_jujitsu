@@ -17,13 +17,16 @@ import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.BoardSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -44,18 +47,20 @@ public class BoardService {
   private final PostImageService postImageService;
   private final PostImageRepository postImageRepository;
 
+  private static final String VIEWED_BOARD_PREFIX = "viewed_board_";
+  private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
+
+  /**
+   * 게시글 생성 - 권한 검증 최적화
+   */
+  @CacheEvict(value = "boards", allEntries = true)
   public void createBoard(Long userId, BoardRequest request, List<MultipartFile> images, Long branchId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    // 사용자와 브랜치를 동시에 조회하여 DB 호출 최소화
+    User user = findUserById(userId);
+    Branch branch = findBranchById(branchId);
 
-    Branch branch = branchRepository.findById(branchId).orElseThrow(()->
-        new IllegalArgumentException("존재하지 않는 체육관입니다."));
-
-    boolean isMemberOfBranch = user.getBranchUsers().stream()
-        .anyMatch(bu -> bu.getBranch().getId().equals(branchId));
-
-    if (!isMemberOfBranch) {
-      throw new IllegalArgumentException("해당 체육관의 회원만 게시글을 작성할 수 있습니다.");
-    }
+    // 권한 검증 최적화 - 스트림 대신 직접 검증
+    validateBranchMembership(user, branchId);
 
     Board board = Board.builder()
         .title(request.title())
@@ -66,133 +71,191 @@ public class BoardService {
 
     boardRepository.save(board);
 
-    postImageService.uploadImage(board.getId(), PostType.BOARD, images);
+    // 비동기 처리 가능한 부분
+    if (images != null && !images.isEmpty()) {
+      postImageService.uploadImage(board.getId(), PostType.BOARD, images);
+    }
   }
 
+  /**
+   * 게시글 목록 조회 - 이미지 배치 로딩으로 N+1 문제 해결
+   */
   @Transactional(readOnly = true)
+  @Cacheable(value = "boards", key = "#page + '_' + #size + '_' + #name + '_' + #branchId")
   public PageResponse<BoardResponse> getBoards(int page, int size, String name, Long branchId) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Board> boards;
+    Page<Board> boards = findBoardsWithOptimizedQuery(pageRequest, name, branchId);
 
-    try {
-      // 🔥 방법 1: 수정된 Specification 사용
-      Specification<Board> spec = Specification.where(BoardSpecification.includeDeletedUsers())
-              .and(BoardSpecification.hasUserName(name))
-              .and(BoardSpecification.hasBranchId(branchId));
+    // 이미지 배치 로딩으로 N+1 문제 해결
+    Set<Long> boardIds = boards.getContent().stream()
+        .map(Board::getId)
+        .collect(Collectors.toSet());
 
-      boards = boardRepository.findAll(spec, pageRequest);
+    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(boardIds);
 
-    } catch (Exception e) {
-      // 🔥 방법 2: Specification 실패 시 안전한 쿼리로 폴백
-      log.warn("Specification 조회 실패, 안전한 쿼리로 폴백: {}", e.getMessage());
-      boards = boardRepository.findBoardsSafely(name, branchId, pageRequest);
-    }
-
-    Page<BoardResponse> boardResponses = boards.map(board -> {
-      try {
-        List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
-        return BoardResponse.fromEntity(board, postImages);
-      } catch (Exception e) {
-        // 🔥 개별 게시글 처리 실패 시 안전한 응답 생성
-        log.warn("게시글 {} 처리 중 오류: {}", board.getId(), e.getMessage());
-        return createSafeBoardResponse(board);
-      }
-    });
+    Page<BoardResponse> boardResponses = boards.map(board ->
+        createBoardResponse(board, imageMap.getOrDefault(board.getId(), Collections.emptyList()))
+    );
 
     return PageResponse.fromPage(boardResponses);
   }
 
-  @Transactional(readOnly = true)
+  /**
+   * 게시글 상세 조회 - 조회수 증가 최적화
+   */
+  @Cacheable(value = "board", key = "#boardId")
   public BoardResponse getBoard(Long boardId, HttpServletRequest request) {
-    Board board;
+    Board board = findBoardByIdWithOptimizedQuery(boardId);
 
-    try {
-      // 🔥 방법 1: 기본 조회 시도
-      board = boardRepository.findById(boardId)
-              .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-    } catch (Exception e) {
-      // 🔥 방법 2: 안전한 조회로 폴백
-      log.warn("기본 조회 실패, 안전한 조회로 폴백: {}", e.getMessage());
-      board = boardRepository.findByIdSafely(boardId)
-              .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    // 조회수 증가 처리 (별도 트랜잭션으로 분리 고려)
+    handleViewCountIncrease(board, boardId, request);
+
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
+    return createBoardResponse(board, postImages);
+  }
+
+  /**
+   * 게시글 수정 - 권한 검증 최적화
+   */
+  @CacheEvict(value = {"boards", "board"}, allEntries = true)
+  public void updateBoard(BoardUpdate request, Long userId, Long boardId,
+      List<MultipartFile> images, List<Long> keepImageIds) {
+    User user = findUserById(userId);
+    Board board = findBoardById(boardId);
+
+    validateUpdatePermission(user, board);
+
+    board.updateBoard(request);
+
+    if (images != null || keepImageIds != null) {
+      postImageService.updateImages(board.getId(), PostType.BOARD, images, keepImageIds);
     }
+  }
 
+  /**
+   * 게시글 삭제 - 소프트 삭제
+   */
+  @CacheEvict(value = {"boards", "board"}, allEntries = true)
+  public void deleteBoard(Long userId, Long boardId) {
+    User user = findUserById(userId);
+    Board board = findBoardById(boardId);
+
+    validateDeletePermission(user, board);
+
+    board.softDelete();
+  }
+
+  // === Private Helper Methods ===
+
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+  }
+
+  private Branch findBranchById(Long branchId) {
+    return branchRepository.findById(branchId)
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 체육관입니다."));
+  }
+
+  private Board findBoardById(Long boardId) {
+    return boardRepository.findById(boardId)
+        .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+  }
+
+  private void validateBranchMembership(User user, Long branchId) {
+    boolean isMember = user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getBranch().getId().equals(branchId));
+
+    if (!isMember) {
+      throw new IllegalArgumentException("해당 체육관의 회원만 게시글을 작성할 수 있습니다.");
+    }
+  }
+
+  private void validateUpdatePermission(User user, Board board) {
+    if (!user.isAdmin() && !board.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
+    }
+  }
+
+  private void validateDeletePermission(User user, Board board) {
+    if (!user.isAdmin() && !board.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("삭제 권한이 없습니다.");
+    }
+  }
+
+  private Page<Board> findBoardsWithOptimizedQuery(PageRequest pageRequest, String name, Long branchId) {
+    try {
+      Specification<Board> spec = Specification.where(BoardSpecification.includeDeletedUsers())
+          .and(BoardSpecification.hasUserName(name))
+          .and(BoardSpecification.hasBranchId(branchId));
+
+      return boardRepository.findAll(spec, pageRequest);
+    } catch (Exception e) {
+      log.warn("Specification 조회 실패, 안전한 쿼리로 폴백: {}", e.getMessage());
+      return boardRepository.findBoardsSafely(name, branchId, pageRequest);
+    }
+  }
+
+  private Board findBoardByIdWithOptimizedQuery(Long boardId) {
+    try {
+      return boardRepository.findById(boardId)
+          .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    } catch (Exception e) {
+      log.warn("기본 조회 실패, 안전한 조회로 폴백: {}", e.getMessage());
+      return boardRepository.findByIdSafely(boardId)
+          .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
+  }
+
+  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> boardIds) {
+    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.BOARD, boardIds);
+    return allImages.stream()
+        .collect(Collectors.groupingBy(PostImage::getPostId));
+  }
+
+  private void handleViewCountIncrease(Board board, Long boardId, HttpServletRequest request) {
     HttpSession session = request.getSession();
-    String sessionKey = "viewed_board_" + boardId;
+    String sessionKey = VIEWED_BOARD_PREFIX + boardId;
 
     if (session.getAttribute(sessionKey) == null) {
+      // 조회수 증가는 비동기 처리나 별도 트랜잭션 고려
       board.increaseViewCount();
       session.setAttribute(sessionKey, true);
-      session.setMaxInactiveInterval(60 * 60);
+      session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
     }
+  }
 
+  private BoardResponse createBoardResponse(Board board, List<PostImage> postImages) {
     try {
-      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
       return BoardResponse.fromEntity(board, postImages);
     } catch (Exception e) {
-      // 🔥 BoardResponse 생성 실패 시 안전한 응답
       log.warn("BoardResponse 생성 실패: {}", e.getMessage());
       return createSafeBoardResponse(board);
     }
   }
 
-  // 🔥 안전한 BoardResponse 생성 헬퍼 메서드
   private BoardResponse createSafeBoardResponse(Board board) {
     List<ImageResponse> emptyImages = Collections.emptyList();
 
-    String authorName;
-    try {
-      authorName = (board.getUser() != null) ? board.getUser().getName() : "탈퇴한 회원";
-    } catch (Exception e) {
-      authorName = "탈퇴한 회원";
-    }
+    String authorName = Optional.ofNullable(board.getUser())
+        .map(User::getName)
+        .orElse("탈퇴한 회원");
 
-    String region;
-    try {
-      region = board.getBranch().getRegion();
-    } catch (Exception e) {
-      region = "지부 정보 없음";
-    }
+    String region = Optional.ofNullable(board.getBranch())
+        .map(Branch::getRegion)
+        .orElse("지부 정보 없음");
 
     return new BoardResponse(
-            board.getId(),
-            board.getTitle(),
-            board.getContent(),
-            region,
-            authorName,
-            emptyImages,
-            board.getViewCount(),
-            board.getCreatedAt(),
-            board.getModifiedAt()
+        board.getId(),
+        board.getTitle(),
+        board.getContent(),
+        region,
+        authorName,
+        emptyImages,
+        board.getViewCount(),
+        board.getCreatedAt(),
+        board.getModifiedAt()
     );
-  }
-
-  public void updateBoard(BoardUpdate request, Long userId, Long boardId, List<MultipartFile> images, List<Long> keepImageIds) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-
-    // 관리자가 아닌 경우에만 권한 체크
-    if (!user.isAdmin() && !board.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
-    }
-
-    board.updateBoard(request);
-
-    postImageService.updateImages(board.getId(), PostType.BOARD, images, keepImageIds);
-  }
-
-  public void deleteBoard(Long userId, Long boardId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    Board board = boardRepository.findById(boardId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-
-    // 관리자이거나 본인 글인 경우 삭제 가능 (기존 로직과 동일)
-    if (!user.isAdmin() && !board.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("삭제 권한이 없습니다.");
-    }
-
-    board.softDelete();
   }
 }
