@@ -1,6 +1,7 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.BranchImage;
 import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -10,12 +11,19 @@ import bon.bon_jujitsu.dto.response.BranchResponse;
 import bon.bon_jujitsu.dto.update.BranchUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.BranchUserRepository;
+import bon.bon_jujitsu.repository.BranchImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import bon.bon_jujitsu.specification.BranchSpecification;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,13 +42,15 @@ public class BranchService {
   private final UserRepository userRepository;
   private final BranchImageService branchImageService;
   private final BranchUserRepository branchUserRepository;
+  private final BranchImageRepository branchImageRepository;
 
+  /**
+   * 지부 생성
+   */
+  @CacheEvict(value = "branches", allEntries = true)
   public void createBranch(Long userId, BranchRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    if (!user.isAdmin()) {
-      throw new IllegalArgumentException("관리자만 지부 등록이 가능합니다.");
-    }
+    User user = findUserById(userId);
+    validateAdminPermission(user);
 
     Branch branch = Branch.builder()
         .region(request.region())
@@ -51,41 +61,70 @@ public class BranchService {
 
     branchRepository.save(branch);
 
-    branchImageService.uploadImage(branch, images);
+    // 이미지 업로드 (같은 트랜잭션에서 처리)
+    if (images != null && !images.isEmpty()) {
+      branchImageService.uploadImage(branch, images);
+    }
   }
 
+  /**
+   * 모든 지역(광역시/도) 조회
+   */
   @Transactional(readOnly = true)
+  @Cacheable(value = "areas", unless = "#result.isEmpty()")
+  public List<String> getAllAreas() {
+    return branchRepository.findDistinctAreas();
+  }
+
+  /**
+   * 특정 지역의 세부 지역들 조회
+   */
+  @Transactional(readOnly = true)
+  @Cacheable(value = "regions", key = "#area", unless = "#result.isEmpty()")
+  public List<String> getRegionsByArea(String area) {
+    return branchRepository.findDistinctRegionsByArea(area);
+  }
+
+  /**
+   * 지부 상세 조회 - N+1 문제 해결
+   */
+  @Transactional(readOnly = true)
+  @Cacheable(value = "branch", key = "#branchId")
   public BranchResponse getBranch(Long branchId) {
-    Branch branch = branchRepository.findById(branchId)
-        .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+    Branch branch = findBranchById(branchId);
 
     try {
-      // OWNER 권한을 가진 유저 찾기 - 삭제된 사용자 제외
-      User owner = branch.getBranchUsers().stream()
+      // 관련 데이터 배치 로딩 (N+1 해결)
+      List<BranchUser> branchUsers = branchUserRepository.findByBranchIdWithUser(branchId);
+      List<BranchImage> branchImages = branchImageRepository.findByBranchId(branchId);
+
+      // 삭제되지 않은 사용자들만 필터링하여 역할별로 분류
+      User owner = branchUsers.stream()
           .filter(bu -> bu.getUserRole() == UserRole.OWNER)
           .map(BranchUser::getUser)
-          .filter(user -> user != null && !user.isDeleted()) // 삭제된 사용자 제외
+          .filter(user -> user != null && !user.isDeleted())
           .findFirst()
           .orElse(null);
 
-      // COACH 권한을 가진 유저들 리스트 - 삭제된 사용자 제외
-      List<User> coaches = branch.getBranchUsers().stream()
+      List<User> coaches = branchUsers.stream()
           .filter(bu -> bu.getUserRole() == UserRole.COACH)
           .map(BranchUser::getUser)
-          .filter(user -> user != null && !user.isDeleted()) // 삭제된 사용자 제외
+          .filter(user -> user != null && !user.isDeleted())
           .collect(Collectors.toList());
 
-      return BranchResponse.from(branch, owner, coaches);
+      return BranchResponse.from(branch, owner, coaches, branchImages);
 
     } catch (Exception e) {
       log.error("🚨 Branch {} 조회 중 오류 발생: {}", branchId, e.getMessage());
-
-      // 오류 발생 시 안전한 응답 반환 (owner와 coaches 없이)
       return BranchResponse.fromBranchOnly(branch);
     }
   }
 
+  /**
+   * 지부 목록 조회 - 배치 로딩으로 N+1 문제 완전 해결
+   */
   @Transactional(readOnly = true)
+  @Cacheable(value = "branches", key = "#page + '_' + #size + '_' + #region + '_' + #area + '_' + #branchIds?.hashCode()")
   public PageResponse<BranchResponse> getAllBranch(int page, int size, String region, String area, List<Long> branchIds) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "region"));
 
@@ -95,87 +134,159 @@ public class BranchService {
 
     Page<Branch> branches = branchRepository.findAll(spec, pageRequest);
 
-    Page<BranchResponse> branchResponses = branches.map(branch -> {
-      try {
-        // OWNER 찾기 - 삭제된 사용자는 제외
-        User owner = branch.getBranchUsers().stream()
-            .filter(bu -> bu.getUserRole() == UserRole.OWNER)
-            .map(BranchUser::getUser)
-            .filter(user -> user != null && !user.isDeleted()) // 여기가 핵심!
-            .findFirst()
-            .orElse(null);
+    if (branches.isEmpty()) {
+      return PageResponse.fromPage(Page.empty());
+    }
 
-        // COACH들 찾기 - 삭제된 사용자는 제외
-        List<User> coaches = branch.getBranchUsers().stream()
-            .filter(bu -> bu.getUserRole() == UserRole.COACH)
-            .map(BranchUser::getUser)
-            .filter(user -> user != null && !user.isDeleted()) // 여기가 핵심!
-            .collect(Collectors.toList());
+    // 🚀 조회된 지부들의 ID 수집
+    Set<Long> branchIdSet = branches.getContent().stream()
+        .map(Branch::getId)
+        .collect(Collectors.toSet());
 
-        return BranchResponse.from(branch, owner, coaches);
+    // 🚀 배치 로딩으로 N+1 문제 해결
+    Map<Long, List<BranchUser>> branchUserMap = branchUserRepository
+        .findByBranchIdInWithUser(branchIdSet)
+        .stream()
+        .collect(Collectors.groupingBy(bu -> bu.getBranch().getId()));
 
-      } catch (Exception e) {
-        log.error("🚨 Branch {} 처리 중 오류 발생: {}", branch.getId(), e.getMessage());
+    Map<Long, List<BranchImage>> branchImageMap = branchImageRepository
+        .findByBranchIdIn(branchIdSet)
+        .stream()
+        .collect(Collectors.groupingBy(bi -> bi.getBranch().getId()));
 
-        // 오류 발생 시 안전한 응답 반환
-        return BranchResponse.fromBranchOnly(branch);
-      }
-    });
+    // 🚀 응답 생성 (추가 쿼리 없음)
+    Page<BranchResponse> branchResponses = branches.map(branch ->
+        createBranchResponse(branch, branchUserMap, branchImageMap)
+    );
 
     return PageResponse.fromPage(branchResponses);
   }
 
-  public void updateBranch(Long userId, Long branchId, BranchUpdate update, List<MultipartFile> images, List<Long> keepImageIds) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  /**
+   * 지부 수정
+   */
+  @CacheEvict(value = {"branches", "branch"}, allEntries = true)
+  public void updateBranch(Long userId, Long branchId, BranchUpdate update,
+      List<MultipartFile> images, List<Long> keepImageIds) {
+    User user = findUserById(userId);
+    Branch branch = findBranchForUpdate(user, branchId);
 
-    Branch branch;
-
-    if (user.isAdminUser()) {
-      branch = branchRepository.findById(branchId)
-          .orElseThrow(() -> new IllegalArgumentException("해당 ID의 지부를 찾을 수 없습니다."));
-    } else {
-      BranchUser branchUser = user.getBranchUsers().stream()
-          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
-          .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("해당 유저는 지부의 관장(OWNER)이 아닙니다."));
-      branch = branchUser.getBranch();
+    // 지부 정보 업데이트
+    if (hasContentChanges(update)) {
+      branch.updateBranch(update);
     }
 
-    branch.updateBranch(update);
-
-    branchImageService.updateImages(branch, images, keepImageIds);
+    // 이미지 처리 (변경사항이 있을 때만, 같은 트랜잭션에서)
+    if (hasImageChanges(images, keepImageIds)) {
+      branchImageService.updateImages(branch, images, keepImageIds);
+    }
   }
 
-
+  /**
+   * 지부 삭제 - 연관 데이터 정리
+   */
+  @CacheEvict(value = {"branches", "branch"}, allEntries = true)
   public void deleteBranch(Long userId, Long branchId) {
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = findUserById(userId);
+    validateAdminPermission(user);
 
-    if (!user.isAdmin()) {
-      throw new IllegalArgumentException("관리자만 지부 삭제가 가능합니다.");
-    }
+    Branch branch = findBranchById(branchId);
 
-    Branch branch = branchRepository.findById(branchId)
-            .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
-
-    // 해당 브랜치에 속한 모든 BranchUser 관계 제거
-    List<BranchUser> branchUsers = branchUserRepository.findByBranch(branch);
-    branchUserRepository.deleteAll(branchUsers);
+    // 연관 데이터 정리
+    cleanupBranchRelatedData(branch);
 
     // 브랜치 soft delete
     branch.softDelete();
   }
 
+  /**
+   * 지역 중복 체크
+   */
+  @Transactional(readOnly = true)
   public boolean isRegionDuplicate(String region) {
     return branchRepository.existsByRegion(region);
   }
 
-  public List<String> getAllAreas() {
-    return branchRepository.findDistinctAreas();
+  // === Private Helper Methods ===
+
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
   }
 
-  public List<String> getRegionsByArea(String area) {
-    return branchRepository.findDistinctRegionsByArea(area);
+  private Branch findBranchById(Long branchId) {
+    return branchRepository.findById(branchId)
+        .orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
+  }
+
+  private void validateAdminPermission(User user) {
+    if (!user.isAdmin()) {
+      throw new IllegalArgumentException("관리자만 해당 작업이 가능합니다.");
+    }
+  }
+
+  private Branch findBranchForUpdate(User user, Long branchId) {
+    if (user.isAdminUser()) {
+      return findBranchById(branchId);
+    } else {
+      return user.getBranchUsers().stream()
+          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+          .filter(bu -> bu.getBranch().getId().equals(branchId))
+          .map(BranchUser::getBranch)
+          .findFirst()
+          .orElseThrow(() -> new IllegalArgumentException("해당 지부의 관장 권한이 없습니다."));
+    }
+  }
+
+  /**
+   * 🚀 BranchResponse 생성 헬퍼 - 안전한 응답 처리
+   */
+  private BranchResponse createBranchResponse(Branch branch,
+      Map<Long, List<BranchUser>> branchUserMap,
+      Map<Long, List<BranchImage>> branchImageMap) {
+    try {
+      List<BranchUser> branchUsers = branchUserMap.getOrDefault(branch.getId(), Collections.emptyList());
+      List<BranchImage> branchImages = branchImageMap.getOrDefault(branch.getId(), Collections.emptyList());
+
+      // 삭제되지 않은 사용자들만 필터링
+      User owner = branchUsers.stream()
+          .filter(bu -> bu.getUserRole() == UserRole.OWNER)
+          .map(BranchUser::getUser)
+          .filter(user -> user != null && !user.isDeleted())
+          .findFirst()
+          .orElse(null);
+
+      List<User> coaches = branchUsers.stream()
+          .filter(bu -> bu.getUserRole() == UserRole.COACH)
+          .map(BranchUser::getUser)
+          .filter(user -> user != null && !user.isDeleted())
+          .collect(Collectors.toList());
+
+      return BranchResponse.from(branch, owner, coaches, branchImages);
+
+    } catch (Exception e) {
+      log.error("🚨 Branch {} 처리 중 오류 발생: {}", branch.getId(), e.getMessage());
+      return BranchResponse.fromBranchOnly(branch);
+    }
+  }
+
+  private boolean hasContentChanges(BranchUpdate update) {
+    return update.region().isPresent() ||
+        update.address().isPresent() ||
+        update.area().isPresent();
+  }
+
+  private boolean hasImageChanges(List<MultipartFile> images, List<Long> keepImageIds) {
+    return (images != null && !images.isEmpty()) || keepImageIds != null;
+  }
+
+  private void cleanupBranchRelatedData(Branch branch) {
+    try {
+      List<BranchUser> branchUsers = branchUserRepository.findByBranch(branch);
+      branchUserRepository.deleteAll(branchUsers);
+      log.info("지부 관련 데이터 정리 완료: branchId={}", branch.getId());
+    } catch (Exception e) {
+      log.warn("지부 관련 데이터 정리 실패: branchId={}, error={}", branch.getId(), e.getMessage());
+    }
   }
 }
