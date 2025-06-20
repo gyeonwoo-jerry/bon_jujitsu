@@ -17,15 +17,23 @@ public record BoardResponse(
     String author,
     List<ImageResponse> images,
     Long viewCount,
+    Long commentCount,  // 댓글 수 추가
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
+
+  // 기존 메서드 (댓글 수 없이)
   public static BoardResponse fromEntity(Board board, List<PostImage> postImages) {
+    return fromEntity(board, postImages, 0L);
+  }
+
+  // 댓글 수 포함 메서드
+  public static BoardResponse fromEntity(Board board, List<PostImage> postImages, Long commentCount) {
     // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
     List<ImageResponse> imageResponses = postImages.stream()
         .map(postImage -> ImageResponse.builder()
-            .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getImagePath()) // 실제 이미지 경로 사용
+            .id(postImage.getId())
+            .url(postImage.getImagePath())
             .build())
         .collect(Collectors.toList());
 
@@ -37,18 +45,25 @@ public record BoardResponse(
         authorName = "탈퇴한 회원";
       }
     } catch (Exception e) {
-      // LazyInitializationException이나 기타 예외 발생 시
       authorName = "탈퇴한 회원";
+    }
+
+    String region;
+    try {
+      region = board.getBranch() != null ? board.getBranch().getRegion() : "지부 정보 없음";
+    } catch (Exception e) {
+      region = "지부 정보 없음";
     }
 
     return BoardResponse.builder()
         .id(board.getId())
         .title(board.getTitle())
         .content(board.getContent())
-        .region(board.getBranch().getRegion())
+        .region(region)
         .author(authorName)
         .images(imageResponses)
         .viewCount(board.getViewCount())
+        .commentCount(commentCount)
         .createdAt(board.getCreatedAt())
         .modifiedAt(board.getModifiedAt())
         .build();

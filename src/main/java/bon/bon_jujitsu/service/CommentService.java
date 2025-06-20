@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,29 +35,19 @@ public class CommentService {
   private final NewsRepository newsRepository;
   private final SponsorRepository sponsorRepository;
 
+  // 최대 댓글 깊이 상수화
+  private static final int MAX_COMMENT_DEPTH = 3;
+
+  @CacheEvict(value = "comments", key = "#request.targetId() + '_' + #request.commentType()")
   public void createComment(Long userId, CommentRequest request) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+    // 사용자 권한 검증을 별도 메서드로 분리
+    User user = validateUserPermission(userId);
 
-    if (user.getBranchUsers().stream()
-        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
-      throw new IllegalArgumentException("승인 대기 중인 사용자는 댓글을 이용할 수 없습니다.");
-    }
+    // QnA 댓글 권한 검증
+    validateQnaCommentPermission(request.commentType(), user);
 
-    // QnA 댓글은 관리자만 가능
-    if (request.commentType() == CommentType.QNA && !user.isAdmin()) {
-      throw new IllegalArgumentException("QnA 댓글은 관리자만 작성할 수 있습니다.");
-    }
-
-    Comment parentComment = null;
-    if (request.parentId() != null) {
-      parentComment = commentRepository.findById(request.parentId())
-          .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
-
-      if (parentComment.getDepth() >= 3) {
-        throw new IllegalArgumentException("더 이상 대댓글을 작성할 수 없습니다.");
-      }
-    }
+    // 부모 댓글 검증
+    Comment parentComment = validateAndGetParentComment(request.parentId());
 
     Comment comment = Comment.builder()
         .content(request.content())
@@ -70,23 +62,13 @@ public class CommentService {
   }
 
   @Transactional(readOnly = true)
+  @Cacheable(value = "comments", key = "#targetId + '_' + #commentType")
   public List<CommentResponse> getComments(Long targetId, CommentType commentType) {
-    // commentType 확인
-    if (commentType == CommentType.BOARD) {
-      boardRepository.findById(targetId)
-          .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-    } else if (commentType == CommentType.NOTICE) {
-      noticeRepository.findById(targetId)
-          .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
-    } else if (commentType == CommentType.QNA) {
-      noticeRepository.findById(targetId)
-              .orElseThrow(() -> new IllegalArgumentException("QNA를 찾을 수 없습니다."));
-    } else {
-      throw new IllegalArgumentException("올바르지 않은 댓글 타입입니다.");
-    }
+    // 타겟 엔티티 존재 여부 검증
+    validateTargetEntity(targetId, commentType);
 
-    // 댓글 조회
-    List<Comment> comments = commentRepository.findByTargetIdAndCommentTypeAndIsDeletedFalseOrderByCreatedAtDesc(
+    // 댓글 조회 - 한 번의 쿼리로 모든 댓글과 사용자 정보를 가져옴
+    List<Comment> comments = commentRepository.findByTargetIdAndCommentTypeWithUserAndBranch(
         targetId, commentType
     );
 
@@ -94,59 +76,143 @@ public class CommentService {
     return buildCommentTree(comments);
   }
 
-  // 대댓글을 포함한 트리 구조로 변환하는 메서드
-  private List<CommentResponse> buildCommentTree(List<Comment> comments) {
-    Map<Long, CommentResponse> commentMap = new HashMap<>();
-    List<CommentResponse> roots = new ArrayList<>();
-
-    // 모든 댓글을 매핑
-    for (Comment comment : comments) {
-      commentMap.put(comment.getId(), new CommentResponse(comment, new ArrayList<>()));
-    }
-
-    // 부모-자식 관계 설정
-    for (Comment comment : comments) {
-      if (comment.getParentComment() != null) {
-        CommentResponse parent = commentMap.get(comment.getParentComment().getId());
-        if (parent != null) {
-          parent.childComments().add(commentMap.get(comment.getId())); // 대댓글 추가
-        }
-      } else {
-        roots.add(commentMap.get(comment.getId())); // 부모 댓글이면 루트에 추가
-      }
-    }
-
-    return roots;
-  }
-
+  @CacheEvict(value = "comments", key = "#comment.targetId + '_' + #comment.commentType")
   public void updateComment(Long userId, Long commentId, CommentUpdate request) {
-    Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-    // 사용자 검증
-    if(!userId.equals(comment.getUser().getId())) {
-      throw new IllegalArgumentException("댓글을 수정할 권한이 없습니다.");
-    }
+    // 권한 검증
+    validateCommentOwnership(userId, comment);
 
-    // 부모 리뷰 수정 불가
-    if (comment.getParentComment() != null && request.parentId() != null) {
-      throw new IllegalArgumentException("부모 댓글은 수정할 수 없습니다.");
-    }
+    // 부모 댓글 수정 불가 검증
+    validateParentCommentUpdate(comment, request);
 
     comment.updateComment(request.content());
   }
 
+  @CacheEvict(value = "comments", key = "#comment.targetId + '_' + #comment.commentType")
   public void deleteComment(Long userId, Long commentId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-    Comment comment = commentRepository.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-    // 사용자 검증
-    if (!user.isAdmin() &&
-        !comment.getUser().getId().equals(userId)) {
-      throw new IllegalArgumentException("삭제 권한이 없습니다.");
-    }
+    // 삭제 권한 검증
+    validateDeletePermission(user, comment);
 
     comment.softDelete();
+  }
+
+  // === 검증 메서드들 ===
+
+  private User validateUserPermission(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+    boolean hasActiveRole = user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() != UserRole.PENDING);
+
+    if (!hasActiveRole) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 댓글을 이용할 수 없습니다.");
+    }
+
+    return user;
+  }
+
+  private void validateQnaCommentPermission(CommentType commentType, User user) {
+    if (commentType == CommentType.QNA && !user.isAdmin()) {
+      throw new IllegalArgumentException("QnA 댓글은 관리자만 작성할 수 있습니다.");
+    }
+  }
+
+  private Comment validateAndGetParentComment(Long parentId) {
+    if (parentId == null) {
+      return null;
+    }
+
+    Comment parentComment = commentRepository.findById(parentId)
+        .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+
+    if (parentComment.getDepth() >= MAX_COMMENT_DEPTH) {
+      throw new IllegalArgumentException("더 이상 대댓글을 작성할 수 없습니다.");
+    }
+
+    return parentComment;
+  }
+
+  private void validateTargetEntity(Long targetId, CommentType commentType) {
+    switch (commentType) {
+      case BOARD -> boardRepository.findById(targetId)
+          .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+      case NOTICE -> noticeRepository.findById(targetId)
+          .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+      case QNA -> noticeRepository.findById(targetId)
+          .orElseThrow(() -> new IllegalArgumentException("QNA를 찾을 수 없습니다."));
+      default -> throw new IllegalArgumentException("올바르지 않은 댓글 타입입니다.");
+    }
+  }
+
+  private void validateCommentOwnership(Long userId, Comment comment) {
+    if (!userId.equals(comment.getUser().getId())) {
+      throw new IllegalArgumentException("댓글을 수정할 권한이 없습니다.");
+    }
+  }
+
+  private void validateParentCommentUpdate(Comment comment, CommentUpdate request) {
+    if (comment.getParentComment() != null && request.parentId() != null) {
+      throw new IllegalArgumentException("부모 댓글은 수정할 수 없습니다.");
+    }
+  }
+
+  private void validateDeletePermission(User user, Comment comment) {
+    if (!user.isAdmin() && !comment.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("삭제 권한이 없습니다.");
+    }
+  }
+
+  // === 트리 구조 빌딩 최적화 ===
+
+  private List<CommentResponse> buildCommentTree(List<Comment> comments) {
+    if (comments.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    Map<Long, CommentResponse> commentMap = new HashMap<>();
+    List<CommentResponse> roots = new ArrayList<>();
+
+    // 첫 번째 패스: 모든 댓글을 CommentResponse로 변환하여 맵에 저장
+    for (Comment comment : comments) {
+      commentMap.put(comment.getId(), new CommentResponse(comment, new ArrayList<>()));
+    }
+
+    // 두 번째 패스: 부모-자식 관계 설정
+    for (Comment comment : comments) {
+      CommentResponse commentResponse = commentMap.get(comment.getId());
+
+      if (comment.getParentComment() != null) {
+        CommentResponse parent = commentMap.get(comment.getParentComment().getId());
+        if (parent != null) {
+          parent.childComments().add(commentResponse);
+        }
+      } else {
+        roots.add(commentResponse);
+      }
+    }
+
+    // 각 레벨에서 생성 시간 순으로 정렬
+    sortCommentsByCreatedAt(roots);
+
+    return roots;
+  }
+
+  private void sortCommentsByCreatedAt(List<CommentResponse> comments) {
+    comments.sort((c1, c2) -> c2.createdAt().compareTo(c1.createdAt()));
+
+    for (CommentResponse comment : comments) {
+      if (!comment.childComments().isEmpty()) {
+        sortCommentsByCreatedAt(comment.childComments());
+      }
+    }
   }
 }

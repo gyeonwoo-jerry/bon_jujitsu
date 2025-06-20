@@ -2,6 +2,7 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
 import bon.bon_jujitsu.domain.Branch;
+import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
@@ -12,9 +13,9 @@ import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.update.BoardUpdate;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
+import bon.bon_jujitsu.repository.CommentRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import bon.bon_jujitsu.specification.BoardSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.util.Collections;
@@ -28,9 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,20 +47,19 @@ public class BoardService {
   private final UserRepository userRepository;
   private final PostImageService postImageService;
   private final PostImageRepository postImageRepository;
+  private final CommentRepository commentRepository;
 
   private static final String VIEWED_BOARD_PREFIX = "viewed_board_";
   private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
 
   /**
-   * 게시글 생성 - 권한 검증 최적화
+   * 게시글 생성
    */
   @CacheEvict(value = "boards", allEntries = true)
   public void createBoard(Long userId, BoardRequest request, List<MultipartFile> images, Long branchId) {
-    // 사용자와 브랜치를 동시에 조회하여 DB 호출 최소화
     User user = findUserById(userId);
     Branch branch = findBranchById(branchId);
 
-    // 권한 검증 최적화 - 스트림 대신 직접 검증
     validateBranchMembership(user, branchId);
 
     Board board = Board.builder()
@@ -71,52 +71,70 @@ public class BoardService {
 
     boardRepository.save(board);
 
-    // 비동기 처리 가능한 부분
     if (images != null && !images.isEmpty()) {
       postImageService.uploadImage(board.getId(), PostType.BOARD, images);
     }
   }
 
   /**
-   * 게시글 목록 조회 - 이미지 배치 로딩으로 N+1 문제 해결
+   * 게시글 목록 조회 - 댓글 수 포함
    */
   @Transactional(readOnly = true)
   @Cacheable(value = "boards", key = "#page + '_' + #size + '_' + #name + '_' + #branchId")
   public PageResponse<BoardResponse> getBoards(int page, int size, String name, Long branchId) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Board> boards = findBoardsWithOptimizedQuery(pageRequest, name, branchId);
+    // 댓글 수와 함께 게시글 조회
+    Page<Object[]> boardsWithCommentCount = boardRepository.findBoardsWithCommentCount(name, branchId, pageRequest);
 
-    // 이미지 배치 로딩으로 N+1 문제 해결
-    Set<Long> boardIds = boards.getContent().stream()
-        .map(Board::getId)
+    // 이미지 배치 로딩
+    Set<Long> boardIds = boardsWithCommentCount.getContent().stream()
+        .map(result -> ((Board) result[0]).getId())
         .collect(Collectors.toSet());
 
     Map<Long, List<PostImage>> imageMap = loadImagesInBatch(boardIds);
 
-    Page<BoardResponse> boardResponses = boards.map(board ->
-        createBoardResponse(board, imageMap.getOrDefault(board.getId(), Collections.emptyList()))
+    // BoardResponse 생성 (댓글 수 포함)
+    List<BoardResponse> boardResponses = boardsWithCommentCount.getContent().stream()
+        .map(result -> {
+          Board board = (Board) result[0];
+          Long commentCount = ((Number) result[1]).longValue();
+          List<PostImage> images = imageMap.getOrDefault(board.getId(), Collections.emptyList());
+
+          return createBoardResponse(board, images, commentCount);
+        })
+        .collect(Collectors.toList());
+
+    Page<BoardResponse> responsePage = new PageImpl<>(
+        boardResponses,
+        pageRequest,
+        boardsWithCommentCount.getTotalElements()
     );
 
-    return PageResponse.fromPage(boardResponses);
+    return PageResponse.fromPage(responsePage);
   }
 
   /**
-   * 게시글 상세 조회 - 조회수 증가 최적화
+   * 게시글 상세 조회 - 댓글 수 포함
    */
   @Cacheable(value = "board", key = "#boardId")
   public BoardResponse getBoard(Long boardId, HttpServletRequest request) {
     Board board = findBoardByIdWithOptimizedQuery(boardId);
 
-    // 조회수 증가 처리 (별도 트랜잭션으로 분리 고려)
+    // 조회수 증가 처리
     handleViewCountIncrease(board, boardId, request);
 
+    // 댓글 수 조회
+    Long commentCount = boardRepository.countCommentsByBoardId(boardId);
+
+    // 이미지 조회
     List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
-    return createBoardResponse(board, postImages);
+
+    return createBoardResponse(board, postImages, commentCount);
   }
 
   /**
-   * 게시글 수정 - 권한 검증 최적화
+   * 게시글 수정
    */
   @CacheEvict(value = {"boards", "board"}, allEntries = true)
   public void updateBoard(BoardUpdate request, Long userId, Long boardId,
@@ -134,7 +152,7 @@ public class BoardService {
   }
 
   /**
-   * 게시글 삭제 - 소프트 삭제
+   * 게시글 삭제
    */
   @CacheEvict(value = {"boards", "board"}, allEntries = true)
   public void deleteBoard(Long userId, Long boardId) {
@@ -142,6 +160,8 @@ public class BoardService {
     Board board = findBoardById(boardId);
 
     validateDeletePermission(user, board);
+
+    commentRepository.softDeleteByTargetIdAndCommentType(boardId, CommentType.BOARD);
 
     board.softDelete();
   }
@@ -184,19 +204,6 @@ public class BoardService {
     }
   }
 
-  private Page<Board> findBoardsWithOptimizedQuery(PageRequest pageRequest, String name, Long branchId) {
-    try {
-      Specification<Board> spec = Specification.where(BoardSpecification.includeDeletedUsers())
-          .and(BoardSpecification.hasUserName(name))
-          .and(BoardSpecification.hasBranchId(branchId));
-
-      return boardRepository.findAll(spec, pageRequest);
-    } catch (Exception e) {
-      log.warn("Specification 조회 실패, 안전한 쿼리로 폴백: {}", e.getMessage());
-      return boardRepository.findBoardsSafely(name, branchId, pageRequest);
-    }
-  }
-
   private Board findBoardByIdWithOptimizedQuery(Long boardId) {
     try {
       return boardRepository.findById(boardId)
@@ -219,23 +226,22 @@ public class BoardService {
     String sessionKey = VIEWED_BOARD_PREFIX + boardId;
 
     if (session.getAttribute(sessionKey) == null) {
-      // 조회수 증가는 비동기 처리나 별도 트랜잭션 고려
       board.increaseViewCount();
       session.setAttribute(sessionKey, true);
       session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
     }
   }
 
-  private BoardResponse createBoardResponse(Board board, List<PostImage> postImages) {
+  private BoardResponse createBoardResponse(Board board, List<PostImage> postImages, Long commentCount) {
     try {
-      return BoardResponse.fromEntity(board, postImages);
+      return BoardResponse.fromEntity(board, postImages, commentCount);
     } catch (Exception e) {
       log.warn("BoardResponse 생성 실패: {}", e.getMessage());
-      return createSafeBoardResponse(board);
+      return createSafeBoardResponse(board, commentCount);
     }
   }
 
-  private BoardResponse createSafeBoardResponse(Board board) {
+  private BoardResponse createSafeBoardResponse(Board board, Long commentCount) {
     List<ImageResponse> emptyImages = Collections.emptyList();
 
     String authorName = Optional.ofNullable(board.getUser())
@@ -254,6 +260,7 @@ public class BoardService {
         authorName,
         emptyImages,
         board.getViewCount(),
+        commentCount,
         board.getCreatedAt(),
         board.getModifiedAt()
     );
