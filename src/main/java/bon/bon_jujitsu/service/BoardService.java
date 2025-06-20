@@ -248,6 +248,10 @@ public class BoardService {
         .map(User::getName)
         .orElse("탈퇴한 회원");
 
+    Long authorId = Optional.ofNullable(board.getUser())
+        .map(User::getId)
+        .orElse(null);  // authorId 추가
+
     String region = Optional.ofNullable(board.getBranch())
         .map(Branch::getRegion)
         .orElse("지부 정보 없음");
@@ -258,6 +262,7 @@ public class BoardService {
         board.getContent(),
         region,
         authorName,
+        authorId,        // authorId 매개변수 추가
         emptyImages,
         board.getViewCount(),
         commentCount,

@@ -15,6 +15,7 @@ public record BoardResponse(
     String content,
     String region,
     String author,
+    Long authorId,
     List<ImageResponse> images,
     Long viewCount,
     Long commentCount,  // 댓글 수 추가
@@ -48,6 +49,15 @@ public record BoardResponse(
       authorName = "탈퇴한 회원";
     }
 
+    Long authorId = null;
+    try {
+      if (board.getUser() != null) {
+        authorId = board.getUser().getId();
+      }
+    } catch (Exception e) {
+      authorId = null;
+    }
+
     String region;
     try {
       region = board.getBranch() != null ? board.getBranch().getRegion() : "지부 정보 없음";
@@ -61,6 +71,7 @@ public record BoardResponse(
         .content(board.getContent())
         .region(region)
         .author(authorName)
+        .authorId(authorId)
         .images(imageResponses)
         .viewCount(board.getViewCount())
         .commentCount(commentCount)
