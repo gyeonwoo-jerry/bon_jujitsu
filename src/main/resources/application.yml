@@ -7,4 +7,4 @@ spring:
     pathmatch:
       matching-strategy: ant-path-matcher
 
-filepath: /uploads/images/
+filepath: /data/uploads/bon/

@@ -46,4 +46,4 @@ logging:
     org.springframework.jdbc: DEBUG # Spring JDBC 로그 디버그(DEBUG) 모드 활성화
     org.springframework.transaction: DEBUG # Spring 트랜잭션 로그 디버그(DEBUG) 모드 활성화
 
-filepath: /uploads/images/
+filepath: /data/uploads/bon/
