@@ -9,9 +9,8 @@ import bon.bon_jujitsu.dto.response.CommentResponse;
 import bon.bon_jujitsu.dto.update.CommentUpdate;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.CommentRepository;
-import bon.bon_jujitsu.repository.NewsRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
-import bon.bon_jujitsu.repository.SponsorRepository;
+import bon.bon_jujitsu.repository.QnARepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,8 +31,7 @@ public class CommentService {
   private final CommentRepository commentRepository;
   private final BoardRepository boardRepository;
   private final NoticeRepository noticeRepository;
-  private final NewsRepository newsRepository;
-  private final SponsorRepository sponsorRepository;
+  private final QnARepository qnARepository;
 
   // 최대 댓글 깊이 상수화
   private static final int MAX_COMMENT_DEPTH = 3;
@@ -147,7 +145,7 @@ public class CommentService {
           .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
       case NOTICE -> noticeRepository.findById(targetId)
           .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
-      case QNA -> noticeRepository.findById(targetId)
+      case QNA -> qnARepository.findById(targetId)
           .orElseThrow(() -> new IllegalArgumentException("QNA를 찾을 수 없습니다."));
       default -> throw new IllegalArgumentException("올바르지 않은 댓글 타입입니다.");
     }
