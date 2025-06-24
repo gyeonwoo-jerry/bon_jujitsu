@@ -35,7 +35,7 @@ spring:
 
 logging:
   level:
-    root: INFO # 전체 애플리케이션 기본 로그 레벨
+    root: DEBUG # 전체 애플리케이션 기본 로그 레벨
     sun.rmi: INFO
     sun.rmi.transport.tcp: INFO
     javax.management.remote.rmi: INFO
