@@ -1,6 +1,6 @@
 // src/config/index.js
 const dev = {
-  apiUrl: "http://211.110.44.79:58080",
+  apiUrl: "http://211.110.44.28:58080",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
@@ -10,7 +10,7 @@ const prod = {
 };
 
 const local = {
-  apiUrl: "http://211.110.44.79:58080",
+  apiUrl: "http://211.110.44.28:58080",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
