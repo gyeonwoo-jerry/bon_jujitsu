@@ -1,6 +1,6 @@
 // src/config/index.js
 const dev = {
-  apiUrl: "http://211.110.44.28:58080",
+  apiUrl: "http://bon-dev.ezylab.co.kr",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
@@ -10,7 +10,7 @@ const prod = {
 };
 
 const local = {
-  apiUrl: "http://211.110.44.28:58080",
+  apiUrl: "http://bon-dev.ezylab.co.kr",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
