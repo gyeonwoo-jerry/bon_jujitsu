@@ -23,9 +23,9 @@ public record SignupRequest (
         String birthday,
         @NotBlank(message = "성별을 입력해주세요.")
         String gender,
-        @NotNull(message = "지점을 선택해주세요.")
-        @Size(min = 1, message = "최소 하나의 지점을 선택해주세요.")
-        List<Long> branchIds,
+//        @NotNull(message = "지점을 선택해주세요.")
+//        @Size(min = 1, message = "최소 하나의 지점을 선택해주세요.")
+//        List<Long> branchIds,
         @Min(0)
         int level,
         Stripe stripe,
