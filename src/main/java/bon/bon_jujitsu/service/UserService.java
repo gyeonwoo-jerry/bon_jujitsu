@@ -86,20 +86,20 @@ public class UserService {
       throw new IllegalArgumentException("중복된 전화번호입니다.");
     }
 
-//    // 지점 중복 방지 검증
-//    List<Long> branchIds = req.branchIds();
-//    Set<Long> uniqueBranchIds = new HashSet<>(branchIds);
-//
-//    if (uniqueBranchIds.size() != branchIds.size()) {
-//      throw new IllegalArgumentException("같은 지점에 중복으로 가입할 수 없습니다.");
-//    }
-//
-//    // 선택된 지점들이 모두 존재하는지 확인
-//    List<Branch> branches = branchRepository.findAllById(branchIds);
-//
-//    if (branches.size() != branchIds.size()) {
-//      throw new IllegalArgumentException("존재하지 않는 지점이 포함되어 있습니다.");
-//    }
+    // 지점 중복 방지 검증
+    List<Long> branchIds = req.branchIds();
+    Set<Long> uniqueBranchIds = new HashSet<>(branchIds);
+
+    if (uniqueBranchIds.size() != branchIds.size()) {
+      throw new IllegalArgumentException("같은 지점에 중복으로 가입할 수 없습니다.");
+    }
+
+    // 선택된 지점들이 모두 존재하는지 확인
+    List<Branch> branches = branchRepository.findAllById(branchIds);
+
+    if (branches.size() != branchIds.size()) {
+      throw new IllegalArgumentException("존재하지 않는 지점이 포함되어 있습니다.");
+    }
 
     // 유저를 빌더로 저장
     User user = User.builder()
@@ -121,16 +121,16 @@ public class UserService {
             .build();
     userRepository.save(user);
 
-//    // 선택된 모든 지점에 대해 BranchUser 생성
-//    List<BranchUser> branchUsers = branches.stream()
-//            .map(branch -> BranchUser.builder()
-//                    .user(user)
-//                    .branch(branch)
-//                    .userRole(UserRole.PENDING)
-//                    .build())
-//            .toList();
-//
-//    branchUserRepository.saveAll(branchUsers);
+    // 선택된 모든 지점에 대해 BranchUser 생성
+    List<BranchUser> branchUsers = branches.stream()
+            .map(branch -> BranchUser.builder()
+                    .user(user)
+                    .branch(branch)
+                    .userRole(UserRole.PENDING)
+                    .build())
+            .toList();
+
+    branchUserRepository.saveAll(branchUsers);
 
     userImageService.uploadImage(user, images);
   }
