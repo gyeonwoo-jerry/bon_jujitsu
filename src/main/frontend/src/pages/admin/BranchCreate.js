@@ -96,7 +96,7 @@ const BranchCreate = () => {
 
     // 최대 20개 이미지 파일 제한
     if (files.length + branchData.images.length > 20) {
-      alert('이미지는 최대 5개까지 업로드할 수 있습니다.');
+      alert('이미지는 최대 20개까지 업로드할 수 있습니다.');
       return;
     }
 

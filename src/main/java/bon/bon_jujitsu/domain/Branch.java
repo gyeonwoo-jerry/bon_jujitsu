@@ -31,7 +31,7 @@ public class Branch extends Timestamped {
   @Column(unique = true, nullable = false)
   private String address;
 
-  @Column(unique = true, nullable = false)
+  @Column(nullable = false)
   private String area;
 
   @Column(nullable = false)
