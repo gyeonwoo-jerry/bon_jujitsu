@@ -84,8 +84,8 @@ function AppRoutes() {
           <Route path="/introLevel" element={<IntroLevel />} />
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
-          <Route path="/branches/:id/board/:id" element={<BoardDetailPage />} />
-          <Route path="/branches/:id/notice/:id" element={<BoardDetailPage />} />
+          <Route path="/branches/:branchId/board/:boardId" element={<BoardDetailPage />} />
+          <Route path="/branches/:branchId/notice/:noticeId" element={<BoardDetailPage />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
           <Route path="/storeWrite" element={<StoreWritePage />} />

@@ -104,6 +104,18 @@
     font-weight: 600;
 }
 
+.branch-board-container .board-list .post-item .post-comments {
+    text-align: center;
+    color: var(--black-color, #000); /* 다른 컬럼과 같은 검정색 */
+    font-weight: normal; /* 다른 컬럼과 같은 폰트 굵기 */
+    font-size: 14px; /* 다른 컬럼과 같은 폰트 크기 */
+}
+
+/* 댓글이 없을 때의 스타일도 검정색으로 */
+.branch-board-container .board-list .post-item .post-comments:empty::after {
+    content: "0";
+    color: var(--black-color, #000);
+}
 
 
 

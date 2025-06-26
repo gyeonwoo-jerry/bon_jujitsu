@@ -1,394 +1,309 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import API from "../utils/api";
-import { loggedNavigate } from "../utils/navigationLogger";
-import "../styles/boardDetail.css";
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import API from '../utils/api';
+import { loggedNavigate } from '../utils/navigationLogger';
+import '../styles/boardDetail.css';
 
-function BoardDetail({ apiEndpoint = "/board", onPostLoad }) {
-  const { id } = useParams(); // URL에서 게시글 ID를 가져옵니다.
-  const [post, setPost] = useState(null);
+const BoardDetail = ({ apiEndpoint = '/board', postId: propPostId, onPostLoad }) => {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const loggedNav = loggedNavigate(navigate);
+  const fetchedRef = useRef(false);
+  const currentBoardIdRef = useRef(null); // 현재 로드된 boardId 추적
+
+  const { branchId, boardId } = params;
+
+  // 수동 파라미터 추출 (라우터 파라미터가 실패할 경우 백업)
+  const [extractedBranchId, setExtractedBranchId] = useState(null);
+  const [extractedBoardId, setExtractedBoardId] = useState(null);
+
+  useEffect(() => {
+    const path = location.pathname;
+
+    // URL 패턴: /branches/{branchId}/board/{boardId}
+    const matches = path.match(/\/branches\/(\d+)\/board\/(\d+)/);
+    if (matches) {
+      const [, extractedBranch, extractedBoard] = matches;
+      setExtractedBranchId(extractedBranch);
+      setExtractedBoardId(extractedBoard);
+    }
+  }, [location.pathname]);
+
+  // 최종 사용할 ID들 (props 우선, 없으면 라우터 파라미터, 그것도 없으면 수동 추출 값 사용)
+  const finalBranchId = branchId || extractedBranchId;
+  const finalBoardId = propPostId || boardId || extractedBoardId;
+
+  const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const rawNavigate = useNavigate();
-  const navigate = loggedNavigate(rawNavigate);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  // API 엔드포인트 정규화 - useMemo로 메모이제이션
-  const normalizedApiEndpoint = useMemo(() => {
-    return apiEndpoint.startsWith("/") ? apiEndpoint : `/${apiEndpoint}`;
-  }, [apiEndpoint]);
-
-  // 이미지 URL 정규화 함수
-  const normalizeImageUrl = (imageData) => {
-    // 빈 값이면 기본 이미지 반환
-    if (!imageData) {
-      return "/images/blank_img.png";
+  useEffect(() => {
+    // boardId가 바뀔 때만 초기화 (같은 boardId면 무시)
+    if (currentBoardIdRef.current !== finalBoardId) {
+      console.log('🔄 BoardId 변경됨:', currentBoardIdRef.current, '→', finalBoardId);
+      fetchedRef.current = false;
+      currentBoardIdRef.current = finalBoardId;
+    } else {
+      console.log('⏭️ 같은 BoardId - 건너뜀:', finalBoardId);
+      return;
     }
 
-    let url = imageData;
-
-    // 객체인 경우 URL 추출
-    if (typeof imageData === 'object') {
-      url = imageData.url || imageData.imagePath || imageData.src;
-    }
-
-    // URL이 여전히 문자열이 아니면 기본 이미지 반환
-    if (!url || typeof url !== 'string') {
-      return "/images/blank_img.png";
-    }
-
-    // 이미 절대 URL인 경우 그대로 반환
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-
-    // 상대 URL인 경우 백엔드 서버 경로로 변환
-    if (url.startsWith("/uploads/")) {
-      const finalUrl = `http://211.110.44.79:58080${url}`;
-      return finalUrl;
-    }
-
-    // 상대 URL인 경우 경로 정리
-    if (url.includes("%")) {
-      try {
-        const decodedUrl = decodeURIComponent(url);
-        return decodedUrl;
-      } catch (e) {
-        console.error("URL 디코딩 오류:", e);
-      }
-    }
-
-    // 슬래시로 시작하는지 확인하고 조정
-    const finalUrl = url.startsWith("/") ? url : `/${url}`;
-    return finalUrl;
-  };
-
-  // fetchPostDetail 함수를 useCallback으로 메모이제이션 - 의존성 최소화
-  const fetchPostDetail = useCallback(async () => {
-    // ID가 유효한지 확인
-    if (!id || id === "undefined" || id === undefined || id === null || typeof id !== 'string') {
-      setError("유효하지 않은 게시글 ID입니다.");
+    // boardId 유효성 검사
+    if (!finalBoardId || finalBoardId === 'undefined' || isNaN(Number(finalBoardId))) {
+      setError('유효하지 않은 게시글 ID입니다.');
       setLoading(false);
       return;
     }
+
+    // branchId 유효성 검사
+    if (!finalBranchId || finalBranchId === 'undefined' || isNaN(Number(finalBranchId))) {
+      setError('유효하지 않은 지부 ID입니다.');
+      setLoading(false);
+      return;
+    }
+
+    fetchBoardDetail();
+  }, [finalBranchId, finalBoardId]);
+
+  const fetchBoardDetail = async () => {
+    // 디버깅 로그
+    console.log('🔍 fetchBoardDetail 호출됨');
+    console.log('fetchedRef.current:', fetchedRef.current);
+    console.log('finalBoardId:', finalBoardId);
+    console.log('apiEndpoint:', apiEndpoint);
+
+    // 중복 호출 방지
+    if (fetchedRef.current) {
+      console.log('❌ 이미 호출됨 - 중단');
+      return;
+    }
+    fetchedRef.current = true;
+    console.log('✅ 첫 호출 - 진행');
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await API.get(`${normalizedApiEndpoint}/${id}`, { headers });
+      setError('');
 
-      if (response.status === 200) {
-        if (response.data.success) {
-          const postData = response.data.content;
-          setPost(postData);
-          document.title = postData?.title || "게시글 상세";
+      // boardId 재검증
+      if (!finalBoardId || finalBoardId === 'undefined' || isNaN(Number(finalBoardId))) {
+        throw new Error('Invalid board ID');
+      }
 
-          // 게시글 제목을 부모 컴포넌트로 전달
-          if (onPostLoad && postData.title) {
-            onPostLoad(postData.title);
-          }
-        } else {
-          throw new Error(response.data.message || "게시글을 불러오는데 실패했습니다.");
+      console.log('📡 API 요청 시작:', `${apiEndpoint}/${finalBoardId}`);
+      const response = await API.get(`${apiEndpoint}/${finalBoardId}`);
+
+      console.log('📡 API 응답 받음:', response.status);
+
+      if (response.data.success) {
+        console.log('✅ 게시글 데이터 설정');
+        setBoard(response.data.content);
+
+        // 게시글 로드 완료 시 상위 컴포넌트에 제목 전달
+        if (onPostLoad && response.data.content.title) {
+          onPostLoad(response.data.content.title);
         }
       } else {
-        throw new Error("게시글을 불러오는데 실패했습니다.");
+        console.log('❌ API 응답 실패:', response.data);
+        setError(response.data.message || '게시글을 불러오는데 실패했습니다.');
       }
     } catch (err) {
-      console.error("게시글 로딩 오류:", err);
-      let errorMessage = "게시글을 불러오는 중 오류가 발생했습니다.";
-
-      if (err.response) {
-        if (err.response.status === 500) {
-          errorMessage = "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-        } else if (err.response.status === 404) {
-          errorMessage = "게시글을 찾을 수 없습니다.";
-        } else if (err.response.data && err.response.data.message) {
-          errorMessage = err.response.data.message;
-        } else {
-          errorMessage = `서버 오류 (${err.response.status}): ${errorMessage}`;
-        }
-      } else if (err.request) {
-        errorMessage = "네트워크 연결을 확인해주세요.";
+      console.log('💥 API 에러:', err);
+      if (err.response?.status === 404) {
+        setError('존재하지 않는 게시글입니다.');
+      } else if (err.response?.status === 403) {
+        setError('게시글에 접근할 권한이 없습니다.');
+      } else if (err.message === 'Invalid board ID') {
+        setError('유효하지 않은 게시글 ID입니다.');
+      } else {
+        setError('게시글을 불러오는데 실패했습니다.');
       }
-
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [normalizedApiEndpoint, id]); // onPostLoad 제거
+  };
 
-  // onPostLoad 호출을 별도 useEffect로 분리
-  useEffect(() => {
-    if (post && post.title && onPostLoad) {
-      onPostLoad(post.title);
-    }
-  }, [post, onPostLoad]);
+  const handleBackToList = () => {
+    loggedNav(`/branches/${finalBranchId}/board`);
+  };
 
-  useEffect(() => {
-    const checkUserRole = () => {
+  const handleEditBoard = () => {
+    loggedNav(`/branches/${finalBranchId}/board/edit/${finalBoardId}`);
+  };
+
+  const handleDeleteBoard = async () => {
+    if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
       try {
-        const userInfoStr = localStorage.getItem('userInfo');
-        if (userInfoStr) {
-          const userInfo = JSON.parse(userInfoStr);
-          setIsAdmin(userInfo.role === 'ADMIN');
+        const response = await API.delete(`${apiEndpoint}/${finalBoardId}`);
+        if (response.data.success) {
+          alert('게시글이 삭제되었습니다.');
+          loggedNav(`/branches/${finalBranchId}/board`);
+        } else {
+          alert(response.data.message || '게시글 삭제에 실패했습니다.');
         }
-      } catch (error) {
-        console.error('사용자 권한 확인 오류:', error);
-        setIsAdmin(false);
+      } catch (err) {
+        alert('게시글 삭제에 실패했습니다.');
       }
-    };
-    checkUserRole();
-  }, []); // 한 번만 실행
+    }
+  };
 
-  // DOM 감시를 별도 useEffect로 분리
-  useEffect(() => {
-    // DOM 감시 함수
-    const checkUndefinedAttributes = () => {
-      const allElements = document.querySelectorAll('*');
-      let foundUndefined = false;
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
 
-      allElements.forEach(element => {
-        // href 속성 확인
-        if (element.href && element.href.includes('undefined')) {
-          console.error('🚨 UNDEFINED HREF 발견:', element);
-          foundUndefined = true;
-          element.removeAttribute('href');
-          element.style.pointerEvents = 'none';
-          element.style.color = '#ccc';
-        }
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // src 속성 확인
-        if (element.src && element.src.includes('undefined')) {
-          console.error('🚨 UNDEFINED SRC 발견:', element);
-          foundUndefined = true;
-          element.src = '/images/blank_img.png';
-        }
-
-        // action 속성 확인
-        if (element.action && element.action.includes('undefined')) {
-          console.error('🚨 UNDEFINED ACTION 발견:', element);
-          foundUndefined = true;
-          element.removeAttribute('action');
-        }
+    if (diffDays === 1) {
+      return date.toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
-
-      if (foundUndefined) {
-        console.log('🔧 UNDEFINED 속성들을 수정했습니다.');
-      }
-    };
-
-    // 초기 검사
-    const timeoutId = setTimeout(checkUndefinedAttributes, 500);
-
-    // 주기적 검사
-    const intervalId = setInterval(checkUndefinedAttributes, 2000);
-
-    // cleanup
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []); // 한 번만 설정
-
-  // API 호출을 별도 useEffect로 분리 - fetchPostDetail 의존성 제거
-  useEffect(() => {
-    // 게시글 ID가 유효할 때만 API를 호출합니다.
-    if (id && id !== "undefined" && id !== undefined && id !== null && typeof id === 'string') {
-      fetchPostDetail();
+    } else if (diffDays <= 7) {
+      return `${diffDays}일 전`;
     } else {
-      if (id) {
-        setError("유효하지 않은 게시글 ID입니다.");
-        setLoading(false);
-      }
-    }
-  }, [id, normalizedApiEndpoint]); // fetchPostDetail 제거, 핵심 의존성만 유지
-
-  const handleGoBack = () => {
-    navigate(-1); // 이전 페이지로 이동
-  };
-
-  // 게시물 수정 함수
-  const handleEdit = () => {
-    if (!id || id === "undefined") {
-      alert("유효하지 않은 게시글입니다.");
-      return;
-    }
-
-    // API 엔드포인트에 따라 수정 페이지 경로 결정
-    let editPath = "";
-
-    if (normalizedApiEndpoint.includes("/skill")) {
-      editPath = `/skillWrite/edit/${id}`;
-    } else if (normalizedApiEndpoint.includes("/news")) {
-      editPath = `/newsWrite/edit/${id}`;
-    } else if (normalizedApiEndpoint.includes("/qna")) {
-      editPath = `/qnaWrite/edit/${id}`;
-    } else if (normalizedApiEndpoint.includes("/sponsor")) {
-      editPath = `/sponsorWrite/edit/${id}`;
-    } else {
-      // 기본 게시판
-      editPath = `/boardWrite/edit/${id}`;
-    }
-
-    navigate(editPath);
-  };
-
-  // 게시물 삭제 함수
-  const handleDelete = async () => {
-    // ID 유효성 확인
-    if (!id || id === "undefined") {
-      alert("유효하지 않은 게시글입니다.");
-      return;
-    }
-
-    // 사용자 확인
-    if (!window.confirm("정말로 이 게시물을 삭제하시겠습니까?")) {
-      return;
-    }
-
-    try {
-      // localStorage에서 userId 가져오기
-      const userId = localStorage.getItem("userId") || 1;
-
-      // API 엔드포인트 경로 처리
-      // '/board' -> '' (비움), '/news' -> '/news' 유지
-      const deleteEndpoint = normalizedApiEndpoint.includes("/board")
-          ? normalizedApiEndpoint.replace("/board", "")
-          : normalizedApiEndpoint;
-
-      // 빈 문자열 체크하여 기본값 설정
-      const finalEndpoint = deleteEndpoint || "";
-
-      // 삭제 API 호출
-      const response = await API.delete(`${finalEndpoint}/${id}?id=${userId}`);
-
-      if (response.status === 200) {
-        alert("게시물이 성공적으로 삭제되었습니다.");
-        // 목록 페이지로 이동
-        navigate(-1);
-      } else {
-        throw new Error(
-            `삭제 요청이 실패했습니다. 상태 코드: ${response.status}`
-        );
-      }
-    } catch (err) {
-      console.error("게시물 삭제 중 오류 발생:", err);
-      alert(
-          "게시물 삭제 중 오류가 발생했습니다: " +
-          (err.message || "알 수 없는 오류")
-      );
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     }
   };
 
-  // 로딩 중인 경우
+  const openImageModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+  };
+
+  // 현재 사용자가 작성자인지 확인하는 함수
+  const isAuthor = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    return userInfo.id === board?.authorId;
+  };
+
   if (loading) {
-    return <div className="loading">게시글을 불러오는 중...</div>;
-  }
-
-  // 오류가 발생한 경우
-  if (error) {
     return (
-        <div className="error-container">
-          <p className="error-message">{error}</p>
-          <button className="back-button" onClick={handleGoBack}>
-            목록으로 돌아가기
-          </button>
+        <div className="board-detail-container">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p>게시글을 불러오는 중...</p>
+          </div>
         </div>
     );
   }
 
-  // 게시글이 없는 경우
-  if (!post) {
+  if (error) {
     return (
-        <div className="error-container">
-          <p className="error-message">게시글을 찾을 수 없습니다.</p>
-          <button className="back-button" onClick={handleGoBack}>
-            목록으로 돌아가기
-          </button>
+        <div className="board-detail-container">
+          <div className="error-message">
+            <h3>오류가 발생했습니다</h3>
+            <p>{error}</p>
+            <button onClick={handleBackToList} className="btn-secondary">
+              목록으로 돌아가기
+            </button>
+          </div>
+        </div>
+    );
+  }
+
+  if (!board) {
+    return (
+        <div className="board-detail-container">
+          <div className="error-message">
+            <h3>게시글을 찾을 수 없습니다</h3>
+            <button onClick={handleBackToList} className="btn-secondary">
+              목록으로 돌아가기
+            </button>
+          </div>
         </div>
     );
   }
 
   return (
       <div className="board-detail-container">
-        <div className="inner">
-          <div className="detail_header">
-            <button className="back-button" onClick={handleGoBack}>
-              &larr;
-            </button>
-            {isAdmin && (
-                <div className="admin-buttons">
-                  <button className="edit-button" onClick={handleEdit}>
-                    수정
-                  </button>
-                  <button className="delete-button" onClick={handleDelete}>
-                    삭제
-                  </button>
-                </div>
-            )}
+        <div className="board-detail-header">
+          <button onClick={handleBackToList} className="btn-back">
+            ← 목록으로
+          </button>
+          {isAuthor() && (
+              <div className="board-actions">
+                <button onClick={handleEditBoard} className="btn-edit">
+                  수정
+                </button>
+                <button onClick={handleDeleteBoard} className="btn-delete">
+                  삭제
+                </button>
+              </div>
+          )}
+        </div>
+
+        <div className="board-detail-content">
+          <div className="board-header">
+            <h1 className="board-title">{board.title}</h1>
+            <div className="board-meta">
+              <div className="board-meta-left">
+                <span className="author">작성자: {board.author}</span>
+                <span className="region">지역: {board.region}</span>
+              </div>
+              <div className="board-meta-right">
+                <span className="date">작성일: {formatDate(board.createdAt)}</span>
+                <span className="views">조회수: {board.viewCount?.toLocaleString()}</span>
+                <span className="comments">댓글: {board.commentCount}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="detail_content">
-            <h1 className="title">{post.title || "제목 없음"}</h1>
-            <div className="meta_data">
-              {post.region && (
-                  <span className="post-detail-region">{post.region}</span>
-              )}
-              <span className="post-detail-author">
-              {post.name || "작성자 없음"}
-            </span>
-              <span className="post-detail-date">
-              {post.createdAt
-                  ? new Date(post.createdAt).toLocaleDateString()
-                  : "날짜 정보 없음"}
-            </span>
+          <div className="board-content">
+            <div className="content-text">
+              {board.content.split('\n').map((line, index) => (
+                  <p key={index}>{line}</p>
+              ))}
             </div>
-            <div className="post-detail-content">
-              {Array.isArray(post.images) && post.images.length > 0 && (
-                  <div className="post_detail_images">
-                    {post.images.map((image, index) => (
-                        <div key={index} className="post_image">
+
+            {board.images && board.images.length > 0 && (
+                <div className="board-images">
+                  <h4>첨부 이미지</h4>
+                  <div className="image-grid">
+                    {board.images.map((image, index) => (
+                        <div key={image.id || index} className="image-item">
                           <img
-                              src={normalizeImageUrl(image)}
-                              alt={`${post.title || "게시글"} 이미지 ${index + 1}`}
-                              className="post-detail-image"
-                              onError={(e) => {
-                                e.target.src = "/images/blank_img.png";
-                                e.target.onerror = null; // 무한 루프 방지
-                              }}
+                              src={image.url}
+                              alt={`첨부 이미지 ${index + 1}`}
+                              onClick={() => openImageModal(image.url)}
+                              className="board-image"
                           />
                         </div>
                     ))}
                   </div>
-              )}
-
-              {post.content && (
-                  <div className="post-detail-text">
-                    {post.content.split("\n").map((paragraph, index) => (
-                        <p key={index}>{paragraph}</p>
-                    ))}
-                  </div>
-              )}
-
-              {/* 제휴업체 URL이 있는 경우 링크 표시 */}
-              {post.url && post.url.trim() && (
-                  <div className="post-external-link">
-                    <a
-                        href={post.url.startsWith('http') ? post.url : `https://${post.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="external-link-button"
-                    >
-                      공식 웹사이트 방문하기
-                    </a>
-                  </div>
-              )}
-            </div>
+                </div>
+            )}
           </div>
+
+          {board.modifiedAt && board.modifiedAt !== board.createdAt && (
+              <div className="board-modified">
+                <small>마지막 수정: {formatDate(board.modifiedAt)}</small>
+              </div>
+          )}
         </div>
+
+        {/* 이미지 모달 */}
+        {selectedImage && (
+            <div className="image-modal" onClick={closeImageModal}>
+              <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                <img src={selectedImage} alt="확대된 이미지" />
+                <button className="modal-close" onClick={closeImageModal}>
+                  ×
+                </button>
+              </div>
+            </div>
+        )}
       </div>
   );
-}
+};
 
 export default BoardDetail;
