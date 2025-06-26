@@ -117,12 +117,18 @@ public class BoardService {
   /**
    * 게시글 상세 조회 - 댓글 수 포함
    */
-  @Cacheable(value = "board", key = "#boardId")
   public BoardResponse getBoard(Long boardId, HttpServletRequest request) {
     Board board = findBoardByIdWithOptimizedQuery(boardId);
 
-    // 조회수 증가 처리
-    handleViewCountIncrease(board, boardId, request);
+    // 세션 기반 간단한 중복 방지
+    HttpSession session = request.getSession();
+    String sessionKey = "viewed_" + boardId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      board.increaseViewCount();
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(3600); // 1시간
+    }
 
     // 댓글 수 조회
     Long commentCount = boardRepository.countCommentsByBoardId(boardId);
