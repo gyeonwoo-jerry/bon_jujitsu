@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
+import Comment from './Comment';
 import '../styles/boardDetail.css';
 
 const BoardDetail = () => {
@@ -387,6 +388,9 @@ const BoardDetail = () => {
               </div>
           )}
         </div>
+
+        {/* 댓글 섹션 */}
+        <Comment boardId={boardId} />
 
         {/* 이미지 모달 */}
         {selectedImage && (
