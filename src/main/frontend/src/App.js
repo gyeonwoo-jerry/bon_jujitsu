@@ -1,22 +1,22 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, {useEffect} from 'react';
+import {BrowserRouter, Route, Routes} from 'react-router-dom';
 
 // 로딩 시스템 import
-import { LoadingProvider, useLoading } from './utils/LoadingContext';
-import { setLoadingManager } from './utils/api';
+import {LoadingProvider, useLoading} from './utils/LoadingContext';
+import {setLoadingManager} from './utils/api';
 import LoadingIndicator from './utils/LoadingIndicator';
 
 // 기존 컴포넌트들 import
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BoardDetail from './components/BoardDetail';
 import Academy from './pages/academy';
 import IntroGreeting from './pages/introGreeting';
 import IntroJiujitsu from './pages/introJiujitsu';
 import IntroLevel from './pages/introLevel';
 import Branches from './pages/branches';
 import BranchesDetail from './pages/branchesDetail';
-import BoardDetailPage from './pages/boardDetail';
 import Comunity from './pages/comunity';
 import Store from './pages/store';
 import StoreDetail from './pages/storeDetail';
@@ -60,6 +60,8 @@ import './styles/response.css';
 import ProtectedRoute from "./components/ProtectedRoute";
 import useSessionCheck from "./hooks/useSessionCheck";
 import useAuthGuard from "./hooks/useAuthGuard";
+import BoardWrite from "./components/BoardWrite";
+import BoardEdit from "./components/BoardEdit";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
 function AppRoutes() {
@@ -84,8 +86,9 @@ function AppRoutes() {
           <Route path="/introLevel" element={<IntroLevel />} />
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
-          <Route path="/branches/:branchId/board/:boardId" element={<BoardDetailPage />} />
-          <Route path="/branches/:branchId/notice/:noticeId" element={<BoardDetailPage />} />
+          <Route path="/branches/:branchId/board/:boardId" element={<BoardDetail />} />
+          <Route path="/branches/:branchId/board/write" element={<BoardWrite />} />
+          <Route path="/board/edit/:boardId" element={<BoardEdit />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
           <Route path="/storeWrite" element={<StoreWritePage />} />

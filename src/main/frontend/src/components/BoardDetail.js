@@ -1,121 +1,190 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
 import '../styles/boardDetail.css';
 
-const BoardDetail = ({ apiEndpoint = '/board', postId: propPostId, onPostLoad }) => {
-  const params = useParams();
-  const location = useLocation();
+const BoardDetail = () => {
+  const { branchId, boardId } = useParams();
   const navigate = useNavigate();
   const loggedNav = loggedNavigate(navigate);
   const fetchedRef = useRef(false);
-  const currentBoardIdRef = useRef(null); // 현재 로드된 boardId 추적
-
-  const { branchId, boardId } = params;
-
-  // 수동 파라미터 추출 (라우터 파라미터가 실패할 경우 백업)
-  const [extractedBranchId, setExtractedBranchId] = useState(null);
-  const [extractedBoardId, setExtractedBoardId] = useState(null);
-
-  useEffect(() => {
-    const path = location.pathname;
-
-    // URL 패턴: /branches/{branchId}/board/{boardId}
-    const matches = path.match(/\/branches\/(\d+)\/board\/(\d+)/);
-    if (matches) {
-      const [, extractedBranch, extractedBoard] = matches;
-      setExtractedBranchId(extractedBranch);
-      setExtractedBoardId(extractedBoard);
-    }
-  }, [location.pathname]);
-
-  // 최종 사용할 ID들 (props 우선, 없으면 라우터 파라미터, 그것도 없으면 수동 추출 값 사용)
-  const finalBranchId = branchId || extractedBranchId;
-  const finalBoardId = propPostId || boardId || extractedBoardId;
 
   const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [canEditState, setCanEditState] = useState(false);
 
-  useEffect(() => {
-    // boardId가 바뀔 때만 초기화 (같은 boardId면 무시)
-    if (currentBoardIdRef.current !== finalBoardId) {
-      console.log('🔄 BoardId 변경됨:', currentBoardIdRef.current, '→', finalBoardId);
-      fetchedRef.current = false;
-      currentBoardIdRef.current = finalBoardId;
-    } else {
-      console.log('⏭️ 같은 BoardId - 건너뜀:', finalBoardId);
-      return;
+  // 로그인 상태 확인
+  const isLoggedIn = () => {
+    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
+    return !!(token || accessToken);
+  };
+
+  // JWT 토큰에서 사용자 ID 추출하는 함수
+  const getUserIdFromToken = () => {
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    if (!token) return null;
+
+    try {
+      const payload = token.split('.')[1];
+      const decodedPayload = JSON.parse(atob(payload));
+      return decodedPayload.sub;
+    } catch (error) {
+      console.error('토큰 디코딩 실패:', error);
+      return null;
+    }
+  };
+
+  // 현재 사용자가 작성자인지 확인하는 함수
+  const isAuthor = () => {
+    if (!board) return false;
+
+    // 1. localStorage의 userInfo에서 id 가져오기
+    const userInfoString = localStorage.getItem('userInfo');
+    let userId = null;
+
+    if (userInfoString) {
+      const userInfo = JSON.parse(userInfoString);
+      userId = userInfo.id;
     }
 
-    // boardId 유효성 검사
-    if (!finalBoardId || finalBoardId === 'undefined' || isNaN(Number(finalBoardId))) {
+    // 2. userInfo에 id가 없으면 토큰에서 추출
+    if (!userId) {
+      userId = getUserIdFromToken();
+    }
+
+    if (!userId) {
+      console.log('❌ 사용자 ID를 찾을 수 없음');
+      return false;
+    }
+
+    console.log('=== 작성자 확인 ===');
+    console.log('현재 사용자 ID:', userId, '(타입:', typeof userId, ')');
+    console.log('게시글 작성자 ID:', board.authorId, '(타입:', typeof board.authorId, ')');
+
+    // 안전한 비교를 위해 문자열로 변환하여 비교
+    const isUserAuthor = String(userId) === String(board.authorId);
+    console.log('작성자 여부:', isUserAuthor);
+
+    return isUserAuthor;
+  };
+
+  // 관리자인지 확인하는 함수
+  const isAdmin = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    console.log('=== 관리자 확인 ===');
+    console.log('사용자 role:', userInfo.role);
+    console.log('사용자 isAdmin:', userInfo.isAdmin);
+
+    const adminStatus = userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
+    console.log('관리자 여부:', adminStatus);
+
+    return adminStatus;
+  };
+
+  // 수정/삭제 권한 확인 - React 상태로 관리
+  useEffect(() => {
+    const checkEditPermission = () => {
+      if (!board) {
+        setCanEditState(false);
+        return;
+      }
+
+      const loggedIn = isLoggedIn();
+      const userIsAuthor = isAuthor();
+      const userIsAdmin = isAdmin();
+      const permission = loggedIn && (userIsAuthor || userIsAdmin);
+
+      console.log('=== 수정/삭제 권한 체크 ===');
+      console.log('로그인 상태:', loggedIn);
+      console.log('작성자 여부:', userIsAuthor);
+      console.log('관리자 여부:', userIsAdmin);
+      console.log('최종 권한:', permission);
+
+      setCanEditState(permission);
+    };
+
+    // board 데이터가 로드된 후에 권한 체크
+    if (board) {
+      checkEditPermission();
+    }
+  }, [board]); // board가 변경될 때마다 실행
+
+  // localStorage 변경 감지 (로그인/로그아웃 시)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log('localStorage 변경 감지됨 - 권한 재확인');
+      if (board) {
+        const loggedIn = isLoggedIn();
+        const userIsAuthor = isAuthor();
+        const userIsAdmin = isAdmin();
+        const permission = loggedIn && (userIsAuthor || userIsAdmin);
+
+        setCanEditState(permission);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [board]);
+
+  useEffect(() => {
+    // boardId가 바뀔 때마다 초기화
+    fetchedRef.current = false;
+    setCanEditState(false); // 권한 상태도 초기화
+
+    // ID 유효성 검사
+    if (!boardId || boardId === 'undefined' || isNaN(Number(boardId))) {
       setError('유효하지 않은 게시글 ID입니다.');
       setLoading(false);
       return;
     }
 
-    // branchId 유효성 검사
-    if (!finalBranchId || finalBranchId === 'undefined' || isNaN(Number(finalBranchId))) {
+    if (!branchId || branchId === 'undefined' || isNaN(Number(branchId))) {
       setError('유효하지 않은 지부 ID입니다.');
       setLoading(false);
       return;
     }
 
     fetchBoardDetail();
-  }, [finalBranchId, finalBoardId]);
+  }, [branchId, boardId]);
 
   const fetchBoardDetail = async () => {
-    // 디버깅 로그
-    console.log('🔍 fetchBoardDetail 호출됨');
-    console.log('fetchedRef.current:', fetchedRef.current);
-    console.log('finalBoardId:', finalBoardId);
-    console.log('apiEndpoint:', apiEndpoint);
-
     // 중복 호출 방지
-    if (fetchedRef.current) {
-      console.log('❌ 이미 호출됨 - 중단');
-      return;
-    }
+    if (fetchedRef.current) return;
     fetchedRef.current = true;
-    console.log('✅ 첫 호출 - 진행');
 
     try {
       setLoading(true);
       setError('');
 
-      // boardId 재검증
-      if (!finalBoardId || finalBoardId === 'undefined' || isNaN(Number(finalBoardId))) {
-        throw new Error('Invalid board ID');
-      }
-
-      console.log('📡 API 요청 시작:', `${apiEndpoint}/${finalBoardId}`);
-      const response = await API.get(`${apiEndpoint}/${finalBoardId}`);
-
-      console.log('📡 API 응답 받음:', response.status);
+      console.log('📡 API 요청:', `/board/${boardId}`);
+      const response = await API.get(`/board/${boardId}`);
 
       if (response.data.success) {
-        console.log('✅ 게시글 데이터 설정');
-        setBoard(response.data.content);
+        const boardData = response.data.content;
+        console.log('📥 받은 board 데이터:', boardData);
 
-        // 게시글 로드 완료 시 상위 컴포넌트에 제목 전달
-        if (onPostLoad && response.data.content.title) {
-          onPostLoad(response.data.content.title);
+        setBoard(boardData);
+
+        // 페이지 제목 설정
+        if (boardData.title) {
+          document.title = `${boardData.title} - 게시글 상세`;
         }
       } else {
-        console.log('❌ API 응답 실패:', response.data);
         setError(response.data.message || '게시글을 불러오는데 실패했습니다.');
       }
     } catch (err) {
-      console.log('💥 API 에러:', err);
+      console.error('API 에러:', err);
       if (err.response?.status === 404) {
         setError('존재하지 않는 게시글입니다.');
       } else if (err.response?.status === 403) {
         setError('게시글에 접근할 권한이 없습니다.');
-      } else if (err.message === 'Invalid board ID') {
-        setError('유효하지 않은 게시글 ID입니다.');
       } else {
         setError('게시글을 불러오는데 실패했습니다.');
       }
@@ -125,25 +194,52 @@ const BoardDetail = ({ apiEndpoint = '/board', postId: propPostId, onPostLoad })
   };
 
   const handleBackToList = () => {
-    loggedNav(`/branches/${finalBranchId}/board`);
+    // 지부 상세 페이지로 이동
+    loggedNav(`/branches/${branchId}`);
   };
 
   const handleEditBoard = () => {
-    loggedNav(`/branches/${finalBranchId}/board/edit/${finalBoardId}`);
+    if (!isLoggedIn()) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!canEditState) {
+      alert('수정 권한이 없습니다.');
+      return;
+    }
+
+    loggedNav(`/board/edit/${boardId}`);
   };
 
   const handleDeleteBoard = async () => {
+    if (!isLoggedIn()) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!canEditState) {
+      alert('삭제 권한이 없습니다.');
+      return;
+    }
+
     if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
       try {
-        const response = await API.delete(`${apiEndpoint}/${finalBoardId}`);
+        const response = await API.delete(`/board/${boardId}`);
         if (response.data.success) {
           alert('게시글이 삭제되었습니다.');
-          loggedNav(`/branches/${finalBranchId}/board`);
+          // 삭제 완료 후 지부 상세 페이지로 이동
+          loggedNav(`/branches/${branchId}`);
         } else {
           alert(response.data.message || '게시글 삭제에 실패했습니다.');
         }
       } catch (err) {
-        alert('게시글 삭제에 실패했습니다.');
+        console.error('삭제 에러:', err);
+        if (err.response?.status === 403) {
+          alert('삭제 권한이 없습니다.');
+        } else {
+          alert('게시글 삭제에 실패했습니다.');
+        }
       }
     }
   };
@@ -178,12 +274,6 @@ const BoardDetail = ({ apiEndpoint = '/board', postId: propPostId, onPostLoad })
 
   const closeImageModal = () => {
     setSelectedImage(null);
-  };
-
-  // 현재 사용자가 작성자인지 확인하는 함수
-  const isAuthor = () => {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    return userInfo.id === board?.authorId;
   };
 
   if (loading) {
@@ -230,12 +320,19 @@ const BoardDetail = ({ apiEndpoint = '/board', postId: propPostId, onPostLoad })
           <button onClick={handleBackToList} className="btn-back">
             ← 목록으로
           </button>
-          {isAuthor() && (
+          {/* 수정/삭제 버튼 - 권한이 있을 때만 표시 */}
+          {canEditState && (
               <div className="board-actions">
-                <button onClick={handleEditBoard} className="btn-edit">
+                <button
+                    onClick={handleEditBoard}
+                    className="btn-edit"
+                >
                   수정
                 </button>
-                <button onClick={handleDeleteBoard} className="btn-delete">
+                <button
+                    onClick={handleDeleteBoard}
+                    className="btn-delete"
+                >
                   삭제
                 </button>
               </div>

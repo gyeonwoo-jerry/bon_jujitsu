@@ -14,6 +14,37 @@
     margin-bottom: 14px;
 }
 
+/* 게시판 헤더 (제목 + 글쓰기 버튼) */
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* 글쓰기 버튼 스타일 */
+.write-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.write-button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.write-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .branch-board-container .board-list {
     width: 100%;
     border-collapse: collapse;
@@ -60,7 +91,7 @@
 
 .branch-board-container .board-list .post-item:last-child {
     border-bottom: none;
-}   
+}
 
 .branch-board-container .board-list .post-item .thumbnail {
     width: 100%;
@@ -90,7 +121,7 @@
     font-size: 24px;
     color: var(--black-color);
     margin-bottom: 10px;
-}   
+}
 
 .empty-posts-message {
     font-size: 21px;
@@ -116,13 +147,3 @@
     content: "0";
     color: var(--black-color, #000);
 }
-
-
-
-
-
-
-
-
-
-

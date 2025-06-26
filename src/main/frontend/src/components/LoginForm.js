@@ -9,6 +9,19 @@ function LoginForm({ onLoginSuccess, onCloseModal }) {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // JWT 토큰에서 사용자 ID 추출하는 함수
+  const getUserIdFromToken = (token) => {
+    try {
+      const payload = token.split('.')[1];
+      const decodedPayload = JSON.parse(atob(payload));
+      console.log('🔑 토큰에서 추출한 payload:', decodedPayload);
+      return decodedPayload.sub; // sub 필드가 사용자 ID
+    } catch (error) {
+      console.error('토큰 디코딩 실패:', error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -23,17 +36,16 @@ function LoginForm({ onLoginSuccess, onCloseModal }) {
         if (response.data.success) {
           console.log("로그인 성공:", response.data);
 
+          const accessToken = response.data.content.accessToken;
+          const refreshToken = response.data.content.refreshToken;
+
           // 토큰 저장
-          setWithExpiry(
-              "accessToken",
-              response.data.content.accessToken,
-              1000 * 60 * 60
-          );
-          setWithExpiry(
-              "refreshToken",
-              response.data.content.refreshToken,
-              1000 * 60 * 60 * 24
-          );
+          setWithExpiry("accessToken", accessToken, 1000 * 60 * 60);
+          setWithExpiry("refreshToken", refreshToken, 1000 * 60 * 60 * 24);
+
+          // JWT 토큰에서 사용자 ID 추출
+          const userIdFromToken = getUserIdFromToken(accessToken);
+          console.log('🔑 토큰에서 추출한 사용자 ID:', userIdFromToken);
 
           // branchRoles 정보 추출
           const branchRoles = response.data.content.branchRoles || [];
@@ -43,12 +55,13 @@ function LoginForm({ onLoginSuccess, onCloseModal }) {
           const parsedBranchRole = branchRoles[0]?.role?.replace("ROLE_", "").toUpperCase() || "USER";
           const userRole = response.data.content.isAdmin ? "ADMIN" : parsedBranchRole;
 
-          // 사용자 정보 저장 (branchRoles 포함)
+          // 사용자 정보 저장 (JWT에서 추출한 ID 사용)
           const userInfo = {
-            id: response.data.content.id || response.data.content.userId || "",
+            id: userIdFromToken || response.data.content.id || response.data.content.userId || "",
             name: response.data.content.name || username,
             email: response.data.content.email || "",
             role: userRole,
+            isAdmin: response.data.content.isAdmin || false, // isAdmin 필드 추가
             branchRoles: branchRoles,
             // 하위 호환성을 위한 기존 필드들
             branchIds: branchRoles.map(br => br.branchId),
@@ -60,9 +73,14 @@ function LoginForm({ onLoginSuccess, onCloseModal }) {
           };
 
           console.log("저장할 사용자 정보:", userInfo);
+          console.log("사용자 ID 확인:", userInfo.id, typeof userInfo.id);
 
           // 로컬 스토리지에 사용자 정보 저장
           localStorage.setItem("userInfo", JSON.stringify(userInfo));
+
+          // 저장된 정보 검증
+          const savedUserInfo = JSON.parse(localStorage.getItem("userInfo"));
+          console.log("저장 후 확인:", savedUserInfo);
 
           // 로그인 성공 알림
           alert("로그인 성공");

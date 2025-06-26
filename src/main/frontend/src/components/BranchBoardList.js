@@ -43,6 +43,144 @@ const BranchBoardList = () => {
 
   const apiEndpoint = '/board';
 
+  // 로그인 상태 확인
+  const isLoggedIn = () => {
+    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
+
+    console.log('token 체크:');
+    console.log('  - token:', token);
+    console.log('  - accessToken:', accessToken);
+
+    // token 또는 accessToken 둘 중 하나라도 있으면 로그인 상태
+    const loggedIn = !!(token || accessToken);
+    console.log('  - 최종 로그인 상태:', loggedIn);
+
+    return loggedIn;
+  };
+
+  // 해당 지부 회원인지 확인
+  const isBranchMember = () => {
+    console.log('=== 지부 회원 확인 시작 ===');
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    console.log('parsed userInfo:', userInfo);
+    console.log('현재 branchId:', branchId);
+    console.log('branchId 타입:', typeof branchId);
+
+    // 관리자는 모든 지부에 글쓰기 가능
+    if (userInfo.isAdmin === true) {
+      console.log('✅ 관리자 권한으로 허용');
+      return true;
+    }
+
+    // 사용자의 지부 정보 확인 (branchRoles 배열에서)
+    if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+      console.log('branchRoles 배열:', userInfo.branchRoles);
+
+      const isMember = userInfo.branchRoles.some(branchRole => {
+        const userBranchId = branchRole.branchId;
+        const currentBranchId = branchId;
+
+        console.log(`비교: ${userBranchId} (${typeof userBranchId}) === ${currentBranchId} (${typeof currentBranchId})`);
+        console.log(`문자열 비교: "${userBranchId}" === "${currentBranchId}" = ${String(userBranchId) === String(currentBranchId)}`);
+        console.log(`숫자 비교: ${Number(userBranchId)} === ${Number(currentBranchId)} = ${Number(userBranchId) === Number(currentBranchId)}`);
+
+        // 안전한 비교: 둘 다 문자열로 변환해서 비교
+        return String(userBranchId) === String(currentBranchId);
+      });
+
+      console.log('✅ 최종 지부 회원 여부:', isMember);
+      return isMember;
+    } else {
+      console.log('❌ branchRoles 정보 없음');
+    }
+
+    return false;
+  };
+
+  // 글쓰기 권한 확인 (React 상태 업데이트를 위해 useEffect 사용)
+  const [canWriteState, setCanWriteState] = useState(false);
+
+  useEffect(() => {
+    const checkWritePermission = () => {
+      const loggedIn = isLoggedIn();
+      const branchMember = isBranchMember();
+      const permission = loggedIn && branchMember;
+
+      console.log('=== 권한 체크 (useEffect) ===');
+      console.log('로그인 상태:', loggedIn);
+      console.log('지부 회원:', branchMember);
+      console.log('최종 권한:', permission);
+      console.log('현재 canWriteState:', canWriteState);
+      console.log('새로운 권한으로 설정:', permission);
+
+      setCanWriteState(permission);
+    };
+
+    // branchId가 설정된 후에 권한 체크
+    if (branchId) {
+      checkWritePermission();
+    }
+  }, [branchId]); // branchId가 변경될 때마다 실행
+
+  // 추가: userInfo가 변경될 때도 체크 (로그인 후)
+  useEffect(() => {
+    const checkWritePermission = () => {
+      if (branchId) {
+        const loggedIn = isLoggedIn();
+        const branchMember = isBranchMember();
+        const permission = loggedIn && branchMember;
+
+        console.log('=== 권한 체크 (userInfo 변경) ===');
+        console.log('브랜치ID:', branchId);
+        console.log('로그인 상태:', loggedIn);
+        console.log('지부 회원:', branchMember);
+        console.log('최종 권한:', permission);
+
+        setCanWriteState(permission);
+      }
+    };
+
+    // localStorage 변경 감지
+    const handleStorageChange = () => {
+      console.log('localStorage 변경 감지됨');
+      checkWritePermission();
+    };
+
+    // 컴포넌트 마운트 시에도 한 번 체크
+    checkWritePermission();
+
+    // storage 이벤트 리스너 추가
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [branchId]);
+
+  // 글쓰기 권한 확인
+  const canWrite = () => {
+    return canWriteState;
+  };
+
+  // 글쓰기 버튼 클릭 핸들러
+  const handleWriteClick = () => {
+    if (!isLoggedIn()) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!isBranchMember()) {
+      alert('해당 지부 회원만 글을 작성할 수 있습니다.');
+      return;
+    }
+
+    navigate(`/branches/${branchId}/board/write`);
+  };
+
   // fetchPosts 함수 - 중복 요청 방지 로직 강화
   const fetchPosts = useCallback(async (pageIndex) => {
     if (!branchId) {
@@ -73,7 +211,7 @@ const BranchBoardList = () => {
 
     console.log(`API 요청: ${apiEndpoint}?page=${serverPageIndex}&size=${pageSize}&branchId=${branchId}`);
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
@@ -126,7 +264,7 @@ const BranchBoardList = () => {
       isRequestInProgress.current = false;
       setLoading(false);
     }
-  }, [branchId, pageSize]); // fetchPosts를 의존성에서 제거
+  }, [branchId, pageSize]);
 
   // 게시물 불러오기 - 의존성 배열 단순화
   useEffect(() => {
@@ -144,7 +282,7 @@ const BranchBoardList = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [branchId, currentPage]); // fetchPosts 의존성 제거
+  }, [branchId, currentPage]);
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
@@ -206,7 +344,16 @@ const BranchBoardList = () => {
 
   if (dataLoaded && posts.length === 0) {
     return <div className="branch-board-container">
-      <h1 className="board-title">지부 자유게시판</h1>
+      <div className="board-header">
+        <h1 className="board-title">지부 자유게시판</h1>
+        <button
+            onClick={handleWriteClick}
+            disabled={!canWriteState}
+            className="write-button"
+        >
+          글쓰기 {canWriteState ? '(활성)' : '(비활성)'}
+        </button>
+      </div>
       <div className="board_empty">
         <div className="empty-posts-container">
           <div className="empty-posts-icon">📭</div>
@@ -230,7 +377,16 @@ const BranchBoardList = () => {
 
   return (
       <div className="branch-board-container">
-        <h1 className="board-title">지부 자유게시판</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h1 className="board-title">지부 자유게시판</h1>
+          <button
+              onClick={handleWriteClick}
+              disabled={!canWrite()}
+              style={{ opacity: canWrite() ? 1 : 0.5, cursor: canWrite() ? 'pointer' : 'not-allowed' }}
+          >
+            글쓰기
+          </button>
+        </div>
 
         <table className="board-list">
           <colgroup>

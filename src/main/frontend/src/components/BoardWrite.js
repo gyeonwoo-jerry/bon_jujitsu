@@ -1,381 +1,396 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import API from "../utils/api";
+import { loggedNavigate } from "../utils/navigationLogger";
 import "../styles/boardWrite.css";
 
-function BoardWrite({ apiEndpoint = "/board", title = "게시글 작성" }) {
-  const { id } = useParams(); // 수정 모드일 경우 게시글 ID
-  const [isEditMode, setIsEditMode] = useState(false);
+const BoardWrite = () => {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const safeNavigate = loggedNavigate(navigate);
+
+  const [branchId, setBranchId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
-    content: "",
-    region: "",
-    images: [],
+    content: ""
   });
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
-  const [error, setError] = useState("");
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
-  // 고정된 userId로 설정
-  const [userId] = useState("14"); // 기본값 14로 고정, API 요청없이 직접 설정
-  const navigate = useNavigate();
-  const isMounted = useRef(true);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 컴포넌트 언마운트 시 isMounted 플래그 업데이트
+  const fileInputRef = useRef(null);
+  const maxImages = 10;
+  const maxImageSize = 10 * 1024 * 1024; // 10MB
+
+  // URL에서 브랜치 ID 추출
   useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-  // 에러가 있을 때 alert 표시
-  React.useEffect(() => {
-    if (error) {
-      alert(error);
-      // 에러 메시지 표시 후 error 상태 초기화
-      setError(null);
-    }
-  }, [error]);
+    if (params && params.branchId) {
+      setBranchId(params.branchId);
+      console.log("params에서 브랜치 ID 찾음:", params.branchId);
+    } else {
+      const path = location.pathname;
+      console.log("현재 URL 경로:", path);
 
-  // fetchPostData 함수를 useCallback으로 메모이제이션
-  const fetchPostData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await API.get(`${apiEndpoint}/${id}`);
-      // 컴포넌트가 마운트된 상태인지 확인
-      if (!isMounted.current) return;
-
-      if (response.status === 200) {
-        const postData = response.data.dataBody;
-        setFormData({
-          title: postData.title || "",
-          content: postData.content || "",
-          region: postData.region || "",
-          images: postData.images || [],
-        });
-        // 기존 이미지 미리보기 설정
-        setPreviewImages(postData.images || []);
-      }
-    } catch (error) {
-      if (isMounted.current) {
-        console.error("게시글 데이터 불러오기 실패:", error);
-        setError("게시글 데이터를 불러오는 중 오류가 발생했습니다.");
-      }
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
+      const matches = path.match(/branches\/(\d+)/);
+      if (matches && matches[1]) {
+        setBranchId(matches[1]);
+        console.log("URL 경로에서 브랜치 ID 추출됨:", matches[1]);
+      } else {
+        console.warn("URL에서 브랜치 ID를 찾을 수 없습니다");
+        setError("잘못된 접근입니다. 올바른 지부 페이지에서 접근해주세요.");
       }
     }
-  }, [apiEndpoint, id]);
+  }, [params, location.pathname]);
 
+  // 권한 확인
   useEffect(() => {
-    document.title = id ? "게시글 수정" : title;
-
-    // 수정 모드인 경우 기존 게시글 데이터 불러오기
-    if (id) {
-      setIsEditMode(true);
-      fetchPostData();
+    if (branchId) {
+      checkWritePermission();
     }
-  }, [id, title, fetchPostData]);
+  }, [branchId]);
 
+  // 로그인 상태 확인
+  const isLoggedIn = () => {
+    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
+    return !!(token || accessToken);
+  };
+
+  // 해당 지부 회원인지 확인
+  const isBranchMember = () => {
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자는 모든 지부에 글쓰기 가능
+    if (userInfo.isAdmin === true) {
+      return true;
+    }
+
+    // 사용자의 지부 정보 확인
+    if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+      return userInfo.branchRoles.some(branchRole =>
+          String(branchRole.branchId) === String(branchId)
+      );
+    }
+
+    return false;
+  };
+
+  // 권한 확인
+  const checkWritePermission = () => {
+    if (!isLoggedIn()) {
+      alert('로그인이 필요합니다.');
+      safeNavigate('/login');
+      return;
+    }
+
+    if (!isBranchMember()) {
+      alert('해당 지부 회원만 글을 작성할 수 있습니다.');
+      safeNavigate(`/branches/${branchId}`);
+      return;
+    }
+  };
+
+  // 입력값 변경 핸들러
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
-  const handleFileChange = (e) => {
+  // 이미지 파일 선택 핸들러
+  const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
-    setSelectedFiles((prev) => [...prev, ...files]);
 
-    // 이미지 미리보기 생성
-    files.forEach((file) => {
+    if (images.length + files.length > maxImages) {
+      alert(`최대 ${maxImages}개의 이미지만 업로드할 수 있습니다.`);
+      return;
+    }
+
+    // 파일 크기 검증
+    const oversizedFiles = files.filter(file => file.size > maxImageSize);
+    if (oversizedFiles.length > 0) {
+      alert('이미지 크기는 10MB 이하여야 합니다.');
+      return;
+    }
+
+    // 이미지 파일 타입 검증
+    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+    if (invalidFiles.length > 0) {
+      alert('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    const newImages = [...images, ...files];
+    setImages(newImages);
+
+    // 미리보기 생성
+    const newPreviews = [...imagePreviews];
+    files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        if (isMounted.current) {
-          setPreviewImages((prev) => [...prev, event.target.result]);
-        }
+      reader.onload = (e) => {
+        newPreviews.push({
+          file: file,
+          url: e.target.result,
+          name: file.name
+        });
+        setImagePreviews([...newPreviews]);
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const removeImage = (index) => {
-    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  // 이미지 삭제 핸들러
+  const handleImageRemove = (index) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
 
-    // 수정 모드에서 기존 이미지 삭제 처리
-    if (isEditMode) {
-      setFormData((prev) => ({
-        ...prev,
-        images: prev.images.filter((_, i) => i !== index),
-      }));
-    }
+    setImages(newImages);
+    setImagePreviews(newPreviews);
   };
 
+  // 폼 유효성 검증
+  const validateForm = () => {
+    if (!formData.title.trim()) {
+      setError('제목을 입력해주세요.');
+      return false;
+    }
+
+    if (!formData.content.trim()) {
+      setError('내용을 입력해주세요.');
+      return false;
+    }
+
+    if (formData.title.length > 100) {
+      setError('제목은 100자 이하로 입력해주세요.');
+      return false;
+    }
+
+    if (formData.content.length > 5000) {
+      setError('내용은 5000자 이하로 입력해주세요.');
+      return false;
+    }
+
+    return true;
+  };
+
+  // 게시글 작성 제출
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isSubmitting) return;
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setLoading(true);
+    setError('');
+
     try {
-      setLoading(true);
-      setError("");
+      const formDataToSend = new FormData();
 
-      // 기본 유효성 검사
-      if (!formData.title.trim()) {
-        setError("제목을 입력해주세요.");
-        setLoading(false);
-        return;
-      }
+      // JSON 데이터를 Blob으로 변환하여 추가
+      const requestBlob = new Blob([JSON.stringify(formData)], {
+        type: 'application/json'
+      });
+      formDataToSend.append('request', requestBlob);
 
-      if (!formData.content.trim()) {
-        setError("내용을 입력해주세요.");
-        setLoading(false);
-        return;
-      }
+      // 이미지 파일들 추가
+      images.forEach(image => {
+        formDataToSend.append('images', image);
+      });
 
-      if (apiEndpoint !== "/news" && !formData.region) {
-        setError("지역을 선택해주세요.");
-        setLoading(false);
-        return;
-      }
+      console.log('게시글 작성 요청:', {
+        branchId,
+        title: formData.title,
+        content: formData.content,
+        imageCount: images.length
+      });
 
-      let response;
-
-      // 뉴스 API는 다른 형식으로 데이터 전송
-      if (apiEndpoint === "/news") {
-        const newsFormData = new FormData();
-
-        // JSON 데이터를 Blob으로 변환하여 추가
-        const jsonBlob = new Blob(
-          [
-            JSON.stringify({
-              title: formData.title,
-              content: formData.content,
-            }),
-          ],
-          { type: "application/json" }
-        );
-        newsFormData.append("request", jsonBlob);
-        // 선택한 파일이 있는 경우 FormData에 추가
-        if (selectedFiles.length > 0) {
-          selectedFiles.forEach((file) => {
-            newsFormData.append("images", file); // 'images' 키로 파일 추가
-          });
+      const response = await API.post(`/board/${branchId}`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
+      });
 
-        console.log("뉴스 등록 요청 데이터:", newsFormData);
-
-        // 백엔드 API 서버 URL 직접 지정 (CORS 이슈가 있을 수 있음)
-        // 개발환경 프록시 설정 확인 필요
-
-        response = await API.post(`${apiEndpoint}`, newsFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+      if (response.data.success) {
+        alert('게시글이 성공적으로 작성되었습니다.');
+        // BranchesDetail 페이지로 돌아가기
+        safeNavigate(`/branches/${branchId}`);
       } else {
-        // 일반 게시글 등록/수정 로직
-        const newsFormData = new FormData();
-
-        // JSON 데이터를 Blob으로 변환하여 추가
-        const jsonBlob = new Blob(
-          [
-            JSON.stringify({
-              title: formData.title,
-              content: formData.content,
-            }),
-          ],
-          { type: "application/json" }
-        );
-        newsFormData.append("request", jsonBlob);
-        // 선택한 파일이 있는 경우 FormData에 추가
-        if (selectedFiles.length > 0) {
-          selectedFiles.forEach((file) => {
-            newsFormData.append("images", file); // 'images' 키로 파일 추가
-          });
-        }
-
-        if (isEditMode) {
-          response = await API.put(`${apiEndpoint}/${id}`, newsFormData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            }
-        });
-        } else {
-            response = await API.post(apiEndpoint, newsFormData, newsFormData, {
-                headers: {
-                "Content-Type": "multipart/form-data",
-                }
-            });
-        }
-      }
-      if (response.status === 200 || response.status === 201) {
-        if (response.data.success) {
-          // 성공 시 게시글 목록 또는 상세 페이지로 이동
-          if (apiEndpoint === "/news") {
-            // 뉴스 목록으로 이동
-            navigate(apiEndpoint);
-          } else {
-            // ID가 있으면 해당 게시글의 상세 페이지로, 없으면 목록으로 이동
-            const redirectId = isEditMode ? id : response.data.id;
-            if (redirectId) {
-              // 수정 모드일 경우 해당 게시글의 상세 페이지로 이동
-              navigate(
-                `${
-                  apiEndpoint.startsWith("/") ? apiEndpoint : "/" + apiEndpoint
-                }/${redirectId}`
-              );
-            } else {
-              // 등록 모드일 경우 게시글 목록으로 이동
-              navigate(apiEndpoint);
-            }
-          }
-        } else {
-          if (response.data.message) {
-            setError(response.data.message);
-          } else {
-            setError("글 등록에 실패했습니다.");
-          }
-        }
+        throw new Error(response.data.message || '게시글 작성에 실패했습니다.');
       }
     } catch (error) {
-      if (isMounted.current) {
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.message
-        ) {
-          setError(error.response.data.message);
+      console.error('게시글 작성 오류:', error);
+
+      if (error.response) {
+        if (error.response.status === 401) {
+          setError('로그인이 필요합니다.');
+        } else if (error.response.status === 403) {
+          setError('글 작성 권한이 없습니다.');
         } else {
-          setError("게시글을 저장하는 중 오류가 발생했습니다.");
+          setError(error.response.data?.message || '게시글 작성에 실패했습니다.');
         }
+      } else {
+        setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
       }
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
+  // 취소 버튼 핸들러
   const handleCancel = () => {
-    if (
-      window.confirm(
-        "작성 중인 내용이 저장되지 않습니다. 정말 취소하시겠습니까?"
-      )
-    ) {
-      navigate(-1); // 이전 페이지로 이동
+    if (formData.title || formData.content || images.length > 0) {
+      if (window.confirm('작성 중인 내용이 있습니다. 정말 취소하시겠습니까?')) {
+        safeNavigate(`/branches/${branchId}`);
+      }
+    } else {
+      safeNavigate(`/branches/${branchId}`);
     }
   };
 
-  if (loading && isEditMode) {
-    return <div className="loading">게시글 정보를 불러오는 중...</div>;
+  if (!branchId) {
+    return (
+        <div className="write-container">
+          <div className="error-message">
+            잘못된 접근입니다. 올바른 지부 페이지에서 접근해주세요.
+          </div>
+        </div>
+    );
   }
 
   return (
-    <div className="board-write-container">
-      <h1 className="board-write-title">
-        {isEditMode ? "게시글 수정" : title}
-      </h1>
-
-      {error && <div className="error-message">{error}</div>}
-
-      <form className="board-write-form" onSubmit={handleSubmit}>
-        {apiEndpoint !== "/news" && (
-          <div className="form-group">
-            <label htmlFor="region">지역</label>
-            <select
-              id="region"
-              name="region"
-              value={formData.region}
-              onChange={handleInputChange}
+      <div className="write-container">
+        <div className="write-header">
+          <h1>게시글 작성</h1>
+          <div className="write-actions">
+            <button
+                type="button"
+                onClick={handleCancel}
+                className="cancel-button"
+                disabled={isSubmitting}
             >
-              <option value="">지역 선택</option>
-              <option value="서울특별시">서울특별시</option>
-              <option value="경기도">경기도</option>
-              <option value="인천광역시">인천광역시</option>
-              <option value="부산광역시">부산광역시</option>
-              <option value="대구광역시">대구광역시</option>
-              <option value="대전광역시">대전광역시</option>
-              <option value="광주광역시">광주광역시</option>
-              <option value="울산광역시">울산광역시</option>
-              <option value="강원도">강원도</option>
-              <option value="충청북도">충청북도</option>
-              <option value="충청남도">충청남도</option>
-              <option value="전라북도">전라북도</option>
-              <option value="전라남도">전라남도</option>
-              <option value="경상북도">경상북도</option>
-              <option value="경상남도">경상남도</option>
-              <option value="제주특별자치도">제주특별자치도</option>
-            </select>
+              취소
+            </button>
+            <button
+                type="submit"
+                onClick={handleSubmit}
+                className="submit-button"
+                disabled={isSubmitting || loading}
+            >
+              {isSubmitting ? '작성 중...' : '작성 완료'}
+            </button>
           </div>
+        </div>
+
+        {error && (
+            <div className="error-message">
+              {error}
+            </div>
         )}
 
-        <div className="form-group">
-          <label htmlFor="title">제목</label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            placeholder="제목을 입력하세요"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="content">내용</label>
-          <textarea
-            id="content"
-            name="content"
-            value={formData.content}
-            onChange={handleInputChange}
-            placeholder="내용을 입력하세요"
-            rows="10"
-          ></textarea>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="images">이미지 첨부</label>
-          <input
-            type="file"
-            id="images"
-            name="images"
-            onChange={handleFileChange}
-            multiple
-            accept="image/*"
-          />
-          <div className="image-preview-container">
-            {previewImages.map((src, index) => (
-              <div className="image-preview" key={index}>
-                <img src={src} alt={`미리보기 ${index + 1}`} />
-                <button
-                  type="button"
-                  className="remove-image"
-                  onClick={() => removeImage(index)}
-                >
-                  &times;
-                </button>
-              </div>
-            ))}
+        <form onSubmit={handleSubmit} className="write-form">
+          <div className="form-group">
+            <label htmlFor="title">제목 *</label>
+            <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="제목을 입력해주세요 (최대 100자)"
+                maxLength={100}
+                required
+                disabled={isSubmitting}
+            />
+            <div className="char-count">
+              {formData.title.length}/100
+            </div>
           </div>
-        </div>
 
-        <div className="form-actions">
-          <button
-            type="button"
-            className="cancel-button"
-            onClick={handleCancel}
-          >
-            취소
-          </button>
-          <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? "저장 중..." : isEditMode ? "수정하기" : "등록하기"}
-          </button>
-        </div>
-      </form>
-    </div>
+          <div className="form-group">
+            <label htmlFor="content">내용 *</label>
+            <textarea
+                id="content"
+                name="content"
+                value={formData.content}
+                onChange={handleInputChange}
+                placeholder="내용을 입력해주세요 (최대 5000자)"
+                maxLength={5000}
+                rows={15}
+                required
+                disabled={isSubmitting}
+            />
+            <div className="char-count">
+              {formData.content.length}/5000
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>이미지 첨부</label>
+            <div className="image-upload-section">
+              <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageSelect}
+                  multiple
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  disabled={isSubmitting}
+              />
+              <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="image-upload-button"
+                  disabled={isSubmitting || images.length >= maxImages}
+              >
+                이미지 선택 ({images.length}/{maxImages})
+              </button>
+              <div className="upload-info">
+                * 이미지는 최대 {maxImages}개, 각 파일당 10MB 이하만 업로드 가능합니다.
+              </div>
+            </div>
+
+            {imagePreviews.length > 0 && (
+                <div className="image-preview-container">
+                  {imagePreviews.map((preview, index) => (
+                      <div key={index} className="image-preview-item">
+                        <img
+                            src={preview.url}
+                            alt={`미리보기 ${index + 1}`}
+                            className="preview-image"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleImageRemove(index)}
+                            className="image-remove-button"
+                            disabled={isSubmitting}
+                        >
+                          ×
+                        </button>
+                        <div className="image-name">{preview.name}</div>
+                      </div>
+                  ))}
+                </div>
+            )}
+          </div>
+        </form>
+
+        {loading && (
+            <div className="loading-overlay">
+              <div className="loading-spinner"></div>
+              <p>게시글을 작성하고 있습니다...</p>
+            </div>
+        )}
+      </div>
   );
-}
+};
 
 export default BoardWrite;
