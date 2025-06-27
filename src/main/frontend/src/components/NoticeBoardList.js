@@ -16,6 +16,7 @@ const NoticeBoardList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [canWriteState, setCanWriteState] = useState(false);
 
   // 중복 요청 방지를 위한 ref
   const isRequestInProgress = useRef(false);
@@ -25,148 +26,72 @@ const NoticeBoardList = () => {
   useEffect(() => {
     if (params && params.branchId) {
       setBranchId(params.branchId);
-      console.log("params에서 브랜치 ID 찾음:", params.branchId);
     } else {
       const path = location.pathname;
-      console.log("현재 URL 경로:", path);
-
       const matches = path.match(/branches\/(\d+)/);
       if (matches && matches[1]) {
         setBranchId(matches[1]);
-        console.log("URL 경로에서 브랜치 ID 추출됨:", matches[1]);
       } else {
-        console.warn("URL에서 브랜치 ID를 찾을 수 없습니다");
         setBranchId(null);
       }
     }
   }, [params, location.pathname]);
 
-  const apiEndpoint = '/notice';
-
   // 로그인 상태 확인
   const isLoggedIn = () => {
     const token = localStorage.getItem('token');
     const accessToken = localStorage.getItem('accessToken');
-
-    console.log('token 체크:');
-    console.log('  - token:', token);
-    console.log('  - accessToken:', accessToken);
-
-    // token 또는 accessToken 둘 중 하나라도 있으면 로그인 상태
-    const loggedIn = !!(token || accessToken);
-    console.log('  - 최종 로그인 상태:', loggedIn);
-
-    return loggedIn;
+    return !!(token || accessToken);
   };
 
   // 해당 지부의 Owner인지 확인 (공지사항 작성 권한)
   const isBranchOwner = () => {
-    console.log('=== 지부 Owner 확인 시작 ===');
-
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
-    console.log('parsed userInfo:', userInfo);
-    console.log('현재 branchId:', branchId);
-    console.log('branchId 타입:', typeof branchId);
-
     // 관리자는 모든 지부에 글쓰기 가능
     if (userInfo.isAdmin === true) {
-      console.log('✅ 관리자 권한으로 허용');
       return true;
     }
 
     // 사용자의 지부 정보 확인 (branchRoles 배열에서 Owner 역할 확인)
     if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
-      console.log('branchRoles 배열:', userInfo.branchRoles);
-
-      const isOwner = userInfo.branchRoles.some(branchRole => {
+      return userInfo.branchRoles.some(branchRole => {
         const userBranchId = branchRole.branchId;
-        const currentBranchId = branchId;
         const role = branchRole.role;
 
-        console.log(`비교: ${userBranchId} (${typeof userBranchId}) === ${currentBranchId} (${typeof currentBranchId})`);
-        console.log(`역할: ${role}`);
-        console.log(`문자열 비교: "${userBranchId}" === "${currentBranchId}" = ${String(userBranchId) === String(currentBranchId)}`);
-        console.log(`Owner 역할 확인: ${role} === "OWNER" = ${role === "OWNER"}`);
-
         // 안전한 비교: 브랜치 ID가 일치하고 역할이 OWNER인지 확인
-        return String(userBranchId) === String(currentBranchId) && role === "OWNER";
+        return String(userBranchId) === String(branchId) && role === "OWNER";
       });
-
-      console.log('✅ 최종 지부 Owner 여부:', isOwner);
-      return isOwner;
-    } else {
-      console.log('❌ branchRoles 정보 없음');
     }
 
     return false;
   };
 
-  // 글쓰기 권한 확인 (React 상태 업데이트를 위해 useEffect 사용)
-  const [canWriteState, setCanWriteState] = useState(false);
-
+  // 글쓰기 권한 확인 및 상태 업데이트
   useEffect(() => {
     const checkWritePermission = () => {
       const loggedIn = isLoggedIn();
       const branchOwner = isBranchOwner();
       const permission = loggedIn && branchOwner;
-
-      console.log('=== 권한 체크 (useEffect) ===');
-      console.log('로그인 상태:', loggedIn);
-      console.log('지부 Owner:', branchOwner);
-      console.log('최종 권한:', permission);
-      console.log('현재 canWriteState:', canWriteState);
-      console.log('새로운 권한으로 설정:', permission);
-
       setCanWriteState(permission);
     };
 
-    // branchId가 설정된 후에 권한 체크
     if (branchId) {
       checkWritePermission();
     }
-  }, [branchId]); // branchId가 변경될 때마다 실행
-
-  // 추가: userInfo가 변경될 때도 체크 (로그인 후)
-  useEffect(() => {
-    const checkWritePermission = () => {
-      if (branchId) {
-        const loggedIn = isLoggedIn();
-        const branchOwner = isBranchOwner();
-        const permission = loggedIn && branchOwner;
-
-        console.log('=== 권한 체크 (userInfo 변경) ===');
-        console.log('브랜치ID:', branchId);
-        console.log('로그인 상태:', loggedIn);
-        console.log('지부 Owner:', branchOwner);
-        console.log('최종 권한:', permission);
-
-        setCanWriteState(permission);
-      }
-    };
 
     // localStorage 변경 감지
     const handleStorageChange = () => {
-      console.log('localStorage 변경 감지됨');
       checkWritePermission();
     };
 
-    // 컴포넌트 마운트 시에도 한 번 체크
-    checkWritePermission();
-
-    // storage 이벤트 리스너 추가
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [branchId]);
-
-  // 글쓰기 권한 확인
-  const canWrite = () => {
-    return canWriteState;
-  };
 
   // 글쓰기 버튼 클릭 핸들러
   const handleWriteClick = () => {
@@ -183,7 +108,7 @@ const NoticeBoardList = () => {
     navigate(`/branches/${branchId}/notice/write`);
   };
 
-  // fetchPosts 함수 - 중복 요청 방지 로직 강화
+  // 게시물 불러오기
   const fetchPosts = useCallback(async (pageIndex) => {
     if (!branchId) {
       setLoading(false);
@@ -193,7 +118,6 @@ const NoticeBoardList = () => {
 
     // 이미 요청 중이면 중단
     if (isRequestInProgress.current) {
-      console.log("이미 요청 중이므로 건너뜁니다.");
       return;
     }
 
@@ -211,21 +135,17 @@ const NoticeBoardList = () => {
     setLoading(true);
     setError('');
 
-    console.log(`API 요청: ${apiEndpoint}?page=${serverPageIndex}&size=${pageSize}&branchId=${branchId}`);
-
     const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
       const response = await API.get(
-          `${apiEndpoint}?page=${serverPageIndex}&size=${pageSize}&branchId=${branchId}`,
+          `/notice?page=${serverPageIndex}&size=${pageSize}&branchId=${branchId}`,
           {
             headers,
-            signal: abortControllerRef.current.signal // 요청 취소를 위한 signal 추가
+            signal: abortControllerRef.current.signal
           }
       );
-
-      console.log("응답 데이터:", response.data);
 
       if (response.status === 200) {
         if (response.data.success) {
@@ -241,11 +161,9 @@ const NoticeBoardList = () => {
     } catch (error) {
       // AbortError는 의도적인 취소이므로 에러로 처리하지 않음
       if (error.name === 'AbortError') {
-        console.log('요청이 취소되었습니다.');
         return;
       }
 
-      console.error('게시판 목록 가져오기 오류:', error);
       setDataLoaded(false);
 
       if (error.response) {
@@ -268,10 +186,9 @@ const NoticeBoardList = () => {
     }
   }, [branchId, pageSize]);
 
-  // 게시물 불러오기 - 의존성 배열 단순화
+  // 게시물 불러오기
   useEffect(() => {
     if (branchId) {
-      console.log("브랜치 ID 감지됨:", branchId, "현재 페이지:", currentPage);
       fetchPosts(currentPage);
     } else {
       setLoading(false);
@@ -284,7 +201,7 @@ const NoticeBoardList = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [branchId, currentPage]);
+  }, [branchId, currentPage, fetchPosts]);
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
@@ -297,31 +214,19 @@ const NoticeBoardList = () => {
   }, []);
 
   const handlePostClick = (id) => {
-    if (!id) {
-      console.error("유효하지 않은 게시물 ID입니다");
-      return;
-    }
+    if (!id) return;
     navigate(`/branches/${branchId}/notice/${id}`);
   };
 
   const handlePageChange = (pageNumber) => {
-    // 이미 같은 페이지면 요청하지 않음
     const internalPageIndex = pageNumber - 1;
     if (internalPageIndex === currentPage) {
       return;
     }
-
-    console.log(`페이지 변경: UI 페이지 ${pageNumber} -> 내부 인덱스 ${internalPageIndex}`);
     setCurrentPage(internalPageIndex);
   };
 
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  const truncateContent = (content, maxLength = 100) => {
-    if (!content) return "";
-    if (content.length <= maxLength) return content;
-    return content.slice(0, maxLength) + "...";
-  };
 
   const safePostsArray = Array.isArray(posts) ? posts : [];
 
@@ -338,43 +243,49 @@ const NoticeBoardList = () => {
   };
 
   if (loading) {
-    return <div className="loading-container">
-      <div className="loading-spinner"></div>
-      <p>게시판 정보를 불러오는 중...</p>
-    </div>;
+    return (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>게시판 정보를 불러오는 중...</p>
+        </div>
+    );
   }
 
   if (dataLoaded && posts.length === 0) {
-    return <div className="branch-board-container">
-      <div className="board-header">
-        <h1 className="board-title">지부 공지사항</h1>
-        <button
-            onClick={handleWriteClick}
-            disabled={!canWriteState}
-            className="write-button"
-        >
-          글쓰기 {canWriteState ? '(활성)' : '(비활성)'}
-        </button>
-      </div>
-      <div className="board_empty">
-        <div className="empty-posts-container">
-          <div className="empty-posts-icon">📭</div>
-          <p className="empty-posts-message">등록된 공지사항이 없습니다.</p>
-          <p className="empty-posts-submessage">첫 번째 공지사항을 작성해보세요!</p>
+    return (
+        <div className="branch-board-container">
+          <div className="board-header">
+            <h1 className="board-title">지부 공지사항</h1>
+            <button
+                onClick={handleWriteClick}
+                disabled={!canWriteState}
+                className="write-button"
+            >
+              글쓰기
+            </button>
+          </div>
+          <div className="board_empty">
+            <div className="empty-posts-container">
+              <div className="empty-posts-icon">📭</div>
+              <p className="empty-posts-message">등록된 공지사항이 없습니다.</p>
+              <p className="empty-posts-submessage">첫 번째 공지사항을 작성해보세요!</p>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>;
+    );
   }
 
   if (error && !dataLoaded) {
-    return <div className="error-container">
-      <p className="error-message">{error}</p>
-      {branchId && (
-          <button className="retry-button" onClick={() => fetchPosts(currentPage)}>
-            다시 시도
-          </button>
-      )}
-    </div>;
+    return (
+        <div className="error-container">
+          <p className="error-message">{error}</p>
+          {branchId && (
+              <button className="retry-button" onClick={() => fetchPosts(currentPage)}>
+                다시 시도
+              </button>
+          )}
+        </div>
+    );
   }
 
   return (
@@ -383,8 +294,11 @@ const NoticeBoardList = () => {
           <h1 className="board-title">지부 공지사항</h1>
           <button
               onClick={handleWriteClick}
-              disabled={!canWrite()}
-              style={{ opacity: canWrite() ? 1 : 0.5, cursor: canWrite() ? 'pointer' : 'not-allowed' }}
+              disabled={!canWriteState}
+              style={{
+                opacity: canWriteState ? 1 : 0.5,
+                cursor: canWriteState ? 'pointer' : 'not-allowed'
+              }}
           >
             글쓰기
           </button>
@@ -393,11 +307,10 @@ const NoticeBoardList = () => {
         <table className="board-list">
           <colgroup>
             <col width='15%' />
-            <col width='35%' />
+            <col width='40%' />
             <col width='15%' />
-            <col width='10%' />
             <col width='15%' />
-            <col width='10%' />
+            <col width='15%' />
           </colgroup>
           <thead>
           <tr>
@@ -407,7 +320,6 @@ const NoticeBoardList = () => {
             <th>작성자</th>
             <th>작성일</th>
             <th>조회수</th>
-            <th>댓글수</th>
           </tr>
           </thead>
           <tbody>
@@ -450,7 +362,7 @@ const NoticeBoardList = () => {
                   {post.region || ""}
                 </td>
                 <td className="post-author">
-                  {post?.owner?.name || post.writer || post.name || "작성자 없음"}
+                  {post?.owner?.name || post.author || post.name || "작성자 없음"}
                 </td>
                 <td className="post-date">
                   {post.date || (post.createdAt
@@ -459,9 +371,6 @@ const NoticeBoardList = () => {
                 </td>
                 <td className="post-views">
                   {post.viewCount || 0}
-                </td>
-                <td className="post-comments">
-                  {post.commentCount || 0}
                 </td>
               </tr>
           ))}

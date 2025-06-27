@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';  
 import { useLocation, useParams } from 'react-router-dom';
-import SponsorDetail from '../components/BoardDetail';
+import SponsorDetail from '../components/PostDetail';
 import SubHeader from '../components/SubHeader';
 
 function SponsorDetailPage() {

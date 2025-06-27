@@ -10,7 +10,7 @@ import LoadingIndicator from './utils/LoadingIndicator';
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import BoardDetail from './components/BoardDetail';
+import PostDetail from './components/PostDetail';
 import Academy from './pages/academy';
 import IntroGreeting from './pages/introGreeting';
 import IntroJiujitsu from './pages/introJiujitsu';
@@ -47,7 +47,7 @@ import BranchCreate from "./pages/admin/BranchCreate";
 import BranchEdit from "./pages/admin/BranchEdit";
 import PostManagement from "./pages/admin/PostManagement";
 import PostCreate from "./pages/admin/PostCreate";
-import PostEdit from "./pages/admin/PostEdit";
+import AdminPostEdit from "./pages/admin/PostEdit";
 import MyPageMain from "./pages/MyPageMain";
 import ProfileEditPage from "./pages/ProfileEditPage";
 import MyPageCart from "./pages/MyPageCart";
@@ -61,7 +61,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import useSessionCheck from "./hooks/useSessionCheck";
 import useAuthGuard from "./hooks/useAuthGuard";
 import PostWrite from "./components/PostWrite";
-import BoardEdit from "./components/BoardEdit";
+import PostEdit from "./components/PostEdit";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
 function AppRoutes() {
@@ -86,12 +86,9 @@ function AppRoutes() {
           <Route path="/introLevel" element={<IntroLevel />} />
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
-          <Route
-              path="/branches/:branchId/:postType/write"
-              element={<PostWrite />}
-          />
-          <Route path="/branches/:branchId/board/:boardId" element={<BoardDetail />} />
-          <Route path="/board/edit/:boardId" element={<BoardEdit />} />
+          <Route path="/branches/:branchId/:postType/write" element={<PostWrite />}/>
+          <Route path="/branches/:branchId/:postType/:postId" element={<PostDetail />} />
+          <Route path="/branches/:branchId/:postType/:postId/edit" element={<PostEdit />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
           <Route path="/storeWrite" element={<StoreWritePage />} />
@@ -130,7 +127,7 @@ function AppRoutes() {
           <Route path="/admin/branches/edit/:branchId" element={<ProtectedRoute><BranchEdit /></ProtectedRoute>} />
           <Route path="/admin/posts" element={<ProtectedRoute><PostManagement /></ProtectedRoute>} />
           <Route path="/admin/posts/create" element={<ProtectedRoute><PostCreate /></ProtectedRoute>} />
-          <Route path="/admin/posts/edit/:category/:id" element={<ProtectedRoute><PostEdit /></ProtectedRoute>} />
+          <Route path="/admin/posts/edit/:category/:id" element={<ProtectedRoute><AdminPostEdit /></ProtectedRoute>} />
 
           {/* 마이페이지 라우트 - 모두 ProtectedRoute로 보호 */}
           <Route path="/mypage" element={<ProtectedRoute><MyPageMain /></ProtectedRoute>} />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import API from '../utils/api';
 import '../styles/comment.css';
 
-const Comment = ({ boardId }) => {
+const Comment = ({ boardId, postType = 'board' }) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -71,21 +71,32 @@ const Comment = ({ boardId }) => {
     }
   };
 
+  // 댓글 타입 결정 (postType에 따라)
+  const getCommentType = () => {
+    return postType === 'notice' ? 'NOTICE' : 'BOARD';
+  };
+
   // 댓글 목록 불러오기
   const fetchComments = async () => {
     try {
       setLoading(true);
       setError('');
 
+      console.log('=== 댓글 불러오기 ===');
+      console.log('boardId:', boardId);
+      console.log('postType:', postType);
+      console.log('commentType:', getCommentType());
+
       const response = await API.get('/comment', {
         params: {
           targetId: boardId,
-          commentType: 'BOARD'
+          commentType: getCommentType() // BOARD 또는 NOTICE
         }
       });
 
       if (response.data.success) {
         setComments(response.data.content || []);
+        console.log('댓글 불러오기 성공:', response.data.content?.length || 0, '개');
       } else {
         setError('댓글을 불러오는데 실패했습니다.');
       }
@@ -99,10 +110,10 @@ const Comment = ({ boardId }) => {
 
   // 컴포넌트 마운트 시 댓글 불러오기
   useEffect(() => {
-    if (boardId) {
+    if (boardId && postType) {
       fetchComments();
     }
-  }, [boardId]);
+  }, [boardId, postType]); // postType도 의존성에 추가
 
   // 새 댓글 작성
   const handleSubmitComment = async (e) => {
@@ -121,9 +132,14 @@ const Comment = ({ boardId }) => {
     try {
       setSubmitting(true);
 
+      console.log('=== 댓글 작성 ===');
+      console.log('boardId:', boardId);
+      console.log('postType:', postType);
+      console.log('commentType:', getCommentType());
+
       const response = await API.post('/comment', {
         content: newComment,
-        commentType: 'BOARD',
+        commentType: getCommentType(), // BOARD 또는 NOTICE
         targetId: parseInt(boardId),
         parentId: null
       });
@@ -131,6 +147,7 @@ const Comment = ({ boardId }) => {
       if (response.data.success) {
         setNewComment('');
         await fetchComments(); // 댓글 목록 새로고침
+        console.log('댓글 작성 성공');
       } else {
         alert(response.data.message || '댓글 작성에 실패했습니다.');
       }
@@ -161,9 +178,13 @@ const Comment = ({ boardId }) => {
     try {
       setSubmitting(true);
 
+      console.log('=== 대댓글 작성 ===');
+      console.log('parentId:', parentId);
+      console.log('commentType:', getCommentType());
+
       const response = await API.post('/comment', {
         content: replyContent,
-        commentType: 'BOARD',
+        commentType: getCommentType(), // BOARD 또는 NOTICE
         targetId: parseInt(boardId),
         parentId: parentId
       });
@@ -172,6 +193,7 @@ const Comment = ({ boardId }) => {
         setReplyContent('');
         setReplyingTo(null);
         await fetchComments(); // 댓글 목록 새로고침
+        console.log('대댓글 작성 성공');
       } else {
         alert(response.data.message || '답글 작성에 실패했습니다.');
       }
@@ -376,8 +398,8 @@ const Comment = ({ boardId }) => {
 
               {/* 디버깅용 임시 정보 표시 */}
               <span style={{ fontSize: '10px', color: '#999', marginLeft: '10px' }}>
-              [권한: {canModifyComment(comment) ? 'O' : 'X'}]
-            </span>
+                [권한: {canModifyComment(comment) ? 'O' : 'X'}] [타입: {getCommentType()}]
+              </span>
             </div>
           </div>
 
@@ -427,10 +449,16 @@ const Comment = ({ boardId }) => {
     );
   };
 
+  // 댓글 섹션 제목 결정
+  const getCommentSectionTitle = () => {
+    const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+    return `${typeLabel} 댓글 ${comments.length}개`;
+  };
+
   return (
       <div className="comment-section">
         <h3 className="comment-title">
-          댓글 {comments.length}개
+          {getCommentSectionTitle()}
         </h3>
 
         {/* 새 댓글 작성 폼 */}

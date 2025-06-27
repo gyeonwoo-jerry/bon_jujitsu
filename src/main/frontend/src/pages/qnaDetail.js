@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';  
 import { useLocation, useParams } from 'react-router-dom';
-import QnaDetail from '../components/BoardDetail';
+import QnaDetail from '../components/PostDetail';
 import SubHeader from '../components/SubHeader';
 
 function QnaDetailPage() {

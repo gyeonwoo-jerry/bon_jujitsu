@@ -1,20 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
 import '../styles/boardWrite.css';
 
-const BoardEdit = () => {
-  const { boardId } = useParams();
+const PostEdit = () => {
+  const params = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const safeNavigate = loggedNavigate(navigate);
   const fileInputRef = useRef(null);
-  const originalImageIds = useRef([]); // 원래 이미지 ID 목록을 저장하는 ref
+  const originalImageIds = useRef([]);
 
+  const [postType, setPostType] = useState(null); // 'board' 또는 'notice'
+  const [postId, setPostId] = useState(null);
+  const [branchId, setBranchId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
-  const [originalBoard, setOriginalBoard] = useState(null);
+  const [originalPost, setOriginalPost] = useState(null);
 
   // 게시글 정보 상태
   const [formData, setFormData] = useState({
@@ -23,20 +27,69 @@ const BoardEdit = () => {
   });
 
   // 이미지 관련 상태
-  const [newImages, setNewImages] = useState([]); // 새로 추가할 이미지 파일
-  const [newImagePreviews, setNewImagePreviews] = useState([]); // 새 이미지 미리보기
-  const [existingImages, setExistingImages] = useState([]); // 기존 이미지 정보
-  const [keepImageIds, setKeepImageIds] = useState([]); // 유지할 기존 이미지 ID들
+  const [newImages, setNewImages] = useState([]);
+  const [newImagePreviews, setNewImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [keepImageIds, setKeepImageIds] = useState([]);
 
   const maxImages = 10;
   const maxImageSize = 10 * 1024 * 1024; // 10MB
 
+  // URL에서 게시물 타입과 ID 추출
+  useEffect(() => {
+    if (params.branchId && params.postType && params.postId) {
+      // postType 유효성 검증
+      if (params.postType === 'board' || params.postType === 'notice') {
+        setPostType(params.postType);
+        setPostId(params.postId);
+        setBranchId(params.branchId);
+        console.log(`${params.postType} 수정 - ID:`, params.postId, 'Branch:', params.branchId);
+      } else {
+        setError("잘못된 게시글 타입입니다. board 또는 notice만 가능합니다.");
+        setInitialLoading(false);
+        return;
+      }
+    } else {
+      // 기존 방식 지원 (하위 호환성)
+      const path = location.pathname;
+      const boardEditMatches = path.match(/\/board\/edit\/(\d+)/);
+      const noticeEditMatches = path.match(/\/notice\/edit\/(\d+)/);
+
+      if (boardEditMatches) {
+        setPostType('board');
+        setPostId(boardEditMatches[1]);
+        console.log("기존 방식 - Board 수정 ID:", boardEditMatches[1]);
+      } else if (noticeEditMatches) {
+        setPostType('notice');
+        setPostId(noticeEditMatches[1]);
+        console.log("기존 방식 - Notice 수정 ID:", noticeEditMatches[1]);
+      } else if (params.boardId) {
+        // 더 기존 방식
+        setPostType('board');
+        setPostId(params.boardId);
+        console.log("파라미터 방식 - Board 수정 ID:", params.boardId);
+      } else {
+        setError('잘못된 접근입니다. 올바른 게시물 페이지에서 접근해주세요.');
+        setInitialLoading(false);
+        return;
+      }
+    }
+  }, [params]);
+
+  // API 엔드포인트 결정
+  const getApiEndpoint = () => {
+    return postType === 'notice' ? '/notice' : '/board';
+  };
+
+  // 게시물 타입에 따른 제목
+  const getPageTitle = () => {
+    return postType === 'notice' ? '공지사항 수정' : '게시글 수정';
+  };
+
   // 기존 게시글 데이터 불러오기
   useEffect(() => {
-    const fetchBoardData = async () => {
-      if (!boardId) {
-        setError('게시글 ID가 없습니다.');
-        setInitialLoading(false);
+    const fetchPostData = async () => {
+      if (!postId || !postType) {
         return;
       }
 
@@ -44,44 +97,48 @@ const BoardEdit = () => {
         setInitialLoading(true);
         setError('');
 
-        console.log('📥 기존 게시글 데이터 불러오기:', boardId);
-        const response = await API.get(`/board/${boardId}`);
+        const apiEndpoint = getApiEndpoint();
+        console.log('📥 기존 게시글 데이터 불러오기:', `${apiEndpoint}/${postId}`);
+        const response = await API.get(`${apiEndpoint}/${postId}`);
 
         if (response.data.success) {
-          const boardData = response.data.content;
-          setOriginalBoard(boardData);
+          const postData = response.data.content;
+          setOriginalPost(postData);
 
           // 폼 데이터 설정
           setFormData({
-            title: boardData.title || '',
-            content: boardData.content || ''
+            title: postData.title || '',
+            content: postData.content || ''
           });
 
-          // 기존 이미지 설정
-          if (boardData.images && Array.isArray(boardData.images)) {
-            console.log('서버에서 받은 이미지 데이터:', boardData.images);
+          // branchId 설정 (URL에서 없을 경우)
+          if (!branchId && postData.branchId) {
+            setBranchId(postData.branchId);
+          }
 
-            const imageObjects = boardData.images.map((img, index) => ({
-              id: img.id || index, // id가 없으면 인덱스 사용
+          // 기존 이미지 설정
+          if (postData.images && Array.isArray(postData.images)) {
+            console.log('서버에서 받은 이미지 데이터:', postData.images);
+
+            const imageObjects = postData.images.map((img, index) => ({
+              id: img.id || index,
               url: img.url
             }));
 
             setExistingImages(imageObjects);
 
-            // 모든 기존 이미지 ID를 유지할 목록에 추가
             const imageIds = imageObjects.map(img => img.id);
             setKeepImageIds(imageIds);
             originalImageIds.current = [...imageIds];
 
             console.log('기존 이미지 설정 완료:', imageObjects);
-            console.log('유지할 이미지 ID 목록:', imageIds);
           } else {
             setExistingImages([]);
             setKeepImageIds([]);
             originalImageIds.current = [];
           }
 
-          console.log('✅ 게시글 데이터 로드 완료:', boardData);
+          console.log('✅ 게시글 데이터 로드 완료:', postData);
         } else {
           throw new Error(response.data.message || '게시글을 불러올 수 없습니다.');
         }
@@ -99,15 +156,15 @@ const BoardEdit = () => {
       }
     };
 
-    fetchBoardData();
-  }, [boardId]);
+    fetchPostData();
+  }, [postId, postType]);
 
   // 수정 권한 확인
   useEffect(() => {
-    if (originalBoard) {
+    if (originalPost && postType) {
       checkEditPermission();
     }
-  }, [originalBoard]);
+  }, [originalPost, postType]);
 
   // 로그인 상태 확인
   const isLoggedIn = () => {
@@ -118,12 +175,11 @@ const BoardEdit = () => {
 
   // 현재 사용자가 작성자인지 확인
   const isAuthor = () => {
-    if (!originalBoard) return false;
+    if (!originalPost) return false;
 
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
-    // JWT 토큰에서 사용자 ID 추출 (userInfo.id가 없을 경우)
     let userId = userInfo.id;
     if (!userId) {
       const token = localStorage.getItem('accessToken');
@@ -138,14 +194,45 @@ const BoardEdit = () => {
       }
     }
 
-    console.log('👤 작성자 확인:', userId, 'vs', originalBoard.authorId);
-    return String(userId) === String(originalBoard.authorId);
+    console.log('👤 작성자 확인:', userId, 'vs', originalPost.authorId);
+    return String(userId) === String(originalPost.authorId);
   };
 
   // 관리자인지 확인
   const isAdmin = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     return userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
+  };
+
+  // 지부 Owner인지 확인 (공지사항용)
+  const isBranchOwner = () => {
+    if (postType !== 'notice') return false;
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자는 모든 지부에 수정 가능
+    if (userInfo.isAdmin === true) {
+      return true;
+    }
+
+    const currentBranchId = branchId || originalPost?.branchId;
+    if (!currentBranchId) return false;
+
+    // 사용자의 지부 정보 확인 (Owner 역할만)
+    if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+      return userInfo.branchRoles.some(branchRole => {
+        const userBranchId = branchRole.branchId;
+        const role = branchRole.role;
+
+        const isSameBranch = String(userBranchId) === String(currentBranchId);
+        const isOwnerRole = role === "OWNER";
+
+        return isSameBranch && isOwnerRole;
+      });
+    }
+
+    return false;
   };
 
   // 수정 권한 확인
@@ -158,10 +245,29 @@ const BoardEdit = () => {
 
     const userIsAuthor = isAuthor();
     const userIsAdmin = isAdmin();
+    const userIsBranchOwner = isBranchOwner();
 
-    if (!userIsAuthor && !userIsAdmin) {
-      alert('게시글 수정 권한이 없습니다.');
-      safeNavigate(-1); // 이전 페이지로 돌아가기
+    let hasPermission = false;
+
+    if (postType === 'notice') {
+      // 공지사항: 작성자, 관리자, 또는 지부 Owner
+      hasPermission = userIsAuthor || userIsAdmin || userIsBranchOwner;
+    } else {
+      // 일반 게시판: 작성자 또는 관리자
+      hasPermission = userIsAuthor || userIsAdmin;
+    }
+
+    console.log('=== 수정 권한 확인 ===');
+    console.log('게시물 타입:', postType);
+    console.log('작성자 여부:', userIsAuthor);
+    console.log('관리자 여부:', userIsAdmin);
+    console.log('지부 Owner 여부:', userIsBranchOwner);
+    console.log('최종 권한:', hasPermission);
+
+    if (!hasPermission) {
+      const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+      alert(`${typeLabel} 수정 권한이 없습니다.`);
+      safeNavigate(-1);
       return;
     }
   };
@@ -180,31 +286,26 @@ const BoardEdit = () => {
     const files = Array.from(e.target.files);
     if (!files || files.length === 0) return;
 
-    // 최대 이미지 개수 확인
     const totalImages = keepImageIds.length + newImages.length + files.length;
     if (totalImages > maxImages) {
-      alert(`이미지는 최대 ${maxImages}개까지 업로드할 수 있습니다. (현재 유지 이미지: ${keepImageIds.length}개, 신규 이미지: ${newImages.length}개)`);
+      alert(`이미지는 최대 ${maxImages}개까지 업로드할 수 있습니다.`);
       return;
     }
 
-    // 파일 크기 검증
     const oversizedFiles = files.filter(file => file.size > maxImageSize);
     if (oversizedFiles.length > 0) {
       alert('이미지 크기는 10MB 이하여야 합니다.');
       return;
     }
 
-    // 이미지 파일 타입 검증
     const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
     if (invalidFiles.length > 0) {
       alert('이미지 파일만 업로드할 수 있습니다.');
       return;
     }
 
-    // 새 이미지 파일 추가
     setNewImages(prev => [...prev, ...files]);
 
-    // 미리보기 생성
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -216,20 +317,14 @@ const BoardEdit = () => {
       };
       reader.readAsDataURL(file);
     });
-
-    console.log('새 이미지 추가 후 keepImageIds:', keepImageIds);
   };
 
-  // 이미지 업로드 버튼 클릭 핸들러
   const handleImageUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  // 기존 이미지 제거 핸들러
   const handleRemoveExistingImage = (imageId) => {
     if (imageId === undefined || imageId === null) return;
-
-    console.log(`이미지 ID '${imageId}' (타입: ${typeof imageId}) 제거 시도`);
 
     setKeepImageIds(prev => {
       const newIds = prev.filter(id => id !== imageId);
@@ -238,7 +333,6 @@ const BoardEdit = () => {
     });
   };
 
-  // 새 이미지 제거 핸들러
   const handleRemoveNewImage = (index) => {
     setNewImages(prev => prev.filter((_, i) => i !== index));
     setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
@@ -281,7 +375,6 @@ const BoardEdit = () => {
     try {
       const formDataToSend = new FormData();
 
-      // 수정 데이터
       const updateData = {
         title: formData.title,
         content: formData.content
@@ -292,14 +385,12 @@ const BoardEdit = () => {
       });
       formDataToSend.append('update', requestBlob);
 
-      // 새 이미지 파일들 추가
       if (newImages.length > 0) {
         newImages.forEach(image => {
           formDataToSend.append('images', image);
         });
       }
 
-      // 유지할 기존 이미지 ID들 추가
       if (keepImageIds.length > 0) {
         const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds)], {
           type: 'application/json'
@@ -307,25 +398,28 @@ const BoardEdit = () => {
         formDataToSend.append('keepImageIds', keepImageIdsBlob);
       }
 
+      const apiEndpoint = getApiEndpoint();
       console.log('게시글 수정 요청:', {
-        boardId,
+        endpoint: `${apiEndpoint}/${postId}`,
+        postType,
         title: formData.title,
         content: formData.content,
         newImageCount: newImages.length,
         keepImageIds: keepImageIds
       });
 
-      const response = await API.patch(`/board/${boardId}`, formDataToSend, {
+      const response = await API.patch(`${apiEndpoint}/${postId}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
 
       if (response.data.success) {
-        alert('게시글이 성공적으로 수정되었습니다.');
-        safeNavigate(-1); // 이전 페이지(상세 페이지)로 돌아가기
+        const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+        alert(`${typeLabel}이 성공적으로 수정되었습니다.`);
+        safeNavigate(-1); // 이전 페이지로 돌아가기
       } else {
-        throw new Error(response.data.message || '게시글 수정에 실패했습니다.');
+        throw new Error(response.data.message || '수정에 실패했습니다.');
       }
     } catch (error) {
       console.error('게시글 수정 오류:', error);
@@ -336,7 +430,7 @@ const BoardEdit = () => {
         } else if (error.response.status === 403) {
           setError('수정 권한이 없습니다.');
         } else {
-          setError(error.response.data?.message || '게시글 수정에 실패했습니다.');
+          setError(error.response.data?.message || '수정에 실패했습니다.');
         }
       } else {
         setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
@@ -349,14 +443,14 @@ const BoardEdit = () => {
   // 취소 버튼 핸들러
   const handleCancel = () => {
     const hasChanges =
-        formData.title !== originalBoard?.title ||
-        formData.content !== originalBoard?.content ||
+        formData.title !== originalPost?.title ||
+        formData.content !== originalPost?.content ||
         newImages.length > 0 ||
         keepImageIds.length !== existingImages.length;
 
     if (hasChanges) {
       if (window.confirm('수정 중인 내용이 있습니다. 정말 취소하시겠습니까?')) {
-        safeNavigate(-1); // 이전 페이지로 돌아가기
+        safeNavigate(-1);
       }
     } else {
       safeNavigate(-1);
@@ -374,7 +468,7 @@ const BoardEdit = () => {
     );
   }
 
-  if (!originalBoard) {
+  if (!originalPost) {
     return (
         <div className="write-container">
           <div className="error-message">
@@ -388,10 +482,12 @@ const BoardEdit = () => {
     );
   }
 
+  const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+
   return (
       <div className="write-container">
         <div className="write-header">
-          <h1>게시글 수정</h1>
+          <h1>{getPageTitle()}</h1>
           <div className="write-actions">
             <button
                 type="button"
@@ -565,11 +661,11 @@ const BoardEdit = () => {
         {loading && (
             <div className="loading-overlay">
               <div className="loading-spinner"></div>
-              <p>게시글을 수정하고 있습니다...</p>
+              <p>{typeLabel}을 수정하고 있습니다...</p>
             </div>
         )}
       </div>
   );
 };
 
-export default BoardEdit;
+export default PostEdit;

@@ -1,21 +1,55 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
 import Comment from './Comment';
 import '../styles/boardDetail.css';
 
-const BoardDetail = () => {
-  const { branchId, boardId } = useParams();
+const PostDetail = () => {
+  const params = useParams();
+  const { branchId, boardId, noticeId } = params;
+  const location = useLocation();
   const navigate = useNavigate();
   const loggedNav = loggedNavigate(navigate);
   const fetchedRef = useRef(false);
 
-  const [board, setBoard] = useState(null);
+  const [post, setPost] = useState(null);
+  const [postType, setPostType] = useState(null); // 'board' 또는 'notice'
+  const [postId, setPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [canEditState, setCanEditState] = useState(false);
+
+  // URL에서 게시물 타입과 ID 추출
+  useEffect(() => {
+    if (params.branchId && params.postType && params.postId) {
+      // postType 유효성 검증
+      if (params.postType === 'board' || params.postType === 'notice') {
+        setPostType(params.postType);
+        setPostId(params.postId);
+      } else {
+        setError("잘못된 게시글 타입입니다. board 또는 notice만 가능합니다.");
+        setLoading(false);
+        return;
+      }
+    } else if (boardId) {
+      // 기존 params 방식 지원 (하위 호환성)
+      setPostType('board');
+      setPostId(boardId);
+    } else if (noticeId) {
+      setPostType('notice');
+      setPostId(noticeId);
+    } else {
+      setError('잘못된 접근입니다. 올바른 게시물 페이지에서 접근해주세요.');
+      setLoading(false);
+      return;
+    }
+
+    // fetchedRef 초기화
+    fetchedRef.current = false;
+    setCanEditState(false);
+  }, [params]);
 
   // 로그인 상태 확인
   const isLoggedIn = () => {
@@ -41,7 +75,7 @@ const BoardDetail = () => {
 
   // 현재 사용자가 작성자인지 확인하는 함수
   const isAuthor = () => {
-    if (!board) return false;
+    if (!post) return false;
 
     // 1. localStorage의 userInfo에서 id 가져오기
     const userInfoString = localStorage.getItem('userInfo');
@@ -58,38 +92,52 @@ const BoardDetail = () => {
     }
 
     if (!userId) {
-      console.log('❌ 사용자 ID를 찾을 수 없음');
       return false;
     }
 
-    console.log('=== 작성자 확인 ===');
-    console.log('현재 사용자 ID:', userId, '(타입:', typeof userId, ')');
-    console.log('게시글 작성자 ID:', board.authorId, '(타입:', typeof board.authorId, ')');
-
     // 안전한 비교를 위해 문자열로 변환하여 비교
-    const isUserAuthor = String(userId) === String(board.authorId);
-    console.log('작성자 여부:', isUserAuthor);
-
-    return isUserAuthor;
+    return String(userId) === String(post.authorId);
   };
 
   // 관리자인지 확인하는 함수
   const isAdmin = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    console.log('=== 관리자 확인 ===');
-    console.log('사용자 role:', userInfo.role);
-    console.log('사용자 isAdmin:', userInfo.isAdmin);
+    return userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
+  };
 
-    const adminStatus = userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
-    console.log('관리자 여부:', adminStatus);
+  // 지부 Owner인지 확인하는 함수 (공지사항용)
+  const isBranchOwner = () => {
+    if (postType !== 'notice') return false; // 공지사항이 아니면 체크하지 않음
 
-    return adminStatus;
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자는 모든 지부에 수정/삭제 가능
+    if (userInfo.isAdmin === true) {
+      return true;
+    }
+
+    // 사용자의 지부 정보 확인 (Owner 역할만)
+    if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+      return userInfo.branchRoles.some(branchRole => {
+        const userBranchId = branchRole.branchId;
+        const currentBranchId = branchId;
+        const role = branchRole.role;
+
+        const isSameBranch = String(userBranchId) === String(currentBranchId);
+        const isOwnerRole = role === "OWNER";
+
+        return isSameBranch && isOwnerRole;
+      });
+    }
+
+    return false;
   };
 
   // 수정/삭제 권한 확인 - React 상태로 관리
   useEffect(() => {
     const checkEditPermission = () => {
-      if (!board) {
+      if (!post || !postType) {
         setCanEditState(false);
         return;
       }
@@ -97,32 +145,40 @@ const BoardDetail = () => {
       const loggedIn = isLoggedIn();
       const userIsAuthor = isAuthor();
       const userIsAdmin = isAdmin();
-      const permission = loggedIn && (userIsAuthor || userIsAdmin);
 
-      console.log('=== 수정/삭제 권한 체크 ===');
-      console.log('로그인 상태:', loggedIn);
-      console.log('작성자 여부:', userIsAuthor);
-      console.log('관리자 여부:', userIsAdmin);
-      console.log('최종 권한:', permission);
+      let permission = false;
+
+      if (postType === 'board') {
+        permission = loggedIn && (userIsAuthor || userIsAdmin);
+      } else if (postType === 'notice') {
+        const userIsBranchOwner = isBranchOwner();
+        permission = loggedIn && (userIsAuthor || userIsAdmin || userIsBranchOwner);
+      }
 
       setCanEditState(permission);
     };
 
-    // board 데이터가 로드된 후에 권한 체크
-    if (board) {
-      checkEditPermission();
-    }
-  }, [board]); // board가 변경될 때마다 실행
+    // 약간의 지연을 두고 실행 (데이터 로딩 완료 대기)
+    const timer = setTimeout(checkEditPermission, 100);
+
+    return () => clearTimeout(timer);
+  }, [post, postType, branchId]);
 
   // localStorage 변경 감지 (로그인/로그아웃 시)
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log('localStorage 변경 감지됨 - 권한 재확인');
-      if (board) {
+      if (post && postType && branchId) {
         const loggedIn = isLoggedIn();
         const userIsAuthor = isAuthor();
         const userIsAdmin = isAdmin();
-        const permission = loggedIn && (userIsAuthor || userIsAdmin);
+        const userIsBranchOwner = isBranchOwner();
+
+        let permission = false;
+        if (postType === 'notice') {
+          permission = loggedIn && (userIsAuthor || userIsAdmin || userIsBranchOwner);
+        } else {
+          permission = loggedIn && (userIsAuthor || userIsAdmin);
+        }
 
         setCanEditState(permission);
       }
@@ -132,30 +188,40 @@ const BoardDetail = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [board]);
+  }, [post, postType, branchId]);
 
+  // 게시물 불러오기
   useEffect(() => {
-    // boardId가 바뀔 때마다 초기화
-    fetchedRef.current = false;
-    setCanEditState(false); // 권한 상태도 초기화
+    if (postType && postId && branchId) {
+      // ID 유효성 검사
+      if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
+        setError('유효하지 않은 게시글 ID입니다.');
+        setLoading(false);
+        return;
+      }
 
-    // ID 유효성 검사
-    if (!boardId || boardId === 'undefined' || isNaN(Number(boardId))) {
-      setError('유효하지 않은 게시글 ID입니다.');
-      setLoading(false);
-      return;
+      if (!branchId || branchId === 'undefined' || isNaN(Number(branchId))) {
+        setError('유효하지 않은 지부 ID입니다.');
+        setLoading(false);
+        return;
+      }
+
+      fetchPostDetail();
     }
+  }, [branchId, postType, postId]);
 
-    if (!branchId || branchId === 'undefined' || isNaN(Number(branchId))) {
-      setError('유효하지 않은 지부 ID입니다.');
-      setLoading(false);
-      return;
-    }
+  // API 엔드포인트 결정
+  const getApiEndpoint = () => {
+    return postType === 'notice' ? '/notice' : '/board';
+  };
 
-    fetchBoardDetail();
-  }, [branchId, boardId]);
+  // 게시물 타입에 따른 제목
+  const getPageTitle = (title) => {
+    const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+    return title ? `${title} - ${typeLabel} 상세` : `${typeLabel} 상세`;
+  };
 
-  const fetchBoardDetail = async () => {
+  const fetchPostDetail = async () => {
     // 중복 호출 방지
     if (fetchedRef.current) return;
     fetchedRef.current = true;
@@ -164,19 +230,15 @@ const BoardDetail = () => {
       setLoading(true);
       setError('');
 
-      console.log('📡 API 요청:', `/board/${boardId}`);
-      const response = await API.get(`/board/${boardId}`);
+      const apiEndpoint = getApiEndpoint();
+      const response = await API.get(`${apiEndpoint}/${postId}`);
 
       if (response.data.success) {
-        const boardData = response.data.content;
-        console.log('📥 받은 board 데이터:', boardData);
-
-        setBoard(boardData);
+        const postData = response.data.content;
+        setPost(postData);
 
         // 페이지 제목 설정
-        if (boardData.title) {
-          document.title = `${boardData.title} - 게시글 상세`;
-        }
+        document.title = getPageTitle(postData.title);
       } else {
         setError(response.data.message || '게시글을 불러오는데 실패했습니다.');
       }
@@ -199,7 +261,7 @@ const BoardDetail = () => {
     loggedNav(`/branches/${branchId}`);
   };
 
-  const handleEditBoard = () => {
+  const handleEditPost = () => {
     if (!isLoggedIn()) {
       alert('로그인이 필요합니다.');
       return;
@@ -210,10 +272,11 @@ const BoardDetail = () => {
       return;
     }
 
-    loggedNav(`/board/edit/${boardId}`);
+    // App.js의 라우팅 구조에 맞게 수정 페이지로 이동
+    loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
   };
 
-  const handleDeleteBoard = async () => {
+  const handleDeletePost = async () => {
     if (!isLoggedIn()) {
       alert('로그인이 필요합니다.');
       return;
@@ -224,22 +287,24 @@ const BoardDetail = () => {
       return;
     }
 
-    if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+    const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+    if (window.confirm(`정말로 이 ${typeLabel}을 삭제하시겠습니까?`)) {
       try {
-        const response = await API.delete(`/board/${boardId}`);
+        const apiEndpoint = getApiEndpoint();
+        const response = await API.delete(`${apiEndpoint}/${postId}`);
         if (response.data.success) {
-          alert('게시글이 삭제되었습니다.');
+          alert(`${typeLabel}이 삭제되었습니다.`);
           // 삭제 완료 후 지부 상세 페이지로 이동
           loggedNav(`/branches/${branchId}`);
         } else {
-          alert(response.data.message || '게시글 삭제에 실패했습니다.');
+          alert(response.data.message || `${typeLabel} 삭제에 실패했습니다.`);
         }
       } catch (err) {
         console.error('삭제 에러:', err);
         if (err.response?.status === 403) {
           alert('삭제 권한이 없습니다.');
         } else {
-          alert('게시글 삭제에 실패했습니다.');
+          alert(`${typeLabel} 삭제에 실패했습니다.`);
         }
       }
     }
@@ -302,7 +367,7 @@ const BoardDetail = () => {
     );
   }
 
-  if (!board) {
+  if (!post) {
     return (
         <div className="board-detail-container">
           <div className="error-message">
@@ -315,6 +380,8 @@ const BoardDetail = () => {
     );
   }
 
+  const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+
   return (
       <div className="board-detail-container">
         <div className="board-detail-header">
@@ -325,13 +392,13 @@ const BoardDetail = () => {
           {canEditState && (
               <div className="board-actions">
                 <button
-                    onClick={handleEditBoard}
+                    onClick={handleEditPost}
                     className="btn-edit"
                 >
                   수정
                 </button>
                 <button
-                    onClick={handleDeleteBoard}
+                    onClick={handleDeletePost}
                     className="btn-delete"
                 >
                   삭제
@@ -342,32 +409,32 @@ const BoardDetail = () => {
 
         <div className="board-detail-content">
           <div className="board-header">
-            <h1 className="board-title">{board.title}</h1>
+            <h1 className="board-title">{post.title}</h1>
             <div className="board-meta">
               <div className="board-meta-left">
-                <span className="author">작성자: {board.author}</span>
-                <span className="region">지역: {board.region}</span>
+                <span className="author">작성자: {post.author}</span>
+                <span className="region">지역: {post.region}</span>
+                <span className="post-type">{typeLabel}</span>
               </div>
               <div className="board-meta-right">
-                <span className="date">작성일: {formatDate(board.createdAt)}</span>
-                <span className="views">조회수: {board.viewCount?.toLocaleString()}</span>
-                <span className="comments">댓글: {board.commentCount}</span>
+                <span className="date">작성일: {formatDate(post.createdAt)}</span>
+                <span className="views">조회수: {post.viewCount?.toLocaleString()}</span>
               </div>
             </div>
           </div>
 
           <div className="board-content">
             <div className="content-text">
-              {board.content.split('\n').map((line, index) => (
+              {post.content.split('\n').map((line, index) => (
                   <p key={index}>{line}</p>
               ))}
             </div>
 
-            {board.images && board.images.length > 0 && (
+            {post.images && post.images.length > 0 && (
                 <div className="board-images">
                   <h4>첨부 이미지</h4>
                   <div className="image-grid">
-                    {board.images.map((image, index) => (
+                    {post.images.map((image, index) => (
                         <div key={image.id || index} className="image-item">
                           <img
                               src={image.url}
@@ -382,15 +449,15 @@ const BoardDetail = () => {
             )}
           </div>
 
-          {board.modifiedAt && board.modifiedAt !== board.createdAt && (
+          {post.modifiedAt && post.modifiedAt !== post.createdAt && (
               <div className="board-modified">
-                <small>마지막 수정: {formatDate(board.modifiedAt)}</small>
+                <small>마지막 수정: {formatDate(post.modifiedAt)}</small>
               </div>
           )}
         </div>
 
         {/* 댓글 섹션 */}
-        <Comment boardId={boardId} />
+        <Comment boardId={postId} postType={postType} />
 
         {/* 이미지 모달 */}
         {selectedImage && (
@@ -407,4 +474,4 @@ const BoardDetail = () => {
   );
 };
 
-export default BoardDetail;
+export default PostDetail;

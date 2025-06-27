@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';  
 import { useLocation, useParams } from 'react-router-dom';
-import SkillDetail from '../components/BoardDetail';
+import SkillDetail from '../components/PostDetail';
 import SubHeader from '../components/SubHeader';
 
 function SkillDetailPage() {

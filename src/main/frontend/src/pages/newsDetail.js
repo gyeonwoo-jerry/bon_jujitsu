@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';  
 import { useLocation, useParams } from 'react-router-dom';
-import NewsDetail from '../components/BoardDetail';
+import NewsDetail from '../components/PostDetail';
 import SubHeader from '../components/SubHeader';
 
 function NewsDetailPage() {
