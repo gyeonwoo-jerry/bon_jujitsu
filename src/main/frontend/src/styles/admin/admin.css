@@ -23,8 +23,9 @@
 .admin_contents .region_tabs .region_tabs_header { display: block; text-align: left; }
 .admin_contents .region_tabs .region_tabs_header span { font-size: 18px; font-weight: 600; color: var(--black-color);  }
 .admin_contents .region_tabs .region-buttons { margin-top: 14px; display: flex; justify-content: start; align-items: start; gap: 12px; flex-wrap: wrap; }
-.admin_contents .region_tabs .region-buttons > button.region-button { transition: all 0.3s ease; cursor: pointer; padding: 13px 20px 13px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); background-color: var(--white-color); }
-.admin_contents .region_tabs .region-buttons > button.region-button:hover { background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .region_tabs .region-buttons button.region-button { transition: all 0.3s ease; cursor: pointer; padding: 13px 20px 13px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--black-color); background-color: var(--white-color); border: none; margin: 0; }
+.admin_contents .region_tabs .region-buttons button.region-button:hover { background-color: var(--point-color); color: var(--white-color); }
+.admin_contents .region_tabs .region-buttons button.region-button.active { background-color: var(--point-color);color: var(--white-color);}
 
 .admin_contents .search-panel { margin-top: 20px; border-top: 1px solid #e0e0e0; padding-top: 20px; display: flex; justify-content: start; align-items: center; gap: 12px; }
 .admin_contents .search-panel .search-form { display: flex; justify-content: start; align-items: center; gap: 12px; }

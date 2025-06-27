@@ -1055,48 +1055,24 @@ const PostManagement = () => {
           </div>
         </div>
 
-        
-
-        {/* OWNER인 경우 지부 선택 (Board, Notice 카테고리에서만) */}
-        {userRole === "OWNER" && getCurrentCategoryInfo()?.needsBranch && (
-            <>
-              {/* 다중 지부 관리자인 경우 버튼 형태 (전체 버튼 없음) */}
-              {userBranches.length > 1 && (
-                  <div className="region-tabs">
-                    <div className="region-tabs-header">
-                      <span className="region-tabs-label">관리 지부 선택:</span>
-                    </div>
-                    <div className="region-buttons">
-                      {userBranches.map((branch) => (
-                          <button
-                              key={branch.id}
-                              className={`region-button ${selectedOwnerBranch === branch.id.toString() ? 'active' : ''}`}
-                              onClick={() => handleOwnerBranchClick(branch.id.toString())}
-                          >
-                            {branch.region}
-                          </button>
-                      ))}
-                    </div>
-                  </div>
-              )}
-
-              {/* 단일 지부 관리자인 경우 드롭다운 형태 (기존 유지) */}
-              {userBranches.length === 1 && (
-                  <div className="owner-branch-selector">
-                    <label className="branch-selector-label">관리 지부 선택:</label>
-                    <select
-                        value={selectedOwnerBranch}
-                        onChange={handleOwnerBranchChange}
-                        className="form-select"
+        {/* OWNER인 경우 지부 선택 (Board, Notice 카테고리에서만, 다중 지부일 때만) */}
+        {userRole === "OWNER" && getCurrentCategoryInfo()?.needsBranch && userBranches.length > 1 && (
+            <div className="region-tabs">
+              <div className="region-tabs-header">
+                <span className="region-tabs-label">관리 지부 선택:</span>
+              </div>
+              <div className="region-buttons">
+                {userBranches.map((branch) => (
+                    <button
+                        key={branch.id}
+                        className={`region-button ${selectedOwnerBranch === branch.id.toString() ? 'active' : ''}`}
+                        onClick={() => handleOwnerBranchClick(branch.id.toString())}
                     >
-                      <option value={userBranches[0].id}>
-                        {userBranches[0].region} ({userBranches[0].area}) - 관리 지부
-                      </option>
-                    </select>
-                    <span className="single-branch-note">* 단일 지부 관리자입니다</span>
-                  </div>
-              )}
-            </>
+                      {branch.region}
+                    </button>
+                ))}
+              </div>
+            </div>
         )}
 
         {/* 현재 선택된 조건 표시 */}
@@ -1112,8 +1088,18 @@ const PostManagement = () => {
             <div className="current-filter">
               <span className="filter-label">현재 조회 중:</span>
               <span className="filter-value">
-                {getSelectedOwnerBranchInfo()?.region} ({getSelectedOwnerBranchInfo()?.area}) 지부
-              </span>
+        {getSelectedOwnerBranchInfo()?.region} {getSelectedOwnerBranchInfo()?.area} 지부
+      </span>
+            </div>
+        )}
+
+        {/* 단일 지부 관리자의 현재 지부 표시 (선택 UI 없이 정보만 표시) */}
+        {userRole === "OWNER" && userBranches.length === 1 && getCurrentCategoryInfo()?.needsBranch && (
+            <div className="current-filter">
+              <span className="filter-label">관리 지부:</span>
+              <span className="filter-value">
+        {userBranches[0].region} {userBranches[0].area} 지부
+      </span>
             </div>
         )}
 

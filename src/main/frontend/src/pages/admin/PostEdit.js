@@ -1,8 +1,9 @@
-// pages/admin/PostEdit.js
+// pages/admin/PostEdit.js - 권한 체크 부분만 수정
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
+import AdminHeader from '../../components/admin/AdminHeader'; // AdminHeader 추가
 import "../../styles/admin/admin.css";
 
 const PostEdit = () => {
@@ -21,6 +22,9 @@ const PostEdit = () => {
     { id: 'news', name: 'News', apiPath: '/news' },
     { id: 'qna', name: 'QnA', apiPath: '/qna' }
   ]);
+
+  // 사용자 정보 상태 추가
+  const [userRole, setUserRole] = useState('');
 
   // 폼 상태
   const [selectedCategory, setSelectedCategory] = useState(category || 'skill');
@@ -53,7 +57,7 @@ const PostEdit = () => {
     return false;
   };
 
-  // 권한 체크
+  // 🔥 수정된 권한 체크 로직
   useEffect(() => {
     if (!checkToken()) {
       navigate('/login');
@@ -65,9 +69,24 @@ const PostEdit = () => {
       try {
         const user = JSON.parse(userInfo);
         const role = user.role || "";
+        setUserRole(role);
 
-        if (role !== "ADMIN") {
-          alert("관리자만 게시글을 수정할 수 있습니다.");
+        // 권한 체크 로직 수정
+        if (role === "ADMIN") {
+          // ADMIN은 모든 게시글 수정 가능
+          console.log("ADMIN 권한으로 게시글 수정 접근");
+        } else if (role === "OWNER") {
+          // OWNER는 Board와 Notice만 수정 가능
+          if (category === 'board' || category === 'notice') {
+            console.log("OWNER 권한으로 Board/Notice 수정 접근");
+          } else {
+            alert("관장은 Board와 Notice만 수정할 수 있습니다.");
+            navigate('/admin/posts');
+            return;
+          }
+        } else {
+          // 기타 권한은 접근 불가
+          alert("게시글을 수정할 권한이 없습니다.");
           navigate('/admin');
           return;
         }
@@ -78,7 +97,7 @@ const PostEdit = () => {
     } else {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [navigate, category]);
 
   // 게시글 정보 불러오기
   useEffect(() => {
@@ -161,7 +180,11 @@ const PostEdit = () => {
         }
       } catch (err) {
         console.error('게시글 정보 불러오기 오류:', err);
-        if (err.response?.status === 404) {
+
+        // 🔥 권한 오류 처리 추가
+        if (err.response?.status === 403) {
+          setError('해당 게시글을 수정할 권한이 없습니다.');
+        } else if (err.response?.status === 404) {
           setError('해당 게시글을 찾을 수 없습니다.');
         } else if (err.response?.status === 401) {
           setError('인증에 실패했습니다. 다시 로그인해주세요.');
@@ -235,12 +258,6 @@ const PostEdit = () => {
       return;
     }
 
-    // 이미지는 모든 카테고리에서 선택사항이므로 검증 제거
-    // if (isImageRequired() && keepImageIds.length === 0 && newImages.length === 0) {
-    //   setError('이미지를 최소 1개 이상 등록해주세요.');
-    //   return;
-    // }
-
     setLoading(true);
     setError(null);
 
@@ -281,7 +298,7 @@ const PostEdit = () => {
         content,
         keepImageIds: keepImageIds.length,
         newImageCount: newImages.length,
-        isImageRequired: isImageRequired()
+        userRole: userRole
       });
 
       const response = await API.patch(`${categoryInfo.apiPath}/${id}`, formData, {
@@ -303,8 +320,15 @@ const PostEdit = () => {
       if (err.response) {
         console.error('오류 상태:', err.response.status);
         console.error('오류 데이터:', err.response.data);
-        console.error('오류 헤더:', err.response.headers);
-        setError(`게시글 수정 실패 (${err.response.status}): ${err.response.data?.message || err.message}`);
+
+        // 🔥 권한 오류 처리 개선
+        if (err.response.status === 403) {
+          setError('해당 게시글을 수정할 권한이 없습니다.');
+        } else if (err.response.status === 401) {
+          setError('인증에 실패했습니다. 다시 로그인해주세요.');
+        } else {
+          setError(`게시글 수정 실패 (${err.response.status}): ${err.response.data?.message || err.message}`);
+        }
       } else if (err.request) {
         console.error('응답 없음:', err.request);
         setError('서버로부터 응답이 없습니다.');
@@ -330,37 +354,43 @@ const PostEdit = () => {
 - 유지할 이미지 ID 목록: ${keepImageIds.join(', ') || '없음'}
 - 새 이미지 수: ${newImages.length}개
 - 이미지 필수 여부: ${isImageRequired() ? '필수' : '선택사항'}
+- 사용자 권한: ${userRole}
     `);
   };
 
   if (initialLoading) {
     return (
-        <div className="post-create">
-          <h2 className="title">게시글관리(게시글수정)</h2>
-          <div className="loading-indicator">
-            게시글 정보를 불러오는 중입니다...
+        <div className="admin_main">
+          <AdminHeader />
+          <div className="admin_contents">
+            <div className="page-header">
+              <div className="title">게시글관리(게시글수정)</div>
+            </div>
+            <div className="loading-indicator">
+              게시글 정보를 불러오는 중입니다...
+            </div>
           </div>
         </div>
     );
   }
 
   return (
-    <div className="admin_main">
-      
-      <div className="admin_contents">
-        <div className="page-header">
-          <div className="title">게시글관리(게시글수정)</div>
-        </div>
+      <div className="admin_main">
+        <AdminHeader />
+        <div className="admin_contents">
+          <div className="page-header">
+            <div className="title">게시글관리(게시글수정)</div>
+          </div>
 
-        {error && (
-            <div className="error-message">
-              {error}
-            </div>
-        )}
+          {error && (
+              <div className="error-message">
+                {error}
+              </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="form-container create-form">
-          <table className="input-table">
-            <tbody>
+          <form onSubmit={handleSubmit} className="form-container create-form">
+            <table className="input-table">
+              <tbody>
               <tr>
                 <th>구분</th>
                 <td>
@@ -384,7 +414,7 @@ const PostEdit = () => {
               <tr>
                 <th>제목</th>
                 <td>
-                <input
+                  <input
                       type="text"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -411,7 +441,7 @@ const PostEdit = () => {
               <tr>
                 <th>이미지</th>
                 <td>
-                <input
+                  <input
                       type="file"
                       accept="image/*"
                       multiple
@@ -458,104 +488,103 @@ const PostEdit = () => {
                   </div>
                   {/* 기존 이미지 표시 */}
                   <div className="image-section">
-                      <h5>기존 이미지 ({existingImages.length}개)</h5>
-                      <div className="image-preview-container">
-                        {existingImages.length > 0 ? (
-                            existingImages.map((image, index) => (
-                                <div key={`existing-${index}`} className="image-preview">
-                                  <img
-                                      src={image.url}
-                                      alt={`기존 이미지 ${index + 1}`}
-                                      onError={(e) => {
-                                        console.error('이미지 로드 실패:', image.url);
-                                        e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
-                                      }}
-                                  />
-                                  <div className="image-tag">기존 [{image.id}]</div>
-                                  {keepImageIds.includes(image.id) ? (
-                                      <button
-                                          type="button"
-                                          className="remove-image"
-                                          onClick={() => handleRemoveExistingImage(image.id)}
-                                          disabled={loading}
-                                      >
-                                        ✕
-                                      </button>
-                                  ) : (
-                                      <div className="removed-tag">삭제됨</div>
-                                  )}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="no-image-message">기존 이미지가 없습니다.</div>
-                        )}
-                      </div>
+                    <h5>기존 이미지 ({existingImages.length}개)</h5>
+                    <div className="image-preview-container">
+                      {existingImages.length > 0 ? (
+                          existingImages.map((image, index) => (
+                              <div key={`existing-${index}`} className="image-preview">
+                                <img
+                                    src={image.url}
+                                    alt={`기존 이미지 ${index + 1}`}
+                                    onError={(e) => {
+                                      console.error('이미지 로드 실패:', image.url);
+                                      e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
+                                    }}
+                                />
+                                <div className="image-tag">기존 [{image.id}]</div>
+                                {keepImageIds.includes(image.id) ? (
+                                    <button
+                                        type="button"
+                                        className="remove-image"
+                                        onClick={() => handleRemoveExistingImage(image.id)}
+                                        disabled={loading}
+                                    >
+                                      ✕
+                                    </button>
+                                ) : (
+                                    <div className="removed-tag">삭제됨</div>
+                                )}
+                              </div>
+                          ))
+                      ) : (
+                          <div className="no-image-message">기존 이미지가 없습니다.</div>
+                      )}
                     </div>
+                  </div>
 
-                    {/* 새 이미지 표시 */}
-                    <div className="image-section">
-                      <h5>새 이미지 ({newImages.length}개)</h5>
-                      <div className="image-preview-container">
-                        {newImages.length > 0 ? (
-                            newImages.map((file, index) => (
-                                <div key={`new-${index}`} className="image-preview">
-                                  <img
-                                      src={URL.createObjectURL(file)}
-                                      alt={`새 이미지 ${index + 1}`}
-                                  />
-                                  <div className="image-tag new">신규</div>
-                                  <button
-                                      type="button"
-                                      className="remove-image"
-                                      onClick={() => handleRemoveNewImage(index)}
-                                      disabled={loading}
-                                  >
-                                    ✕
-                                  </button>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="no-image-message">새 이미지가 없습니다.</div>
-                        )}
-                      </div>
+                  {/* 새 이미지 표시 */}
+                  <div className="image-section">
+                    <h5>새 이미지 ({newImages.length}개)</h5>
+                    <div className="image-preview-container">
+                      {newImages.length > 0 ? (
+                          newImages.map((file, index) => (
+                              <div key={`new-${index}`} className="image-preview">
+                                <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`새 이미지 ${index + 1}`}
+                                />
+                                <div className="image-tag new">신규</div>
+                                <button
+                                    type="button"
+                                    className="remove-image"
+                                    onClick={() => handleRemoveNewImage(index)}
+                                    disabled={loading}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                          ))
+                      ) : (
+                          <div className="no-image-message">새 이미지가 없습니다.</div>
+                      )}
                     </div>
+                  </div>
 
-                    {/* 이미지 개수 요약 표시 */}
-                    <div className="image-summary">
-                      <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {newImages.length}개 = 총 {keepImageIds.length + newImages.length}개
-                      {(keepImageIds.length + newImages.length > 4) &&
-                          <div className="image-warning">⚠️ 이미지는 최대 4개까지만 가능합니다!</div>
-                      }
-                    </div>
+                  {/* 이미지 개수 요약 표시 */}
+                  <div className="image-summary">
+                    <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {newImages.length}개 = 총 {keepImageIds.length + newImages.length}개
+                    {(keepImageIds.length + newImages.length > 4) &&
+                        <div className="image-warning">⚠️ 이미지는 최대 4개까지만 가능합니다!</div>
+                    }
+                  </div>
                 </td>
               </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
 
-
-          {/* 수정하기 버튼 */}
-          <div className="form-buttons">
-            <button
-                type="submit"
-                className="submit-button"
-                disabled={loading || !title.trim() || !content.trim()}
-            >
-              {loading ? '수정 중...' : '수정하기'}
-            </button>
-            <button
-                type="button"
-                onClick={() => {
-                  navigate('/admin/posts');
-                }}
-                className="cancel-button"
-                disabled={loading}
-            >
-              취소
-            </button>
-          </div>
-        </form>
+            {/* 수정하기 버튼 */}
+            <div className="form-buttons">
+              <button
+                  type="submit"
+                  className="submit-button"
+                  disabled={loading || !title.trim() || !content.trim()}
+              >
+                {loading ? '수정 중...' : '수정하기'}
+              </button>
+              <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/admin/posts');
+                  }}
+                  className="cancel-button"
+                  disabled={loading}
+              >
+                취소
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
   );
 };
 
