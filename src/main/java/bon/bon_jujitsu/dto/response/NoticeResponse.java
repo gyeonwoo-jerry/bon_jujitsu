@@ -14,11 +14,12 @@ public record NoticeResponse(
     String title,
     String content,
     String region,
-    String name,
+    String author,        // name -> author로 필드명 변경 (BoardResponse와 일치)
+    Long authorId,        // String -> Long으로 타입 변경
     List<ImageResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
-    LocalDateTime modifiedAT
+    LocalDateTime modifiedAt  // modifiedAT -> modifiedAt으로 오타 수정
 ) {
 
   public static NoticeResponse fromEntity(Notice notice, List<PostImage> postImages) {
@@ -41,16 +42,33 @@ public record NoticeResponse(
       authorName = "탈퇴한 회원";
     }
 
+    Long authorId = null;
+    try {
+      if (notice.getUser() != null) {
+        authorId = notice.getUser().getId();
+      }
+    } catch (Exception e) {
+      authorId = null;
+    }
+
+    String region;
+    try {
+      region = notice.getBranch() != null ? notice.getBranch().getRegion() : "지부 정보 없음";
+    } catch (Exception e) {
+      region = "지부 정보 없음";
+    }
+
     return NoticeResponse.builder()
         .id(notice.getId())
         .title(notice.getTitle())
         .content(notice.getContent())
-        .region(notice.getBranch().getRegion())
-        .name(authorName)
+        .region(region)
+        .author(authorName)     // name -> author로 변경
+        .authorId(authorId)     // 추가된 필드
         .images(imageResponses)
         .viewCount(notice.getViewCount())
         .createdAt(notice.getCreatedAt())
-        .modifiedAT(notice.getModifiedAt())
+        .modifiedAt(notice.getModifiedAt())
         .build();
   }
 }

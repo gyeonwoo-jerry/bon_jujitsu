@@ -73,6 +73,8 @@ public class NoticeService {
     postImageService.uploadImage(notice.getId(), PostType.NOTICE, images);
   }
 
+  // NoticeService.java의 개선된 부분
+
   @Transactional(readOnly = true)
   public PageResponse<NoticeResponse> getNotices(int page, int size, String name, Long branchId) {
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -80,60 +82,24 @@ public class NoticeService {
     Page<Notice> notices;
 
     try {
-      // 🔥 방법 1: 수정된 Specification 사용
       Specification<Notice> spec = Specification.where(NoticeSpecification.includeDeletedUsers())
-              .and(NoticeSpecification.hasUserName(name))
-              .and(NoticeSpecification.hasBranchId(branchId));
+          .and(NoticeSpecification.hasUserName(name))
+          .and(NoticeSpecification.hasBranchId(branchId));
 
       notices = noticeRepository.findAll(spec, pageRequest);
-
     } catch (Exception e) {
-      // 🔥 방법 2: Specification 실패 시 안전한 쿼리로 폴백
       log.warn("Notice Specification 조회 실패, 안전한 쿼리로 폴백: {}", e.getMessage());
       notices = noticeRepository.findNoticesSafely(name, branchId, pageRequest);
     }
 
     Page<NoticeResponse> noticeResponses = notices.map(notice -> {
       try {
-        List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId())
-                .stream()
-                .map(postImage -> {
-                  String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-                  return ImageResponse.builder()
-                          .id(postImage.getId())
-                          .url(path)
-                          .build();
-                })
-                .collect(Collectors.toList());
-
-        // 🔥 안전한 작성자명 처리
-        String authorName;
-        try {
-          if (notice.getUser() != null) {
-            authorName = notice.getUser().getName();
-          } else {
-            authorName = "탈퇴한 회원";
-          }
-        } catch (Exception ex) {
-          authorName = "탈퇴한 회원";
-        }
-
-        return new NoticeResponse(
-                notice.getId(),
-                notice.getTitle(),
-                notice.getContent(),
-                notice.getBranch().getRegion(),
-                authorName, // 🔥 안전하게 처리된 작성자명
-                imageResponses,
-                notice.getViewCount(),
-                notice.getCreatedAt(),
-                notice.getModifiedAt()
-        );
-
+        List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
+        return NoticeResponse.fromEntity(notice, postImages);
       } catch (Exception e) {
-        // 🔥 개별 공지사항 처리 실패 시 안전한 응답 생성
         log.warn("공지사항 {} 처리 중 오류: {}", notice.getId(), e.getMessage());
-        return createSafeNoticeResponse(notice);
+        // fromEntity가 이미 안전한 처리를 하므로 빈 이미지 리스트로 재시도
+        return NoticeResponse.fromEntity(notice, Collections.emptyList());
       }
     });
 
@@ -145,14 +111,12 @@ public class NoticeService {
     Notice notice;
 
     try {
-      // 🔥 방법 1: 기본 조회 시도
       notice = noticeRepository.findById(noticeId)
-              .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+          .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
     } catch (Exception e) {
-      // 🔥 방법 2: 안전한 조회로 폴백
       log.warn("기본 조회 실패, 안전한 조회로 폴백: {}", e.getMessage());
       notice = noticeRepository.findByIdSafely(noticeId)
-              .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+          .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
     }
 
     HttpSession session = request.getSession();
@@ -168,42 +132,13 @@ public class NoticeService {
       List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
       return NoticeResponse.fromEntity(notice, postImages);
     } catch (Exception e) {
-      // 🔥 NoticeResponse 생성 실패 시 안전한 응답
-      log.warn("NoticeResponse 생성 실패: {}", e.getMessage());
-      return createSafeNoticeResponse(notice);
+      log.warn("이미지 조회 실패: {}", e.getMessage());
+      // fromEntity가 이미 안전한 처리를 하므로 빈 이미지 리스트로 재시도
+      return NoticeResponse.fromEntity(notice, Collections.emptyList());
     }
   }
 
-  // 🔥 안전한 NoticeResponse 생성 헬퍼 메서드
-  private NoticeResponse createSafeNoticeResponse(Notice notice) {
-    List<ImageResponse> emptyImages = Collections.emptyList();
-
-    String authorName;
-    try {
-      authorName = (notice.getUser() != null) ? notice.getUser().getName() : "탈퇴한 회원";
-    } catch (Exception e) {
-      authorName = "탈퇴한 회원";
-    }
-
-    String region;
-    try {
-      region = notice.getBranch().getRegion();
-    } catch (Exception e) {
-      region = "지부 정보 없음";
-    }
-
-    return new NoticeResponse(
-            notice.getId(),
-            notice.getTitle(),
-            notice.getContent(),
-            region,
-            authorName,
-            emptyImages,
-            notice.getViewCount(),
-            notice.getCreatedAt(),
-            notice.getModifiedAt()
-    );
-  }
+// createSafeNoticeResponse 메서드 제거
 
   public void updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images, List<Long> keepImageIds) {
     User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
