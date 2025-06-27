@@ -59,7 +59,7 @@ const BranchBoardList = () => {
     return loggedIn;
   };
 
-  // 해당 지부 회원인지 확인
+  // 해당 지부 회원인지 확인 - 역할 체크 추가
   const isBranchMember = () => {
     console.log('=== 지부 회원 확인 시작 ===');
 
@@ -83,13 +83,19 @@ const BranchBoardList = () => {
       const isMember = userInfo.branchRoles.some(branchRole => {
         const userBranchId = branchRole.branchId;
         const currentBranchId = branchId;
+        const role = branchRole.role; // 역할 추가!
 
         console.log(`비교: ${userBranchId} (${typeof userBranchId}) === ${currentBranchId} (${typeof currentBranchId})`);
+        console.log(`역할: ${role}`); // 역할 로그 추가
         console.log(`문자열 비교: "${userBranchId}" === "${currentBranchId}" = ${String(userBranchId) === String(currentBranchId)}`);
-        console.log(`숫자 비교: ${Number(userBranchId)} === ${Number(currentBranchId)} = ${Number(userBranchId) === Number(currentBranchId)}`);
 
-        // 안전한 비교: 둘 다 문자열로 변환해서 비교
-        return String(userBranchId) === String(currentBranchId);
+        // 해당 브랜치의 활성 역할(USER, COACH, OWNER) 허용, PENDING은 제외
+        const isValidRole = ['USER', 'COACH', 'OWNER'].includes(role);
+        const isSameBranch = String(userBranchId) === String(currentBranchId);
+
+        console.log(`유효한 역할: ${isValidRole}, 같은 브랜치: ${isSameBranch}`);
+
+        return isSameBranch && isValidRole; // 역할 체크 추가!
       });
 
       console.log('✅ 최종 지부 회원 여부:', isMember);

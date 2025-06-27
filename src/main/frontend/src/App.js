@@ -60,7 +60,7 @@ import './styles/response.css';
 import ProtectedRoute from "./components/ProtectedRoute";
 import useSessionCheck from "./hooks/useSessionCheck";
 import useAuthGuard from "./hooks/useAuthGuard";
-import BoardWrite from "./components/BoardWrite";
+import PostWrite from "./components/PostWrite";
 import BoardEdit from "./components/BoardEdit";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
@@ -86,8 +86,11 @@ function AppRoutes() {
           <Route path="/introLevel" element={<IntroLevel />} />
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
+          <Route
+              path="/branches/:branchId/:postType/write"
+              element={<PostWrite />}
+          />
           <Route path="/branches/:branchId/board/:boardId" element={<BoardDetail />} />
-          <Route path="/branches/:branchId/board/write" element={<BoardWrite />} />
           <Route path="/board/edit/:boardId" element={<BoardEdit />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />

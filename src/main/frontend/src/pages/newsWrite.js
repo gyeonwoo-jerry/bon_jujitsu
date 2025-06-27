@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
-import BoardWrite from '../components/BoardWrite';
+import PostWrite from '../components/PostWrite';
 
 function NewsWrite() {
   const [pageName, setPageName] = useState('');
@@ -33,7 +33,7 @@ function NewsWrite() {
   return (
     <div className="newsWrite">
       <SubHeader pageName={pageName} />
-      <BoardWrite 
+      <PostWrite
         apiEndpoint={apiEndpoint}
         title={id ? '뉴스 수정' : '뉴스 작성'} 
       />
