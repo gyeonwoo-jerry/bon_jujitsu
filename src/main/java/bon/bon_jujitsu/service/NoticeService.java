@@ -9,27 +9,25 @@ import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.NoticeRequest;
-import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.response.NoticeResponse;
 import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import bon.bon_jujitsu.specification.NoticeSpecification;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,165 +44,209 @@ public class NoticeService {
   private final PostImageService postImageService;
   private final PostImageRepository postImageRepository;
 
-  public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> images, Long branchId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  private static final String VIEWED_NOTICE_PREFIX = "viewed_notice_";
+  private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
 
-    Branch branch  = branchRepository.findById(branchId).orElseThrow(()->
-        new IllegalArgumentException("존재하지 않는 체육관입니다."));
+  /**
+   * 공지사항 생성
+   */
+  public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> images, Long branchId) {
+    User user = findUserById(userId);
+    Branch branch = findBranchById(branchId);
+
+    validateNoticeWritePermission(user, branchId);
+
+    Notice notice = Notice.builder()
+        .title(request.title())
+        .content(request.content())
+        .branch(branch)
+        .user(user)
+        .build();
+
+    noticeRepository.save(notice);
+
+    if (images != null && !images.isEmpty()) {
+      postImageService.uploadImage(notice.getId(), PostType.NOTICE, images);
+    }
+  }
+
+  /**
+   * 공지사항 목록 조회 (N+1 문제 해결)
+   */
+  @Transactional(readOnly = true)
+  public PageResponse<NoticeResponse> getNotices(int page, int size, String name, Long branchId) {
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+    // N+1 문제 방지를 위한 fetch join 사용
+    Page<Notice> notices = noticeRepository.findNoticesWithFetchJoin(name, branchId, pageRequest);
+
+    // 이미지만 별도로 배치 로딩
+    Set<Long> noticeIds = notices.getContent().stream()
+        .map(Notice::getId)
+        .collect(Collectors.toSet());
+
+    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(noticeIds);
+
+    // NoticeResponse 생성
+    return PageResponse.fromPage(notices.map(notice -> {
+      List<PostImage> images = imageMap.getOrDefault(notice.getId(), Collections.emptyList());
+      return NoticeResponse.fromEntity(notice, images);
+    }));
+  }
+
+  /**
+   * 공지사항 상세 조회 (N+1 문제 해결)
+   */
+  @Transactional(readOnly = true)
+  public NoticeResponse getNotice(Long noticeId, HttpServletRequest request) {
+    // N+1 문제 방지를 위한 fetch join 사용
+    Notice notice = noticeRepository.findByIdWithFetchJoin(noticeId)
+        .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+
+    // 세션 기반 조회수 증가 처리
+    handleViewCountIncrease(notice, noticeId, request);
+
+    // 이미지 조회
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
+
+    return NoticeResponse.fromEntity(notice, postImages);
+  }
+
+  /**
+   * 공지사항 수정
+   */
+  public void updateNotice(NoticeUpdate update, Long userId, Long noticeId,
+      List<MultipartFile> images, List<Long> keepImageIds) {
+    User user = findUserById(userId);
+    Notice notice = findNoticeById(noticeId);
+
+    validateNoticeUpdatePermission(user, notice);
+
+    notice.updateNotice(update);
+
+    if (images != null || keepImageIds != null) {
+      postImageService.updateImages(notice.getId(), PostType.NOTICE, images, keepImageIds);
+    }
+  }
+
+  /**
+   * 공지사항 삭제
+   */
+  public void deleteNotice(Long userId, Long noticeId) {
+    User user = findUserById(userId);
+    Notice notice = findNoticeById(noticeId);
+
+    validateNoticeDeletePermission(user, notice);
+
+    notice.softDelete();
+  }
+
+  /**
+   * 메인 공지사항 조회
+   */
+  @Transactional(readOnly = true)
+  public NoticeResponse getMainNotice(Long branchId) {
+    Branch branch = findBranchById(branchId);
+
+    Notice notice = noticeRepository.findTopByBranchOrderByCreatedAtDesc(branch)
+        .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
+
+    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
+
+    return NoticeResponse.fromEntity(notice, postImages);
+  }
+
+  // === Private Helper Methods ===
+
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+  }
+
+  private Branch findBranchById(Long branchId) {
+    return branchRepository.findById(branchId)
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 체육관입니다."));
+  }
+
+  private Notice findNoticeById(Long noticeId) {
+    return noticeRepository.findById(noticeId)
+        .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+  }
+
+  private void validateNoticeWritePermission(User user, Long branchId) {
+    // 관리자는 모든 지부에 작성 가능
+    if (user.isAdmin()) {
+      return;
+    }
 
     BranchUser branchUser = user.getBranchUsers().stream()
         .filter(bu -> bu.getBranch().getId().equals(branchId))
         .findFirst()
         .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
 
-    if (!(branchUser.getUserRole() == UserRole.OWNER || user.isAdmin())) {
+    if (branchUser.getUserRole() != UserRole.OWNER) {
       throw new IllegalArgumentException("공지사항은 관장이나 관리자만 작성할 수 있습니다.");
     }
-
-    Notice notice = Notice.builder()
-        .title(request.title())
-        .content(request.content())
-        .branch(branch )
-        .user(user)
-        .build();
-
-    noticeRepository.save(notice);
-
-    postImageService.uploadImage(notice.getId(), PostType.NOTICE, images);
   }
 
-  // NoticeService.java의 개선된 부분
-
-  @Transactional(readOnly = true)
-  public PageResponse<NoticeResponse> getNotices(int page, int size, String name, Long branchId) {
-    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-    Page<Notice> notices;
-
-    try {
-      Specification<Notice> spec = Specification.where(NoticeSpecification.includeDeletedUsers())
-          .and(NoticeSpecification.hasUserName(name))
-          .and(NoticeSpecification.hasBranchId(branchId));
-
-      notices = noticeRepository.findAll(spec, pageRequest);
-    } catch (Exception e) {
-      log.warn("Notice Specification 조회 실패, 안전한 쿼리로 폴백: {}", e.getMessage());
-      notices = noticeRepository.findNoticesSafely(name, branchId, pageRequest);
+  private void validateNoticeUpdatePermission(User user, Notice notice) {
+    // 관리자는 모든 공지사항 수정 가능
+    if (user.isAdmin()) {
+      return;
     }
 
-    Page<NoticeResponse> noticeResponses = notices.map(notice -> {
-      try {
-        List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
-        return NoticeResponse.fromEntity(notice, postImages);
-      } catch (Exception e) {
-        log.warn("공지사항 {} 처리 중 오류: {}", notice.getId(), e.getMessage());
-        // fromEntity가 이미 안전한 처리를 하므로 빈 이미지 리스트로 재시도
-        return NoticeResponse.fromEntity(notice, Collections.emptyList());
-      }
-    });
+    Branch noticeBranch = notice.getBranch();
+    BranchUser branchUser = user.getBranchUsers().stream()
+        .filter(bu -> bu.getBranch().getId().equals(noticeBranch.getId()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
 
-    return PageResponse.fromPage(noticeResponses);
+    if (branchUser.getUserRole() != UserRole.OWNER) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 수정할 수 있습니다.");
+    }
+
+    // 관장은 본인이 작성한 공지사항만 수정 가능
+    if (!notice.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 공지사항만 수정할 수 있습니다.");
+    }
   }
 
-  @Transactional(readOnly = true)
-  public NoticeResponse getNotice(Long noticeId, HttpServletRequest request) {
-    Notice notice;
-
-    try {
-      notice = noticeRepository.findById(noticeId)
-          .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
-    } catch (Exception e) {
-      log.warn("기본 조회 실패, 안전한 조회로 폴백: {}", e.getMessage());
-      notice = noticeRepository.findByIdSafely(noticeId)
-          .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다."));
+  private void validateNoticeDeletePermission(User user, Notice notice) {
+    // 관리자는 모든 공지사항 삭제 가능
+    if (user.isAdmin()) {
+      return;
     }
 
+    Branch noticeBranch = notice.getBranch();
+    BranchUser branchUser = user.getBranchUsers().stream()
+        .filter(bu -> bu.getBranch().getId().equals(noticeBranch.getId()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
+
+    if (branchUser.getUserRole() != UserRole.OWNER) {
+      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 삭제할 수 있습니다.");
+    }
+
+    // 관장은 본인이 작성한 공지사항만 삭제 가능
+    if (!notice.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 공지사항만 삭제할 수 있습니다.");
+    }
+  }
+
+  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> noticeIds) {
+    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.NOTICE, noticeIds);
+    return allImages.stream()
+        .collect(Collectors.groupingBy(PostImage::getPostId));
+  }
+
+  private void handleViewCountIncrease(Notice notice, Long noticeId, HttpServletRequest request) {
     HttpSession session = request.getSession();
-    String sessionKey = "viewed_notice_" + noticeId;
+    String sessionKey = VIEWED_NOTICE_PREFIX + noticeId;
 
     if (session.getAttribute(sessionKey) == null) {
       notice.increaseViewCount();
       session.setAttribute(sessionKey, true);
-      session.setMaxInactiveInterval(60 * 60);
+      session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
     }
-
-    try {
-      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
-      return NoticeResponse.fromEntity(notice, postImages);
-    } catch (Exception e) {
-      log.warn("이미지 조회 실패: {}", e.getMessage());
-      // fromEntity가 이미 안전한 처리를 하므로 빈 이미지 리스트로 재시도
-      return NoticeResponse.fromEntity(notice, Collections.emptyList());
-    }
-  }
-
-// createSafeNoticeResponse 메서드 제거
-
-  public void updateNotice(NoticeUpdate update, Long userId, Long noticeId, List<MultipartFile> images, List<Long> keepImageIds) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-
-    // 공지사항이 속한 지점 확인
-    Branch noticeBranch = notice.getBranch();
-
-    // 사용자가 해당 지점에 등록되어 있는지와 역할 확인
-    BranchUser branchUser = user.getBranchUsers().stream()
-        .filter(bu -> bu.getBranch().getId().equals(noticeBranch.getId()))
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
-
-    // 관리자이거나 해당 지점의 관장인 경우에만 수정 가능
-    if (!(user.isAdmin() || branchUser.getUserRole() == UserRole.OWNER)) {
-      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 수정할 수 있습니다.");
-    }
-
-    // 관장인 경우 본인이 작성한 공지사항만 수정 가능
-    if (branchUser.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
-      throw new IllegalArgumentException("본인이 작성한 공지사항만 수정할 수 있습니다.");
-    }
-
-    notice.updateNotice(update);
-
-    postImageService.updateImages(notice.getId(), PostType.NOTICE, images, keepImageIds);
-  }
-
-  public void deleteNotice(Long userId, Long noticeId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    Notice notice = noticeRepository.findById(noticeId).orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-
-    // 공지사항이 속한 지점 확인
-    Branch noticeBranch = notice.getBranch();
-
-    // 사용자가 해당 지점에 등록되어 있는지와 역할 확인
-    BranchUser branchUser = user.getBranchUsers().stream()
-        .filter(bu -> bu.getBranch().getId().equals(noticeBranch.getId()))
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("해당 체육관에 등록된 사용자가 아닙니다."));
-
-    // 관리자이거나 해당 지점의 관장인 경우에만 삭제 가능
-    if (!(user.isAdmin() || branchUser.getUserRole() == UserRole.OWNER)) {
-      throw new IllegalArgumentException("공지사항은 관장이나 관리자만 삭제할 수 있습니다.");
-    }
-
-    // 관장인 경우 본인이 작성한 공지사항만 수정 가능
-    if (branchUser.getUserRole() == UserRole.OWNER && !notice.getUser().getId().equals(user.getId())) {
-      throw new IllegalArgumentException("본인이 작성한 공지사항만 삭제할 수 있습니다.");
-    }
-
-    notice.softDelete();
-  }
-
-  public NoticeResponse getMainNotice(Long branchId) {
-    Branch branch = branchRepository.findById(branchId).orElseThrow(() -> new IllegalArgumentException("지부를 찾을 수 없습니다."));
-
-    Notice notice = noticeRepository.findTopByBranchOrderByCreatedAtDesc(branch)
-        .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
-
-    // PostImage 엔티티 리스트를 직접 가져옴
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
-
-    return NoticeResponse.fromEntity(notice, postImages);
   }
 }
