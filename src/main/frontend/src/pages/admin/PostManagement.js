@@ -276,11 +276,34 @@ const PostManagement = () => {
       setSearchPerformed(false);
       setPosts([]);
       setSearchQuery('');
-      setSelectedRegion('');
-      setSelectedOwnerBranch('');
+      setSelectedRegion(''); // ADMIN용 region만 초기화
       setError(null);
+
+      // 🔥 OWNER의 경우 지부 선택 유지 로직 추가
+      if (userRole === "OWNER" && userBranches.length > 0) {
+        const categoryInfo = getCurrentCategoryInfo();
+
+        if (categoryInfo?.needsBranch) {
+          // Board, Notice 카테고리인 경우 지부 선택 유지 또는 자동 선택
+          if (userBranches.length === 1) {
+            // 단일 지부 관리자인 경우 자동 선택 유지
+            setSelectedOwnerBranch(userBranches[0].id.toString());
+            console.log("카테고리 변경 후 단일 지부 자동 선택:", userBranches[0].id);
+          } else if (userBranches.length > 1 && !selectedOwnerBranch) {
+            // 다중 지부 관리자이지만 선택된 지부가 없는 경우에만 초기화
+            setSelectedOwnerBranch('');
+          }
+          // else: 다중 지부 관리자이고 이미 선택된 지부가 있으면 유지
+        } else {
+          // News, Skill, Sponsor 등 지부가 필요없는 카테고리인 경우에만 초기화
+          setSelectedOwnerBranch('');
+        }
+      } else {
+        // ADMIN이거나 OWNER가 아닌 경우 기존대로 초기화
+        setSelectedOwnerBranch('');
+      }
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, userRole, userBranches]); // 의존성 배열에 userRole, userBranches 추가
 
   // 특정 region으로 게시글 데이터 가져오기 (ADMIN 버튼 클릭용)
   const fetchPostsWithRegion = async (region) => {

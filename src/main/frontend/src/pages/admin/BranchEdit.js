@@ -1,9 +1,10 @@
-// BranchEdit.js - ProductEdit.js와 동일한 구조로 개선
+// BranchEdit.js - AdminHeader 포함
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../../utils/api';
 import { getWithExpiry } from '../../utils/storage';
 import AddressSearch from '../../components/admin/AddressSearch';
+import AdminHeader from '../../components/admin/AdminHeader'; // AdminHeader 추가
 import "../../styles/admin/admin.css";
 import config from '../../utils/config';
 
@@ -321,92 +322,94 @@ const BranchEdit = () => {
 
   if (initialLoading) {
     return (
-      <div className="admin_main">
-        <div className="admin_contents">
-          <div className="page-header">
-            <div className="title">지부관리(지부수정)</div>
+        <div className="admin_main">
+          <AdminHeader /> {/* AdminHeader 추가 */}
+          <div className="admin_contents">
+            <div className="page-header">
+              <div className="title">지부관리(지부수정)</div>
+            </div>
+            <div className="loading-indicator">지부 정보를 불러오는 중입니다...</div>
           </div>
-          <div className="loading-indicator">지부 정보를 불러오는 중입니다...</div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="admin_main">
-      <div className="admin_contents">
-        <div className="page-header">
-          <div className="title">지부관리(지부수정)</div>
-        </div>
+      <div className="admin_main">
+        <AdminHeader /> {/* AdminHeader 추가 */}
+        <div className="admin_contents">
+          <div className="page-header">
+            <div className="title">지부관리(지부수정)</div>
+          </div>
 
-        {error && (
-            <div className="error-message">
-              {error}
-            </div>
-        )}
+          {error && (
+              <div className="error-message">
+                {error}
+              </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="form-container branch-form">
-          <table className="input-table">
-            <tbody>
-            <tr>
-              <th>지부명</th>
-              <td>
-                <input
-                    type="text"
-                    name="region"
-                    value={branchData.region}
-                    onChange={handleInputChange}
-                    className="region-input"
-                    placeholder="지부명을 입력하세요"
-                    required
-                />
-              </td>
-            </tr>
-            <tr>
-              <th>주소</th>
-              <td className="addr_input">
-                <AddressSearch
-                    onAddressSelect={(address, area) => {
-                      setBranchData(prev => ({
-                        ...prev,
-                        address,
-                        area: area || prev.area
-                      }));
-                    }}
-                    selectedAddress={branchData.address}
-                />
-                <p className="input-help-text">* 주소를 변경하려면 주소 검색 버튼을 클릭하세요.</p>
-              </td>
-            </tr>
-            <tr>
-              <th>상세 주소</th>
-              <td>
-                <input
-                    type="text"
-                    name="addressDetail"
-                    value={branchData.addressDetail}
-                    onChange={handleInputChange}
-                    placeholder="상세 주소를 입력하세요 (건물명, 동/호수 등)"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th>지역</th>
-              <td>
-                <input
-                    type="text"
-                    name="area"
-                    value={branchData.area}
-                    onChange={handleInputChange}
-                    placeholder="지역을 입력하세요 (예: 서울특별시, 경기도 등)"
-                    required
-                />
-                <p className="input-help-text">* 주소 검색 시 자동으로 설정됩니다.</p>
-              </td>
-            </tr>
-            <tr>
-              <th>지부 설명</th>
-              <td>
+          <form onSubmit={handleSubmit} className="form-container branch-form">
+            <table className="input-table">
+              <tbody>
+              <tr>
+                <th>지부명</th>
+                <td>
+                  <input
+                      type="text"
+                      name="region"
+                      value={branchData.region}
+                      onChange={handleInputChange}
+                      className="region-input"
+                      placeholder="지부명을 입력하세요"
+                      required
+                  />
+                </td>
+              </tr>
+              <tr>
+                <th>주소</th>
+                <td className="addr_input">
+                  <AddressSearch
+                      onAddressSelect={(address, area) => {
+                        setBranchData(prev => ({
+                          ...prev,
+                          address,
+                          area: area || prev.area
+                        }));
+                      }}
+                      selectedAddress={branchData.address}
+                  />
+                  <p className="input-help-text">* 주소를 변경하려면 주소 검색 버튼을 클릭하세요.</p>
+                </td>
+              </tr>
+              <tr>
+                <th>상세 주소</th>
+                <td>
+                  <input
+                      type="text"
+                      name="addressDetail"
+                      value={branchData.addressDetail}
+                      onChange={handleInputChange}
+                      placeholder="상세 주소를 입력하세요 (건물명, 동/호수 등)"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <th>지역</th>
+                <td>
+                  <input
+                      type="text"
+                      name="area"
+                      value={branchData.area}
+                      onChange={handleInputChange}
+                      placeholder="지역을 입력하세요 (예: 서울특별시, 경기도 등)"
+                      required
+                  />
+                  <p className="input-help-text">* 주소 검색 시 자동으로 설정됩니다.</p>
+                </td>
+              </tr>
+              <tr>
+                <th>지부 설명</th>
+                <td>
               <textarea
                   name="content"
                   value={branchData.content}
@@ -414,147 +417,147 @@ const BranchEdit = () => {
                   rows="5"
                   placeholder="지부 설명을 입력하세요"
               />
-              </td>
-            </tr>
-            <tr>
-              <th>이미지</th>
-              <td>
-                <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageChange}
-                    ref={fileInputRef}
-                    className="hidden-file-input"
-                />
-                <div className="image-info-section">
-                  <button
-                      type="button"
-                      className="image-upload-button"
-                      onClick={handleImageUploadClick}
-                  >
-                    이미지 등록
-                  </button>
-                  <button
-                      type="button"
-                      className="image-upload-button"
-                      onClick={debugImages}
-                      style={{ backgroundColor: '#e74c3c' }}
-                  >
-                    이미지 정보 확인
-                  </button>
-                  <button
-                      type="button"
-                      className="image-upload-button"
-                      onClick={() => {
-                        // 원본 이미지 ID 목록에서 모든 이미지 ID를 다시 keepImageIds로 설정
-                        setKeepImageIds([...originalImageIds.current]);
-                        console.log('모든 기존 이미지 복원됨:', originalImageIds.current);
-                        alert('모든 기존 이미지가 복원되었습니다.');
-                      }}
-                      style={{ backgroundColor: '#27ae60' }}
-                  >
-                    모든 이미지 복원
-                  </button>
-                </div>
+                </td>
+              </tr>
+              <tr>
+                <th>이미지</th>
+                <td>
+                  <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageChange}
+                      ref={fileInputRef}
+                      className="hidden-file-input"
+                  />
+                  <div className="image-info-section">
+                    <button
+                        type="button"
+                        className="image-upload-button"
+                        onClick={handleImageUploadClick}
+                    >
+                      이미지 등록
+                    </button>
+                    <button
+                        type="button"
+                        className="image-upload-button"
+                        onClick={debugImages}
+                        style={{ backgroundColor: '#e74c3c' }}
+                    >
+                      이미지 정보 확인
+                    </button>
+                    <button
+                        type="button"
+                        className="image-upload-button"
+                        onClick={() => {
+                          // 원본 이미지 ID 목록에서 모든 이미지 ID를 다시 keepImageIds로 설정
+                          setKeepImageIds([...originalImageIds.current]);
+                          console.log('모든 기존 이미지 복원됨:', originalImageIds.current);
+                          alert('모든 기존 이미지가 복원되었습니다.');
+                        }}
+                        style={{ backgroundColor: '#27ae60' }}
+                    >
+                      모든 이미지 복원
+                    </button>
+                  </div>
 
-                <div className="image-management-section">
-                  <h4>이미지 관리</h4>
+                  <div className="image-management-section">
+                    <h4>이미지 관리</h4>
 
-                  {/* 기존 이미지 표시 */}
-                  <div>
-                    <h5>기존 이미지 ({existingImages.length}개)</h5>
-                    <div className="image-preview-container">
-                      {existingImages.length > 0 ? (
-                          existingImages.map((image, index) => (
-                              <div key={`existing-${index}`} className="image-preview">
-                                <img
-                                    src={image.url}
-                                    alt={`지부 이미지 ${index + 1}`}
-                                    onError={(e) => {
-                                      console.error('이미지 로드 실패:', image.url);
-                                      e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
-                                    }}
-                                />
-                                <div className="image-tag">기존 [{image.id}]</div>
-                                {keepImageIds.includes(image.id) ? (
-                                    <button
-                                        type="button"
-                                        className="remove-image"
-                                        onClick={() => handleRemoveExistingImage(image.id)}
-                                    >
-                                      ✕
-                                    </button>
-                                ) : (
-                                    <div className="removed-tag">삭제됨</div>
-                                )}
-                              </div>
-                          ))
-                      ) : (
-                          <div>기존 이미지가 없습니다.</div>
-                      )}
+                    {/* 기존 이미지 표시 */}
+                    <div>
+                      <h5>기존 이미지 ({existingImages.length}개)</h5>
+                      <div className="image-preview-container">
+                        {existingImages.length > 0 ? (
+                            existingImages.map((image, index) => (
+                                <div key={`existing-${index}`} className="image-preview">
+                                  <img
+                                      src={image.url}
+                                      alt={`지부 이미지 ${index + 1}`}
+                                      onError={(e) => {
+                                        console.error('이미지 로드 실패:', image.url);
+                                        e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABh0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzT7MfTgAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNi8yNC8xMqLz6JEAAADQSURBVHic7cExAQAAAMKg9U9tCF+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAAxvQAAeh3OxgAAAAASUVORK5CYII=';
+                                      }}
+                                  />
+                                  <div className="image-tag">기존 [{image.id}]</div>
+                                  {keepImageIds.includes(image.id) ? (
+                                      <button
+                                          type="button"
+                                          className="remove-image"
+                                          onClick={() => handleRemoveExistingImage(image.id)}
+                                      >
+                                        ✕
+                                      </button>
+                                  ) : (
+                                      <div className="removed-tag">삭제됨</div>
+                                  )}
+                                </div>
+                            ))
+                        ) : (
+                            <div>기존 이미지가 없습니다.</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 새 이미지 표시 */}
+                    <div>
+                      <h5>새 이미지 ({branchData.images.length}개)</h5>
+                      <div className="image-preview-container">
+                        {branchData.images.length > 0 ? (
+                            branchData.images.map((file, index) => (
+                                <div key={`new-${index}`} className="image-preview">
+                                  <img
+                                      src={URL.createObjectURL(file)}
+                                      alt={`새 이미지 ${index + 1}`}
+                                  />
+                                  <div className="image-tag">신규</div>
+                                  <button
+                                      type="button"
+                                      className="remove-image"
+                                      onClick={() => handleRemoveNewImage(index)}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                            ))
+                        ) : (
+                            <div>새 이미지가 없습니다.</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 이미지 개수 요약 표시 */}
+                    <div className="image-summary">
+                      <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {branchData.images.length}개 = 총 {keepImageIds.length + branchData.images.length}개
+                      {(keepImageIds.length + branchData.images.length > 5) &&
+                          <div style={{ color: 'red', marginTop: '5px' }}>⚠️ 이미지는 최대 20개까지만 가능합니다!</div>
+                      }
                     </div>
                   </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
 
-                  {/* 새 이미지 표시 */}
-                  <div>
-                    <h5>새 이미지 ({branchData.images.length}개)</h5>
-                    <div className="image-preview-container">
-                      {branchData.images.length > 0 ? (
-                          branchData.images.map((file, index) => (
-                              <div key={`new-${index}`} className="image-preview">
-                                <img
-                                    src={URL.createObjectURL(file)}
-                                    alt={`새 이미지 ${index + 1}`}
-                                />
-                                <div className="image-tag">신규</div>
-                                <button
-                                    type="button"
-                                    className="remove-image"
-                                    onClick={() => handleRemoveNewImage(index)}
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                          ))
-                      ) : (
-                          <div>새 이미지가 없습니다.</div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 이미지 개수 요약 표시 */}
-                  <div className="image-summary">
-                    <strong>이미지 현황:</strong> 기존 이미지 {keepImageIds.length}개 + 신규 이미지 {branchData.images.length}개 = 총 {keepImageIds.length + branchData.images.length}개
-                    {(keepImageIds.length + branchData.images.length > 5) &&
-                        <div style={{ color: 'red', marginTop: '5px' }}>⚠️ 이미지는 최대 20개까지만 가능합니다!</div>
-                    }
-                  </div>
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-
-          <div className="form-buttons">
-            <button
-                type="submit"
-                className="register-button"
-                disabled={loading}
-            >
-              {loading ? '수정 중...' : '수정하기'}
-            </button>
-            <button
-                type="button"
-                className="cancel-button"
-                onClick={() => navigate('/admin/branches')}
-            >
-              취소
-            </button>
-          </div>
-        </form>
+            <div className="form-buttons">
+              <button
+                  type="submit"
+                  className="register-button"
+                  disabled={loading}
+              >
+                {loading ? '수정 중...' : '수정하기'}
+              </button>
+              <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={() => navigate('/admin/branches')}
+              >
+                취소
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
   );
 };
 
