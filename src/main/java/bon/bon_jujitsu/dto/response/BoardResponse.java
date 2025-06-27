@@ -18,18 +18,11 @@ public record BoardResponse(
     Long authorId,
     List<ImageResponse> images,
     Long viewCount,
-    Long commentCount,  // 댓글 수 추가
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
 
-  // 기존 메서드 (댓글 수 없이)
   public static BoardResponse fromEntity(Board board, List<PostImage> postImages) {
-    return fromEntity(board, postImages, 0L);
-  }
-
-  // 댓글 수 포함 메서드
-  public static BoardResponse fromEntity(Board board, List<PostImage> postImages, Long commentCount) {
     // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
     List<ImageResponse> imageResponses = postImages.stream()
         .map(postImage -> ImageResponse.builder()
@@ -74,7 +67,6 @@ public record BoardResponse(
         .authorId(authorId)
         .images(imageResponses)
         .viewCount(board.getViewCount())
-        .commentCount(commentCount)
         .createdAt(board.getCreatedAt())
         .modifiedAt(board.getModifiedAt())
         .build();
