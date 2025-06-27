@@ -97,7 +97,6 @@ public class NoticeService {
   /**
    * 공지사항 상세 조회 (N+1 문제 해결)
    */
-  @Transactional(readOnly = true)
   public NoticeResponse getNotice(Long noticeId, HttpServletRequest request) {
     // N+1 문제 방지를 위한 fetch join 사용
     Notice notice = noticeRepository.findByIdWithFetchJoin(noticeId)
