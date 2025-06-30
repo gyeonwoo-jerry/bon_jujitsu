@@ -6,7 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 import API from "../utils/api";
 import "../styles/branchesDetail.css";
 import BranchBoardList from "./BranchBoardList";
-import NoticeBoardList from "./NoticeBoardList";
+import BranchNoticeList from "./BranchNoticeList";
 import ColorThief from 'colorthief';
 
 function BranchesDetail() {
@@ -225,7 +225,7 @@ function BranchesDetail() {
                 <BranchBoardList />
               </div>
               <div className="board_list">
-                <NoticeBoardList />
+                <BranchNoticeList />
               </div>
             </div>
               

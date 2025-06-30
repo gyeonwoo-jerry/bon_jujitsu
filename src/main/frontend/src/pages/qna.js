@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
-import BoardList from '../components/BoardList';
+import PostList from '../components/PostList';
 import '../styles/qna.css'; // 스타일 파일이 없다면 생성해야 합니다
 
 function Qna() {
@@ -46,7 +46,7 @@ function Qna() {
       <div className="qna-container">
         <div className="inner">
             <div className="section_title">본주짓수 <font className='thin small'>Q&A</font></div>
-            <BoardList
+            <PostList
               apiEndpoint="/qna"
               title=""
               detailPathPrefix="/qnaDetail"

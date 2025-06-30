@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
-import BoardList from '../components/BoardList';
+import PostList from '../components/PostList';
 import '../styles/sponsor.css'; // 스타일 파일이 없다면 생성해야 합니다
 
 function Sponsor() {
@@ -46,7 +46,7 @@ function Sponsor() {
       <div className="sponsor-container">
         <div className="inner">
             <div className="section_title">BON <font className='thin small'>with</font> PARTNERS</div>
-            <BoardList
+            <PostList
               apiEndpoint="/sponsor"
               title=""
               detailPathPrefix="/sponsorDetail"

@@ -87,6 +87,7 @@ function AppRoutes() {
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/branches/:branchId/:postType/write" element={<PostWrite />}/>
+          <Route path="/skill/write" element={<PostWrite />}/>
           <Route path="/branches/:branchId/:postType/:postId" element={<PostDetail />} />
           <Route path="/branches/:branchId/:postType/:postId/edit" element={<PostEdit />} />
           <Route path="/comunity" element={<Comunity />} />

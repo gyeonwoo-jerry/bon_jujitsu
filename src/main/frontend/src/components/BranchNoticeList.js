@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import API from "../utils/api";
 import "../styles/branchBoardList.css";
 
-const NoticeBoardList = () => {
+const BranchNoticeList = () => {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -410,4 +410,4 @@ const NoticeBoardList = () => {
   );
 };
 
-export default NoticeBoardList;
+export default BranchNoticeList;

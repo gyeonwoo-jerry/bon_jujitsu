@@ -7,14 +7,14 @@ import '../styles/boardDetail.css';
 
 const PostDetail = () => {
   const params = useParams();
-  const { branchId, boardId, noticeId } = params;
+  const { branchId, boardId, noticeId, skillId } = params;
   const location = useLocation();
   const navigate = useNavigate();
   const loggedNav = loggedNavigate(navigate);
   const fetchedRef = useRef(false);
 
   const [post, setPost] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board' 또는 'notice'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill'
   const [postId, setPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,18 +23,38 @@ const PostDetail = () => {
 
   // URL에서 게시물 타입과 ID 추출
   useEffect(() => {
-    if (params.branchId && params.postType && params.postId) {
-      // postType 유효성 검증
-      if (params.postType === 'board' || params.postType === 'notice') {
-        setPostType(params.postType);
-        setPostId(params.postId);
+    // 스킬 상세 페이지 처리
+    if (location.pathname.includes('/skillDetail/')) {
+      const skillIdFromPath = location.pathname.split('/skillDetail/')[1];
+      if (skillIdFromPath && skillIdFromPath !== 'undefined') {
+        setPostType('skill');
+        setPostId(skillIdFromPath);
+        console.log('스킬 상세 페이지 - ID:', skillIdFromPath);
       } else {
-        setError("잘못된 게시글 타입입니다. board 또는 notice만 가능합니다.");
+        setError('유효하지 않은 스킬 ID입니다.');
         setLoading(false);
         return;
       }
-    } else if (boardId) {
-      // 기존 params 방식 지원 (하위 호환성)
+    }
+    // 기존 URL 파라미터 방식
+    else if (params.branchId && params.postType && params.postId) {
+      // postType 유효성 검증
+      if (['board', 'notice', 'skill'].includes(params.postType)) {
+        setPostType(params.postType);
+        setPostId(params.postId);
+      } else {
+        setError("잘못된 게시글 타입입니다. board, notice, skill만 가능합니다.");
+        setLoading(false);
+        return;
+      }
+    }
+    // 스킬 파라미터 처리
+    else if (skillId) {
+      setPostType('skill');
+      setPostId(skillId);
+    }
+    // 기존 params 방식 지원 (하위 호환성)
+    else if (boardId) {
       setPostType('board');
       setPostId(boardId);
     } else if (noticeId) {
@@ -49,7 +69,7 @@ const PostDetail = () => {
     // fetchedRef 초기화
     fetchedRef.current = false;
     setCanEditState(false);
-  }, [params]);
+  }, [params, location.pathname]);
 
   // 로그인 상태 확인
   const isLoggedIn = () => {
@@ -134,6 +154,29 @@ const PostDetail = () => {
     return false;
   };
 
+  // 스킬 Owner인지 확인하는 함수 (스킬용)
+  const isSkillOwner = () => {
+    if (postType !== 'skill') return false; // 스킬이 아니면 체크하지 않음
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자는 모든 스킬에 수정/삭제 가능
+    if (userInfo.isAdmin === true) {
+      return true;
+    }
+
+    // 사용자의 지부 정보 확인 (Owner 역할만 - 어느 지부든)
+    if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+      return userInfo.branchRoles.some(branchRole => {
+        const role = branchRole.role;
+        return role === "OWNER";
+      });
+    }
+
+    return false;
+  };
+
   // 수정/삭제 권한 확인 - React 상태로 관리
   useEffect(() => {
     const checkEditPermission = () => {
@@ -153,6 +196,9 @@ const PostDetail = () => {
       } else if (postType === 'notice') {
         const userIsBranchOwner = isBranchOwner();
         permission = loggedIn && (userIsAuthor || userIsAdmin || userIsBranchOwner);
+      } else if (postType === 'skill') {
+        const userIsSkillOwner = isSkillOwner();
+        permission = loggedIn && (userIsAuthor || userIsAdmin || userIsSkillOwner);
       }
 
       setCanEditState(permission);
@@ -167,15 +213,18 @@ const PostDetail = () => {
   // localStorage 변경 감지 (로그인/로그아웃 시)
   useEffect(() => {
     const handleStorageChange = () => {
-      if (post && postType && branchId) {
+      if (post && postType) {
         const loggedIn = isLoggedIn();
         const userIsAuthor = isAuthor();
         const userIsAdmin = isAdmin();
         const userIsBranchOwner = isBranchOwner();
+        const userIsSkillOwner = isSkillOwner();
 
         let permission = false;
         if (postType === 'notice') {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userIsBranchOwner);
+        } else if (postType === 'skill') {
+          permission = loggedIn && (userIsAuthor || userIsAdmin || userIsSkillOwner);
         } else {
           permission = loggedIn && (userIsAuthor || userIsAdmin);
         }
@@ -192,32 +241,55 @@ const PostDetail = () => {
 
   // 게시물 불러오기
   useEffect(() => {
-    if (postType && postId && branchId) {
-      // ID 유효성 검사
-      if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
-        setError('유효하지 않은 게시글 ID입니다.');
-        setLoading(false);
-        return;
-      }
+    if (postType && postId) {
+      // 스킬의 경우 branchId가 필요없음
+      if (postType === 'skill') {
+        // ID 유효성 검사
+        if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
+          setError('유효하지 않은 스킬 ID입니다.');
+          setLoading(false);
+          return;
+        }
+        fetchPostDetail();
+      } else if (branchId) {
+        // board, notice의 경우 branchId 필요
+        if (!branchId || branchId === 'undefined' || isNaN(Number(branchId))) {
+          setError('유효하지 않은 지부 ID입니다.');
+          setLoading(false);
+          return;
+        }
 
-      if (!branchId || branchId === 'undefined' || isNaN(Number(branchId))) {
-        setError('유효하지 않은 지부 ID입니다.');
-        setLoading(false);
-        return;
-      }
+        if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
+          setError('유효하지 않은 게시글 ID입니다.');
+          setLoading(false);
+          return;
+        }
 
-      fetchPostDetail();
+        fetchPostDetail();
+      }
     }
   }, [branchId, postType, postId]);
 
   // API 엔드포인트 결정
   const getApiEndpoint = () => {
-    return postType === 'notice' ? '/notice' : '/board';
+    if (postType === 'notice') return '/notice';
+    if (postType === 'skill') return '/skill';
+    return '/board';
   };
 
   // 게시물 타입에 따른 제목
   const getPageTitle = (title) => {
-    const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+    let typeLabel = '';
+    switch (postType) {
+      case 'notice':
+        typeLabel = '공지사항';
+        break;
+      case 'skill':
+        typeLabel = '기술';
+        break;
+      default:
+        typeLabel = '게시글';
+    }
     return title ? `${title} - ${typeLabel} 상세` : `${typeLabel} 상세`;
   };
 
@@ -257,8 +329,13 @@ const PostDetail = () => {
   };
 
   const handleBackToList = () => {
-    // 지부 상세 페이지로 이동
-    loggedNav(`/branches/${branchId}`);
+    if (postType === 'skill') {
+      // 스킬 목록 페이지로 이동
+      loggedNav('/skill');
+    } else {
+      // 지부 상세 페이지로 이동
+      loggedNav(`/branches/${branchId}`);
+    }
   };
 
   const handleEditPost = () => {
@@ -272,8 +349,17 @@ const PostDetail = () => {
       return;
     }
 
-    // App.js의 라우팅 구조에 맞게 수정 페이지로 이동
-    loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
+    // 수정 페이지로 이동
+    if (postType === 'skill') {
+      // skill은 branch와 무관하므로 임시 branchId 사용 또는 특별한 처리
+      // 방법 1: 고정된 branchId 사용 (예: 0 또는 'global')
+      loggedNav(`/branches/0/skill/${postId}/edit`);
+
+      // 방법 2: 또는 다른 고정값
+      // loggedNav(`/branches/global/skill/${postId}/edit`);
+    } else {
+      loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
+    }
   };
 
   const handleDeletePost = async () => {
@@ -287,15 +373,26 @@ const PostDetail = () => {
       return;
     }
 
-    const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+    let typeLabel = '';
+    switch (postType) {
+      case 'notice':
+        typeLabel = '공지사항';
+        break;
+      case 'skill':
+        typeLabel = '기술';
+        break;
+      default:
+        typeLabel = '게시글';
+    }
+
     if (window.confirm(`정말로 이 ${typeLabel}을 삭제하시겠습니까?`)) {
       try {
         const apiEndpoint = getApiEndpoint();
         const response = await API.delete(`${apiEndpoint}/${postId}`);
         if (response.data.success) {
           alert(`${typeLabel}이 삭제되었습니다.`);
-          // 삭제 완료 후 지부 상세 페이지로 이동
-          loggedNav(`/branches/${branchId}`);
+          // 삭제 완료 후 목록 페이지로 이동
+          handleBackToList();
         } else {
           alert(response.data.message || `${typeLabel} 삭제에 실패했습니다.`);
         }
@@ -380,7 +477,17 @@ const PostDetail = () => {
     );
   }
 
-  const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
+  let typeLabel = '';
+  switch (postType) {
+    case 'notice':
+      typeLabel = '공지사항';
+      break;
+    case 'skill':
+      typeLabel = '기술';
+      break;
+    default:
+      typeLabel = '게시글';
+  }
 
   return (
       <div className="board-detail-container">
@@ -413,7 +520,7 @@ const PostDetail = () => {
             <div className="board-meta">
               <div className="board-meta-left">
                 <span className="author">작성자: {post.author}</span>
-                <span className="region">지역: {post.region}</span>
+                {post.region && <span className="region">지역: {post.region}</span>}
                 <span className="post-type">{typeLabel}</span>
               </div>
               <div className="board-meta-right">
@@ -456,8 +563,10 @@ const PostDetail = () => {
           )}
         </div>
 
-        {/* 댓글 섹션 */}
-        <Comment boardId={postId} postType={postType} />
+        {/* 댓글 섹션 - 스킬이 아닐 때만 표시 */}
+        {postType !== 'skill' && (
+            <Comment boardId={postId} postType={postType} />
+        )}
 
         {/* 이미지 모달 */}
         {selectedImage && (
