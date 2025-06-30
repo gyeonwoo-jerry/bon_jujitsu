@@ -36,21 +36,15 @@ const PostEdit = () => {
   const maxImageSize = 10 * 1024 * 1024; // 10MB
 
   // URL에서 게시물 타입과 ID 추출
+  // URL에서 게시물 타입과 ID 추출
   useEffect(() => {
-    // 스킬 수정 페이지 처리
-    if (location.pathname.includes('/skill/edit/')) {
-      const skillIdFromPath = location.pathname.split('/skill/edit/')[1];
-      if (skillIdFromPath && skillIdFromPath !== 'undefined') {
-        setPostType('skill');
-        setPostId(skillIdFromPath);
-        console.log('스킬 수정 페이지 - ID:', skillIdFromPath);
-      } else {
-        setError('유효하지 않은 스킬 ID입니다.');
-        setInitialLoading(false);
-        return;
-      }
+    // 새로운 스킬 수정 라우트: /skill/:skillId/edit
+    if (params.skillId && location.pathname.includes('/skill/') && location.pathname.includes('/edit')) {
+      setPostType('skill');
+      setPostId(params.skillId);
+      console.log('스킬 수정 페이지 - ID:', params.skillId);
     }
-    // 새로운 URL 파라미터 방식
+    // 기존 브랜치 게시물: /branches/:branchId/:postType/:postId/edit
     else if (params.branchId && params.postType && params.postId) {
       // postType 유효성 검증
       if (['board', 'notice', 'skill'].includes(params.postType)) {
@@ -63,8 +57,9 @@ const PostEdit = () => {
         setInitialLoading(false);
         return;
       }
-    } else {
-      // 기존 방식 지원 (하위 호환성)
+    }
+    // 기존 방식들 (하위 호환성을 위해 유지)
+    else {
       const path = location.pathname;
       const boardEditMatches = path.match(/\/board\/edit\/(\d+)/);
       const noticeEditMatches = path.match(/\/notice\/edit\/(\d+)/);

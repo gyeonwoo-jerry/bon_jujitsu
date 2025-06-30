@@ -4,6 +4,7 @@ import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
 import Comment from './Comment';
 import '../styles/boardDetail.css';
+import SubHeader from './SubHeader';
 
 const PostDetail = () => {
   const params = useParams();
@@ -351,12 +352,7 @@ const PostDetail = () => {
 
     // 수정 페이지로 이동
     if (postType === 'skill') {
-      // skill은 branch와 무관하므로 임시 branchId 사용 또는 특별한 처리
-      // 방법 1: 고정된 branchId 사용 (예: 0 또는 'global')
-      loggedNav(`/branches/0/skill/${postId}/edit`);
-
-      // 방법 2: 또는 다른 고정값
-      // loggedNav(`/branches/global/skill/${postId}/edit`);
+      loggedNav(`/skill/${postId}/edit`);  // 이 부분만 변경!
     } else {
       loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
     }
@@ -490,6 +486,15 @@ const PostDetail = () => {
   }
 
   return (
+      <>
+        {/* 스킬일 때만 SubHeader 렌더링 */}
+        {postType === 'skill' && (
+            <SubHeader
+                pageName={'기술 상세'}
+                descName="본주짓수 기술을 확인해보세요"
+            />
+        )}
+
       <div className="board-detail-container">
         <div className="board-detail-header">
           <button onClick={handleBackToList} className="btn-back">
@@ -580,6 +585,7 @@ const PostDetail = () => {
             </div>
         )}
       </div>
+        </>
   );
 };
 

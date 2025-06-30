@@ -1,17 +1,19 @@
+// news.js 전체 수정된 버전:
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
 import PostList from '../components/PostList';
-import '../styles/news.css'; // 스타일 파일이 없다면 생성해야 합니다
+import '../styles/news.css';
 
 function News() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [canWriteNews, setCanWriteNews] = useState(false);
   const navigate = useNavigate();
-  
-  useEffect(() => { 
+
+  useEffect(() => {
     const title = '뉴스';
     setPageName(title);
     document.title = title;
@@ -20,49 +22,80 @@ function News() {
     const backgroundImage = '';
     setBackgroundImage(backgroundImage);
 
-    // 사용자 권한 확인
-    const checkUserRole = () => {
+    // 뉴스 작성 권한 확인 (관리자만)
+    const checkNewsWritePermission = () => {
       try {
         const userInfoStr = localStorage.getItem('userInfo');
-        if (userInfoStr) {
-          const userInfo = JSON.parse(userInfoStr);
-          setIsAdmin(userInfo.role === 'ADMIN');
+        if (!userInfoStr) {
+          setCanWriteNews(false);
+          return;
+        }
+
+        const userInfo = JSON.parse(userInfoStr);
+        console.log('뉴스 페이지 권한 확인:', userInfo);
+
+        // 관리자만 뉴스 작성 가능
+        if (userInfo.isAdmin === true) {
+          console.log('✅ 관리자 권한으로 뉴스 작성 허용');
+          setCanWriteNews(true);
+        } else {
+          console.log('❌ 관리자 아님');
+          setCanWriteNews(false);
         }
       } catch (error) {
-        console.error('사용자 권한 확인 오류:', error);
-        setIsAdmin(false);
+        console.error('뉴스 작성 권한 확인 오류:', error);
+        setCanWriteNews(false);
       }
     };
-    checkUserRole();
+
+    checkNewsWritePermission();
   }, []);
 
   const handleWriteClick = () => {
-    navigate('/newsWrite');
+    // 로그인 상태 확인
+    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
+    const isLoggedIn = !!(token || accessToken);
+
+    if (!isLoggedIn) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
+    if (!canWriteNews) {
+      alert('뉴스 게시물은 관리자만 작성할 수 있습니다.');
+      return;
+    }
+
+    // PostWrite 통합 컴포넌트로 이동
+    navigate('/news/write');
   };
 
   return (
-    <div className="news">
-      <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
-      <div className="news-container">
-        <div className="inner">
+      <div className="news">
+        <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
+        <div className="news-container">
+          <div className="inner">
             <div className="section_title">BON <font className='thin small'>in</font> MEDIA</div>
             <PostList
-              apiEndpoint="/news"
-              title=""
-              detailPathPrefix="/newsDetail"
+                apiEndpoint="/news"
+                title=""
+                searchPlaceholder="뉴스 검색..."
+                pageSize={12}
             />
-            {isAdmin && (
-              <button 
-                className="write-button"
-                onClick={handleWriteClick}
-              >
-                글쓰기
-              </button>
+            {canWriteNews && (
+                <button
+                    className="write-button"
+                    onClick={handleWriteClick}
+                >
+                  글쓰기
+                </button>
             )}
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
-export default News; 
+export default News;
