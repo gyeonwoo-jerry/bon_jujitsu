@@ -14,6 +14,7 @@ public record QnAResponse(
         String title,
         String content,
         String authorName,        // 작성자 이름 (회원은 닉네임, 비회원은 입력한 이름)
+        Long authorId,
         boolean isGuestPost,     // 비회원 작성글 여부
         List<ImageResponse> images,
         Long viewCount,
@@ -50,6 +51,7 @@ public record QnAResponse(
                 .title(qna.getTitle())
                 .content(qna.getContent())
                 .authorName(authorName)
+                .authorId(qna.getUser().getId())
                 .isGuestPost(isGuestPost)
                 .images(imageResponses)
                 .viewCount(qna.getViewCount())

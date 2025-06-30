@@ -70,28 +70,8 @@ public class NewsService {
     }
 
     Page<NewsResponse> newsResponses = newsPage.map(news -> {
-      // 이미지 경로를 ImageResponse 객체 리스트로 변환
-      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId())
-          .stream()
-          .map(postImage -> {
-            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-            return ImageResponse.builder()
-                .id(postImage.getId()) // PostImage의 ID 사용
-                .url(path)
-                .build();
-          })
-          .collect(Collectors.toList());
-
-      return new NewsResponse(
-          news.getId(),
-          news.getTitle(),
-          news.getContent(),
-          news.getUser().getName(),
-          imageResponses, // imagePaths 대신 imageResponses 사용
-          news.getViewCount(),
-          news.getCreatedAt(),
-          news.getModifiedAt()
-      );
+      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId());
+      return NewsResponse.fromEntity(news, postImages);
     });
 
     return PageResponse.fromPage(newsResponses);

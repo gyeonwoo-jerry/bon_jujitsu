@@ -13,7 +13,8 @@ public record SkillResponse(
     Long id,
     String title,
     String content,
-    String name,
+    String author,
+    Long authorId,
     List<ImageResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
@@ -29,11 +30,33 @@ public record SkillResponse(
             .build())
         .collect(Collectors.toList());
 
+    String authorName;
+    try {
+      if (skill.getUser() != null) {
+        authorName = skill.getUser().getName();
+      } else {
+        authorName = "탈퇴한 회원";
+      }
+    } catch (Exception e) {
+      authorName = "탈퇴한 회원";
+    }
+
+    Long authorId = null;
+    try {
+      if (skill.getUser() != null) {
+        authorId = skill.getUser().getId();
+      }
+    } catch (Exception e) {
+      authorId = null;
+    }
+
+
     return SkillResponse.builder()
         .id(skill.getId())
         .title(skill.getTitle())
         .content(skill.getContent())
-        .name(skill.getUser().getName())
+        .author(authorName)
+        .authorId(authorId)
         .images(imageResponses)
         .viewCount(skill.getViewCount())
         .createdAt(skill.getCreatedAt())

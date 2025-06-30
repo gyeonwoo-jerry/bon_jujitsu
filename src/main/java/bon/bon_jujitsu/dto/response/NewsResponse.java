@@ -13,7 +13,8 @@ public record NewsResponse(
     Long id,
     String title,
     String content,
-    String name,
+    String author,
+    Long authorId,
     List<ImageResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
@@ -29,11 +30,32 @@ public record NewsResponse(
             .build())
         .collect(Collectors.toList());
 
+    String authorName;
+    try {
+      if (news.getUser() != null) {
+        authorName = news.getUser().getName();
+      } else {
+        authorName = "탈퇴한 회원";
+      }
+    } catch (Exception e) {
+      authorName = "탈퇴한 회원";
+    }
+
+    Long authorId = null;
+    try {
+      if (news.getUser() != null) {
+        authorId = news.getUser().getId();
+      }
+    } catch (Exception e) {
+      authorId = null;
+    }
+
     return NewsResponse.builder()
         .id(news.getId())
         .title(news.getTitle())
         .content(news.getContent())
-        .name(news.getUser().getName())
+        .author(authorName)
+        .authorId(authorId)
         .images(imageResponses)
         .viewCount(news.getViewCount())
         .createdAt(news.getCreatedAt())

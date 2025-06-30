@@ -71,29 +71,8 @@ public class SponsorService {
     }
 
     Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
-      // 이미지 경로를 ImageResponse 객체 리스트로 변환
-      List<ImageResponse> imageResponses = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId())
-          .stream()
-          .map(postImage -> {
-            String path = Optional.ofNullable(postImage.getImagePath()).orElse("");
-            return ImageResponse.builder()
-                .id(postImage.getId()) // PostImage의 ID 사용
-                .url(path)
-                .build();
-          })
-          .collect(Collectors.toList());
-
-      return new SponsorResponse(
-          sponsor.getId(),
-          sponsor.getTitle(),
-          sponsor.getContent(),
-          sponsor.getUser().getName(),
-          sponsor.getUrl(),
-          imageResponses, // imagePaths 대신 imageResponses 사용
-          sponsor.getViewCount(),
-          sponsor.getCreatedAt(),
-          sponsor.getModifiedAt()
-      );
+      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId());
+      return SponsorResponse.fromEntity(sponsor, postImages);
     });
 
     return PageResponse.fromPage(sponsorResponses);

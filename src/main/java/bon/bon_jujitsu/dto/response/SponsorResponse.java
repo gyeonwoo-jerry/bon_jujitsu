@@ -13,7 +13,8 @@ public record SponsorResponse(
     Long id,
     String title,
     String content,
-    String name,
+    String author,
+    Long authorId,
     String url,
     List<ImageResponse> images,
     Long viewCount,
@@ -29,11 +30,32 @@ public record SponsorResponse(
             .build())
         .collect(Collectors.toList());
 
+    String authorName;
+    try {
+      if (sponsor.getUser() != null) {
+        authorName = sponsor.getUser().getName();
+      } else {
+        authorName = "탈퇴한 회원";
+      }
+    } catch (Exception e) {
+      authorName = "탈퇴한 회원";
+    }
+
+    Long authorId = null;
+    try {
+      if (sponsor.getUser() != null) {
+        authorId = sponsor.getUser().getId();
+      }
+    } catch (Exception e) {
+      authorId = null;
+    }
+
     return SponsorResponse.builder()
         .id(sponsor.getId())
         .title(sponsor.getTitle())
         .content(sponsor.getContent())
-        .name(sponsor.getUser().getName())
+        .author(authorName)
+        .authorId(authorId)
         .url(sponsor.getUrl())
         .images(imageResponses)
         .viewCount(sponsor.getViewCount())
