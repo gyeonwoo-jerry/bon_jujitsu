@@ -109,7 +109,7 @@ public class QnaService {
 
     public void updateQnA(QnAUpdate update, Long userId, Long qnaId, List<MultipartFile> images, List<Long> keepImageIds) {
         QnA qna = qnaRepository.findById(qnaId)
-                .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("QnA를 찾을 수 없습니다."));
 
         // 관리자 권한 확인 (관리자면 모든 글 수정 가능)
         User user = null;
@@ -123,17 +123,10 @@ public class QnaService {
         // 관리자가 아닌 경우에만 기존 권한 체크 수행
         if (!isAdmin) {
             if (qna.isGuestPost()) {
-                if (userId != null) {
-                    throw new IllegalArgumentException("비회원 작성글은 로그아웃 후 수정해주세요.");
-                }
-                if (!update.hasGuestPassword()) {
-                    throw new IllegalArgumentException("비회원 수정시 비밀번호가 필요합니다.");
-                }
-                String inputPassword = update.guestPassword().orElse("");
-                if (!passwordEncoder.matches(inputPassword, qna.getGuestPassword())) {
-                    throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-                }
+                // 비회원 글의 경우 - 이미 PostDetail에서 비밀번호 검증했으므로 패스
+                // 추가 검증 없이 수정 허용
             } else {
+                // 회원 글의 경우
                 if (userId == null) {
                     throw new IllegalArgumentException("로그인이 필요합니다.");
                 }
@@ -147,8 +140,8 @@ public class QnaService {
         // 수정할 내용이 있을 때만 업데이트
         if (update != null && update.hasContentToUpdate()) {
             qna.update(
-                    update.title().orElse(qna.getTitle()),
-                    update.content().orElse(qna.getContent())
+                update.title().orElse(qna.getTitle()),
+                update.content().orElse(qna.getContent())
             );
         }
 
