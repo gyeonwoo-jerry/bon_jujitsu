@@ -69,7 +69,7 @@ function News() {
     }
 
     // PostWrite 통합 컴포넌트로 이동
-    navigate('/news/write');
+    navigate('/write/news');
   };
 
   return (
@@ -83,6 +83,7 @@ function News() {
                 title=""
                 searchPlaceholder="뉴스 검색..."
                 pageSize={12}
+                postType="news"
             />
             {canWriteNews && (
                 <button

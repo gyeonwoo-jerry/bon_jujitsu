@@ -3,19 +3,19 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
 import Comment from './Comment';
-import '../styles/boardDetail.css';
+import '../styles/postDetail.css';
 import SubHeader from './SubHeader';
 
 const PostDetail = () => {
   const params = useParams();
-  const { branchId, boardId, noticeId, skillId } = params;
+  const { branchId, boardId, noticeId, skillId, newsId } = params;
   const location = useLocation();
   const navigate = useNavigate();
   const loggedNav = loggedNavigate(navigate);
   const fetchedRef = useRef(false);
 
   const [post, setPost] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news'
   const [postId, setPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,38 +24,78 @@ const PostDetail = () => {
 
   // URL에서 게시물 타입과 ID 추출
   useEffect(() => {
-    // 스킬 상세 페이지 처리
-    if (location.pathname.includes('/skillDetail/')) {
+    // 통합 라우트 처리: /detail/:postType/:postId 또는 /branches/:branchId/:postType/:postId
+
+    // 1. 전역 게시물 상세: /detail/:postType/:postId (skill, news)
+    if (params.postType && params.postId && !params.branchId &&
+        location.pathname.startsWith('/detail/')) {
+      const type = params.postType;
+      const id = params.postId;
+
+      if (['skill', 'news'].includes(type)) {
+        if (id && id !== 'undefined') {
+          setPostType(type);
+          setPostId(id);
+          console.log(`${type} 상세 페이지 - ID:`, id);
+        } else {
+          setError(`유효하지 않은 ${type === 'skill' ? '스킬' : '뉴스'} ID입니다.`);
+          setLoading(false);
+          return;
+        }
+      } else {
+        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill 또는 news만 가능합니다.');
+        setLoading(false);
+        return;
+      }
+    }
+    // 2. 지부별 게시물 상세: /branches/:branchId/:postType/:postId
+    else if (params.branchId && params.postType && params.postId) {
+      const type = params.postType;
+      const id = params.postId;
+
+      if (['board', 'notice'].includes(type)) {
+        setPostType(type);
+        setPostId(id);
+        console.log(`${type} 상세 페이지 - 브랜치 ID: ${params.branchId}, 게시물 ID:`, id);
+      } else {
+        setError('잘못된 게시글 타입입니다. 지부 게시물은 board 또는 notice만 가능합니다.');
+        setLoading(false);
+        return;
+      }
+    }
+    // 3. 하위 호환성 지원 (기존 라우트들)
+    else if (location.pathname.includes('/skillDetail/')) {
       const skillIdFromPath = location.pathname.split('/skillDetail/')[1];
       if (skillIdFromPath && skillIdFromPath !== 'undefined') {
         setPostType('skill');
         setPostId(skillIdFromPath);
-        console.log('스킬 상세 페이지 - ID:', skillIdFromPath);
+        console.log('스킬 상세 페이지 (기존 방식) - ID:', skillIdFromPath);
       } else {
         setError('유효하지 않은 스킬 ID입니다.');
         setLoading(false);
         return;
       }
     }
-    // 기존 URL 파라미터 방식
-    else if (params.branchId && params.postType && params.postId) {
-      // postType 유효성 검증
-      if (['board', 'notice', 'skill'].includes(params.postType)) {
-        setPostType(params.postType);
-        setPostId(params.postId);
+    else if (location.pathname.includes('/newsDetail/')) {
+      const newsIdFromPath = location.pathname.split('/newsDetail/')[1];
+      if (newsIdFromPath && newsIdFromPath !== 'undefined') {
+        setPostType('news');
+        setPostId(newsIdFromPath);
+        console.log('뉴스 상세 페이지 (기존 방식) - ID:', newsIdFromPath);
       } else {
-        setError("잘못된 게시글 타입입니다. board, notice, skill만 가능합니다.");
+        setError('유효하지 않은 뉴스 ID입니다.');
         setLoading(false);
         return;
       }
     }
-    // 스킬 파라미터 처리
+    // 4. 개별 파라미터 처리 (하위 호환성)
     else if (skillId) {
       setPostType('skill');
       setPostId(skillId);
-    }
-    // 기존 params 방식 지원 (하위 호환성)
-    else if (boardId) {
+    } else if (newsId) {
+      setPostType('news');
+      setPostId(newsId);
+    } else if (boardId) {
       setPostType('board');
       setPostId(boardId);
     } else if (noticeId) {
@@ -178,6 +218,17 @@ const PostDetail = () => {
     return false;
   };
 
+  // 뉴스 편집 권한 확인 (관리자만)
+  const canEditNews = () => {
+    if (postType !== 'news') return false; // 뉴스가 아니면 체크하지 않음
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자만 뉴스 수정/삭제 가능
+    return userInfo.isAdmin === true;
+  };
+
   // 수정/삭제 권한 확인 - React 상태로 관리
   useEffect(() => {
     const checkEditPermission = () => {
@@ -200,6 +251,9 @@ const PostDetail = () => {
       } else if (postType === 'skill') {
         const userIsSkillOwner = isSkillOwner();
         permission = loggedIn && (userIsAuthor || userIsAdmin || userIsSkillOwner);
+      } else if (postType === 'news') {
+        const userCanEditNews = canEditNews();
+        permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditNews);
       }
 
       setCanEditState(permission);
@@ -220,12 +274,15 @@ const PostDetail = () => {
         const userIsAdmin = isAdmin();
         const userIsBranchOwner = isBranchOwner();
         const userIsSkillOwner = isSkillOwner();
+        const userCanEditNews = canEditNews();
 
         let permission = false;
         if (postType === 'notice') {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userIsBranchOwner);
         } else if (postType === 'skill') {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userIsSkillOwner);
+        } else if (postType === 'news') {
+          permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditNews);
         } else {
           permission = loggedIn && (userIsAuthor || userIsAdmin);
         }
@@ -243,11 +300,11 @@ const PostDetail = () => {
   // 게시물 불러오기
   useEffect(() => {
     if (postType && postId) {
-      // 스킬의 경우 branchId가 필요없음
-      if (postType === 'skill') {
+      // skill, news의 경우 branchId가 필요없음
+      if (['skill', 'news'].includes(postType)) {
         // ID 유효성 검사
         if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
-          setError('유효하지 않은 스킬 ID입니다.');
+          setError(`유효하지 않은 ${postType === 'skill' ? '스킬' : '뉴스'} ID입니다.`);
           setLoading(false);
           return;
         }
@@ -275,6 +332,7 @@ const PostDetail = () => {
   const getApiEndpoint = () => {
     if (postType === 'notice') return '/notice';
     if (postType === 'skill') return '/skill';
+    if (postType === 'news') return '/news';
     return '/board';
   };
 
@@ -287,6 +345,9 @@ const PostDetail = () => {
         break;
       case 'skill':
         typeLabel = '기술';
+        break;
+      case 'news':
+        typeLabel = '뉴스';
         break;
       default:
         typeLabel = '게시글';
@@ -333,6 +394,9 @@ const PostDetail = () => {
     if (postType === 'skill') {
       // 스킬 목록 페이지로 이동
       loggedNav('/skill');
+    } else if (postType === 'news') {
+      // 뉴스 목록 페이지로 이동
+      loggedNav('/news');
     } else {
       // 지부 상세 페이지로 이동
       loggedNav(`/branches/${branchId}`);
@@ -351,9 +415,11 @@ const PostDetail = () => {
     }
 
     // 수정 페이지로 이동
-    if (postType === 'skill') {
-      loggedNav(`/skill/${postId}/edit`);  // 이 부분만 변경!
+    if (['skill', 'news'].includes(postType)) {
+      // 전역 게시물: /edit/:postType/:postId
+      loggedNav(`/edit/${postType}/${postId}`);
     } else {
+      // 지부 게시물: /branches/:branchId/:postType/:postId/edit
       loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
     }
   };
@@ -376,6 +442,9 @@ const PostDetail = () => {
         break;
       case 'skill':
         typeLabel = '기술';
+        break;
+      case 'news':
+        typeLabel = '뉴스';
         break;
       default:
         typeLabel = '게시글';
@@ -481,111 +550,118 @@ const PostDetail = () => {
     case 'skill':
       typeLabel = '기술';
       break;
+    case 'news':
+      typeLabel = '뉴스';
+      break;
     default:
       typeLabel = '게시글';
   }
 
   return (
       <>
-        {/* 스킬일 때만 SubHeader 렌더링 */}
-        {postType === 'skill' && (
+        {/* 스킬이나 뉴스일 때만 SubHeader 렌더링 */}
+        {(postType === 'skill' || postType === 'news') && (
             <SubHeader
-                pageName={'기술 상세'}
-                descName="본주짓수 기술을 확인해보세요"
+                pageName={postType === 'skill' ? '기술 상세' : '뉴스 상세'}
+                descName={postType === 'skill' ? "본주짓수 기술을 확인해보세요" : "본주짓수 최신 소식을 확인해보세요"}
             />
         )}
 
-      <div className="board-detail-container">
-        <div className="board-detail-header">
-          <button onClick={handleBackToList} className="btn-back">
-            ← 목록으로
-          </button>
-          {/* 수정/삭제 버튼 - 권한이 있을 때만 표시 */}
-          {canEditState && (
-              <div className="board-actions">
-                <button
-                    onClick={handleEditPost}
-                    className="btn-edit"
-                >
-                  수정
-                </button>
-                <button
-                    onClick={handleDeletePost}
-                    className="btn-delete"
-                >
-                  삭제
-                </button>
-              </div>
-          )}
-        </div>
-
-        <div className="board-detail-content">
-          <div className="board-header">
-            <h1 className="board-title">{post.title}</h1>
-            <div className="board-meta">
-              <div className="board-meta-left">
-                <span className="author">작성자: {post.author}</span>
-                {post.region && <span className="region">지역: {post.region}</span>}
-                <span className="post-type">{typeLabel}</span>
-              </div>
-              <div className="board-meta-right">
-                <span className="date">작성일: {formatDate(post.createdAt)}</span>
-                <span className="views">조회수: {post.viewCount?.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="board-content">
-            <div className="content-text">
-              {post.content.split('\n').map((line, index) => (
-                  <p key={index}>{line}</p>
-              ))}
-            </div>
-
-            {post.images && post.images.length > 0 && (
-                <div className="board-images">
-                  <h4>첨부 이미지</h4>
-                  <div className="image-grid">
-                    {post.images.map((image, index) => (
-                        <div key={image.id || index} className="image-item">
-                          <img
-                              src={image.url}
-                              alt={`첨부 이미지 ${index + 1}`}
-                              onClick={() => openImageModal(image.url)}
-                              className="board-image"
-                          />
-                        </div>
-                    ))}
-                  </div>
+        <div className={`board-detail-container ${postType}-detail`}>
+          <div className="board-detail-header">
+            <button onClick={handleBackToList} className="btn-back">
+              ← 목록으로
+            </button>
+            {/* 수정/삭제 버튼 - 권한이 있을 때만 표시 */}
+            {canEditState && (
+                <div className="board-actions">
+                  <button
+                      onClick={handleEditPost}
+                      className="btn-edit"
+                  >
+                    수정
+                  </button>
+                  <button
+                      onClick={handleDeletePost}
+                      className="btn-delete"
+                  >
+                    삭제
+                  </button>
                 </div>
             )}
           </div>
 
-          {post.modifiedAt && post.modifiedAt !== post.createdAt && (
-              <div className="board-modified">
-                <small>마지막 수정: {formatDate(post.modifiedAt)}</small>
+          <div className="board-detail-content">
+            <div className="board-header">
+              <h1 className="board-title">{post.title}</h1>
+              <div className="board-meta">
+                <div className="board-meta-left">
+                  <span className="author">작성자: {post.author}</span>
+                  {post.region && <span
+                      className="region">지역: {post.region}</span>}
+                  <span className="post-type">{typeLabel}</span>
+                </div>
+                <div className="board-meta-right">
+                  <span className="date">작성일: {formatDate(
+                      post.createdAt)}</span>
+                  <span
+                      className="views">조회수: {post.viewCount?.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="board-content">
+              <div className="content-text">
+                {post.content.split('\n').map((line, index) => (
+                    <p key={index}>{line}</p>
+                ))}
+              </div>
+
+              {post.images && post.images.length > 0 && (
+                  <div className="board-images">
+                    <h4>첨부 이미지</h4>
+                    <div className="image-grid">
+                      {post.images.map((image, index) => (
+                          <div key={image.id || index} className="image-item">
+                            <img
+                                src={image.url}
+                                alt={`첨부 이미지 ${index + 1}`}
+                                onClick={() => openImageModal(image.url)}
+                                className="board-image"
+                            />
+                          </div>
+                      ))}
+                    </div>
+                  </div>
+              )}
+            </div>
+
+            {post.modifiedAt && post.modifiedAt !== post.createdAt && (
+                <div className="board-modified">
+                  <small>마지막 수정: {formatDate(post.modifiedAt)}</small>
+                </div>
+            )}
+          </div>
+
+          {/* 댓글 섹션 - 스킬과 뉴스가 아닐 때만 표시 */}
+          {!['skill', 'news'].includes(postType) && (
+              <Comment boardId={postId} postType={postType}/>
+          )}
+
+          {/* 이미지 모달 */}
+          {selectedImage && (
+              <div className="image-modal" onClick={closeImageModal}>
+                <div className="image-modal-content"
+                     onClick={(e) => e.stopPropagation()}>
+                  <img src={selectedImage} alt="확대된 이미지"/>
+                  <button className="modal-close" onClick={closeImageModal}>
+                    ×
+                  </button>
+                </div>
               </div>
           )}
         </div>
-
-        {/* 댓글 섹션 - 스킬이 아닐 때만 표시 */}
-        {postType !== 'skill' && (
-            <Comment boardId={postId} postType={postType} />
-        )}
-
-        {/* 이미지 모달 */}
-        {selectedImage && (
-            <div className="image-modal" onClick={closeImageModal}>
-              <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
-                <img src={selectedImage} alt="확대된 이미지" />
-                <button className="modal-close" onClick={closeImageModal}>
-                  ×
-                </button>
-              </div>
-            </div>
-        )}
-      </div>
-        </>
+      </>
   );
 };
 

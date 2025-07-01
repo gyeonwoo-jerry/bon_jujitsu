@@ -11,7 +11,8 @@ const PostList = ({
   branchId = null,
   showRegion = false,
   searchPlaceholder = "제목으로 검색...",
-  pageSize = 12
+  pageSize = 12,
+  postType = "skill" // skill 또는 news만 지원
 }) => {
   const navigate = useNavigate();
   const safeNavigate = loggedNavigate(navigate);
@@ -51,22 +52,12 @@ const PostList = ({
         }
       }
 
-      // 지부 ID 관련 파라미터는 skill에서 사용하지 않으므로 제거
-      // if (branchId) {
-      //   params.append('branchId', branchId);
-      // }
+      // 지부 ID 관련 파라미터는 skill, news에서 사용하지 않음
+      // (skill과 news는 전역 게시물이므로 branchId 불필요)
 
       const requestUrl = `${apiEndpoint}?${params.toString()}`;
-      console.log('🔍 API 요청 URL:', requestUrl);
-      console.log('🔍 현재 페이지:', currentPage);
-      console.log('🔍 페이지 크기:', pageSize);
 
       const response = await API.get(requestUrl);
-
-      console.log('📦 API 응답 전체:', response.data);
-      console.log('✅ 응답 성공 여부:', response.data.success);
-      console.log('📄 응답 메시지:', response.data.message);
-      console.log('📋 응답 컨텐츠:', response.data.content);
 
       if (response.data.success) {
         const data = response.data.content;
@@ -78,24 +69,14 @@ const PostList = ({
         let totalElements = 0;
 
         if (data.list) {
-          // 스킬 API 응답 구조: { list: [], totalPage: 1, page: 1, size: 12 }
+          // 스킬, 뉴스 API 응답 구조: { list: [], totalPage: 1, page: 1, size: 12 }
           posts = data.list;
           totalPages = data.totalPage || 0;
-          totalElements = data.list.length; // 스킬 API에는 totalElements가 없으므로 현재 페이지 요소 수 사용
-          console.log('📝 스킬 API 응답 - 게시글 개수:', posts.length);
-        } else if (data.content) {
-          // 일반 게시판 API 응답 구조: { content: [], totalPages: 1, totalElements: 5 }
-          posts = data.content;
-          totalPages = data.totalPages || 0;
-          totalElements = data.totalElements || 0;
-          console.log('📝 일반 API 응답 - 게시글 개수:', posts.length);
+          totalElements = data.list.length; // 스킬, 뉴스 API에는 totalElements가 없으므로 현재 페이지 요소 수 사용
+          console.log(`📝 ${postType} API 응답 - 게시글 개수:`, posts.length);
         } else {
           console.warn('⚠️ 알 수 없는 응답 구조:', data);
         }
-
-        console.log('📏 설정된 게시글 개수:', posts.length);
-        console.log('📄 전체 페이지:', totalPages);
-        console.log('🔢 전체 요소:', totalElements);
 
         setPosts(posts);
         setTotalPages(totalPages);
@@ -125,14 +106,24 @@ const PostList = ({
     }
   };
 
+  // 게시물 타입에 따른 상세 페이지 경로 결정 (skill, news만)
+  const getDetailPath = (post) => {
+    switch (postType) {
+      case 'news':
+        return `/detail/news/${post.id}`;  // 통합 라우트로 변경
+      case 'skill':
+      default:
+        return `/detail/skill/${post.id}`; // 통합 라우트로 변경
+    }
+  };
+
   const handleCardClick = (post) => {
     if (!post.id) {
       console.error('게시글 ID가 없습니다:', post);
       return;
     }
 
-    // 스킬 상세 페이지로 이동
-    const detailPath = `/skillDetail/${post.id}`;
+    const detailPath = getDetailPath(post);
     console.log('상세 페이지 이동:', detailPath);
     safeNavigate(detailPath);
   };
@@ -166,8 +157,26 @@ const PostList = ({
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
+  // 게시물 타입에 따른 카드 클래스 결정 (skill, news만)
   const getCardClassName = () => {
-    return "skill-card"; // skill 전용이므로 항상 skill-card 사용
+    switch (postType) {
+      case 'news':
+        return "news-card";
+      case 'skill':
+      default:
+        return "skill-card";
+    }
+  };
+
+  // 게시물 타입에 따른 기본 아이콘 결정 (skill, news만)
+  const getDefaultIcon = () => {
+    switch (postType) {
+      case 'news':
+        return '📰';
+      case 'skill':
+      default:
+        return '🥋';
+    }
   };
 
   const renderPagination = () => {
@@ -316,7 +325,7 @@ const PostList = ({
                             />
                         ) : (
                             <div className="no-image">
-                              <span>📄</span>
+                              <span>{getDefaultIcon()}</span>
                             </div>
                         )}
                         {/* 이미지 개수 배지 */}
@@ -374,7 +383,7 @@ const PostList = ({
             </>
         ) : (
             <div className="no-posts">
-              <div className="no-posts-icon">📝</div>
+              <div className="no-posts-icon">{getDefaultIcon()}</div>
               <p>게시글이 없습니다.</p>
               {searchQuery && (
                   <p>다른 검색어로 시도해보세요.</p>

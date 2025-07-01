@@ -80,7 +80,7 @@ function Skill() {
     }
 
     // 새로운 PostWrite 스킬 라우트로 이동
-    navigate('/skill/write');
+    navigate('/write/skill');
   };
 
   return (

@@ -22,8 +22,6 @@ import Store from './pages/store';
 import StoreDetail from './pages/storeDetail';
 import Skill from './pages/skill';
 import News from './pages/news';
-import NewsDetail from './pages/newsDetail';
-import NewsWrite from './pages/newsWrite';
 import Qna from './pages/qna';
 import QnaDetail from './pages/qnaDetail';
 import QnaWrite from './pages/qnaWrite';
@@ -85,11 +83,11 @@ function AppRoutes() {
           <Route path="/branches" element={<Branches />} />
           <Route path="/branches/:id" element={<BranchesDetail />} />
           <Route path="/branches/:branchId/:postType/write" element={<PostWrite />}/>
-          <Route path="/skill/write" element={<PostWrite />}/>
+          <Route path="/write/:postType" element={<PostWrite />} />
           <Route path="/branches/:branchId/:postType/:postId" element={<PostDetail />} />
-          <Route path="/skillDetail/:skillId" element={<PostDetail />} />
+          <Route path="/detail/:postType/:postId" element={<PostDetail />} />
           <Route path="/branches/:branchId/:postType/:postId/edit" element={<PostEdit />} />
-          <Route path="/skill/:skillId/edit" element={<PostEdit />} />
+          <Route path="/edit/:postType/:postId" element={<PostEdit />} />
           <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
           <Route path="/storeWrite" element={<StoreWritePage />} />
@@ -100,9 +98,6 @@ function AppRoutes() {
           <Route path="/order/:id" element={<Order />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
-          <Route path="/newsDetail/:id" element={<NewsDetail />} />
-          <Route path="/newsWrite" element={<NewsWrite />} />
-          <Route path="/newsWrite/edit/:id" element={<NewsWrite />} />
           <Route path="/qna" element={<Qna />} />
           <Route path="/qnaDetail/:id" element={<QnaDetail />} />
           <Route path="/qnaWrite" element={<QnaWrite />} />

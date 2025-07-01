@@ -11,7 +11,7 @@ const PostWrite = () => {
   const safeNavigate = loggedNavigate(navigate);
 
   const [branchId, setBranchId] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news'
   const [formData, setFormData] = useState({
     title: "",
     content: ""
@@ -28,30 +28,41 @@ const PostWrite = () => {
 
   // URL에서 브랜치 ID와 게시물 타입 추출
   useEffect(() => {
-    // 스킬 전용 라우트: /skill/write
-    if (location.pathname === '/skill/write') {
-      setPostType('skill');
-      setBranchId(null); // 스킬은 브랜치와 무관
-      console.log('스킬 글쓰기 - 전역');
+    // 통합 라우트 처리: /write/:postType 또는 /branches/:branchId/:postType/write
+
+    // 1. 전역 게시물 작성: /write/:postType (skill, news)
+    if (params.postType && !params.branchId) {
+      const type = params.postType;
+
+      if (['skill', 'news'].includes(type)) {
+        setPostType(type);
+        setBranchId(null); // 전역 게시물은 브랜치와 무관
+        console.log(`${type} 글쓰기 - 전역`);
+      } else {
+        setError(`잘못된 게시글 타입입니다. 전역 게시물은 skill 또는 news만 가능합니다.`);
+      }
       return;
     }
 
-    // 지부별 게시물: /branches/:branchId/:postType/write
+    // 2. 지부별 게시물: /branches/:branchId/:postType/write
     if (params.branchId && params.postType) {
       setBranchId(params.branchId);
+      const type = params.postType;
 
       // postType 유효성 검증 (board, notice만 허용)
-      if (['board', 'notice'].includes(params.postType)) {
-        setPostType(params.postType);
-        console.log(`${params.postType} 글쓰기 - 브랜치 ID:`, params.branchId);
+      if (['board', 'notice'].includes(type)) {
+        setPostType(type);
+        console.log(`${type} 글쓰기 - 브랜치 ID:`, params.branchId);
       } else {
-        setError("잘못된 게시글 타입입니다. board 또는 notice만 가능합니다.");
+        setError("잘못된 게시글 타입입니다. 지부 게시물은 board 또는 notice만 가능합니다.");
       }
-    } else {
-      console.warn("URL에서 브랜치 ID 또는 게시글 타입을 찾을 수 없습니다");
-      setError("잘못된 접근입니다. 올바른 경로로 접근해주세요.");
+      return;
     }
-  }, [params, location.pathname]);
+
+    // 3. 잘못된 접근
+    console.warn("URL에서 올바른 파라미터를 찾을 수 없습니다");
+    setError("잘못된 접근입니다. 올바른 경로로 접근해주세요.");
+  }, [params.branchId, params.postType]);
 
   // 권한 확인
   useEffect(() => {
@@ -193,6 +204,25 @@ const PostWrite = () => {
     return false;
   };
 
+  // 뉴스 작성 권한 확인 (관리자만, 지부와 무관)
+  const canWriteNews = () => {
+    console.log('=== 뉴스 작성 권한 확인 시작 (전역) ===');
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    console.log('parsed userInfo:', userInfo);
+
+    // 관리자만 뉴스 작성 가능
+    if (userInfo.isAdmin === true) {
+      console.log('✅ 관리자 권한으로 허용');
+      return true;
+    }
+
+    console.log('❌ 관리자 아님');
+    return false;
+  };
+
   // 권한 확인
   const checkWritePermission = () => {
     if (!isLoggedIn()) {
@@ -213,6 +243,12 @@ const PostWrite = () => {
         safeNavigate('/skill'); // 스킬 목록 페이지로
         return;
       }
+    } else if (postType === 'news') {
+      if (!canWriteNews()) {
+        alert('뉴스 게시물은 관리자만 작성할 수 있습니다.');
+        safeNavigate('/news'); // 뉴스 목록 페이지로
+        return;
+      }
     } else if (postType === 'board') {
       if (!isBranchMember()) {
         alert('해당 지부 회원만 글을 작성할 수 있습니다.');
@@ -229,6 +265,8 @@ const PostWrite = () => {
         return '/notice';
       case 'skill':
         return '/skill';
+      case 'news':
+        return '/news';
       case 'board':
       default:
         return '/board';
@@ -242,6 +280,8 @@ const PostWrite = () => {
         return '공지사항 작성';
       case 'skill':
         return '스킬 게시물 작성';
+      case 'news':
+        return '뉴스 게시물 작성';
       case 'board':
       default:
         return '게시글 작성';
@@ -254,6 +294,8 @@ const PostWrite = () => {
         return '공지사항이 성공적으로 작성되었습니다.';
       case 'skill':
         return '스킬 게시물이 성공적으로 작성되었습니다.';
+      case 'news':
+        return '뉴스 게시물이 성공적으로 작성되었습니다.';
       case 'board':
       default:
         return '게시글이 성공적으로 작성되었습니다.';
@@ -266,6 +308,8 @@ const PostWrite = () => {
         return '공지사항을 작성하고 있습니다...';
       case 'skill':
         return '스킬 게시물을 작성하고 있습니다...';
+      case 'news':
+        return '뉴스 게시물을 작성하고 있습니다...';
       case 'board':
       default:
         return '게시글을 작성하고 있습니다...';
@@ -276,6 +320,8 @@ const PostWrite = () => {
     switch (postType) {
       case 'skill':
         return '스킬에 대한 상세한 내용을 입력해주세요 (최대 5000자)';
+      case 'news':
+        return '뉴스 내용을 입력해주세요 (최대 5000자)';
       case 'notice':
         return '공지사항 내용을 입력해주세요 (최대 5000자)';
       case 'board':
@@ -397,13 +443,13 @@ const PostWrite = () => {
 
       const apiEndpoint = getApiEndpoint();
 
-      // API 엔드포인트별 URL 설정
-      const url = postType === 'skill' ? apiEndpoint : `${apiEndpoint}/${branchId}`;
+      // API 엔드포인트별 URL 설정 (skill, news는 브랜치 ID 없음)
+      const url = (postType === 'skill' || postType === 'news') ? apiEndpoint : `${apiEndpoint}/${branchId}`;
 
       console.log('게시글 작성 요청:', {
         endpoint: apiEndpoint,
         url: url,
-        branchId: postType === 'skill' ? 'N/A (전역)' : branchId,
+        branchId: (postType === 'skill' || postType === 'news') ? 'N/A (전역)' : branchId,
         postType,
         title: formData.title,
         content: formData.content,
@@ -419,9 +465,7 @@ const PostWrite = () => {
       if (response.data.success) {
         alert(getSuccessMessage());
         // 타입에 따른 적절한 페이지로 이동
-        if (postType === 'skill') {
-          safeNavigate('/skill'); // 스킬 목록 페이지
-        }
+        navigateToListPage();
       } else {
         throw new Error(response.data.message || '작성에 실패했습니다.');
       }
@@ -449,19 +493,34 @@ const PostWrite = () => {
   const handleCancel = () => {
     if (formData.title || formData.content || images.length > 0) {
       if (window.confirm('작성 중인 내용이 있습니다. 정말 취소하시겠습니까?')) {
-        if (postType === 'skill') {
-          safeNavigate('/skill'); // 스킬 목록 페이지
-        }
+        navigateToListPage();
       }
     } else {
-      if (postType === 'skill') {
-        safeNavigate('/skill'); // 스킬 목록 페이지
-      }
+      navigateToListPage();
     }
   };
 
-  // 에러 처리: 스킬은 branchId가 없어도 됨
-  if (postType !== 'skill' && !branchId) {
+  // 타입에 따른 목록 페이지로 이동
+  const navigateToListPage = () => {
+    switch (postType) {
+      case 'skill':
+        safeNavigate('/skill');
+        break;
+      case 'news':
+        safeNavigate('/news');
+        break;
+      case 'notice':
+      case 'board':
+        safeNavigate(`/branches/${branchId}`);
+        break;
+      default:
+        safeNavigate('/');
+        break;
+    }
+  };
+
+  // 에러 처리: skill, news는 branchId가 없어도 됨
+  if ((postType !== 'skill' && postType !== 'news') && !branchId) {
     return (
         <div className="write-container">
           <div className="error-message">

@@ -12,7 +12,7 @@ const PostEdit = () => {
   const fileInputRef = useRef(null);
   const originalImageIds = useRef([]);
 
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news'
   const [postId, setPostId] = useState(null);
   const [branchId, setBranchId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,39 +36,68 @@ const PostEdit = () => {
   const maxImageSize = 10 * 1024 * 1024; // 10MB
 
   // URL에서 게시물 타입과 ID 추출
-  // URL에서 게시물 타입과 ID 추출
   useEffect(() => {
-    // 새로운 스킬 수정 라우트: /skill/:skillId/edit
-    if (params.skillId && location.pathname.includes('/skill/') && location.pathname.includes('/edit')) {
-      setPostType('skill');
-      setPostId(params.skillId);
-      console.log('스킬 수정 페이지 - ID:', params.skillId);
-    }
-    // 기존 브랜치 게시물: /branches/:branchId/:postType/:postId/edit
-    else if (params.branchId && params.postType && params.postId) {
-      // postType 유효성 검증
-      if (['board', 'notice', 'skill'].includes(params.postType)) {
-        setPostType(params.postType);
-        setPostId(params.postId);
-        setBranchId(params.branchId);
-        console.log(`${params.postType} 수정 - ID:`, params.postId, 'Branch:', params.branchId);
+    // 통합 라우트 처리: /edit/:postType/:postId 또는 /branches/:branchId/:postType/:postId/edit
+
+    // 1. 전역 게시물 수정: /edit/:postType/:postId (skill, news)
+    if (params.postType && params.postId && !params.branchId &&
+        location.pathname.startsWith('/edit/')) {
+      const type = params.postType;
+      const id = params.postId;
+
+      if (['skill', 'news'].includes(type)) {
+        setPostType(type);
+        setPostId(id);
+        console.log(`${type} 수정 페이지 - ID:`, id);
       } else {
-        setError("잘못된 게시글 타입입니다. board, notice, skill만 가능합니다.");
+        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill 또는 news만 가능합니다.');
         setInitialLoading(false);
         return;
       }
     }
-    // 기존 방식들 (하위 호환성을 위해 유지)
+    // 2. 지부별 게시물 수정: /branches/:branchId/:postType/:postId/edit
+    else if (params.branchId && params.postType && params.postId) {
+      const type = params.postType;
+      const id = params.postId;
+
+      if (['board', 'notice'].includes(type)) {
+        setPostType(type);
+        setPostId(id);
+        setBranchId(params.branchId);
+        console.log(`${type} 수정 - ID:`, id, 'Branch:', params.branchId);
+      } else {
+        setError('잘못된 게시글 타입입니다. 지부 게시물은 board 또는 notice만 가능합니다.');
+        setInitialLoading(false);
+        return;
+      }
+    }
+    // 3. 하위 호환성 지원 (기존 라우트들)
+    else if (params.skillId && location.pathname.includes('/skill/') && location.pathname.includes('/edit')) {
+      setPostType('skill');
+      setPostId(params.skillId);
+      console.log('스킬 수정 페이지 (기존 방식) - ID:', params.skillId);
+    }
+    else if (params.newsId && location.pathname.includes('/news/') && location.pathname.includes('/edit')) {
+      setPostType('news');
+      setPostId(params.newsId);
+      console.log('뉴스 수정 페이지 (기존 방식) - ID:', params.newsId);
+    }
+    // 기존 방식들 (더 이전 버전 호환성)
     else {
       const path = location.pathname;
       const boardEditMatches = path.match(/\/board\/edit\/(\d+)/);
       const noticeEditMatches = path.match(/\/notice\/edit\/(\d+)/);
       const skillEditMatches = path.match(/\/skill\/edit\/(\d+)/);
+      const newsEditMatches = path.match(/\/news\/edit\/(\d+)/);
 
       if (skillEditMatches) {
         setPostType('skill');
         setPostId(skillEditMatches[1]);
         console.log("기존 방식 - Skill 수정 ID:", skillEditMatches[1]);
+      } else if (newsEditMatches) {
+        setPostType('news');
+        setPostId(newsEditMatches[1]);
+        console.log("기존 방식 - News 수정 ID:", newsEditMatches[1]);
       } else if (boardEditMatches) {
         setPostType('board');
         setPostId(boardEditMatches[1]);
@@ -94,6 +123,7 @@ const PostEdit = () => {
   const getApiEndpoint = () => {
     if (postType === 'notice') return '/notice';
     if (postType === 'skill') return '/skill';
+    if (postType === 'news') return '/news';
     return '/board';
   };
 
@@ -104,6 +134,8 @@ const PostEdit = () => {
         return '공지사항 수정';
       case 'skill':
         return '기술 수정';
+      case 'news':
+        return '뉴스 수정';
       default:
         return '게시글 수정';
     }
@@ -134,8 +166,8 @@ const PostEdit = () => {
             content: postData.content || ''
           });
 
-          // branchId 설정 (URL에서 없을 경우, 스킬은 branchId가 없음)
-          if (!branchId && postData.branchId && postType !== 'skill') {
+          // branchId 설정 (URL에서 없을 경우, skill과 news는 branchId가 없음)
+          if (!branchId && postData.branchId && !['skill', 'news'].includes(postType)) {
             setBranchId(postData.branchId);
           }
 
@@ -281,6 +313,17 @@ const PostEdit = () => {
     return false;
   };
 
+  // 뉴스 편집 권한 확인 (관리자만)
+  const canEditNews = () => {
+    if (postType !== 'news') return false;
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자만 뉴스 수정 가능
+    return userInfo.isAdmin === true;
+  };
+
   // 수정 권한 확인
   const checkEditPermission = () => {
     if (!isLoggedIn()) {
@@ -293,6 +336,7 @@ const PostEdit = () => {
     const userIsAdmin = isAdmin();
     const userIsBranchOwner = isBranchOwner();
     const userIsSkillOwner = isSkillOwner();
+    const userCanEditNews = canEditNews();
 
     let hasPermission = false;
 
@@ -302,6 +346,9 @@ const PostEdit = () => {
     } else if (postType === 'skill') {
       // 스킬: 작성자, 관리자, 또는 스킬 Owner
       hasPermission = userIsAuthor || userIsAdmin || userIsSkillOwner;
+    } else if (postType === 'news') {
+      // 뉴스: 작성자, 관리자만 (실질적으로 관리자만)
+      hasPermission = userIsAuthor || userIsAdmin || userCanEditNews;
     } else {
       // 일반 게시판: 작성자 또는 관리자
       hasPermission = userIsAuthor || userIsAdmin;
@@ -313,6 +360,7 @@ const PostEdit = () => {
     console.log('관리자 여부:', userIsAdmin);
     console.log('지부 Owner 여부:', userIsBranchOwner);
     console.log('스킬 Owner 여부:', userIsSkillOwner);
+    console.log('뉴스 편집 권한:', userCanEditNews);
     console.log('최종 권한:', hasPermission);
 
     if (!hasPermission) {
@@ -323,6 +371,9 @@ const PostEdit = () => {
           break;
         case 'skill':
           typeLabel = '기술';
+          break;
+        case 'news':
+          typeLabel = '뉴스';
           break;
         default:
           typeLabel = '게시글';
@@ -484,6 +535,9 @@ const PostEdit = () => {
           case 'skill':
             typeLabel = '기술';
             break;
+          case 'news':
+            typeLabel = '뉴스';
+            break;
           default:
             typeLabel = '게시글';
         }
@@ -560,6 +614,9 @@ const PostEdit = () => {
       break;
     case 'skill':
       typeLabel = '기술';
+      break;
+    case 'news':
+      typeLabel = '뉴스';
       break;
     default:
       typeLabel = '게시글';
