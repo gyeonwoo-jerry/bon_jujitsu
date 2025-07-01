@@ -108,6 +108,10 @@ public class CommentService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
+    if (user.isAdmin()) {
+      return user;
+    }
+
     boolean hasActiveRole = user.getBranchUsers().stream()
         .anyMatch(bu -> bu.getUserRole() != UserRole.PENDING);
 
