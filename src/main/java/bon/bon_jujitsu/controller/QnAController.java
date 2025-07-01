@@ -2,6 +2,7 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.PasswordRequest;
 import bon.bon_jujitsu.dto.request.QnaRequest;
 import bon.bon_jujitsu.dto.response.QnAResponse;
 import bon.bon_jujitsu.dto.update.QnAUpdate;
@@ -9,6 +10,7 @@ import bon.bon_jujitsu.resolver.AuthenticationUserId;
 import bon.bon_jujitsu.service.QnaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +32,20 @@ public class QnAController {
     ) {
         qnaService.createQna(request, userId, images);
         return ApiResponse.success("QnA 생성 완료", null);
+    }
+
+    @PostMapping("/qna/{qnaId}/verify-password")
+    public ApiResponse<Void> verifyGuestPassword(
+        @PathVariable Long qnaId,
+        @RequestBody @Valid PasswordRequest guestPassword
+    ) {
+        boolean isValid = qnaService.verifyGuestPassword(qnaId, guestPassword);
+
+        if (isValid) {
+            return ApiResponse.success("비밀번호가 확인되었습니다.", null);
+        } else {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
     }
 
     @GetMapping("/qna")

@@ -3,6 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.config.PasswordEncoder;
 import bon.bon_jujitsu.domain.*;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.PasswordRequest;
 import bon.bon_jujitsu.dto.request.QnaRequest;
 import bon.bon_jujitsu.dto.response.QnAResponse;
 import bon.bon_jujitsu.dto.response.SkillResponse;
@@ -14,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -24,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 public class QnaService {
@@ -192,5 +195,25 @@ public class QnaService {
 
         // 소프트 삭제 실행
         qna.softDelete();
+    }
+
+    public boolean verifyGuestPassword(Long qnaId, PasswordRequest request) {
+        try {
+            // QnA 조회
+            QnA qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 QnA입니다."));
+
+            // 비회원 작성 게시물인지 확인
+            if (qna.getGuestName() == null || qna.getGuestPassword() == null) {
+                return false;
+            }
+
+            // 비밀번호 확인 (암호화된 비밀번호와 비교)
+            return passwordEncoder.matches(request.guestPassword(), qna.getGuestPassword());
+
+        } catch (Exception e) {
+            log.error("비밀번호 확인 중 오류 발생: ", e);
+            return false;
+        }
     }
 }
