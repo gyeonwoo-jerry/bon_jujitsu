@@ -77,6 +77,7 @@ public class AuthenticationFilter implements Filter {
             requestUri.startsWith("/cart") ||
             requestUri.startsWith("/mypage") ||
             requestUri.startsWith("/order") ||
+            requestUri.startsWith("/api/comment") ||
             requestUri.startsWith("/storeWrite") ||
             requestUri.startsWith("/data/uploads/") || // 이미지 업로드 경로 예외 처리
             requestUri.startsWith("/api/qna") ||
