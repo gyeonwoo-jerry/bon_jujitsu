@@ -46,12 +46,14 @@ public record QnAResponse(
             }
         }
 
+        Long authorId = !isGuestPost && qna.getUser() != null ? qna.getUser().getId() : null;
+
         return QnAResponse.builder()
                 .id(qna.getId())
                 .title(qna.getTitle())
                 .content(qna.getContent())
                 .authorName(authorName)
-                .authorId(qna.getUser().getId())
+                .authorId(authorId)
                 .isGuestPost(isGuestPost)
                 .images(imageResponses)
                 .viewCount(qna.getViewCount())
