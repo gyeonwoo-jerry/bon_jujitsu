@@ -238,6 +238,77 @@
     color: rgba(255, 255, 255, 0.7);
 }
 
+/* 제휴업체 카드 (특별 스타일) */
+.sponsor-card {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid #00f2fe;
+}
+
+.sponsor-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+}
+
+.sponsor-card .card-content {
+    color: white;
+}
+
+.sponsor-card .card-title {
+    color: white;
+}
+
+.sponsor-card .card-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sponsor-card .card-meta {
+    color: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sponsor-card .no-image {
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.sponsor-card .modified-info {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* 제휴업체 특별 정보 */
+.sponsor-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sponsor-info span {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sponsor-info .website {
+    background: rgba(0, 242, 254, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 /* 카드 이미지 */
 .card-image {
     position: relative;
@@ -255,7 +326,8 @@
 
 .post-card:hover .card-image img,
 .skill-card:hover .card-image img,
-.news-card:hover .card-image img {
+.news-card:hover .card-image img,
+.sponsor-card:hover .card-image img {
     transform: scale(1.05);
 }
 
@@ -271,6 +343,11 @@
 }
 
 .skill-card .no-image {
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.sponsor-card .no-image {
     background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
     color: rgba(255, 255, 255, 0.7);
 }
@@ -378,7 +455,8 @@
 
 .post-card:hover .card-overlay,
 .skill-card:hover .card-overlay,
-.news-card:hover .card-overlay {
+.news-card:hover .card-overlay,
+.sponsor-card:hover .card-overlay {
     opacity: 1;
 }
 
@@ -393,7 +471,8 @@
 
 .post-card:hover .view-detail,
 .skill-card:hover .view-detail,
-.news-card:hover .view-detail {
+.news-card:hover .view-detail,
+.sponsor-card:hover .view-detail {
     transform: translateY(0);
 }
 
@@ -498,6 +577,16 @@
     .pagination-button {
         padding: 6px 10px;
         font-size: 14px;
+    }
+
+    .sponsor-info {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sponsor-info span {
+        font-size: 10px;
+        padding: 3px 6px;
     }
 }
 

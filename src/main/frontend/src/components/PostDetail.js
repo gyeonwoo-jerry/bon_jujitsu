@@ -8,14 +8,14 @@ import SubHeader from './SubHeader';
 
 const PostDetail = () => {
   const params = useParams();
-  const { branchId, boardId, noticeId, skillId, newsId, qnaId } = params;
+  const { branchId, boardId, noticeId, skillId, newsId, qnaId, sponsorId } = params;
   const location = useLocation();
   const navigate = useNavigate();
   const loggedNav = loggedNavigate(navigate);
   const fetchedRef = useRef(false);
 
   const [post, setPost] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna', 'sponsor'
   const [postId, setPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,23 +29,23 @@ const PostDetail = () => {
   useEffect(() => {
     // 통합 라우트 처리: /detail/:postType/:postId 또는 /branches/:branchId/:postType/:postId
 
-    // 1. 전역 게시물 상세: /detail/:postType/:postId (skill, news, qna)
+    // 1. 전역 게시물 상세: /detail/:postType/:postId (skill, news, qna, sponsor)
     if (params.postType && params.postId && !params.branchId &&
         location.pathname.startsWith('/detail/')) {
       const type = params.postType;
       const id = params.postId;
 
-      if (['skill', 'news', 'qna'].includes(type)) {
+      if (['skill', 'news', 'qna', 'sponsor'].includes(type)) {
         if (id && id !== 'undefined') {
           setPostType(type);
           setPostId(id);
         } else {
-          setError(`유효하지 않은 ${type === 'skill' ? '스킬' : type === 'news' ? '뉴스' : 'QnA'} ID입니다.`);
+          setError(`유효하지 않은 ${type === 'skill' ? '스킬' : type === 'news' ? '뉴스' : type === 'qna' ? 'QnA' : '제휴업체'} ID입니다.`);
           setLoading(false);
           return;
         }
       } else {
-        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill, news 또는 qna만 가능합니다.');
+        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill, news, qna 또는 sponsor만 가능합니다.');
         setLoading(false);
         return;
       }
@@ -98,6 +98,17 @@ const PostDetail = () => {
         return;
       }
     }
+    else if (location.pathname.includes('/sponsorDetail/')) {
+      const sponsorIdFromPath = location.pathname.split('/sponsorDetail/')[1];
+      if (sponsorIdFromPath && sponsorIdFromPath !== 'undefined') {
+        setPostType('sponsor');
+        setPostId(sponsorIdFromPath);
+      } else {
+        setError('유효하지 않은 제휴업체 ID입니다.');
+        setLoading(false);
+        return;
+      }
+    }
     // 4. 개별 파라미터 처리 (하위 호환성)
     else if (skillId) {
       setPostType('skill');
@@ -108,6 +119,9 @@ const PostDetail = () => {
     } else if (qnaId) {
       setPostType('qna');
       setPostId(qnaId);
+    } else if (sponsorId) {
+      setPostType('sponsor');
+      setPostId(sponsorId);
     } else if (boardId) {
       setPostType('board');
       setPostId(boardId);
@@ -247,6 +261,17 @@ const PostDetail = () => {
     return userInfo.isAdmin === true;
   };
 
+  // 제휴업체 편집 권한 확인 (관리자만)
+  const canEditSponsor = () => {
+    if (postType !== 'sponsor') return false; // 제휴업체가 아니면 체크하지 않음
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자만 제휴업체 수정/삭제 가능
+    return userInfo.isAdmin === true;
+  };
+
   // 수정/삭제 권한 확인 - React 상태로 관리
   useEffect(() => {
     const checkEditPermission = () => {
@@ -272,6 +297,9 @@ const PostDetail = () => {
       } else if (postType === 'news') {
         const userCanEditNews = canEditNews();
         permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditNews);
+      } else if (postType === 'sponsor') {
+        const userCanEditSponsor = canEditSponsor();
+        permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditSponsor);
       } else if (postType === 'qna') {
         // QnA 권한 로직
         if (userIsAdmin) {
@@ -299,6 +327,7 @@ const PostDetail = () => {
         const userIsBranchOwner = isBranchOwner();
         const userIsSkillOwner = isSkillOwner();
         const userCanEditNews = canEditNews();
+        const userCanEditSponsor = canEditSponsor();
 
         let permission = false;
         if (postType === 'notice') {
@@ -307,6 +336,8 @@ const PostDetail = () => {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userIsSkillOwner);
         } else if (postType === 'news') {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditNews);
+        } else if (postType === 'sponsor') {
+          permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditSponsor);
         } else if (postType === 'qna') {
           if (userIsAdmin) {
             permission = true;
@@ -332,11 +363,15 @@ const PostDetail = () => {
   // 게시물 불러오기
   useEffect(() => {
     if (postType && postId) {
-      // skill, news, qna의 경우 branchId가 필요없음
-      if (['skill', 'news', 'qna'].includes(postType)) {
+      // skill, news, qna, sponsor의 경우 branchId가 필요없음
+      if (['skill', 'news', 'qna', 'sponsor'].includes(postType)) {
         // ID 유효성 검사
         if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
-          setError(`유효하지 않은 ${postType === 'skill' ? '스킬' : postType === 'news' ? '뉴스' : 'QnA'} ID입니다.`);
+          setError(`유효하지 않은 ${
+              postType === 'skill' ? '스킬' :
+                  postType === 'news' ? '뉴스' :
+                      postType === 'qna' ? 'QnA' : '제휴업체'
+          } ID입니다.`);
           setLoading(false);
           return;
         }
@@ -366,6 +401,7 @@ const PostDetail = () => {
     if (postType === 'skill') return '/skill';
     if (postType === 'news') return '/news';
     if (postType === 'qna') return '/qna';
+    if (postType === 'sponsor') return '/sponsor';
     return '/board';
   };
 
@@ -384,6 +420,9 @@ const PostDetail = () => {
         break;
       case 'qna':
         typeLabel = 'QnA';
+        break;
+      case 'sponsor':
+        typeLabel = '제휴업체';
         break;
       default:
         typeLabel = '게시글';
@@ -436,6 +475,9 @@ const PostDetail = () => {
     } else if (postType === 'qna') {
       // QnA 목록 페이지로 이동
       loggedNav('/qna');
+    } else if (postType === 'sponsor') {
+      // 제휴업체 목록 페이지로 이동
+      loggedNav('/sponsor');
     } else {
       // 지부 상세 페이지로 이동
       loggedNav(`/branches/${branchId}`);
@@ -491,7 +533,7 @@ const PostDetail = () => {
       return;
     }
 
-    // 기타 (skill, news 등) - 기존 로직
+    // 기타 (skill, news, sponsor 등) - 기존 로직
     if (!canEditState) {
       alert('수정 권한이 없습니다.');
       return;
@@ -503,7 +545,7 @@ const PostDetail = () => {
     }
 
     // 수정 페이지로 이동
-    if (['skill', 'news'].includes(postType)) {
+    if (['skill', 'news', 'sponsor'].includes(postType)) {
       loggedNav(`/edit/${postType}/${postId}`);
     } else {
       loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
@@ -558,7 +600,7 @@ const PostDetail = () => {
       return;
     }
 
-    // 기타 (skill, news 등) - 기존 로직
+    // 기타 (skill, news, sponsor 등) - 기존 로직
     if (!canEditState) {
       alert('삭제 권한이 없습니다.');
       return;
@@ -587,6 +629,9 @@ const PostDetail = () => {
         break;
       case 'qna':
         typeLabel = 'QnA';
+        break;
+      case 'sponsor':
+        typeLabel = '제휴업체';
         break;
       default:
         typeLabel = '게시글';
@@ -794,19 +839,27 @@ const PostDetail = () => {
     case 'qna':
       typeLabel = 'QnA';
       break;
+    case 'sponsor':
+      typeLabel = '제휴업체';
+      break;
     default:
       typeLabel = '게시글';
   }
 
   return (
       <>
-        {/* 스킬, 뉴스, QnA일 때만 SubHeader 렌더링 */}
+        {/* 스킬, 뉴스, QnA일 때만 SubHeader 렌더링 (sponsor 제외) */}
         {(['skill', 'news', 'qna'].includes(postType)) && (
             <SubHeader
-                pageName={postType === 'skill' ? '기술 상세' : postType === 'news' ? '뉴스 상세' : 'QnA 상세'}
-                descName={postType === 'skill' ? "본주짓수 기술을 확인해보세요" :
-                    postType === 'news' ? "본주짓수 최신 소식을 확인해보세요" :
-                        "본주짓수 QnA를 확인해보세요"}
+                pageName={
+                  postType === 'skill' ? '기술 상세' :
+                      postType === 'news' ? '뉴스 상세' : 'QnA 상세'
+                }
+                descName={
+                  postType === 'skill' ? "본주짓수 기술을 확인해보세요" :
+                      postType === 'news' ? "본주짓수 최신 소식을 확인해보세요" :
+                          "본주짓수 QnA를 확인해보세요"
+                }
             />
         )}
 
@@ -842,6 +895,9 @@ const PostDetail = () => {
                 return canEditState;
               } else if (postType === 'news') {
                 // 기존 뉴스 로직 유지
+                return canEditState;
+              } else if (postType === 'sponsor') {
+                // 제휴업체: 관리자만
                 return canEditState;
               } else {
                 // 기타
@@ -889,6 +945,21 @@ const PostDetail = () => {
                 ))}
               </div>
 
+              {/* 제휴업체 특별 정보 표시 */}
+              {postType === 'sponsor' && post.url && (
+                  <div className="sponsor-website-info">
+                    <h4>웹사이트</h4>
+                    <a
+                        href={post.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="sponsor-website-link"
+                    >
+                      🌐 {post.url}
+                    </a>
+                  </div>
+              )}
+
               {post.images && post.images.length > 0 && (
                   <div className="board-images">
                     <h4>첨부 이미지</h4>
@@ -923,8 +994,8 @@ const PostDetail = () => {
                   postType="qna"
                   adminOnly={true}
               />
-          ) : !(['skill', 'news'].includes(postType)) && (
-              // 스킬과 뉴스가 아닐 때만 일반 댓글 표시
+          ) : !(['skill', 'news', 'sponsor'].includes(postType)) && (
+              // 스킬, 뉴스, 제휴업체가 아닐 때만 일반 댓글 표시
               <Comment postId={postId} postType={postType}/>
           )}
 

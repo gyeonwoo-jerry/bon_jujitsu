@@ -8,10 +8,10 @@ function Sponsor() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [canWriteSponsor, setCanWriteSponsor] = useState(false);
   const navigate = useNavigate();
-  
-  useEffect(() => { 
+
+  useEffect(() => {
     const title = '제휴업체';
     setPageName(title);
     document.title = title;
@@ -20,49 +20,81 @@ function Sponsor() {
     const backgroundImage = '';
     setBackgroundImage(backgroundImage);
 
-    // 사용자 권한 확인
-    const checkUserRole = () => {
+    // 제휴업체 등록 권한 확인 (관리자만)
+    const checkSponsorWritePermission = () => {
       try {
         const userInfoStr = localStorage.getItem('userInfo');
-        if (userInfoStr) {
-          const userInfo = JSON.parse(userInfoStr);
-          setIsAdmin(userInfo.role === 'ADMIN');
+        if (!userInfoStr) {
+          setCanWriteSponsor(false);
+          return;
+        }
+
+        const userInfo = JSON.parse(userInfoStr);
+        console.log('제휴업체 페이지 권한 확인:', userInfo);
+
+        // 관리자만 제휴업체 등록 가능
+        if (userInfo.isAdmin === true) {
+          console.log('✅ 관리자 권한으로 제휴업체 등록 허용');
+          setCanWriteSponsor(true);
+        } else {
+          console.log('❌ 관리자 아님');
+          setCanWriteSponsor(false);
         }
       } catch (error) {
-        console.error('사용자 권한 확인 오류:', error);
-        setIsAdmin(false);
+        console.error('제휴업체 등록 권한 확인 오류:', error);
+        setCanWriteSponsor(false);
       }
     };
-    checkUserRole();
+
+    checkSponsorWritePermission();
   }, []);
 
   const handleWriteClick = () => {
-    navigate('/sponsorWrite');
+    // 로그인 상태 확인
+    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
+    const isLoggedIn = !!(token || accessToken);
+
+    if (!isLoggedIn) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
+    if (!canWriteSponsor) {
+      alert('제휴업체 등록은 관리자만 가능합니다.');
+      return;
+    }
+
+    // 제휴업체 등록 페이지로 이동
+    navigate('/write/sponsor');
   };
 
   return (
-    <div className="sponsor">
-      <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
-      <div className="sponsor-container">
-        <div className="inner">
+      <div className="sponsor">
+        <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
+        <div className="sponsor-container">
+          <div className="inner">
             <div className="section_title">BON <font className='thin small'>with</font> PARTNERS</div>
             <PostList
-              apiEndpoint="/sponsor"
-              title=""
-              detailPathPrefix="/sponsorDetail"
+                apiEndpoint="/sponsor"
+                title=""
+                searchPlaceholder="제휴업체명으로 검색..."
+                pageSize={12}
+                postType="sponsor"
             />
-            {isAdmin && (
-              <button 
-                className="write-button"
-                onClick={handleWriteClick}
-              >
-                제휴업체 등록
-              </button>
+            {canWriteSponsor && (
+                <button
+                    className="write-button"
+                    onClick={handleWriteClick}
+                >
+                  제휴업체 등록
+                </button>
             )}
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 
-export default Sponsor; 
+export default Sponsor;

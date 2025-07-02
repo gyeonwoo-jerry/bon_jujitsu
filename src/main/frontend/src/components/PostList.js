@@ -12,7 +12,7 @@ const PostList = ({
   showRegion = false,
   searchPlaceholder = "제목으로 검색...",
   pageSize = 12,
-  postType = "skill" // skill, news, qna 지원
+  postType = "skill" // skill, news, qna, sponsor 지원
 }) => {
   const navigate = useNavigate();
   const safeNavigate = loggedNavigate(navigate);
@@ -97,6 +97,8 @@ const PostList = ({
         return `/detail/news/${post.id}`;
       case 'qna':
         return `/detail/qna/${post.id}`;
+      case 'sponsor':
+        return `/detail/sponsor/${post.id}`;
       case 'skill':
       default:
         return `/detail/skill/${post.id}`;
@@ -145,6 +147,8 @@ const PostList = ({
     switch (postType) {
       case 'news':
         return "news-card";
+      case 'sponsor':
+        return "sponsor-card";
       case 'skill':
       default:
         return "skill-card";
@@ -157,6 +161,8 @@ const PostList = ({
         return '📰';
       case 'qna':
         return '❓';
+      case 'sponsor':
+        return '🤝';
       case 'skill':
       default:
         return '🥋';
@@ -355,7 +361,7 @@ const PostList = ({
                     </table>
                   </div>
               ) : (
-                  /* skill, news는 카드 형태로 표시 */
+                  /* skill, news, sponsor는 카드 형태로 표시 */
                   <div className="posts-grid">
                     {posts.map((post) => (
                         <div
@@ -408,6 +414,13 @@ const PostList = ({
                                   <small>✏️ 수정: {formatDate(post.modifiedAt)}</small>
                                 </div>
                             )}
+
+                            {/* 제휴업체 특별 정보 */}
+                            {postType === 'sponsor' && post.url && (
+                                <div className="sponsor-info">
+                                  <span className="website">🌐 웹사이트</span>
+                                </div>
+                            )}
                           </div>
 
                           <div className="card-overlay">
@@ -423,13 +436,19 @@ const PostList = ({
 
               {/* 총 게시글 수 정보 */}
               <div className="total-info">
-                전체 {totalElements}개의 {postType === 'qna' ? '질문' : '게시글'} (페이지 {currentPage}/{totalPages})
+                전체 {totalElements}개의 {
+                postType === 'qna' ? '질문' :
+                    postType === 'sponsor' ? '제휴업체' : '게시글'
+              } (페이지 {currentPage}/{totalPages})
               </div>
             </>
         ) : (
             <div className="no-posts">
               <div className="no-posts-icon">{getDefaultIcon()}</div>
-              <p>{postType === 'qna' ? '질문이 없습니다.' : '게시글이 없습니다.'}</p>
+              <p>{
+                postType === 'qna' ? '질문이 없습니다.' :
+                    postType === 'sponsor' ? '등록된 제휴업체가 없습니다.' : '게시글이 없습니다.'
+              }</p>
               {searchQuery && (
                   <p>다른 검색어로 시도해보세요.</p>
               )}

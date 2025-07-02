@@ -12,7 +12,7 @@ const PostEdit = () => {
   const fileInputRef = useRef(null);
   const originalImageIds = useRef([]);
 
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna', 'sponsor'
   const [postId, setPostId] = useState(null);
   const [branchId, setBranchId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,9 @@ const PostEdit = () => {
     title: '',
     content: '',
     guestName: '',
-    guestPassword: ''
+    guestPassword: '',
+    // sponsor 전용 필드
+    url: ''
   });
 
   // QnA 비회원 작성 여부
@@ -44,17 +46,17 @@ const PostEdit = () => {
   useEffect(() => {
     // 통합 라우트 처리: /edit/:postType/:postId 또는 /branches/:branchId/:postType/:postId/edit
 
-    // 1. 전역 게시물 수정: /edit/:postType/:postId (skill, news, qna)
+    // 1. 전역 게시물 수정: /edit/:postType/:postId (skill, news, qna, sponsor)
     if (params.postType && params.postId && !params.branchId &&
         location.pathname.startsWith('/edit/')) {
       const type = params.postType;
       const id = params.postId;
 
-      if (['skill', 'news', 'qna'].includes(type)) {
+      if (['skill', 'news', 'qna', 'sponsor'].includes(type)) {
         setPostType(type);
         setPostId(id);
       } else {
-        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill, news 또는 qna만 가능합니다.');
+        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill, news, qna 또는 sponsor만 가능합니다.');
         setInitialLoading(false);
         return;
       }
@@ -87,6 +89,10 @@ const PostEdit = () => {
       setPostType('qna');
       setPostId(params.qnaId);
     }
+    else if (params.sponsorId && location.pathname.includes('/sponsor/') && location.pathname.includes('/edit')) {
+      setPostType('sponsor');
+      setPostId(params.sponsorId);
+    }
     // 기존 방식들 (더 이전 버전 호환성)
     else {
       const path = location.pathname;
@@ -95,6 +101,7 @@ const PostEdit = () => {
       const skillEditMatches = path.match(/\/skill\/edit\/(\d+)/);
       const newsEditMatches = path.match(/\/news\/edit\/(\d+)/);
       const qnaEditMatches = path.match(/\/qna\/edit\/(\d+)/);
+      const sponsorEditMatches = path.match(/\/sponsor\/edit\/(\d+)/);
 
       if (skillEditMatches) {
         setPostType('skill');
@@ -105,6 +112,9 @@ const PostEdit = () => {
       } else if (qnaEditMatches) {
         setPostType('qna');
         setPostId(qnaEditMatches[1]);
+      } else if (sponsorEditMatches) {
+        setPostType('sponsor');
+        setPostId(sponsorEditMatches[1]);
       } else if (boardEditMatches) {
         setPostType('board');
         setPostId(boardEditMatches[1]);
@@ -129,6 +139,7 @@ const PostEdit = () => {
     if (postType === 'skill') return '/skill';
     if (postType === 'news') return '/news';
     if (postType === 'qna') return '/qna';
+    if (postType === 'sponsor') return '/sponsor';
     return '/board';
   };
 
@@ -143,9 +154,35 @@ const PostEdit = () => {
         return '뉴스 수정';
       case 'qna':
         return 'QnA 수정';
+      case 'sponsor':
+        return '제휴업체 수정';
       default:
         return '게시글 수정';
     }
+  };
+
+  // URL 유효성 검증 헬퍼 함수
+  const isValidUrl = (string) => {
+    try {
+      // 프로토콜이 없으면 https://를 자동으로 추가
+      const urlToTest = string.startsWith('http://') || string.startsWith('https://')
+          ? string
+          : 'https://' + string;
+
+      new URL(urlToTest);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // URL 정규화 함수 (프로토콜 자동 추가)
+  const normalizeUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return 'https://' + url;
   };
 
   // 기존 게시글 데이터 불러오기
@@ -175,11 +212,12 @@ const PostEdit = () => {
             title: postData.title || '',
             content: postData.content || '',
             guestName: postData.guestName || '',
-            guestPassword: '' // 보안상 비밀번호는 표시하지 않음
+            guestPassword: '', // 보안상 비밀번호는 표시하지 않음
+            url: postData.url || '' // sponsor 전용 필드
           });
 
-          // branchId 설정 (URL에서 없을 경우, skill, news, qna는 branchId가 없음)
-          if (!branchId && postData.branchId && !['skill', 'news', 'qna'].includes(postType)) {
+          // branchId 설정 (URL에서 없을 경우, skill, news, qna, sponsor는 branchId가 없음)
+          if (!branchId && postData.branchId && !['skill', 'news', 'qna', 'sponsor'].includes(postType)) {
             setBranchId(postData.branchId);
           }
 
@@ -334,6 +372,17 @@ const PostEdit = () => {
     return userInfo.isAdmin === true;
   };
 
+  // 제휴업체 편집 권한 확인 (관리자만)
+  const canEditSponsor = () => {
+    if (postType !== 'sponsor') return false;
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자만 제휴업체 수정 가능
+    return userInfo.isAdmin === true;
+  };
+
   // QnA 편집 권한 확인 (관리자만)
   const canEditQna = () => {
     if (postType !== 'qna') return false;
@@ -369,7 +418,7 @@ const PostEdit = () => {
     }
 
     // 다른 게시물 타입의 경우 로그인 필요
-    if (postType !== 'qna' && !isLoggedIn()) {
+    if (!['qna'].includes(postType) && !isLoggedIn()) {
       alert('로그인이 필요합니다.');
       safeNavigate('/login');
       return;
@@ -380,6 +429,7 @@ const PostEdit = () => {
     const userIsBranchOwner = isBranchOwner();
     const userIsSkillOwner = isSkillOwner();
     const userCanEditNews = canEditNews();
+    const userCanEditSponsor = canEditSponsor();
     const userCanEditQna = canEditQna();
 
     let hasPermission = false;
@@ -393,6 +443,9 @@ const PostEdit = () => {
     } else if (postType === 'news') {
       // 뉴스: 작성자, 관리자만 (실질적으로 관리자만)
       hasPermission = userIsAuthor || userIsAdmin || userCanEditNews;
+    } else if (postType === 'sponsor') {
+      // 제휴업체: 관리자만
+      hasPermission = userIsAuthor || userIsAdmin || userCanEditSponsor;
     } else if (postType === 'qna') {
       // QnA: 관리자 또는 작성자 본인
       hasPermission = userCanEditQna || userIsAuthor || userIsAdmin;
@@ -415,6 +468,9 @@ const PostEdit = () => {
           break;
         case 'qna':
           typeLabel = 'QnA';
+          break;
+        case 'sponsor':
+          typeLabel = '제휴업체';
           break;
         default:
           typeLabel = '게시글';
@@ -520,6 +576,14 @@ const PostEdit = () => {
       }
     }
 
+    // 제휴업체 URL 유효성 검증
+    if (postType === 'sponsor') {
+      if (formData.url.trim() && !isValidUrl(formData.url.trim())) {
+        setError('올바른 URL 형식을 입력해주세요.');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -543,6 +607,14 @@ const PostEdit = () => {
       // QnA 비회원 수정시 비밀번호 포함
       if (postType === 'qna' && isGuestPost && formData.guestPassword) {
         updateData.guestPassword = formData.guestPassword;
+      }
+
+      // 제휴업체 전용 데이터
+      if (postType === 'sponsor') {
+        if (formData.url.trim()) {
+          // URL 정규화 (프로토콜 자동 추가)
+          updateData.url = normalizeUrl(formData.url.trim());
+        }
       }
 
       const requestBlob = new Blob([JSON.stringify(updateData)], {
@@ -585,6 +657,9 @@ const PostEdit = () => {
           case 'qna':
             typeLabel = 'QnA';
             break;
+          case 'sponsor':
+            typeLabel = '제휴업체';
+            break;
           default:
             typeLabel = '게시글';
         }
@@ -617,6 +692,7 @@ const PostEdit = () => {
     const hasChanges =
         formData.title !== originalPost?.title ||
         formData.content !== originalPost?.content ||
+        (postType === 'sponsor' && formData.url !== (originalPost?.url || '')) ||
         newImages.length > 0 ||
         keepImageIds.length !== existingImages.length;
 
@@ -668,6 +744,9 @@ const PostEdit = () => {
     case 'qna':
       typeLabel = 'QnA';
       break;
+    case 'sponsor':
+      typeLabel = '제휴업체';
+      break;
     default:
       typeLabel = '게시글';
   }
@@ -707,7 +786,6 @@ const PostEdit = () => {
           {postType === 'qna' && isGuestPost && (
               <div className="guest-info-section">
                 <div className="form-group">
-                  <label htmlFor="guestName">작성자 (수정 불가)</label>
                   <input
                       type="text"
                       id="guestName"
@@ -737,15 +815,38 @@ const PostEdit = () => {
               </div>
           )}
 
+          {/* 제휴업체 전용 필드들 */}
+          {postType === 'sponsor' && (
+              <div className="sponsor-info-section">
+                <h3>제휴업체 정보</h3>
+
+                <div className="form-group">
+                  <label htmlFor="url">웹사이트 URL</label>
+                  <input
+                      type="text"
+                      id="url"
+                      name="url"
+                      value={formData.url}
+                      onChange={handleInputChange}
+                      placeholder="예: www.youtube.com 또는 https://www.youtube.com"
+                      disabled={loading}
+                  />
+                  <div className="field-info">
+                    * 제휴업체의 공식 웹사이트 주소를 입력해주세요. (http:// 또는 https:// 생략 가능)
+                  </div>
+                </div>
+              </div>
+          )}
+
           <div className="form-group">
-            <label htmlFor="title">제목 *</label>
+            <label htmlFor="title">{postType === 'sponsor' ? '업체명' : '제목'} *</label>
             <input
                 type="text"
                 id="title"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                placeholder="제목을 입력해주세요 (최대 100자)"
+                placeholder={postType === 'sponsor' ? '제휴업체명을 입력해주세요 (최대 100자)' : '제목을 입력해주세요 (최대 100자)'}
                 maxLength={100}
                 required
                 disabled={loading}
@@ -762,7 +863,11 @@ const PostEdit = () => {
                 name="content"
                 value={formData.content}
                 onChange={handleInputChange}
-                placeholder={postType === 'qna' ? '질문 내용을 입력해주세요 (최대 5000자)' : '내용을 입력해주세요 (최대 5000자)'}
+                placeholder={
+                  postType === 'sponsor' ? '제휴업체에 대한 소개와 혜택 등을 입력해주세요 (최대 5000자)' :
+                      postType === 'qna' ? '질문 내용을 입력해주세요 (최대 5000자)' :
+                          '내용을 입력해주세요 (최대 5000자)'
+                }
                 maxLength={5000}
                 rows={15}
                 required

@@ -24,8 +24,6 @@ import Skill from './pages/skill';
 import News from './pages/news';
 import Qna from './pages/qna';
 import Sponsor from './pages/sponsor';
-import SponsorDetail from './pages/sponsorDetail';
-import SponsorWrite from './pages/sponsorWrite';
 import Join from './pages/join';
 import Cart from './pages/cart';
 import Order from './pages/order';
@@ -98,9 +96,6 @@ function AppRoutes() {
           <Route path="/news" element={<News />} />
           <Route path="/qna" element={<Qna />} />
           <Route path="/sponsor" element={<Sponsor />} />
-          <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
-          <Route path="/sponsorWrite" element={<SponsorWrite />} />
-          <Route path="/sponsorWrite/edit/:id" element={<SponsorWrite />} />
           <Route path="/join" element={<Join />} />
 
           {/* 관리자 페이지 라우트 - 모두 ProtectedRoute로 보호 */}

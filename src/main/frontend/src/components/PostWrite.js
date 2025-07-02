@@ -11,12 +11,14 @@ const PostWrite = () => {
   const safeNavigate = loggedNavigate(navigate);
 
   const [branchId, setBranchId] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna', 'sponsor'
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     guestName: "",
-    guestPassword: ""
+    guestPassword: "",
+    // sponsor 전용 필드
+    url: ""
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -33,15 +35,15 @@ const PostWrite = () => {
   useEffect(() => {
     // 통합 라우트 처리: /write/:postType 또는 /branches/:branchId/:postType/write
 
-    // 1. 전역 게시물 작성: /write/:postType (skill, news, qna)
+    // 1. 전역 게시물 작성: /write/:postType (skill, news, qna, sponsor)
     if (params.postType && !params.branchId) {
       const type = params.postType;
 
-      if (['skill', 'news', 'qna'].includes(type)) {
+      if (['skill', 'news', 'qna', 'sponsor'].includes(type)) {
         setPostType(type);
         setBranchId(null); // 전역 게시물은 브랜치와 무관
       } else {
-        setError(`잘못된 게시글 타입입니다. 전역 게시물은 skill, news 또는 qna만 가능합니다.`);
+        setError(`잘못된 게시글 타입입니다. 전역 게시물은 skill, news, qna 또는 sponsor만 가능합니다.`);
       }
       return;
     }
@@ -173,6 +175,19 @@ const PostWrite = () => {
     return false;
   };
 
+  // 제휴업체 작성 권한 확인 (관리자만, 지부와 무관)
+  const canWriteSponsor = () => {
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자만 제휴업체 등록 가능
+    if (userInfo.isAdmin === true) {
+      return true;
+    }
+
+    return false;
+  };
+
   // QnA 작성 권한 확인 (로그인 사용자 또는 비회원 모두 가능)
   const canWriteQna = () => {
     return true; // QnA는 누구나 작성 가능
@@ -209,6 +224,12 @@ const PostWrite = () => {
         safeNavigate('/news');
         return;
       }
+    } else if (postType === 'sponsor') {
+      if (!canWriteSponsor()) {
+        alert('제휴업체 등록은 관리자만 가능합니다.');
+        safeNavigate('/sponsor');
+        return;
+      }
     } else if (postType === 'board') {
       if (!isBranchMember()) {
         alert('해당 지부 회원만 글을 작성할 수 있습니다.');
@@ -229,6 +250,8 @@ const PostWrite = () => {
         return '/news';
       case 'qna':
         return '/qna';
+      case 'sponsor':
+        return '/sponsor';
       case 'board':
       default:
         return '/board';
@@ -246,6 +269,8 @@ const PostWrite = () => {
         return '뉴스 게시물 작성';
       case 'qna':
         return 'QnA 작성';
+      case 'sponsor':
+        return '제휴업체 등록';
       case 'board':
       default:
         return '게시글 작성';
@@ -262,6 +287,8 @@ const PostWrite = () => {
         return '뉴스 게시물이 성공적으로 작성되었습니다.';
       case 'qna':
         return 'QnA가 성공적으로 작성되었습니다.';
+      case 'sponsor':
+        return '제휴업체가 성공적으로 등록되었습니다.';
       case 'board':
       default:
         return '게시글이 성공적으로 작성되었습니다.';
@@ -278,6 +305,8 @@ const PostWrite = () => {
         return '뉴스 게시물을 작성하고 있습니다...';
       case 'qna':
         return 'QnA를 작성하고 있습니다...';
+      case 'sponsor':
+        return '제휴업체를 등록하고 있습니다...';
       case 'board':
       default:
         return '게시글을 작성하고 있습니다...';
@@ -294,6 +323,8 @@ const PostWrite = () => {
         return '공지사항 내용을 입력해주세요 (최대 5000자)';
       case 'qna':
         return '질문 내용을 입력해주세요 (최대 5000자)';
+      case 'sponsor':
+        return '제휴업체에 대한 소개와 혜택 등을 입력해주세요 (최대 5000자)';
       case 'board':
       default:
         return '내용을 입력해주세요 (최대 5000자)';
@@ -415,7 +446,40 @@ const PostWrite = () => {
       }
     }
 
+    // 제휴업체 필수 필드 검증
+    if (postType === 'sponsor') {
+      // url 필드가 있으면 유효한 URL인지 검증
+      if (formData.url.trim() && !isValidUrl(formData.url.trim())) {
+        setError('올바른 URL 형식을 입력해주세요.');
+        return false;
+      }
+    }
+
     return true;
+  };
+
+  // URL 유효성 검증 헬퍼 함수
+  const isValidUrl = (string) => {
+    try {
+      // 프로토콜이 없으면 https://를 자동으로 추가
+      const urlToTest = string.startsWith('http://') || string.startsWith('https://')
+          ? string
+          : 'https://' + string;
+
+      new URL(urlToTest);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // URL 정규화 함수 (프로토콜 자동 추가)
+  const normalizeUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return 'https://' + url;
   };
 
   // 게시글 작성 제출
@@ -445,6 +509,14 @@ const PostWrite = () => {
         requestData.guestPassword = formData.guestPassword;
       }
 
+      // 제휴업체 전용 데이터
+      if (postType === 'sponsor') {
+        if (formData.url.trim()) {
+          // URL 정규화 (프로토콜 자동 추가)
+          requestData.url = normalizeUrl(formData.url.trim());
+        }
+      }
+
       // JSON 데이터를 Blob으로 변환하여 추가
       const requestBlob = new Blob([JSON.stringify(requestData)], {
         type: 'application/json'
@@ -458,8 +530,8 @@ const PostWrite = () => {
 
       const apiEndpoint = getApiEndpoint();
 
-      // API 엔드포인트별 URL 설정 (skill, news, qna는 브랜치 ID 없음)
-      const url = (['skill', 'news', 'qna'].includes(postType)) ? apiEndpoint : `${apiEndpoint}/${branchId}`;
+      // API 엔드포인트별 URL 설정 (skill, news, qna, sponsor는 브랜치 ID 없음)
+      const url = (['skill', 'news', 'qna', 'sponsor'].includes(postType)) ? apiEndpoint : `${apiEndpoint}/${branchId}`;
 
       const response = await API.post(url, formDataToSend, {
         headers: {
@@ -517,6 +589,9 @@ const PostWrite = () => {
       case 'qna':
         safeNavigate('/qna');
         break;
+      case 'sponsor':
+        safeNavigate('/sponsor');
+        break;
       case 'notice':
       case 'board':
         safeNavigate(`/branches/${branchId}`);
@@ -527,8 +602,8 @@ const PostWrite = () => {
     }
   };
 
-  // 에러 처리: skill, news, qna는 branchId가 없어도 됨
-  if (!['skill', 'news', 'qna'].includes(postType) && !branchId) {
+  // 에러 처리: skill, news, qna, sponsor는 branchId가 없어도 됨
+  if (!['skill', 'news', 'qna', 'sponsor'].includes(postType) && !branchId) {
     return (
         <div className="write-container">
           <div className="error-message">
@@ -547,6 +622,8 @@ const PostWrite = () => {
         </div>
     );
   }
+
+  // 제휴업체 카테고리 옵션 - 제거됨 (백엔드에서 지원하지 않음)
 
   return (
       <div className="write-container">
@@ -567,7 +644,7 @@ const PostWrite = () => {
                 className="submit-button"
                 disabled={isSubmitting || loading}
             >
-              {isSubmitting ? '작성 중...' : '작성 완료'}
+              {isSubmitting ? '작성 중...' : (postType === 'sponsor' ? '등록 완료' : '작성 완료')}
             </button>
           </div>
         </div>
@@ -647,15 +724,38 @@ const PostWrite = () => {
               </>
           )}
 
+          {/* 제휴업체 전용 필드들 */}
+          {postType === 'sponsor' && (
+              <div className="sponsor-info-section">
+                <h3>제휴업체 정보</h3>
+
+                <div className="form-group">
+                  <label htmlFor="url">웹사이트 URL</label>
+                  <input
+                      type="text"
+                      id="url"
+                      name="url"
+                      value={formData.url}
+                      onChange={handleInputChange}
+                      placeholder="예: www.youtube.com 또는 https://www.youtube.com"
+                      disabled={isSubmitting}
+                  />
+                  <div className="field-info">
+                    * 제휴업체의 공식 웹사이트 주소를 입력해주세요. (http:// 또는 https:// 생략 가능)
+                  </div>
+                </div>
+              </div>
+          )}
+
           <div className="form-group">
-            <label htmlFor="title">제목 *</label>
+            <label htmlFor="title">{postType === 'sponsor' ? '업체명' : '제목'} *</label>
             <input
                 type="text"
                 id="title"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                placeholder="제목을 입력해주세요 (최대 100자)"
+                placeholder={postType === 'sponsor' ? '제휴업체명을 입력해주세요 (최대 100자)' : '제목을 입력해주세요 (최대 100자)'}
                 maxLength={100}
                 required
                 disabled={isSubmitting}
