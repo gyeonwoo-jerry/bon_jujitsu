@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -37,12 +39,10 @@ public class ItemService {
   private final ItemImageService itemImageService;
   private final ItemOptionRepository itemOptionRepository;
 
+  @CacheEvict(value = "items", allEntries = true)
   public void createItem(Long userId, ItemRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    if(!user.isAdmin()) {
-      throw new IllegalArgumentException("관리자만 상품등록이 가능합니다.");
-    }
+    User user = validateUser(userId);
+    validateAdmin(user);
 
     Item item = Item.builder()
         .name(request.name())
@@ -53,149 +53,174 @@ public class ItemService {
 
     itemRepository.save(item);
 
-    List<ItemOption> itemOptions = request.options().stream()
-        .map(optionRequest -> new ItemOption(
-            null,
-            optionRequest.size() != null ? optionRequest.size() : "NONE",  // 기본값 설정
-            optionRequest.color() != null ? optionRequest.color() : "DEFAULT", // 기본값 설정
-            optionRequest.amount(),
-            item))
-        .toList();
+    // 옵션 생성 로직 간소화
+    if (request.options() != null && !request.options().isEmpty()) {
+      List<ItemOption> itemOptions = request.options().stream()
+          .map(optionRequest -> new ItemOption(
+              null,
+              optionRequest.size() != null ? optionRequest.size() : "NONE",
+              optionRequest.color() != null ? optionRequest.color() : "DEFAULT",
+              optionRequest.amount(),
+              item))
+          .toList();
 
-    itemOptionRepository.saveAll(itemOptions);
+      itemOptionRepository.saveAll(itemOptions);
+    }
 
-    itemImageService.uploadImage(item, images);
+    if (images != null && !images.isEmpty()) {
+      itemImageService.uploadImage(item, images);
+    }
   }
 
   @Transactional(readOnly = true)
+  @Cacheable("items")
   public PageResponse<ItemResponse> getItems(int page, int size, Long userId, String name) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    if (!user.isAdmin() && user.getBranchUsers().stream()
-        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
-      throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
-    }
+    User user = validateUser(userId);
+    validateUserAccess(user);
 
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Page<Item> items;
-    if (name != null && !name.isBlank()) {
-      items = itemRepository.findByNameContainingIgnoreCase(name, pageRequest); // 🔍 조건 검색
-    } else {
-      items = itemRepository.findAll(pageRequest); // 전체 조회
-    }
+    Page<Item> items = (name != null && !name.isBlank())
+        ? itemRepository.findByNameContainingIgnoreCaseWithFetch(name, pageRequest)
+        : itemRepository.findAllWithFetch(pageRequest);
 
-    Page<ItemResponse> allItems = items.map(ItemResponse::fromEntity);
-
-    return PageResponse.fromPage(allItems);
+    return PageResponse.fromPage(items.map(ItemResponse::fromEntity));
   }
 
   @Transactional(readOnly = true)
+  @Cacheable(value = "items", key = "#itemId")
   public ItemResponse getItem(Long itemId, Long userId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = validateUser(userId);
+    validateUserAccess(user);
 
-    if (!user.isAdmin() && user.getBranchUsers().stream()
-        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
-      throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
-    }
-
-    Item item = itemRepository.findById(itemId).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+    Item item = itemRepository.findByIdWithFetch(itemId)
+        .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
     return ItemResponse.fromEntity(item);
   }
 
-  public void updateItem(Long userId, ItemUpdate update, Long itemId, List<MultipartFile> images, List<Long> keepImageIds) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  @CacheEvict(value = "items", allEntries = true)
+  public void updateItem(Long userId, ItemUpdate update, Long itemId,
+      List<MultipartFile> images, List<Long> keepImageIds) {
+    User user = validateUser(userId);
+    validateAdmin(user);
 
-    if (!user.isAdmin()) {
-      throw new IllegalArgumentException("관리자만 상품수정이 가능합니다.");
+    Item item = validateItem(itemId);
+
+    // 기본 정보 업데이트
+    updateBasicItemInfo(item, update);
+
+    // 옵션 업데이트
+    update.option().ifPresent(optionRequests -> updateItemOptions(item, optionRequests));
+
+    // 이미지 업데이트
+    if (images != null || keepImageIds != null) {
+      itemImageService.updateImages(item, images, keepImageIds);
     }
+  }
 
-    Item item = itemRepository.findById(itemId)
-        .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-
-    // 1. 기본 정보 업데이트
+  private void updateBasicItemInfo(Item item, ItemUpdate update) {
     update.name().ifPresent(item::updateName);
     update.content().ifPresent(item::updateContent);
     update.price().ifPresent(item::updatePrice);
     update.sale().ifPresent(item::updateSale);
-
-    // 2. 옵션 업데이트
-    update.option().ifPresent(optionRequests -> {
-      // 기존 옵션 ID 기준 Map 생성
-      List<ItemOption> existingOptions = itemOptionRepository.findByItemId(itemId);
-      Map<Long, ItemOption> existingMap = existingOptions.stream()
-          .collect(Collectors.toMap(ItemOption::getId, o -> o));
-
-      List<ItemOption> toSave = new ArrayList<>();
-      Set<Long> requestIds = new HashSet<>();
-
-      for (ItemOptionUpdate request : optionRequests) {
-        if (request.id().isPresent() && existingMap.containsKey(request.id().get())) {
-          // 기존 옵션 업데이트
-          ItemOption option = existingMap.get(request.id().get());
-          request.size().ifPresent(option::updateSize);
-          request.color().ifPresent(option::updateColor);
-          request.amount().ifPresent(option::updateItemAmount);
-          toSave.add(option);
-          requestIds.add(option.getId());
-        } else {
-          // 새 옵션 추가
-          ItemOption newOption = new ItemOption(
-              null,
-              request.size().orElse("NONE"),
-              request.color().orElse("DEFAULT"),
-              request.amount().orElse(1),
-              item
-          );
-          toSave.add(newOption);
-        }
-      }
-
-      // 삭제 대상 옵션 = 기존에는 있었는데 요청에서 누락된 ID
-      List<ItemOption> toDelete = existingOptions.stream()
-          .filter(opt -> !requestIds.contains(opt.getId()))
-          .collect(Collectors.toList());
-
-      itemOptionRepository.deleteAll(toDelete);
-      itemOptionRepository.saveAll(toSave);
-    });
-
-    // 3. 이미지 업데이트
-    itemImageService.updateImages(item, images, keepImageIds);
   }
 
-  public void deleteItem(Long userId, Long itemId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  private void updateItemOptions(Item item, List<ItemOptionUpdate> optionRequests) {
+    List<ItemOption> existingOptions = itemOptionRepository.findByItemId(item.getId());
+    Map<Long, ItemOption> existingMap = existingOptions.stream()
+        .collect(Collectors.toMap(ItemOption::getId, o -> o));
 
-    if(!user.isAdmin()) {
-      throw new IllegalArgumentException("관리자만 상품삭제가 가능합니다.");
+    List<ItemOption> toSave = new ArrayList<>();
+    Set<Long> requestIds = new HashSet<>();
+
+    // 옵션 업데이트/추가 처리
+    for (ItemOptionUpdate request : optionRequests) {
+      if (request.id().isPresent() && existingMap.containsKey(request.id().get())) {
+        // 기존 옵션 업데이트
+        ItemOption option = existingMap.get(request.id().get());
+        updateExistingOption(option, request);
+        toSave.add(option);
+        requestIds.add(option.getId());
+      } else {
+        // 새 옵션 추가
+        toSave.add(createNewOption(request, item));
+      }
     }
 
-    Item item = itemRepository.findById(itemId).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+    // 삭제할 옵션 처리
+    List<ItemOption> toDelete = existingOptions.stream()
+        .filter(opt -> !requestIds.contains(opt.getId()))
+        .toList();
 
+    itemOptionRepository.deleteAll(toDelete);
+    itemOptionRepository.saveAll(toSave);
+  }
+
+  private void updateExistingOption(ItemOption option, ItemOptionUpdate request) {
+    request.size().ifPresent(option::updateSize);
+    request.color().ifPresent(option::updateColor);
+    request.amount().ifPresent(option::updateItemAmount);
+  }
+
+  private ItemOption createNewOption(ItemOptionUpdate request, Item item) {
+    return new ItemOption(
+        null,
+        request.size().orElse("NONE"),
+        request.color().orElse("DEFAULT"),
+        request.amount().orElse(1),
+        item
+    );
+  }
+
+  @CacheEvict(value = "items", allEntries = true)
+  public void deleteItem(Long userId, Long itemId) {
+    User user = validateUser(userId);
+    validateAdmin(user);
+
+    Item item = validateItem(itemId);
     item.softDelete();
   }
 
+  @Transactional(readOnly = true)
+  @Cacheable("items")
   public PageResponse<LatestItemResponse> getMainItems(int page, int size, Long userId) {
-    User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    if (user.getBranchUsers().stream()
-        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
-      throw new IllegalArgumentException("승인 대기 중인 사용자는 상품조회를 이용할 수 없습니다.");
-    }
+    User user = validateUser(userId);
+    validateUserAccess(user);
 
     PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    Page<Item> items = itemRepository.findTop4ByOrderByCreatedAtDescWithFetch(pageRequest);
 
-    Page<Item> items = itemRepository.findTop4ByOrderByCreatedAtDesc(pageRequest);
-
-    Page<LatestItemResponse> latestItems = items.map(LatestItemResponse::from);
-
-    return PageResponse.fromPage(latestItems);
+    return PageResponse.fromPage(items.map(LatestItemResponse::from));
   }
 
+  @Transactional(readOnly = true)
   public boolean isNameDuplicate(String name) {
     return itemRepository.existsByName(name);
   }
+
+  // 공통 검증 메서드들로 중복 제거
+  private User validateUser(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  }
+
+  private void validateAdmin(User user) {
+    if (!user.isAdmin()) {
+      throw new IllegalArgumentException("관리자만 접근 가능합니다.");
+    }
+  }
+
+  private void validateUserAccess(User user) {
+    if (!user.isAdmin() && user.getBranchUsers().stream()
+        .noneMatch(bu -> bu.getUserRole() != UserRole.PENDING)) {
+      throw new IllegalArgumentException("승인 대기 중인 사용자는 이용할 수 없습니다.");
+    }
+  }
+
+  private Item validateItem(Long itemId) {
+    return itemRepository.findById(itemId)
+        .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+  }
+
 }
