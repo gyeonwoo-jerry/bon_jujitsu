@@ -143,8 +143,6 @@ public class BoardService {
 
     validateDeletePermission(user, board);
 
-    commentRepository.softDeleteByTargetIdAndCommentType(boardId, CommentType.BOARD);
-
     board.softDelete();
   }
 
