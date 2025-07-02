@@ -18,11 +18,12 @@ public record QnAResponse(
         boolean isGuestPost,     // 비회원 작성글 여부
         List<ImageResponse> images,
         Long viewCount,
+        boolean hasAnswer,
         LocalDateTime createdAt,
         LocalDateTime modifiedAT
 ) {
 
-    public static QnAResponse from(QnA qna, List<PostImage> postImages) {
+    public static QnAResponse from(QnA qna, List<PostImage> postImages, boolean hasAnswer) {
         List<ImageResponse> imageResponses = postImages.stream()
                 .map(postImage -> ImageResponse.builder()
                         .id(postImage.getId())
@@ -57,6 +58,7 @@ public record QnAResponse(
                 .isGuestPost(isGuestPost)
                 .images(imageResponses)
                 .viewCount(qna.getViewCount())
+                .hasAnswer(hasAnswer)
                 .createdAt(qna.getCreatedAt())
                 .modifiedAT(qna.getModifiedAt())
                 .build();

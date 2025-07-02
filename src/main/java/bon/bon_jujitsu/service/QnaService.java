@@ -8,6 +8,7 @@ import bon.bon_jujitsu.dto.request.QnaRequest;
 import bon.bon_jujitsu.dto.response.QnAResponse;
 import bon.bon_jujitsu.dto.response.SkillResponse;
 import bon.bon_jujitsu.dto.update.QnAUpdate;
+import bon.bon_jujitsu.repository.CommentRepository;
 import bon.bon_jujitsu.repository.PostImageRepository;
 import bon.bon_jujitsu.repository.QnARepository;
 import bon.bon_jujitsu.repository.UserRepository;
@@ -37,6 +38,7 @@ public class QnaService {
     private final QnARepository qnARepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CommentRepository commentRepository;
 
     public void createQna(QnaRequest request, Long userId, List<MultipartFile> images) {
         QnA.QnABuilder qnaBuilder = QnA.builder()
@@ -80,7 +82,9 @@ public class QnaService {
 
         Page<QnAResponse> qnaResponses = qnaPage.map(qna -> {
             List<PostImage> images = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
-            return QnAResponse.from(qna, images);
+            // 댓글 존재 여부 확인
+            boolean hasAnswer = commentRepository.existsByPostTypeAndPostId(PostType.QNA, qna.getId());
+            return QnAResponse.from(qna, images, hasAnswer);
         });
 
         return PageResponse.fromPage(qnaResponses);
@@ -103,7 +107,9 @@ public class QnaService {
 
         List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
 
-        return QnAResponse.from(qna, postImages);
+        boolean hasAnswer = commentRepository.existsByPostTypeAndPostId(PostType.QNA, qna.getId());
+
+        return QnAResponse.from(qna, postImages, hasAnswer);
     }
 
 
