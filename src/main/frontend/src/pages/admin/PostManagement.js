@@ -155,24 +155,6 @@ const PostManagement = () => {
     }
   };
 
-  // OWNER 지부 선택 핸들러 (드롭다운용 - 단일 지부일 때만 사용)
-  const handleOwnerBranchChange = (e) => {
-    setSelectedOwnerBranch(e.target.value);
-    setCurrentPage(0);
-
-    // Board, Notice 카테고리이고 선택된 카테고리가 있을 때만 즉시 검색
-    if (selectedCategory && getCurrentCategoryInfo()?.needsBranch) {
-      setSearchPerformed(true);
-      // 약간의 지연 후 검색 실행 (상태 업데이트 후)
-      setTimeout(() => {
-        fetchPosts();
-      }, 100);
-    } else {
-      setSearchPerformed(false);
-      setPosts([]);
-    }
-  };
-
   // 초기화 및 권한 체크
   useEffect(() => {
     // 토큰 확인
@@ -276,34 +258,32 @@ const PostManagement = () => {
       setSearchPerformed(false);
       setPosts([]);
       setSearchQuery('');
-      setSelectedRegion(''); // ADMIN용 region만 초기화
+      setSelectedRegion(''); // ADMIN용만 초기화
       setError(null);
 
-      // 🔥 OWNER의 경우 지부 선택 유지 로직 추가
-      if (userRole === "OWNER" && userBranches.length > 0) {
-        const categoryInfo = getCurrentCategoryInfo();
+      // 🔥 수정된 부분: selectedCategory를 직접 사용하여 카테고리 정보 확인
+      const categoryInfo = allCategories.find(cat => cat.id === selectedCategory);
 
-        if (categoryInfo?.needsBranch) {
-          // Board, Notice 카테고리인 경우 지부 선택 유지 또는 자동 선택
-          if (userBranches.length === 1) {
-            // 단일 지부 관리자인 경우 자동 선택 유지
-            setSelectedOwnerBranch(userBranches[0].id.toString());
-            console.log("카테고리 변경 후 단일 지부 자동 선택:", userBranches[0].id);
-          } else if (userBranches.length > 1 && !selectedOwnerBranch) {
-            // 다중 지부 관리자이지만 선택된 지부가 없는 경우에만 초기화
+      // OWNER의 경우 지부 선택 처리
+      if (userRole === "OWNER") {
+        if (userBranches.length === 1) {
+          // 단일 지부 관리자인 경우
+          if (categoryInfo?.needsBranch) {
+            // Board, Notice 같이 지부가 필요한 카테고리면 자동으로 지부 선택 유지
+            const branchId = userBranches[0].id.toString();
+            setSelectedOwnerBranch(branchId);
+            console.log("단일 지부 자동 선택 유지:", branchId);
+          } else {
+            // 지부가 필요없는 카테고리면 초기화
             setSelectedOwnerBranch('');
           }
-          // else: 다중 지부 관리자이고 이미 선택된 지부가 있으면 유지
-        } else {
-          // News, Skill, Sponsor 등 지부가 필요없는 카테고리인 경우에만 초기화
+        } else if (userBranches.length > 1) {
+          // 다중 지부 관리자인 경우 항상 초기화
           setSelectedOwnerBranch('');
         }
-      } else {
-        // ADMIN이거나 OWNER가 아닌 경우 기존대로 초기화
-        setSelectedOwnerBranch('');
       }
     }
-  }, [selectedCategory, userRole, userBranches]); // 의존성 배열에 userRole, userBranches 추가
+  }, [selectedCategory, userRole, userBranches, allCategories]);
 
   // 특정 region으로 게시글 데이터 가져오기 (ADMIN 버튼 클릭용)
   const fetchPostsWithRegion = async (region) => {
@@ -772,13 +752,6 @@ const PostManagement = () => {
     console.log('카테고리 변경:', newCategory);
 
     setSelectedCategory(newCategory);
-    setSearchPerformed(false);
-    setPosts([]);
-    setSearchQuery('');
-    setSelectedRegion('');
-    setSelectedOwnerBranch('');
-    setCurrentPage(0);
-    setError(null);
   };
 
   // 게시글 삭제 핸들러
@@ -813,8 +786,6 @@ const PostManagement = () => {
   const handleEdit = (id) => {
     navigate(`/admin/posts/edit/${selectedCategory.toLowerCase()}/${id}`);
   };
-
-  // PostManagement.js에서 handleDetail 함수 수정 (응답 데이터의 region 활용)
 
   const handleDetail = (id) => {
     let detailPath = '';
@@ -890,19 +861,19 @@ const PostManagement = () => {
         break;
 
       case 'News':
-        detailPath = `/newsDetail/${id}`;
+        detailPath = `/detail/news/${id}`;
         break;
 
       case 'Skill':
-        detailPath = `/skillDetail/${id}`;
+        detailPath = `/detail/skill/${id}`;
         break;
 
       case 'Sponsor':
-        detailPath = `/sponsorDetail/${id}`;
+        detailPath = `/detail/sponsor/${id}`;
         break;
 
       case 'QnA':
-        detailPath = `/qnaDetail/${id}`;
+        detailPath = `/detail/qna/${id}`;
         break;
 
       default:
