@@ -2,7 +2,6 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
 import bon.bon_jujitsu.domain.Branch;
-import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.domain.PostImage;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
