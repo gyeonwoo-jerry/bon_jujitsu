@@ -2,6 +2,7 @@ package bon.bon_jujitsu.repository;
 
 import bon.bon_jujitsu.domain.Comment;
 import bon.bon_jujitsu.domain.CommentType;
+import bon.bon_jujitsu.domain.PostType;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,7 +22,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
       @Param("commentType") CommentType commentType
   );
 
-  @Modifying
-  @Query("UPDATE Comment c SET c.isDeleted = true WHERE c.targetId = :targetId AND c.commentType = :commentType")
-  void softDeleteByTargetIdAndCommentType(@Param("targetId") Long targetId, @Param("commentType") CommentType commentType);
+  boolean existsByCommentTypeAndTargetId(CommentType commentType, Long id);
 }

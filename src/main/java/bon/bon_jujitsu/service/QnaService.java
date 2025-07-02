@@ -83,7 +83,7 @@ public class QnaService {
         Page<QnAResponse> qnaResponses = qnaPage.map(qna -> {
             List<PostImage> images = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
             // 댓글 존재 여부 확인
-            boolean hasAnswer = commentRepository.existsByPostTypeAndPostId(PostType.QNA, qna.getId());
+            boolean hasAnswer = commentRepository.existsByCommentTypeAndTargetId(CommentType.QNA, qna.getId());
             return QnAResponse.from(qna, images, hasAnswer);
         });
 
@@ -107,7 +107,7 @@ public class QnaService {
 
         List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
 
-        boolean hasAnswer = commentRepository.existsByPostTypeAndPostId(PostType.QNA, qna.getId());
+        boolean hasAnswer = commentRepository.existsByCommentTypeAndTargetId(CommentType.QNA, qna.getId());
 
         return QnAResponse.from(qna, postImages, hasAnswer);
     }
