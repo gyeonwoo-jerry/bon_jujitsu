@@ -1,8 +1,8 @@
 // pages/MyPageReview.js
 import React, { useEffect, useState } from "react";
-import MyPageHeader from "../components/MyPageHeader";
-import API from "../utils/api";
-import "../styles/mypage-review.css";
+import MyPageHeader from "../../components/MyPageHeader";
+import API from "../../utils/api";
+import "../../styles/mypage-review.css";
 
 const MyPageReview = () => {
   const [activeTab, setActiveTab] = useState("reviewable"); // "reviewable" | "written"

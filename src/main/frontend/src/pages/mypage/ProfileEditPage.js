@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import API from '../utils/api';
-import AddressSearch from '../components/admin/AddressSearch';
-import "../styles/profileEdit.css";
+import API from '../../utils/api';
+import AddressSearch from '../../components/admin/AddressSearch';
+import "../../styles/profileEdit.css";
 
 // MyPageComponents를 인라인으로 정의
 const MyPageAlert = ({ type = "info", title, message, closable = false, onClose = null }) => {

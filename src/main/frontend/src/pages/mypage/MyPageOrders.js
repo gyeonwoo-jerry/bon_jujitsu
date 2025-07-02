@@ -1,8 +1,8 @@
 // pages/MyPageOrders.js
 import React, { useEffect, useState } from "react";
-import MyPageHeader from "../components/MyPageHeader";
-import API from "../utils/api";
-import "../styles/mypage.css";
+import MyPageHeader from "../../components/MyPageHeader";
+import API from "../../utils/api";
+import "../../styles/mypage.css";
 
 const MyPageOrders = () => {
   const [orders, setOrders] = useState([]);

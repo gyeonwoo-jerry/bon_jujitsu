@@ -23,8 +23,6 @@ import StoreDetail from './pages/storeDetail';
 import Skill from './pages/skill';
 import News from './pages/news';
 import Qna from './pages/qna';
-import QnaDetail from './pages/qnaDetail';
-import QnaWrite from './pages/qnaWrite';
 import Sponsor from './pages/sponsor';
 import SponsorDetail from './pages/sponsorDetail';
 import SponsorWrite from './pages/sponsorWrite';
@@ -44,11 +42,11 @@ import BranchEdit from "./pages/admin/BranchEdit";
 import PostManagement from "./pages/admin/PostManagement";
 import PostCreate from "./pages/admin/PostCreate";
 import AdminPostEdit from "./pages/admin/PostEdit";
-import MyPageMain from "./pages/MyPageMain";
-import ProfileEditPage from "./pages/ProfileEditPage";
-import MyPageCart from "./pages/MyPageCart";
-import MyPageOrders from "./pages/MyPageOrders";
-import MyPageReview from "./pages/MyPageReview";
+import MyPageMain from "./pages/mypage/MyPageMain";
+import ProfileEditPage from "./pages/mypage/ProfileEditPage";
+import MyPageCart from "./pages/mypage/MyPageCart";
+import MyPageOrders from "./pages/mypage/MyPageOrders";
+import MyPageReview from "./pages/mypage/MyPageReview";
 
 // 스타일 import
 import './styles/main.css';
@@ -99,9 +97,6 @@ function AppRoutes() {
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
           <Route path="/qna" element={<Qna />} />
-          <Route path="/qnaDetail/:id" element={<QnaDetail />} />
-          <Route path="/qnaWrite" element={<QnaWrite />} />
-          <Route path="/qnaWrite/edit/:id" element={<QnaWrite />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/sponsorDetail/:id" element={<SponsorDetail />} />
           <Route path="/sponsorWrite" element={<SponsorWrite />} />

@@ -1,13 +1,13 @@
 // pages/MyPageMain.js
 import React, { useEffect, useState } from "react";
-import MyPageHeader from "../components/MyPageHeader";
+import MyPageHeader from "../../components/MyPageHeader";
 import {
   MyPageSummaryCard,
   MyPageQuickLinkButton,
   MyPageStatusBadge,
   MyPageAlert
-} from "../components/MyPageComponents";
-import "../styles/mypage.css";
+} from "../../components/MyPageComponents";
+import "../../styles/mypage.css";
 
 const MyPageMain = () => {
   const [userRole, setUserRole] = useState("");

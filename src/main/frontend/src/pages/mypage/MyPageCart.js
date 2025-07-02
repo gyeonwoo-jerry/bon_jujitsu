@@ -1,8 +1,8 @@
 // pages/MyPageCart.js
 import React, { useEffect, useState } from "react";
-import MyPageHeader from "../components/MyPageHeader";
-import API from "../utils/api"; // axios 인스턴스 import
-import "../styles/mypage.css";
+import MyPageHeader from "../../components/MyPageHeader";
+import API from "../../utils/api"; // axios 인스턴스 import
+import "../../styles/mypage.css";
 
 const MyPageCart = () => {
   const [cart, setCart] = useState(null);
