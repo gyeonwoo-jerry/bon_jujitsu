@@ -392,3 +392,30 @@
     width: 100%;
   }
 }
+
+/* QnA 댓글 섹션 */
+.qna-comment-section {
+  border-top: 2px solid #17a2b8;
+  background-color: #f8fcff;
+}
+
+.qna-comment-section .comment-title {
+  color: #17a2b8;
+}
+
+/* QnA 댓글 아이템 */
+.qna-comment {
+  background-color: #fff;
+  border-left: 3px solid #17a2b8;
+}
+
+/* 관리자 배지 */
+.admin-badge {
+  background-color: #17a2b8;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-left: 8px;
+}

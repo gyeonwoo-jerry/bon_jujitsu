@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import API from '../utils/api';
 import { loggedNavigate } from '../utils/navigationLogger';
-import '../styles/boardWrite.css';
+import '../styles/postWrite.css';
 
 const PostEdit = () => {
   const params = useParams();
@@ -12,7 +12,7 @@ const PostEdit = () => {
   const fileInputRef = useRef(null);
   const originalImageIds = useRef([]);
 
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna'
   const [postId, setPostId] = useState(null);
   const [branchId, setBranchId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,8 +23,13 @@ const PostEdit = () => {
   // 게시글 정보 상태
   const [formData, setFormData] = useState({
     title: '',
-    content: ''
+    content: '',
+    guestName: '',
+    guestPassword: ''
   });
+
+  // QnA 비회원 작성 여부
+  const [isGuestPost, setIsGuestPost] = useState(false);
 
   // 이미지 관련 상태
   const [newImages, setNewImages] = useState([]);
@@ -39,18 +44,17 @@ const PostEdit = () => {
   useEffect(() => {
     // 통합 라우트 처리: /edit/:postType/:postId 또는 /branches/:branchId/:postType/:postId/edit
 
-    // 1. 전역 게시물 수정: /edit/:postType/:postId (skill, news)
+    // 1. 전역 게시물 수정: /edit/:postType/:postId (skill, news, qna)
     if (params.postType && params.postId && !params.branchId &&
         location.pathname.startsWith('/edit/')) {
       const type = params.postType;
       const id = params.postId;
 
-      if (['skill', 'news'].includes(type)) {
+      if (['skill', 'news', 'qna'].includes(type)) {
         setPostType(type);
         setPostId(id);
-        console.log(`${type} 수정 페이지 - ID:`, id);
       } else {
-        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill 또는 news만 가능합니다.');
+        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill, news 또는 qna만 가능합니다.');
         setInitialLoading(false);
         return;
       }
@@ -64,7 +68,6 @@ const PostEdit = () => {
         setPostType(type);
         setPostId(id);
         setBranchId(params.branchId);
-        console.log(`${type} 수정 - ID:`, id, 'Branch:', params.branchId);
       } else {
         setError('잘못된 게시글 타입입니다. 지부 게시물은 board 또는 notice만 가능합니다.');
         setInitialLoading(false);
@@ -75,12 +78,14 @@ const PostEdit = () => {
     else if (params.skillId && location.pathname.includes('/skill/') && location.pathname.includes('/edit')) {
       setPostType('skill');
       setPostId(params.skillId);
-      console.log('스킬 수정 페이지 (기존 방식) - ID:', params.skillId);
     }
     else if (params.newsId && location.pathname.includes('/news/') && location.pathname.includes('/edit')) {
       setPostType('news');
       setPostId(params.newsId);
-      console.log('뉴스 수정 페이지 (기존 방식) - ID:', params.newsId);
+    }
+    else if (params.qnaId && location.pathname.includes('/qna/') && location.pathname.includes('/edit')) {
+      setPostType('qna');
+      setPostId(params.qnaId);
     }
     // 기존 방식들 (더 이전 버전 호환성)
     else {
@@ -89,28 +94,27 @@ const PostEdit = () => {
       const noticeEditMatches = path.match(/\/notice\/edit\/(\d+)/);
       const skillEditMatches = path.match(/\/skill\/edit\/(\d+)/);
       const newsEditMatches = path.match(/\/news\/edit\/(\d+)/);
+      const qnaEditMatches = path.match(/\/qna\/edit\/(\d+)/);
 
       if (skillEditMatches) {
         setPostType('skill');
         setPostId(skillEditMatches[1]);
-        console.log("기존 방식 - Skill 수정 ID:", skillEditMatches[1]);
       } else if (newsEditMatches) {
         setPostType('news');
         setPostId(newsEditMatches[1]);
-        console.log("기존 방식 - News 수정 ID:", newsEditMatches[1]);
+      } else if (qnaEditMatches) {
+        setPostType('qna');
+        setPostId(qnaEditMatches[1]);
       } else if (boardEditMatches) {
         setPostType('board');
         setPostId(boardEditMatches[1]);
-        console.log("기존 방식 - Board 수정 ID:", boardEditMatches[1]);
       } else if (noticeEditMatches) {
         setPostType('notice');
         setPostId(noticeEditMatches[1]);
-        console.log("기존 방식 - Notice 수정 ID:", noticeEditMatches[1]);
       } else if (params.boardId) {
         // 더 기존 방식
         setPostType('board');
         setPostId(params.boardId);
-        console.log("파라미터 방식 - Board 수정 ID:", params.boardId);
       } else {
         setError('잘못된 접근입니다. 올바른 게시물 페이지에서 접근해주세요.');
         setInitialLoading(false);
@@ -124,6 +128,7 @@ const PostEdit = () => {
     if (postType === 'notice') return '/notice';
     if (postType === 'skill') return '/skill';
     if (postType === 'news') return '/news';
+    if (postType === 'qna') return '/qna';
     return '/board';
   };
 
@@ -136,6 +141,8 @@ const PostEdit = () => {
         return '기술 수정';
       case 'news':
         return '뉴스 수정';
+      case 'qna':
+        return 'QnA 수정';
       default:
         return '게시글 수정';
     }
@@ -153,28 +160,31 @@ const PostEdit = () => {
         setError('');
 
         const apiEndpoint = getApiEndpoint();
-        console.log('📥 기존 게시글 데이터 불러오기:', `${apiEndpoint}/${postId}`);
         const response = await API.get(`${apiEndpoint}/${postId}`);
 
         if (response.data.success) {
           const postData = response.data.content;
           setOriginalPost(postData);
 
+          // QnA 비회원 작성 여부 확인
+          const isGuest = postType === 'qna' && postData.guestName;
+          setIsGuestPost(isGuest);
+
           // 폼 데이터 설정
           setFormData({
             title: postData.title || '',
-            content: postData.content || ''
+            content: postData.content || '',
+            guestName: postData.guestName || '',
+            guestPassword: '' // 보안상 비밀번호는 표시하지 않음
           });
 
-          // branchId 설정 (URL에서 없을 경우, skill과 news는 branchId가 없음)
-          if (!branchId && postData.branchId && !['skill', 'news'].includes(postType)) {
+          // branchId 설정 (URL에서 없을 경우, skill, news, qna는 branchId가 없음)
+          if (!branchId && postData.branchId && !['skill', 'news', 'qna'].includes(postType)) {
             setBranchId(postData.branchId);
           }
 
           // 기존 이미지 설정
           if (postData.images && Array.isArray(postData.images)) {
-            console.log('서버에서 받은 이미지 데이터:', postData.images);
-
             const imageObjects = postData.images.map((img, index) => ({
               id: img.id || index,
               url: img.url
@@ -185,20 +195,16 @@ const PostEdit = () => {
             const imageIds = imageObjects.map(img => img.id);
             setKeepImageIds(imageIds);
             originalImageIds.current = [...imageIds];
-
-            console.log('기존 이미지 설정 완료:', imageObjects);
           } else {
             setExistingImages([]);
             setKeepImageIds([]);
             originalImageIds.current = [];
           }
-
-          console.log('✅ 게시글 데이터 로드 완료:', postData);
         } else {
           throw new Error(response.data.message || '게시글을 불러올 수 없습니다.');
         }
       } catch (error) {
-        console.error('❌ 게시글 데이터 로드 실패:', error);
+        console.error('게시글 데이터 로드 실패:', error);
         if (error.response?.status === 404) {
           setError('존재하지 않는 게시글입니다.');
         } else if (error.response?.status === 403) {
@@ -232,6 +238,11 @@ const PostEdit = () => {
   const isAuthor = () => {
     if (!originalPost) return false;
 
+    // QnA 비회원 작성의 경우는 작성자 확인 불가 (관리자만 수정 가능)
+    if (postType === 'qna' && originalPost.guestName) {
+      return false;
+    }
+
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
@@ -249,7 +260,6 @@ const PostEdit = () => {
       }
     }
 
-    console.log('👤 작성자 확인:', userId, 'vs', originalPost.authorId);
     return String(userId) === String(originalPost.authorId);
   };
 
@@ -324,9 +334,42 @@ const PostEdit = () => {
     return userInfo.isAdmin === true;
   };
 
+  // QnA 편집 권한 확인 (관리자만)
+  const canEditQna = () => {
+    if (postType !== 'qna') return false;
+
+    const userInfoString = localStorage.getItem('userInfo');
+    const userInfo = JSON.parse(userInfoString || '{}');
+
+    // 관리자는 모든 QnA 수정 가능
+    if (userInfo.isAdmin === true || userInfo.role === 'ADMIN') {
+      return true;
+    }
+
+    // 로그인한 회원이 본인 글인 경우 수정 가능
+    if (isLoggedIn()) {
+      return isAuthor();
+    }
+
+    return false;
+  };
+
   // 수정 권한 확인
   const checkEditPermission = () => {
-    if (!isLoggedIn()) {
+    // QnA 비회원 작성의 경우 로그인 체크 생략 (비밀번호로 검증)
+    if (postType === 'qna' && originalPost && (originalPost.isGuestPost || originalPost.guestName)) {
+      return; // 비회원 QnA는 로그인 체크 없이 통과
+    }
+
+    // QnA 회원 작성의 경우 로그인 필요
+    if (postType === 'qna' && !originalPost?.guestName && !isLoggedIn()) {
+      alert('로그인이 필요합니다.');
+      safeNavigate('/login');
+      return;
+    }
+
+    // 다른 게시물 타입의 경우 로그인 필요
+    if (postType !== 'qna' && !isLoggedIn()) {
       alert('로그인이 필요합니다.');
       safeNavigate('/login');
       return;
@@ -337,6 +380,7 @@ const PostEdit = () => {
     const userIsBranchOwner = isBranchOwner();
     const userIsSkillOwner = isSkillOwner();
     const userCanEditNews = canEditNews();
+    const userCanEditQna = canEditQna();
 
     let hasPermission = false;
 
@@ -349,19 +393,13 @@ const PostEdit = () => {
     } else if (postType === 'news') {
       // 뉴스: 작성자, 관리자만 (실질적으로 관리자만)
       hasPermission = userIsAuthor || userIsAdmin || userCanEditNews;
+    } else if (postType === 'qna') {
+      // QnA: 관리자 또는 작성자 본인
+      hasPermission = userCanEditQna || userIsAuthor || userIsAdmin;
     } else {
       // 일반 게시판: 작성자 또는 관리자
       hasPermission = userIsAuthor || userIsAdmin;
     }
-
-    console.log('=== 수정 권한 확인 ===');
-    console.log('게시물 타입:', postType);
-    console.log('작성자 여부:', userIsAuthor);
-    console.log('관리자 여부:', userIsAdmin);
-    console.log('지부 Owner 여부:', userIsBranchOwner);
-    console.log('스킬 Owner 여부:', userIsSkillOwner);
-    console.log('뉴스 편집 권한:', userCanEditNews);
-    console.log('최종 권한:', hasPermission);
 
     if (!hasPermission) {
       let typeLabel = '';
@@ -374,6 +412,9 @@ const PostEdit = () => {
           break;
         case 'news':
           typeLabel = '뉴스';
+          break;
+        case 'qna':
+          typeLabel = 'QnA';
           break;
         default:
           typeLabel = '게시글';
@@ -440,7 +481,6 @@ const PostEdit = () => {
 
     setKeepImageIds(prev => {
       const newIds = prev.filter(id => id !== imageId);
-      console.log(`이미지 ID '${imageId}' 제거됨, 남은 ID:`, newIds);
       return newIds;
     });
   };
@@ -472,6 +512,14 @@ const PostEdit = () => {
       return false;
     }
 
+    // QnA 비회원 수정시 비밀번호 확인 (실제로는 관리자만 수정 가능)
+    if (postType === 'qna' && isGuestPost) {
+      if (!formData.guestPassword.trim()) {
+        setError('수정을 위해 기존 비밀번호를 입력해주세요.');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -492,6 +540,11 @@ const PostEdit = () => {
         content: formData.content
       };
 
+      // QnA 비회원 수정시 비밀번호 포함
+      if (postType === 'qna' && isGuestPost && formData.guestPassword) {
+        updateData.guestPassword = formData.guestPassword;
+      }
+
       const requestBlob = new Blob([JSON.stringify(updateData)], {
         type: 'application/json'
       });
@@ -511,15 +564,6 @@ const PostEdit = () => {
       }
 
       const apiEndpoint = getApiEndpoint();
-      console.log('게시글 수정 요청:', {
-        endpoint: `${apiEndpoint}/${postId}`,
-        postType,
-        title: formData.title,
-        content: formData.content,
-        newImageCount: newImages.length,
-        keepImageIds: keepImageIds
-      });
-
       const response = await API.patch(`${apiEndpoint}/${postId}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -537,6 +581,9 @@ const PostEdit = () => {
             break;
           case 'news':
             typeLabel = '뉴스';
+            break;
+          case 'qna':
+            typeLabel = 'QnA';
             break;
           default:
             typeLabel = '게시글';
@@ -618,6 +665,9 @@ const PostEdit = () => {
     case 'news':
       typeLabel = '뉴스';
       break;
+    case 'qna':
+      typeLabel = 'QnA';
+      break;
     default:
       typeLabel = '게시글';
   }
@@ -653,6 +703,40 @@ const PostEdit = () => {
         )}
 
         <form onSubmit={handleSubmit} className="write-form">
+          {/* QnA 비회원 작성시 정보 표시 */}
+          {postType === 'qna' && isGuestPost && (
+              <div className="guest-info-section">
+                <div className="form-group">
+                  <label htmlFor="guestName">작성자 (수정 불가)</label>
+                  <input
+                      type="text"
+                      id="guestName"
+                      name="guestName"
+                      value={formData.guestName}
+                      disabled={true}
+                      className="disabled-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="guestPassword">비밀번호 확인 *</label>
+                  <input
+                      type="password"
+                      id="guestPassword"
+                      name="guestPassword"
+                      value={formData.guestPassword}
+                      onChange={handleInputChange}
+                      placeholder="수정을 위해 기존 비밀번호를 입력해주세요"
+                      maxLength={20}
+                      required
+                      disabled={loading}
+                  />
+                  <div className="password-info">
+                    * 수정을 위해 기존 비밀번호를 입력해야 합니다.
+                  </div>
+                </div>
+              </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="title">제목 *</label>
             <input
@@ -678,7 +762,7 @@ const PostEdit = () => {
                 name="content"
                 value={formData.content}
                 onChange={handleInputChange}
-                placeholder="내용을 입력해주세요 (최대 5000자)"
+                placeholder={postType === 'qna' ? '질문 내용을 입력해주세요 (최대 5000자)' : '내용을 입력해주세요 (최대 5000자)'}
                 maxLength={5000}
                 rows={15}
                 required

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import API from "../utils/api";
-import "../styles/boardWrite.css";
+import "../styles/postWrite.css";
 
 function SponsorWrite({ apiEndpoint = "/sponsor", title = "제휴업체 작성" }) {
   const { id } = useParams(); // URL에서 ID 파라미터 가져오기

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import API from '../utils/api';
 import '../styles/comment.css';
 
-const Comment = ({ boardId, postType = 'board' }) => {
+const Comment = ({ postId, postType = 'board', adminOnly = false }) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +28,6 @@ const Comment = ({ boardId, postType = 'board' }) => {
       try {
         const userInfo = JSON.parse(userInfoString);
         if (userInfo.id) {
-          console.log('userInfo에서 사용자 ID 발견:', userInfo.id, '(타입:', typeof userInfo.id, ')');
           return userInfo.id;
         }
       } catch (error) {
@@ -42,14 +41,12 @@ const Comment = ({ boardId, postType = 'board' }) => {
       try {
         const payload = token.split('.')[1];
         const decodedPayload = JSON.parse(atob(payload));
-        console.log('토큰에서 사용자 ID 발견:', decodedPayload.sub, '(타입:', typeof decodedPayload.sub, ')');
         return decodedPayload.sub;
       } catch (error) {
         console.error('토큰 디코딩 실패:', error);
       }
     }
 
-    console.log('사용자 ID를 찾을 수 없음');
     return null;
   };
 
@@ -57,23 +54,37 @@ const Comment = ({ boardId, postType = 'board' }) => {
   const isAdmin = () => {
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      console.log('관리자 권한 확인 - userInfo:', userInfo);
-      console.log('role:', userInfo.role);
-      console.log('isAdmin:', userInfo.isAdmin);
-
-      const adminStatus = userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
-      console.log('관리자 여부:', adminStatus);
-
-      return adminStatus;
+      return userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
     } catch (error) {
       console.error('관리자 권한 확인 중 오류:', error);
       return false;
     }
   };
 
+  // 댓글 작성 권한 확인
+  const canWriteComment = () => {
+    if (!isLoggedIn()) return false;
+
+    // QnA는 adminOnly가 true이면 관리자만 댓글(답변) 작성 가능
+    if (adminOnly) {
+      return isAdmin();
+    }
+
+    // 일반 게시물은 로그인한 사용자 누구나
+    return true;
+  };
+
   // 댓글 타입 결정 (postType에 따라)
   const getCommentType = () => {
-    return postType === 'notice' ? 'NOTICE' : 'BOARD';
+    switch (postType) {
+      case 'notice':
+        return 'NOTICE';
+      case 'qna':
+        return 'QNA';
+      case 'board':
+      default:
+        return 'BOARD';
+    }
   };
 
   // 댓글 목록 불러오기
@@ -82,21 +93,15 @@ const Comment = ({ boardId, postType = 'board' }) => {
       setLoading(true);
       setError('');
 
-      console.log('=== 댓글 불러오기 ===');
-      console.log('boardId:', boardId);
-      console.log('postType:', postType);
-      console.log('commentType:', getCommentType());
-
       const response = await API.get('/comment', {
         params: {
-          targetId: boardId,
-          commentType: getCommentType() // BOARD 또는 NOTICE
+          targetId: postId,
+          commentType: getCommentType()
         }
       });
 
       if (response.data.success) {
         setComments(response.data.content || []);
-        console.log('댓글 불러오기 성공:', response.data.content?.length || 0, '개');
       } else {
         setError('댓글을 불러오는데 실패했습니다.');
       }
@@ -110,44 +115,42 @@ const Comment = ({ boardId, postType = 'board' }) => {
 
   // 컴포넌트 마운트 시 댓글 불러오기
   useEffect(() => {
-    if (boardId && postType) {
+    if (postId && postType) {
       fetchComments();
     }
-  }, [boardId, postType]); // postType도 의존성에 추가
+  }, [postId, postType]);
 
   // 새 댓글 작성
   const handleSubmitComment = async (e) => {
     e.preventDefault();
 
-    if (!isLoggedIn()) {
-      alert('로그인이 필요합니다.');
+    if (!canWriteComment()) {
+      if (adminOnly) {
+        alert('관리자만 답변을 작성할 수 있습니다.');
+      } else {
+        alert('로그인이 필요합니다.');
+      }
       return;
     }
 
     if (!newComment.trim()) {
-      alert('댓글 내용을 입력해주세요.');
+      alert(postType === 'qna' ? '답변 내용을 입력해주세요.' : '댓글 내용을 입력해주세요.');
       return;
     }
 
     try {
       setSubmitting(true);
 
-      console.log('=== 댓글 작성 ===');
-      console.log('boardId:', boardId);
-      console.log('postType:', postType);
-      console.log('commentType:', getCommentType());
-
       const response = await API.post('/comment', {
         content: newComment,
-        commentType: getCommentType(), // BOARD 또는 NOTICE
-        targetId: parseInt(boardId),
+        commentType: getCommentType(),
+        targetId: parseInt(postId),
         parentId: null
       });
 
       if (response.data.success) {
         setNewComment('');
         await fetchComments(); // 댓글 목록 새로고침
-        console.log('댓글 작성 성공');
       } else {
         alert(response.data.message || '댓글 작성에 실패했습니다.');
       }
@@ -155,6 +158,8 @@ const Comment = ({ boardId, postType = 'board' }) => {
       console.error('댓글 작성 실패:', err);
       if (err.response?.status === 401) {
         alert('로그인이 필요합니다.');
+      } else if (err.response?.status === 403) {
+        alert('댓글 작성 권한이 없습니다.');
       } else {
         alert(err.response?.data?.message || '댓글 작성에 실패했습니다.');
       }
@@ -165,8 +170,12 @@ const Comment = ({ boardId, postType = 'board' }) => {
 
   // 대댓글 작성
   const handleSubmitReply = async (parentId) => {
-    if (!isLoggedIn()) {
-      alert('로그인이 필요합니다.');
+    if (!canWriteComment()) {
+      if (adminOnly) {
+        alert('관리자만 답변을 작성할 수 있습니다.');
+      } else {
+        alert('로그인이 필요합니다.');
+      }
       return;
     }
 
@@ -178,14 +187,10 @@ const Comment = ({ boardId, postType = 'board' }) => {
     try {
       setSubmitting(true);
 
-      console.log('=== 대댓글 작성 ===');
-      console.log('parentId:', parentId);
-      console.log('commentType:', getCommentType());
-
       const response = await API.post('/comment', {
         content: replyContent,
-        commentType: getCommentType(), // BOARD 또는 NOTICE
-        targetId: parseInt(boardId),
+        commentType: getCommentType(),
+        targetId: parseInt(postId),
         parentId: parentId
       });
 
@@ -193,7 +198,6 @@ const Comment = ({ boardId, postType = 'board' }) => {
         setReplyContent('');
         setReplyingTo(null);
         await fetchComments(); // 댓글 목록 새로고침
-        console.log('대댓글 작성 성공');
       } else {
         alert(response.data.message || '답글 작성에 실패했습니다.');
       }
@@ -259,15 +263,8 @@ const Comment = ({ boardId, postType = 'board' }) => {
     const currentUserId = getCurrentUserId();
     const userIsAdmin = isAdmin();
 
-    console.log('=== 댓글 수정 권한 확인 ===');
-    console.log('댓글 전체 객체:', comment);
-    console.log('현재 사용자 ID:', currentUserId, '(타입:', typeof currentUserId, ')');
-    console.log('댓글 작성자 ID:', comment.userId, '(타입:', typeof comment.userId, ')');
-    console.log('관리자 여부:', userIsAdmin);
-
     // 사용자 ID가 없으면 권한 없음
     if (!currentUserId) {
-      console.log('사용자 ID가 없어서 권한 없음');
       return false;
     }
 
@@ -275,15 +272,14 @@ const Comment = ({ boardId, postType = 'board' }) => {
     const currentUserIdStr = String(currentUserId);
     const commentUserIdStr = String(comment.userId);
     const isOwner = currentUserIdStr === commentUserIdStr;
-    const hasPermission = userIsAdmin || isOwner;
 
-    console.log('현재 사용자 ID (문자열):', currentUserIdStr);
-    console.log('댓글 작성자 ID (문자열):', commentUserIdStr);
-    console.log('작성자 여부:', isOwner);
-    console.log('최종 권한:', hasPermission);
-    console.log('========================');
+    // QnA의 경우 관리자만 수정/삭제 가능
+    if (postType === 'qna') {
+      return userIsAdmin;
+    }
 
-    return hasPermission;
+    // 일반 게시물의 경우 작성자 또는 관리자
+    return userIsAdmin || isOwner;
   };
 
   // 날짜 포맷팅
@@ -309,10 +305,15 @@ const Comment = ({ boardId, postType = 'board' }) => {
     const isReplying = replyingTo === comment.id;
 
     return (
-        <div key={comment.id} className={`comment-item depth-${depth}`}>
+        <div key={comment.id} className={`comment-item depth-${depth} ${postType === 'qna' ? 'qna-comment' : ''}`}>
           <div className="comment-content">
             <div className="comment-header">
-              <span className="comment-author">{comment.name}</span>
+              <span className="comment-author">
+                {comment.name}
+                {postType === 'qna' && isAdmin() && (
+                    <span className="admin-badge">관리자</span>
+                )}
+              </span>
               <span className="comment-date">{formatDate(comment.createdAt)}</span>
               {comment.modifiedAt && comment.modifiedAt !== comment.createdAt && (
                   <span className="comment-modified">(수정됨)</span>
@@ -325,7 +326,7 @@ const Comment = ({ boardId, postType = 'board' }) => {
                 <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    placeholder="댓글을 수정해주세요..."
+                    placeholder={postType === 'qna' ? '답변을 수정해주세요...' : '댓글을 수정해주세요...'}
                     rows={3}
                     disabled={submitting}
                 />
@@ -357,7 +358,8 @@ const Comment = ({ boardId, postType = 'board' }) => {
             </div>
 
             <div className="comment-actions">
-              {isLoggedIn() && depth < 2 && !isEditing && (
+              {/* QnA에서는 대댓글 기능 제한 */}
+              {canWriteComment() && postType !== 'qna' && depth < 2 && !isEditing && (
                   <button
                       type="button"
                       onClick={() => {
@@ -377,7 +379,6 @@ const Comment = ({ boardId, postType = 'board' }) => {
                         onClick={() => {
                           setEditingComment(comment.id);
                           setEditContent(comment.content);
-                          console.log('수정 모드 진입 - 댓글 ID:', comment.id);
                         }}
                         className="btn-edit"
                     >
@@ -385,26 +386,18 @@ const Comment = ({ boardId, postType = 'board' }) => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => {
-                          console.log('삭제 시도 - 댓글 ID:', comment.id);
-                          handleDeleteComment(comment.id);
-                        }}
+                        onClick={() => handleDeleteComment(comment.id)}
                         className="btn-delete"
                     >
                       삭제
                     </button>
                   </>
               )}
-
-              {/* 디버깅용 임시 정보 표시 */}
-              <span style={{ fontSize: '10px', color: '#999', marginLeft: '10px' }}>
-                [권한: {canModifyComment(comment) ? 'O' : 'X'}] [타입: {getCommentType()}]
-              </span>
             </div>
           </div>
 
-          {/* 답글 작성 폼 */}
-          {isReplying && (
+          {/* 답글 작성 폼 - QnA에서는 비활성화 */}
+          {isReplying && postType !== 'qna' && (
               <div className="reply-form">
             <textarea
                 value={replyContent}
@@ -437,8 +430,8 @@ const Comment = ({ boardId, postType = 'board' }) => {
               </div>
           )}
 
-          {/* 대댓글 렌더링 */}
-          {comment.childComments && comment.childComments.length > 0 && (
+          {/* 대댓글 렌더링 - QnA에서는 제한 */}
+          {postType !== 'qna' && comment.childComments && comment.childComments.length > 0 && (
               <div className="child-comments">
                 {comment.childComments.map(childComment =>
                     renderComment(childComment, depth + 1)
@@ -451,23 +444,53 @@ const Comment = ({ boardId, postType = 'board' }) => {
 
   // 댓글 섹션 제목 결정
   const getCommentSectionTitle = () => {
-    const typeLabel = postType === 'notice' ? '공지사항' : '게시글';
-    return `${typeLabel} 댓글 ${comments.length}개`;
+    let typeLabel = '';
+    switch (postType) {
+      case 'notice':
+        typeLabel = '공지사항';
+        break;
+      case 'qna':
+        typeLabel = 'QnA';
+        break;
+      case 'board':
+      default:
+        typeLabel = '게시글';
+        break;
+    }
+
+    const commentLabel = postType === 'qna' ? '답변' : '댓글';
+    return `${typeLabel} ${commentLabel} ${comments.length}개`;
+  };
+
+  // 댓글 작성 폼 플레이스홀더
+  const getCommentPlaceholder = () => {
+    if (postType === 'qna') {
+      return adminOnly ? '답변을 입력해주세요...' : '질문에 대한 답변을 입력해주세요...';
+    }
+    return '댓글을 입력해주세요...';
+  };
+
+  // 댓글 작성 버튼 텍스트
+  const getSubmitButtonText = () => {
+    if (postType === 'qna') {
+      return submitting ? '답변 작성 중...' : '답변 작성';
+    }
+    return submitting ? '작성 중...' : '댓글 작성';
   };
 
   return (
-      <div className="comment-section">
+      <div className={`comment-section ${postType === 'qna' ? 'qna-comment-section' : ''}`}>
         <h3 className="comment-title">
           {getCommentSectionTitle()}
         </h3>
 
         {/* 새 댓글 작성 폼 */}
-        {isLoggedIn() ? (
+        {canWriteComment() ? (
             <form onSubmit={handleSubmitComment} className="comment-form">
           <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="댓글을 입력해주세요..."
+              placeholder={getCommentPlaceholder()}
               rows={4}
               disabled={submitting}
           />
@@ -477,13 +500,18 @@ const Comment = ({ boardId, postType = 'board' }) => {
                     disabled={submitting || !newComment.trim()}
                     className="btn-submit"
                 >
-                  {submitting ? '작성 중...' : '댓글 작성'}
+                  {getSubmitButtonText()}
                 </button>
               </div>
             </form>
         ) : (
             <div className="login-required">
-              <p>댓글을 작성하려면 로그인이 필요합니다.</p>
+              <p>
+                {adminOnly
+                    ? '관리자만 답변을 작성할 수 있습니다.'
+                    : '댓글을 작성하려면 로그인이 필요합니다.'
+                }
+              </p>
             </div>
         )}
 
@@ -498,13 +526,18 @@ const Comment = ({ boardId, postType = 'board' }) => {
         <div className="comment-list">
           {loading ? (
               <div className="loading-spinner">
-                <p>댓글을 불러오는 중...</p>
+                <p>{postType === 'qna' ? '답변을 불러오는 중...' : '댓글을 불러오는 중...'}</p>
               </div>
           ) : comments.length > 0 ? (
               comments.map(comment => renderComment(comment))
           ) : (
               <div className="no-comments">
-                <p>아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!</p>
+                <p>
+                  {postType === 'qna'
+                      ? '아직 답변이 없습니다. 첫 번째 답변을 작성해보세요!'
+                      : '아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!'
+                  }
+                </p>
               </div>
           )}
         </div>

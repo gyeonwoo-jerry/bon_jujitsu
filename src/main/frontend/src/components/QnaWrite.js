@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../utils/api";
-import "../styles/boardWrite.css";
+import "../styles/postWrite.css";
 
 function QnaWrite({ apiEndpoint = "/qna", title = "질문 작성" }) {
   const { id } = useParams(); // 수정 모드일 경우 게시글 ID

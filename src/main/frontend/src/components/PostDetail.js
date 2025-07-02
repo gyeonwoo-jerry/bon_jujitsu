@@ -8,42 +8,44 @@ import SubHeader from './SubHeader';
 
 const PostDetail = () => {
   const params = useParams();
-  const { branchId, boardId, noticeId, skillId, newsId } = params;
+  const { branchId, boardId, noticeId, skillId, newsId, qnaId } = params;
   const location = useLocation();
   const navigate = useNavigate();
   const loggedNav = loggedNavigate(navigate);
   const fetchedRef = useRef(false);
 
   const [post, setPost] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna'
   const [postId, setPostId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [canEditState, setCanEditState] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [pendingAction, setPendingAction] = useState(null); // 'edit' 또는 'delete'
 
   // URL에서 게시물 타입과 ID 추출
   useEffect(() => {
     // 통합 라우트 처리: /detail/:postType/:postId 또는 /branches/:branchId/:postType/:postId
 
-    // 1. 전역 게시물 상세: /detail/:postType/:postId (skill, news)
+    // 1. 전역 게시물 상세: /detail/:postType/:postId (skill, news, qna)
     if (params.postType && params.postId && !params.branchId &&
         location.pathname.startsWith('/detail/')) {
       const type = params.postType;
       const id = params.postId;
 
-      if (['skill', 'news'].includes(type)) {
+      if (['skill', 'news', 'qna'].includes(type)) {
         if (id && id !== 'undefined') {
           setPostType(type);
           setPostId(id);
-          console.log(`${type} 상세 페이지 - ID:`, id);
         } else {
-          setError(`유효하지 않은 ${type === 'skill' ? '스킬' : '뉴스'} ID입니다.`);
+          setError(`유효하지 않은 ${type === 'skill' ? '스킬' : type === 'news' ? '뉴스' : 'QnA'} ID입니다.`);
           setLoading(false);
           return;
         }
       } else {
-        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill 또는 news만 가능합니다.');
+        setError('잘못된 게시글 타입입니다. 전역 게시물은 skill, news 또는 qna만 가능합니다.');
         setLoading(false);
         return;
       }
@@ -56,7 +58,6 @@ const PostDetail = () => {
       if (['board', 'notice'].includes(type)) {
         setPostType(type);
         setPostId(id);
-        console.log(`${type} 상세 페이지 - 브랜치 ID: ${params.branchId}, 게시물 ID:`, id);
       } else {
         setError('잘못된 게시글 타입입니다. 지부 게시물은 board 또는 notice만 가능합니다.');
         setLoading(false);
@@ -69,7 +70,6 @@ const PostDetail = () => {
       if (skillIdFromPath && skillIdFromPath !== 'undefined') {
         setPostType('skill');
         setPostId(skillIdFromPath);
-        console.log('스킬 상세 페이지 (기존 방식) - ID:', skillIdFromPath);
       } else {
         setError('유효하지 않은 스킬 ID입니다.');
         setLoading(false);
@@ -81,9 +81,19 @@ const PostDetail = () => {
       if (newsIdFromPath && newsIdFromPath !== 'undefined') {
         setPostType('news');
         setPostId(newsIdFromPath);
-        console.log('뉴스 상세 페이지 (기존 방식) - ID:', newsIdFromPath);
       } else {
         setError('유효하지 않은 뉴스 ID입니다.');
+        setLoading(false);
+        return;
+      }
+    }
+    else if (location.pathname.includes('/qnaDetail/')) {
+      const qnaIdFromPath = location.pathname.split('/qnaDetail/')[1];
+      if (qnaIdFromPath && qnaIdFromPath !== 'undefined') {
+        setPostType('qna');
+        setPostId(qnaIdFromPath);
+      } else {
+        setError('유효하지 않은 QnA ID입니다.');
         setLoading(false);
         return;
       }
@@ -95,6 +105,9 @@ const PostDetail = () => {
     } else if (newsId) {
       setPostType('news');
       setPostId(newsId);
+    } else if (qnaId) {
+      setPostType('qna');
+      setPostId(qnaId);
     } else if (boardId) {
       setPostType('board');
       setPostId(boardId);
@@ -137,6 +150,11 @@ const PostDetail = () => {
   // 현재 사용자가 작성자인지 확인하는 함수
   const isAuthor = () => {
     if (!post) return false;
+
+    // QnA에서 비로그인 상태면 일단 false 반환 (비밀번호로 나중에 검증)
+    if (postType === 'qna' && !isLoggedIn()) {
+      return false;
+    }
 
     // 1. localStorage의 userInfo에서 id 가져오기
     const userInfoString = localStorage.getItem('userInfo');
@@ -254,15 +272,21 @@ const PostDetail = () => {
       } else if (postType === 'news') {
         const userCanEditNews = canEditNews();
         permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditNews);
+      } else if (postType === 'qna') {
+        // QnA 권한 로직
+        if (userIsAdmin) {
+          permission = true;
+        } else if (loggedIn) {
+          permission = userIsAuthor;
+        } else {
+          permission = true; // 비로그인은 항상 버튼 표시
+        }
       }
 
       setCanEditState(permission);
     };
 
-    // 약간의 지연을 두고 실행 (데이터 로딩 완료 대기)
-    const timer = setTimeout(checkEditPermission, 100);
-
-    return () => clearTimeout(timer);
+    checkEditPermission();
   }, [post, postType, branchId]);
 
   // localStorage 변경 감지 (로그인/로그아웃 시)
@@ -283,6 +307,14 @@ const PostDetail = () => {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userIsSkillOwner);
         } else if (postType === 'news') {
           permission = loggedIn && (userIsAuthor || userIsAdmin || userCanEditNews);
+        } else if (postType === 'qna') {
+          if (userIsAdmin) {
+            permission = true;
+          } else if (loggedIn) {
+            permission = userIsAuthor;
+          } else {
+            permission = true; // 비로그인은 항상 버튼 표시
+          }
         } else {
           permission = loggedIn && (userIsAuthor || userIsAdmin);
         }
@@ -300,11 +332,11 @@ const PostDetail = () => {
   // 게시물 불러오기
   useEffect(() => {
     if (postType && postId) {
-      // skill, news의 경우 branchId가 필요없음
-      if (['skill', 'news'].includes(postType)) {
+      // skill, news, qna의 경우 branchId가 필요없음
+      if (['skill', 'news', 'qna'].includes(postType)) {
         // ID 유효성 검사
         if (!postId || postId === 'undefined' || isNaN(Number(postId))) {
-          setError(`유효하지 않은 ${postType === 'skill' ? '스킬' : '뉴스'} ID입니다.`);
+          setError(`유효하지 않은 ${postType === 'skill' ? '스킬' : postType === 'news' ? '뉴스' : 'QnA'} ID입니다.`);
           setLoading(false);
           return;
         }
@@ -333,6 +365,7 @@ const PostDetail = () => {
     if (postType === 'notice') return '/notice';
     if (postType === 'skill') return '/skill';
     if (postType === 'news') return '/news';
+    if (postType === 'qna') return '/qna';
     return '/board';
   };
 
@@ -348,6 +381,9 @@ const PostDetail = () => {
         break;
       case 'news':
         typeLabel = '뉴스';
+        break;
+      case 'qna':
+        typeLabel = 'QnA';
         break;
       default:
         typeLabel = '게시글';
@@ -397,6 +433,9 @@ const PostDetail = () => {
     } else if (postType === 'news') {
       // 뉴스 목록 페이지로 이동
       loggedNav('/news');
+    } else if (postType === 'qna') {
+      // QnA 목록 페이지로 이동
+      loggedNav('/qna');
     } else {
       // 지부 상세 페이지로 이동
       loggedNav(`/branches/${branchId}`);
@@ -404,37 +443,137 @@ const PostDetail = () => {
   };
 
   const handleEditPost = () => {
-    if (!isLoggedIn()) {
-      alert('로그인이 필요합니다.');
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const loggedIn = isLoggedIn();
+    const userIsAdmin = userInfo.isAdmin === true || userInfo.role === 'ADMIN';
+    const userIsAuthor = isAuthor();
+
+    // QnA인 경우 별도 처리
+    if (postType === 'qna') {
+      // 관리자 체크
+      if (userIsAdmin) {
+        loggedNav(`/edit/${postType}/${postId}`);
+        return;
+      }
+
+      // 로그인한 회원이지만 작성자가 아닌 경우
+      if (loggedIn && !userIsAuthor) {
+        alert('본인이 작성한 글만 수정할 수 있습니다.');
+        return;
+      }
+
+      // 비로그인인 경우 비밀번호 확인
+      if (!loggedIn) {
+        setPendingAction('edit');
+        setShowPasswordModal(true);
+        return;
+      }
+
+      // 작성자인 경우 수정 페이지로 이동
+      loggedNav(`/edit/${postType}/${postId}`);
       return;
     }
 
+    // Board/Notice인 경우
+    if (postType === 'board' || postType === 'notice') {
+      if (!loggedIn) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      if (!userIsAuthor && !userIsAdmin) {
+        alert('수정 권한이 없습니다.');
+        return;
+      }
+
+      // 수정 페이지로 이동
+      loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
+      return;
+    }
+
+    // 기타 (skill, news 등) - 기존 로직
     if (!canEditState) {
       alert('수정 권한이 없습니다.');
       return;
     }
 
+    if (!loggedIn) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
     // 수정 페이지로 이동
     if (['skill', 'news'].includes(postType)) {
-      // 전역 게시물: /edit/:postType/:postId
       loggedNav(`/edit/${postType}/${postId}`);
     } else {
-      // 지부 게시물: /branches/:branchId/:postType/:postId/edit
       loggedNav(`/branches/${branchId}/${postType}/${postId}/edit`);
     }
   };
 
   const handleDeletePost = async () => {
-    if (!isLoggedIn()) {
-      alert('로그인이 필요합니다.');
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const loggedIn = isLoggedIn();
+    const userIsAdmin = userInfo.isAdmin === true || userInfo.role === 'ADMIN';
+    const userIsAuthor = isAuthor();
+
+    // QnA인 경우 별도 처리
+    if (postType === 'qna') {
+      // 관리자 체크
+      if (userIsAdmin) {
+        await performDelete();
+        return;
+      }
+
+      // 로그인한 회원이지만 작성자가 아닌 경우
+      if (loggedIn && !userIsAuthor) {
+        alert('본인이 작성한 글만 삭제할 수 있습니다.');
+        return;
+      }
+
+      // 비로그인인 경우 비밀번호 확인
+      if (!loggedIn) {
+        setPendingAction('delete');
+        setShowPasswordModal(true);
+        return;
+      }
+
+      // 작성자인 경우 삭제 진행
+      await performDelete();
       return;
     }
 
+    // Board/Notice인 경우
+    if (postType === 'board' || postType === 'notice') {
+      if (!loggedIn) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      if (!userIsAuthor && !userIsAdmin) {
+        alert('삭제 권한이 없습니다.');
+        return;
+      }
+
+      await performDelete();
+      return;
+    }
+
+    // 기타 (skill, news 등) - 기존 로직
     if (!canEditState) {
       alert('삭제 권한이 없습니다.');
       return;
     }
 
+    if (!loggedIn) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    await performDelete();
+  };
+
+  // 실제 삭제 수행 - 비회원 비밀번호 처리 추가
+  const performDelete = async (guestPassword = null) => {
     let typeLabel = '';
     switch (postType) {
       case 'notice':
@@ -446,6 +585,9 @@ const PostDetail = () => {
       case 'news':
         typeLabel = '뉴스';
         break;
+      case 'qna':
+        typeLabel = 'QnA';
+        break;
       default:
         typeLabel = '게시글';
     }
@@ -453,7 +595,24 @@ const PostDetail = () => {
     if (window.confirm(`정말로 이 ${typeLabel}을 삭제하시겠습니까?`)) {
       try {
         const apiEndpoint = getApiEndpoint();
-        const response = await API.delete(`${apiEndpoint}/${postId}`);
+
+        let response;
+
+        // QnA 비회원 삭제의 경우 비밀번호와 함께 요청
+        if (postType === 'qna' && guestPassword) {
+          // 백엔드 API에 맞춰 비밀번호를 쿼리 파라미터나 요청 바디로 전달
+          // 방법 1: 쿼리 파라미터로 전달
+          response = await API.delete(`${apiEndpoint}/${postId}?guestPassword=${encodeURIComponent(guestPassword)}`);
+
+          // 방법 2: 요청 바디로 전달 (백엔드 구현에 따라 선택)
+          // response = await API.delete(`${apiEndpoint}/${postId}`, {
+          //   data: { guestPassword: guestPassword }
+          // });
+        } else {
+          // 일반 삭제
+          response = await API.delete(`${apiEndpoint}/${postId}`);
+        }
+
         if (response.data.success) {
           alert(`${typeLabel}이 삭제되었습니다.`);
           // 삭제 완료 후 목록 페이지로 이동
@@ -465,11 +624,69 @@ const PostDetail = () => {
         console.error('삭제 에러:', err);
         if (err.response?.status === 403) {
           alert('삭제 권한이 없습니다.');
+        } else if (err.response?.status === 400) {
+          alert(err.response.data?.message || '비밀번호가 일치하지 않습니다.');
         } else {
           alert(`${typeLabel} 삭제에 실패했습니다.`);
         }
       }
     }
+  };
+
+  // 비밀번호 확인
+  const handlePasswordConfirm = async () => {
+    if (!passwordInput.trim()) {
+      alert('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      if (pendingAction === 'edit') {
+        // 수정의 경우 기존 로직 유지 (비밀번호 검증 후 페이지 이동)
+        const response = await API.post(`/qna/${postId}/verify-password`, {
+          guestPassword: passwordInput
+        });
+
+        if (response.data.success) {
+          setShowPasswordModal(false);
+          setPasswordInput('');
+          // 수정 페이지로 이동
+          loggedNav(`/edit/qna/${postId}`);
+          setPendingAction(null);
+        } else {
+          alert('비밀번호가 일치하지 않습니다.');
+          setPasswordInput('');
+        }
+      } else if (pendingAction === 'delete') {
+        // 삭제의 경우 비밀번호를 직접 전달
+        setShowPasswordModal(false);
+        const password = passwordInput;
+        setPasswordInput('');
+        setPendingAction(null);
+
+        // 비밀번호와 함께 삭제 수행
+        await performDelete(password);
+      }
+    } catch (error) {
+      console.error('비밀번호 확인 오류:', error);
+
+      // 백엔드에서 IllegalArgumentException으로 오는 에러 처리
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else if (error.response?.status === 400) {
+        alert('비밀번호가 일치하지 않습니다.');
+      } else {
+        alert('비밀번호 확인 중 오류가 발생했습니다.');
+      }
+      setPasswordInput('');
+    }
+  };
+
+  // 비밀번호 모달 닫기
+  const handlePasswordModalClose = () => {
+    setShowPasswordModal(false);
+    setPasswordInput('');
+    setPendingAction(null);
   };
 
   const formatDate = (dateString) => {
@@ -502,6 +719,27 @@ const PostDetail = () => {
 
   const closeImageModal = () => {
     setSelectedImage(null);
+  };
+
+  // QnA 작성자 정보 (회원/비회원 구분)
+  const getQnaAuthor = () => {
+    if (postType !== 'qna') return post.author;
+
+    // 백엔드에서 authorName 필드로 통합해서 보내주므로 이를 우선 사용
+    if (post.authorName) {
+      return post.authorName;
+    }
+
+    // fallback 로직
+    if (post.guestName) {
+      return post.guestName;
+    }
+
+    if (post.author) {
+      return post.author;
+    }
+
+    return '익명';
   };
 
   if (loading) {
@@ -553,17 +791,22 @@ const PostDetail = () => {
     case 'news':
       typeLabel = '뉴스';
       break;
+    case 'qna':
+      typeLabel = 'QnA';
+      break;
     default:
       typeLabel = '게시글';
   }
 
   return (
       <>
-        {/* 스킬이나 뉴스일 때만 SubHeader 렌더링 */}
-        {(postType === 'skill' || postType === 'news') && (
+        {/* 스킬, 뉴스, QnA일 때만 SubHeader 렌더링 */}
+        {(['skill', 'news', 'qna'].includes(postType)) && (
             <SubHeader
-                pageName={postType === 'skill' ? '기술 상세' : '뉴스 상세'}
-                descName={postType === 'skill' ? "본주짓수 기술을 확인해보세요" : "본주짓수 최신 소식을 확인해보세요"}
+                pageName={postType === 'skill' ? '기술 상세' : postType === 'news' ? '뉴스 상세' : 'QnA 상세'}
+                descName={postType === 'skill' ? "본주짓수 기술을 확인해보세요" :
+                    postType === 'news' ? "본주짓수 최신 소식을 확인해보세요" :
+                        "본주짓수 QnA를 확인해보세요"}
             />
         )}
 
@@ -572,19 +815,44 @@ const PostDetail = () => {
             <button onClick={handleBackToList} className="btn-back">
               ← 목록으로
             </button>
-            {/* 수정/삭제 버튼 - 권한이 있을 때만 표시 */}
-            {canEditState && (
+            {/* 수정/삭제 버튼 표시 조건 */}
+            {(() => {
+              const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+              const loggedIn = isLoggedIn();
+              const userIsAdmin = userInfo.isAdmin === true || userInfo.role === 'ADMIN';
+              const userIsAuthor = isAuthor();
+
+              if (postType === 'qna') {
+                // QnA인 경우
+                if (userIsAdmin) {
+                  return true; // 관리자는 항상 표시
+                } else if (loggedIn) {
+                  return userIsAuthor; // 로그인 회원은 본인 글만 표시
+                } else {
+                  return true; // 비로그인은 항상 표시 (비밀번호로 검증)
+                }
+              } else if (postType === 'board') {
+                // Board인 경우: 작성자 본인 또는 관리자
+                return loggedIn && (userIsAuthor || userIsAdmin);
+              } else if (postType === 'notice') {
+                // Notice인 경우: 작성자 본인 또는 관리자
+                return loggedIn && (userIsAuthor || userIsAdmin);
+              } else if (postType === 'skill') {
+                // 기존 스킬 로직 유지
+                return canEditState;
+              } else if (postType === 'news') {
+                // 기존 뉴스 로직 유지
+                return canEditState;
+              } else {
+                // 기타
+                return canEditState;
+              }
+            })() && (
                 <div className="board-actions">
-                  <button
-                      onClick={handleEditPost}
-                      className="btn-edit"
-                  >
+                  <button onClick={handleEditPost} className="btn-edit">
                     수정
                   </button>
-                  <button
-                      onClick={handleDeletePost}
-                      className="btn-delete"
-                  >
+                  <button onClick={handleDeletePost} className="btn-delete">
                     삭제
                   </button>
                 </div>
@@ -596,16 +864,20 @@ const PostDetail = () => {
               <h1 className="board-title">{post.title}</h1>
               <div className="board-meta">
                 <div className="board-meta-left">
-                  <span className="author">작성자: {post.author}</span>
-                  {post.region && <span
-                      className="region">지역: {post.region}</span>}
+                  <span className="author">
+                    작성자: {postType === 'qna' ? getQnaAuthor() : post.author}
+                    {postType === 'qna' && post.guestName && (
+                        <span className="guest-badge">비회원</span>
+                    )}
+                  </span>
+                  {post.region && <span className="region">지역: {post.region}</span>}
                   <span className="post-type">{typeLabel}</span>
                 </div>
                 <div className="board-meta-right">
-                  <span className="date">작성일: {formatDate(
-                      post.createdAt)}</span>
-                  <span
-                      className="views">조회수: {post.viewCount?.toLocaleString()}</span>
+                  <span className="date">작성일: {formatDate(post.createdAt)}</span>
+                  {postType !== 'qna' && (
+                      <span className="views">조회수: {post.viewCount?.toLocaleString()}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -643,9 +915,47 @@ const PostDetail = () => {
             )}
           </div>
 
-          {/* 댓글 섹션 - 스킬과 뉴스가 아닐 때만 표시 */}
-          {!['skill', 'news'].includes(postType) && (
-              <Comment boardId={postId} postType={postType}/>
+          {/* 댓글 섹션 */}
+          {postType === 'qna' ? (
+              // QnA의 경우 관리자만 댓글(답변) 작성 가능
+              <Comment
+                  postId={postId}
+                  postType="qna"
+                  adminOnly={true}
+              />
+          ) : !(['skill', 'news'].includes(postType)) && (
+              // 스킬과 뉴스가 아닐 때만 일반 댓글 표시
+              <Comment postId={postId} postType={postType}/>
+          )}
+
+          {/* 비밀번호 확인 모달 */}
+          {showPasswordModal && (
+              <div className="password-modal-overlay" onClick={handlePasswordModalClose}>
+                <div className="password-modal" onClick={(e) => e.stopPropagation()}>
+                  <h3>비밀번호 확인</h3>
+                  <p>작성시 입력한 비밀번호를 입력해주세요.</p>
+                  <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="비밀번호를 입력하세요"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handlePasswordConfirm();
+                        }
+                      }}
+                      autoFocus
+                  />
+                  <div className="password-modal-actions">
+                    <button onClick={handlePasswordConfirm} className="btn-confirm">
+                      확인
+                    </button>
+                    <button onClick={handlePasswordModalClose} className="btn-cancel">
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
           )}
 
           {/* 이미지 모달 */}

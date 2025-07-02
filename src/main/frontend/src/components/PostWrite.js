@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import API from "../utils/api";
 import { loggedNavigate } from "../utils/navigationLogger";
-import "../styles/boardWrite.css";
+import "../styles/postWrite.css";
 
 const PostWrite = () => {
   const params = useParams();
@@ -11,16 +11,19 @@ const PostWrite = () => {
   const safeNavigate = loggedNavigate(navigate);
 
   const [branchId, setBranchId] = useState(null);
-  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news'
+  const [postType, setPostType] = useState(null); // 'board', 'notice', 'skill', 'news', 'qna'
   const [formData, setFormData] = useState({
     title: "",
-    content: ""
+    content: "",
+    guestName: "",
+    guestPassword: ""
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGuestPost, setIsGuestPost] = useState(false); // QnA 비회원 작성 여부
 
   const fileInputRef = useRef(null);
   const maxImages = 10;
@@ -30,16 +33,15 @@ const PostWrite = () => {
   useEffect(() => {
     // 통합 라우트 처리: /write/:postType 또는 /branches/:branchId/:postType/write
 
-    // 1. 전역 게시물 작성: /write/:postType (skill, news)
+    // 1. 전역 게시물 작성: /write/:postType (skill, news, qna)
     if (params.postType && !params.branchId) {
       const type = params.postType;
 
-      if (['skill', 'news'].includes(type)) {
+      if (['skill', 'news', 'qna'].includes(type)) {
         setPostType(type);
         setBranchId(null); // 전역 게시물은 브랜치와 무관
-        console.log(`${type} 글쓰기 - 전역`);
       } else {
-        setError(`잘못된 게시글 타입입니다. 전역 게시물은 skill 또는 news만 가능합니다.`);
+        setError(`잘못된 게시글 타입입니다. 전역 게시물은 skill, news 또는 qna만 가능합니다.`);
       }
       return;
     }
@@ -52,7 +54,6 @@ const PostWrite = () => {
       // postType 유효성 검증 (board, notice만 허용)
       if (['board', 'notice'].includes(type)) {
         setPostType(type);
-        console.log(`${type} 글쓰기 - 브랜치 ID:`, params.branchId);
       } else {
         setError("잘못된 게시글 타입입니다. 지부 게시물은 board 또는 notice만 가능합니다.");
       }
@@ -60,7 +61,6 @@ const PostWrite = () => {
     }
 
     // 3. 잘못된 접근
-    console.warn("URL에서 올바른 파라미터를 찾을 수 없습니다");
     setError("잘못된 접근입니다. 올바른 경로로 접근해주세요.");
   }, [params.branchId, params.postType]);
 
@@ -80,46 +80,29 @@ const PostWrite = () => {
 
   // 해당 지부 회원인지 확인 (일반 게시판용 - USER, COACH, OWNER 모두 가능)
   const isBranchMember = () => {
-    console.log('=== 지부 회원 확인 시작 (Board) ===');
-
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
-    console.log('parsed userInfo:', userInfo);
-    console.log('현재 branchId:', branchId);
-
     // 관리자는 모든 지부에 글쓰기 가능
     if (userInfo.isAdmin === true) {
-      console.log('✅ 관리자 권한으로 허용');
       return true;
     }
 
     // 사용자의 지부 정보 확인 (USER, COACH, OWNER 모든 역할 허용, PENDING 제외)
     if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
-      console.log('branchRoles 배열:', userInfo.branchRoles);
-
       const isMember = userInfo.branchRoles.some(branchRole => {
         const userBranchId = branchRole.branchId;
         const currentBranchId = branchId;
         const role = branchRole.role;
 
-        console.log(`비교: ${userBranchId} (${typeof userBranchId}) === ${currentBranchId} (${typeof currentBranchId})`);
-        console.log(`역할: ${role}`);
-        console.log(`브랜치 일치: ${String(userBranchId) === String(currentBranchId)}`);
-
         // 해당 브랜치의 활성 역할(USER, COACH, OWNER) 허용, PENDING은 제외
         const isValidRole = ['USER', 'COACH', 'OWNER'].includes(role);
         const isSameBranch = String(userBranchId) === String(currentBranchId);
 
-        console.log(`유효한 역할: ${isValidRole}, 같은 브랜치: ${isSameBranch}`);
-
         return isSameBranch && isValidRole;
       });
 
-      console.log('✅ 최종 지부 회원 여부:', isMember);
       return isMember;
-    } else {
-      console.log('❌ branchRoles 정보 없음');
     }
 
     return false;
@@ -127,33 +110,20 @@ const PostWrite = () => {
 
   // 해당 지부의 Owner인지 확인 (공지사항용)
   const isBranchOwner = () => {
-    console.log('=== 지부 Owner 확인 시작 (Notice) ===');
-
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
-    console.log('parsed userInfo:', userInfo);
-    console.log('현재 branchId:', branchId);
-
     // 관리자는 모든 지부에 글쓰기 가능
     if (userInfo.isAdmin === true) {
-      console.log('✅ 관리자 권한으로 허용');
       return true;
     }
 
     // 사용자의 지부 정보 확인 (Owner 역할만)
     if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
-      console.log('branchRoles 배열:', userInfo.branchRoles);
-
       const isOwner = userInfo.branchRoles.some(branchRole => {
         const userBranchId = branchRole.branchId;
         const currentBranchId = branchId;
         const role = branchRole.role;
-
-        console.log(`비교: ${userBranchId} (${typeof userBranchId}) === ${currentBranchId} (${typeof currentBranchId})`);
-        console.log(`역할: ${role}`);
-        console.log(`브랜치 일치: ${String(userBranchId) === String(currentBranchId)}`);
-        console.log(`Owner 역할 확인: ${role} === "OWNER" = ${role === "OWNER"}`);
 
         const isSameBranch = String(userBranchId) === String(currentBranchId);
         const isOwnerRole = role === "OWNER";
@@ -161,10 +131,7 @@ const PostWrite = () => {
         return isSameBranch && isOwnerRole;
       });
 
-      console.log('✅ 최종 지부 Owner 여부:', isOwner);
       return isOwner;
-    } else {
-      console.log('❌ branchRoles 정보 없음');
     }
 
     return false;
@@ -172,33 +139,22 @@ const PostWrite = () => {
 
   // 스킬 작성 권한 확인 (Owner 또는 관리자만, 지부와 무관)
   const canWriteSkill = () => {
-    console.log('=== 스킬 작성 권한 확인 시작 (전역) ===');
-
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
-    console.log('parsed userInfo:', userInfo);
-
     // 관리자는 스킬 작성 가능
     if (userInfo.isAdmin === true) {
-      console.log('✅ 관리자 권한으로 허용');
       return true;
     }
 
     // 사용자의 지부 정보 확인 (어느 지부든 Owner 역할이 있으면 됨)
     if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
-      console.log('branchRoles 배열:', userInfo.branchRoles);
-
       const hasOwnerRole = userInfo.branchRoles.some(branchRole => {
         const role = branchRole.role;
-        console.log(`역할 확인: ${role}`);
         return role === "OWNER";
       });
 
-      console.log('✅ Owner 역할 보유 여부 (어느 지부든):', hasOwnerRole);
       return hasOwnerRole;
-    } else {
-      console.log('❌ branchRoles 정보 없음');
     }
 
     return false;
@@ -206,25 +162,29 @@ const PostWrite = () => {
 
   // 뉴스 작성 권한 확인 (관리자만, 지부와 무관)
   const canWriteNews = () => {
-    console.log('=== 뉴스 작성 권한 확인 시작 (전역) ===');
-
     const userInfoString = localStorage.getItem('userInfo');
     const userInfo = JSON.parse(userInfoString || '{}');
 
-    console.log('parsed userInfo:', userInfo);
-
     // 관리자만 뉴스 작성 가능
     if (userInfo.isAdmin === true) {
-      console.log('✅ 관리자 권한으로 허용');
       return true;
     }
 
-    console.log('❌ 관리자 아님');
     return false;
+  };
+
+  // QnA 작성 권한 확인 (로그인 사용자 또는 비회원 모두 가능)
+  const canWriteQna = () => {
+    return true; // QnA는 누구나 작성 가능
   };
 
   // 권한 확인
   const checkWritePermission = () => {
+    if (postType === 'qna') {
+      // QnA는 로그인 여부에 상관없이 작성 가능
+      return;
+    }
+
     if (!isLoggedIn()) {
       alert('로그인이 필요합니다.');
       safeNavigate('/login');
@@ -240,13 +200,13 @@ const PostWrite = () => {
     } else if (postType === 'skill') {
       if (!canWriteSkill()) {
         alert('스킬 게시물은 관장이나 관리자만 작성할 수 있습니다.');
-        safeNavigate('/skill'); // 스킬 목록 페이지로
+        safeNavigate('/skill');
         return;
       }
     } else if (postType === 'news') {
       if (!canWriteNews()) {
         alert('뉴스 게시물은 관리자만 작성할 수 있습니다.');
-        safeNavigate('/news'); // 뉴스 목록 페이지로
+        safeNavigate('/news');
         return;
       }
     } else if (postType === 'board') {
@@ -267,6 +227,8 @@ const PostWrite = () => {
         return '/skill';
       case 'news':
         return '/news';
+      case 'qna':
+        return '/qna';
       case 'board':
       default:
         return '/board';
@@ -282,6 +244,8 @@ const PostWrite = () => {
         return '스킬 게시물 작성';
       case 'news':
         return '뉴스 게시물 작성';
+      case 'qna':
+        return 'QnA 작성';
       case 'board':
       default:
         return '게시글 작성';
@@ -296,6 +260,8 @@ const PostWrite = () => {
         return '스킬 게시물이 성공적으로 작성되었습니다.';
       case 'news':
         return '뉴스 게시물이 성공적으로 작성되었습니다.';
+      case 'qna':
+        return 'QnA가 성공적으로 작성되었습니다.';
       case 'board':
       default:
         return '게시글이 성공적으로 작성되었습니다.';
@@ -310,6 +276,8 @@ const PostWrite = () => {
         return '스킬 게시물을 작성하고 있습니다...';
       case 'news':
         return '뉴스 게시물을 작성하고 있습니다...';
+      case 'qna':
+        return 'QnA를 작성하고 있습니다...';
       case 'board':
       default:
         return '게시글을 작성하고 있습니다...';
@@ -324,6 +292,8 @@ const PostWrite = () => {
         return '뉴스 내용을 입력해주세요 (최대 5000자)';
       case 'notice':
         return '공지사항 내용을 입력해주세요 (최대 5000자)';
+      case 'qna':
+        return '질문 내용을 입력해주세요 (최대 5000자)';
       case 'board':
       default:
         return '내용을 입력해주세요 (최대 5000자)';
@@ -337,6 +307,21 @@ const PostWrite = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // QnA 작성 모드 변경 핸들러
+  const handleQnaTypeChange = (e) => {
+    const isGuest = e.target.value === 'guest';
+    setIsGuestPost(isGuest);
+
+    if (!isGuest) {
+      // 회원 작성으로 변경시 비회원 정보 초기화
+      setFormData(prev => ({
+        ...prev,
+        guestName: "",
+        guestPassword: ""
+      }));
+    }
   };
 
   // 이미지 파일 선택 핸들러
@@ -412,6 +397,24 @@ const PostWrite = () => {
       return false;
     }
 
+    // QnA 비회원 작성시 추가 검증
+    if (postType === 'qna' && isGuestPost) {
+      if (!formData.guestName.trim()) {
+        setError('이름을 입력해주세요.');
+        return false;
+      }
+
+      if (!formData.guestPassword.trim()) {
+        setError('비밀번호를 입력해주세요.');
+        return false;
+      }
+
+      if (formData.guestPassword.length < 4) {
+        setError('비밀번호는 4자 이상 입력해주세요.');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -430,8 +433,20 @@ const PostWrite = () => {
     try {
       const formDataToSend = new FormData();
 
+      // 요청 데이터 구성
+      let requestData = {
+        title: formData.title,
+        content: formData.content
+      };
+
+      // QnA 비회원 작성시 추가 데이터
+      if (postType === 'qna' && isGuestPost) {
+        requestData.guestName = formData.guestName;
+        requestData.guestPassword = formData.guestPassword;
+      }
+
       // JSON 데이터를 Blob으로 변환하여 추가
-      const requestBlob = new Blob([JSON.stringify(formData)], {
+      const requestBlob = new Blob([JSON.stringify(requestData)], {
         type: 'application/json'
       });
       formDataToSend.append('request', requestBlob);
@@ -443,18 +458,8 @@ const PostWrite = () => {
 
       const apiEndpoint = getApiEndpoint();
 
-      // API 엔드포인트별 URL 설정 (skill, news는 브랜치 ID 없음)
-      const url = (postType === 'skill' || postType === 'news') ? apiEndpoint : `${apiEndpoint}/${branchId}`;
-
-      console.log('게시글 작성 요청:', {
-        endpoint: apiEndpoint,
-        url: url,
-        branchId: (postType === 'skill' || postType === 'news') ? 'N/A (전역)' : branchId,
-        postType,
-        title: formData.title,
-        content: formData.content,
-        imageCount: images.length
-      });
+      // API 엔드포인트별 URL 설정 (skill, news, qna는 브랜치 ID 없음)
+      const url = (['skill', 'news', 'qna'].includes(postType)) ? apiEndpoint : `${apiEndpoint}/${branchId}`;
 
       const response = await API.post(url, formDataToSend, {
         headers: {
@@ -509,6 +514,9 @@ const PostWrite = () => {
       case 'news':
         safeNavigate('/news');
         break;
+      case 'qna':
+        safeNavigate('/qna');
+        break;
       case 'notice':
       case 'board':
         safeNavigate(`/branches/${branchId}`);
@@ -519,8 +527,8 @@ const PostWrite = () => {
     }
   };
 
-  // 에러 처리: skill, news는 branchId가 없어도 됨
-  if ((postType !== 'skill' && postType !== 'news') && !branchId) {
+  // 에러 처리: skill, news, qna는 branchId가 없어도 됨
+  if (!['skill', 'news', 'qna'].includes(postType) && !branchId) {
     return (
         <div className="write-container">
           <div className="error-message">
@@ -571,6 +579,74 @@ const PostWrite = () => {
         )}
 
         <form onSubmit={handleSubmit} className="write-form">
+          {/* QnA 작성 모드 선택 */}
+          {postType === 'qna' && (
+              <div className="form-group">
+                <label>작성 모드</label>
+                <div className="qna-type-selector">
+                  <label className="radio-label">
+                    <input
+                        type="radio"
+                        name="qnaType"
+                        value="member"
+                        checked={!isGuestPost}
+                        onChange={handleQnaTypeChange}
+                        disabled={isSubmitting}
+                    />
+                    회원 작성
+                  </label>
+                  <label className="radio-label">
+                    <input
+                        type="radio"
+                        name="qnaType"
+                        value="guest"
+                        checked={isGuestPost}
+                        onChange={handleQnaTypeChange}
+                        disabled={isSubmitting}
+                    />
+                    비회원 작성
+                  </label>
+                </div>
+              </div>
+          )}
+
+          {/* 비회원 작성시 이름, 비밀번호 입력 */}
+          {postType === 'qna' && isGuestPost && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="guestName">이름 *</label>
+                  <input
+                      type="text"
+                      id="guestName"
+                      name="guestName"
+                      value={formData.guestName}
+                      onChange={handleInputChange}
+                      placeholder="이름을 입력해주세요"
+                      maxLength={20}
+                      required
+                      disabled={isSubmitting}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="guestPassword">비밀번호 *</label>
+                  <input
+                      type="password"
+                      id="guestPassword"
+                      name="guestPassword"
+                      value={formData.guestPassword}
+                      onChange={handleInputChange}
+                      placeholder="비밀번호를 입력해주세요 (4자 이상)"
+                      maxLength={20}
+                      required
+                      disabled={isSubmitting}
+                  />
+                  <div className="password-info">
+                    * 비회원 작성시 수정/삭제를 위해 비밀번호가 필요합니다.
+                  </div>
+                </div>
+              </>
+          )}
+
           <div className="form-group">
             <label htmlFor="title">제목 *</label>
             <input

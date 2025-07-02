@@ -74,31 +74,10 @@
     overflow: hidden;
 }
 
-/* 기본 헤더 (게시판, 공지사항용) */
 .board-header {
     padding: 30px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-}
-
-/* 스킬 헤더 스타일 */
-.board-detail-container.skill-detail .board-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* 뉴스 헤더 스타일 */
-.board-detail-container.news-detail .board-header {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-/* 일반 게시판 헤더 스타일 */
-.board-detail-container.board-detail .board-header {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-}
-
-/* 공지사항 헤더 스타일 */
-.board-detail-container.notice-detail .board-header {
-    background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
 }
 
 .board-title {
@@ -136,38 +115,6 @@
     gap: 5px;
 }
 
-/* 게시물 타입 뱃지 스타일 */
-.post-type {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* 타입별 뱃지 색상 */
-.skill-detail .post-type {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.news-detail .post-type {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.board-detail .post-type {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.notice-detail .post-type {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
 .board-content {
     padding: 40px 30px;
 }
@@ -201,23 +148,6 @@
     color: #495057;
 }
 
-/* 타입별 이미지 제목 색상 */
-.skill-detail .board-images h4 {
-    color: #667eea;
-}
-
-.news-detail .board-images h4 {
-    color: #f5576c;
-}
-
-.board-detail .board-images h4 {
-    color: #0984e3;
-}
-
-.notice-detail .board-images h4 {
-    color: #e84393;
-}
-
 .image-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -235,23 +165,6 @@
 .image-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* 타입별 이미지 호버 효과 */
-.skill-detail .image-item:hover {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.news-detail .image-item:hover {
-    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
-}
-
-.board-detail .image-item:hover {
-    box-shadow: 0 4px 12px rgba(9, 132, 227, 0.3);
-}
-
-.notice-detail .image-item:hover {
-    box-shadow: 0 4px 12px rgba(232, 67, 147, 0.3);
 }
 
 .board-image {
@@ -273,27 +186,6 @@
     font-size: 13px;
     border-top: 1px solid #f8f9fa;
     background-color: #f8f9fa;
-}
-
-/* 타입별 수정 정보 영역 색상 */
-.skill-detail .board-modified {
-    background: linear-gradient(to right, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
-    border-top-color: rgba(102, 126, 234, 0.1);
-}
-
-.news-detail .board-modified {
-    background: linear-gradient(to right, rgba(240, 147, 251, 0.05), rgba(245, 87, 108, 0.05));
-    border-top-color: rgba(245, 87, 108, 0.1);
-}
-
-.board-detail .board-modified {
-    background: linear-gradient(to right, rgba(116, 185, 255, 0.05), rgba(9, 132, 227, 0.05));
-    border-top-color: rgba(9, 132, 227, 0.1);
-}
-
-.notice-detail .board-modified {
-    background: linear-gradient(to right, rgba(253, 121, 168, 0.05), rgba(232, 67, 147, 0.05));
-    border-top-color: rgba(232, 67, 147, 0.1);
 }
 
 /* 이미지 모달 */
@@ -487,3 +379,137 @@
         padding: 15px;
     }
 }
+
+/* 비밀번호 확인 모달 스타일 */
+.password-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.password-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.password-modal h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.password-modal p {
+    margin: 0 0 20px 0;
+    color: #666;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.password-modal input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 25px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.password-modal input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.password-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.password-modal-actions button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+}
+
+.btn-confirm {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.btn-cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+/* QnA 전용 스타일 */
+.qna-detail {
+    border-top: 4px solid #17a2b8;
+}
+
+.qna-detail .board-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+/* 비회원 배지 */
+.guest-badge {
+    background-color: #6c757d;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+/* 답변 상태 */
+.answer-status {
+    color: #17a2b8;
+    font-weight: 500;
+}
+
+/* 이미지 모달 */
+
