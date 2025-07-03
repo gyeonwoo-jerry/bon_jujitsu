@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
-import PostList from '../components/PostList';
-import '../styles/skill.css'; // 스타일 파일이 없다면 생성해야 합니다
+import { usePostList } from '../hooks/usePostList';
+import SearchSection from '../components/common/SearchSection';
+import PostCard from '../components/common/PostCard';
+import Pagination from '../components/common/Pagination';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorMessage from '../components/common/ErrorMessage';
+import '../styles/skill.css';
+import '../styles/postList.css';
 
 function Skill() {
   const [pageName, setPageName] = useState('');
@@ -10,6 +16,25 @@ function Skill() {
   const [backgroundImage, setBackgroundImage] = useState('');
   const [canWriteSkill, setCanWriteSkill] = useState(false);
   const navigate = useNavigate();
+
+  // PostList 로직을 usePostList 훅으로 대체
+  const {
+    posts,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    totalElements,
+    searchQuery,
+    searchType,
+    setSearchQuery,
+    setSearchType,
+    handleSearch,
+    handlePageChange,
+    clearSearch,
+    navigate: postNavigate,
+    fetchPosts
+  } = usePostList('/skill', 12);
 
   useEffect(() => {
     const title = '기술';
@@ -89,17 +114,58 @@ function Skill() {
         <div className="skill-container">
           <div className="inner">
             <div className="section_title">BON <font className='thin small'>in</font> SKILL</div>
-            <PostList
-                apiEndpoint="/skill"
-                title=""
-                searchPlaceholder="기술명으로 검색..."
-                pageSize={12}
-            />
+
+            {/* 기존 PostList 대신 직접 구현 */}
+            <div className="post-list-container">
+              <SearchSection
+                  searchQuery={searchQuery}
+                  searchType={searchType}
+                  onSearchQueryChange={setSearchQuery}
+                  onSearchTypeChange={setSearchType}
+                  onSearch={handleSearch}
+                  totalElements={totalElements}
+                  onClearSearch={clearSearch}
+                  placeholder="기술명으로 검색..."
+              />
+
+              {loading && <LoadingSpinner message="기술 게시글을 불러오는 중..." />}
+              {error && <ErrorMessage message={error} onRetry={fetchPosts} />}
+
+              {posts.length > 0 ? (
+                  <>
+                    <div className="posts-grid">
+                      {posts.map((post) => (
+                          <PostCard
+                              key={post.id}
+                              post={post}
+                              type="skill"
+                              onClick={() => postNavigate(`/detail/skill/${post.id}`)}
+                              showRegion={true}
+                          />
+                      ))}
+                    </div>
+
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+
+                    <div className="total-info">
+                      전체 {totalElements}개의 게시글 (페이지 {currentPage}/{totalPages})
+                    </div>
+                  </>
+              ) : (
+                  <div className="no-posts">
+                    <div className="no-posts-icon">🥋</div>
+                    <p>게시글이 없습니다.</p>
+                    {searchQuery && <p>다른 검색어로 시도해보세요.</p>}
+                  </div>
+              )}
+            </div>
+
             {canWriteSkill && (
-                <button
-                    className="write-button"
-                    onClick={handleWriteClick}
-                >
+                <button className="write-button" onClick={handleWriteClick}>
                   글쓰기
                 </button>
             )}

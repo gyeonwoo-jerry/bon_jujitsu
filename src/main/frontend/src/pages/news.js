@@ -1,10 +1,14 @@
-// news.js 전체 수정된 버전:
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubHeader from '../components/SubHeader';
-import PostList from '../components/PostList';
+import { usePostList } from '../hooks/usePostList';
+import SearchSection from '../components/common/SearchSection';
+import PostCard from '../components/common/PostCard';
+import Pagination from '../components/common/Pagination';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorMessage from '../components/common/ErrorMessage';
 import '../styles/news.css';
+import '../styles/postList.css';
 
 function News() {
   const [pageName, setPageName] = useState('');
@@ -12,6 +16,25 @@ function News() {
   const [backgroundImage, setBackgroundImage] = useState('');
   const [canWriteNews, setCanWriteNews] = useState(false);
   const navigate = useNavigate();
+
+  // PostList 로직을 usePostList 훅으로 대체
+  const {
+    posts,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    totalElements,
+    searchQuery,
+    searchType,
+    setSearchQuery,
+    setSearchType,
+    handleSearch,
+    handlePageChange,
+    clearSearch,
+    navigate: postNavigate,
+    fetchPosts
+  } = usePostList('/news', 12);
 
   useEffect(() => {
     const title = '뉴스';
@@ -78,18 +101,58 @@ function News() {
         <div className="news-container">
           <div className="inner">
             <div className="section_title">BON <font className='thin small'>in</font> MEDIA</div>
-            <PostList
-                apiEndpoint="/news"
-                title=""
-                searchPlaceholder="뉴스 검색..."
-                pageSize={12}
-                postType="news"
-            />
+
+            {/* 기존 PostList 대신 직접 구현 */}
+            <div className="post-list-container">
+              <SearchSection
+                  searchQuery={searchQuery}
+                  searchType={searchType}
+                  onSearchQueryChange={setSearchQuery}
+                  onSearchTypeChange={setSearchType}
+                  onSearch={handleSearch}
+                  totalElements={totalElements}
+                  onClearSearch={clearSearch}
+                  placeholder="뉴스 검색..."
+              />
+
+              {loading && <LoadingSpinner message="뉴스를 불러오는 중..." />}
+              {error && <ErrorMessage message={error} onRetry={fetchPosts} />}
+
+              {posts.length > 0 ? (
+                  <>
+                    <div className="posts-grid">
+                      {posts.map((post) => (
+                          <PostCard
+                              key={post.id}
+                              post={post}
+                              type="news"
+                              onClick={() => postNavigate(`/detail/news/${post.id}`)}
+                              showRegion={false}
+                          />
+                      ))}
+                    </div>
+
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+
+                    <div className="total-info">
+                      전체 {totalElements}개의 뉴스 (페이지 {currentPage}/{totalPages})
+                    </div>
+                  </>
+              ) : (
+                  <div className="no-posts">
+                    <div className="no-posts-icon">📰</div>
+                    <p>뉴스가 없습니다.</p>
+                    {searchQuery && <p>다른 검색어로 시도해보세요.</p>}
+                  </div>
+              )}
+            </div>
+
             {canWriteNews && (
-                <button
-                    className="write-button"
-                    onClick={handleWriteClick}
-                >
+                <button className="write-button" onClick={handleWriteClick}>
                   글쓰기
                 </button>
             )}
