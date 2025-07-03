@@ -21,8 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
   Optional<User> findByMemberId(String nickname);
 
-  Page<User> findAllByIsDeletedFalse(Pageable pageable);
-
   @Query(
       value = """
         SELECT * FROM users 
@@ -33,9 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
       nativeQuery = true
   )
   Page<User> findAllByIsDeletedTrueNative(Pageable pageable);
-
-  @Query("SELECT DISTINCT u FROM User u JOIN u.branchUsers bu WHERE bu.branch.id IN :branchIds AND u.isDeleted = false")
-  Page<User> findAllByBranchIdInAndIsDeletedFalse(@Param("branchIds") List<Long> branchIds, PageRequest pageRequest);
 
   @Query(
       value = """
@@ -58,4 +53,20 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Page<User> findDeletedUsersByBranchIdsNative(@Param("branchIds") List<Long> branchIds, Pageable pageable);
 
   boolean existsByMemberId(String memberId);
+
+  // 사용자 조회 시 BranchUser 관계까지 함께 조회 (로그인용)
+  @Query("SELECT u FROM User u LEFT JOIN FETCH u.branchUsers bu LEFT JOIN FETCH bu.branch WHERE u.memberId = :memberId AND u.isDeleted = false")
+  Optional<User> findByMemberIdWithBranchUsers(@Param("memberId") String memberId);
+
+  // 사용자 목록 조회 시 BranchUser 관계까지 함께 조회
+  @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.branchUsers bu LEFT JOIN FETCH bu.branch WHERE u.isDeleted = false ORDER BY u.createdAt DESC")
+  Page<User> findAllByIsDeletedFalseWithBranchUsers(Pageable pageable);
+
+  // 특정 지점의 사용자 조회 시 BranchUser 관계까지 함께 조회
+  @Query("SELECT DISTINCT u FROM User u JOIN FETCH u.branchUsers bu JOIN FETCH bu.branch WHERE bu.branch.id IN :branchIds AND u.isDeleted = false ORDER BY u.createdAt DESC")
+  Page<User> findAllByBranchIdInAndIsDeletedFalseWithBranchUsers(@Param("branchIds") List<Long> branchIds, Pageable pageable);
+
+  // 프로필 조회 시 관련 데이터 함께 조회
+  @Query("SELECT u FROM User u LEFT JOIN FETCH u.images LEFT JOIN FETCH u.branchUsers bu LEFT JOIN FETCH bu.branch WHERE u.id = :userId AND u.isDeleted = false")
+  Optional<User> findByIdWithDetailsAndIsDeletedFalse(@Param("userId") Long userId);
 }
