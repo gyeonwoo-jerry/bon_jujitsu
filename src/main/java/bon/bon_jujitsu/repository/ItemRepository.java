@@ -23,7 +23,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
   @Query("SELECT DISTINCT i FROM Item i " +
       "LEFT JOIN FETCH i.itemOptions " +
-      "LEFT JOIN FETCH i.reviews " +        // reviews는 Item과 1:N이므로 괜찮음
       "WHERE i.id = :itemId")
   Optional<Item> findByIdWithFetch(@Param("itemId") Long itemId);
 
