@@ -36,7 +36,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       "JOIN FETCH o.user u " +
       "LEFT JOIN FETCH o.orderItems oi " +
       "LEFT JOIN FETCH oi.item i " +
-      "LEFT JOIN FETCH oi.itemOption io " +
       "WHERE o.orderStatus = :status " +
       "ORDER BY o.createdAt DESC")
   Page<Order> findAllByOrderStatusWithUserAndItems(@Param("status") OrderStatus status, Pageable pageable);
@@ -45,7 +44,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       "JOIN FETCH o.user u " +
       "LEFT JOIN FETCH o.orderItems oi " +
       "LEFT JOIN FETCH oi.item i " +
-      "LEFT JOIN FETCH oi.itemOption io " +
       "WHERE o.user = :user AND o.orderStatus IN :statuses " +
       "ORDER BY o.createdAt DESC")
   Page<Order> findAllByUserAndOrderStatusInWithItems(@Param("user") User user,
