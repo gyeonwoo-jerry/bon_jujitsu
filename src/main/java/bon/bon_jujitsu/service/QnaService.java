@@ -133,7 +133,8 @@ public class QnaService {
         QnA qna = findQnAById(qnaId);
 
         // 권한 검증
-        validateUpdatePermission(qna, userId);
+        String guestPassword = update != null ? update.guestPassword().orElse(null) : null;
+        validateUpdatePermission(qna, userId, guestPassword);
 
         // 수정할 내용이 있을 때만 업데이트
         if (update != null && update.hasContentToUpdate()) {
@@ -215,14 +216,29 @@ public class QnaService {
             .orElse(false);
     }
 
-    private void validateUpdatePermission(QnA qna, Long userId) {
+    private void validateUpdatePermission(QnA qna, Long userId, String guestPassword) {
         // 관리자는 모든 글 수정 가능
         if (isAdmin(userId)) {
             return;
         }
 
         if (qna.isGuestPost()) {
-            // 비회원 글의 경우 - 이미 PostDetail에서 비밀번호 검증했으므로 패스
+            // 비회원 글의 경우
+            if (userId != null) {
+                // 로그인한 일반 회원이 비회원 글을 수정하려고 하는 경우
+                throw new IllegalArgumentException("비회원이 작성한 글은 일반 회원이 수정할 수 없습니다.");
+            }
+
+            // 비회원이 수정하려는 경우 - 비밀번호 검증
+            if (guestPassword == null || guestPassword.trim().isEmpty()) {
+                throw new IllegalArgumentException("비밀번호를 입력해주세요.");
+            }
+
+            // 비밀번호 검증 (암호화된 비밀번호와 비교)
+            if (!passwordEncoder.matches(guestPassword, qna.getGuestPassword())) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
+
             return;
         }
 
