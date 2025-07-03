@@ -52,8 +52,8 @@ import './styles/response.css';
 import ProtectedRoute from "./components/ProtectedRoute";
 import useSessionCheck from "./hooks/useSessionCheck";
 import useAuthGuard from "./hooks/useAuthGuard";
-import PostWrite from "./components/PostWrite";
-import PostEdit from "./components/PostEdit";
+import PostWrite from "./pages/PostWrite";
+import PostEdit from "./pages/PostEdit";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
 function AppRoutes() {
