@@ -14,27 +14,21 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
   @Query("SELECT DISTINCT i FROM Item i " +
       "LEFT JOIN FETCH i.itemOptions " +
-      "LEFT JOIN FETCH i.images " +
       "WHERE LOWER(i.name) LIKE LOWER(CONCAT('%', :name, '%'))")
   Page<Item> findByNameContainingIgnoreCaseWithFetch(@Param("name") String name, PageRequest pageRequest);
 
-
   @Query("SELECT DISTINCT i FROM Item i " +
-      "LEFT JOIN FETCH i.itemOptions " +
-      "LEFT JOIN FETCH i.images")
+      "LEFT JOIN FETCH i.itemOptions")
   Page<Item> findAllWithFetch(PageRequest pageRequest);
 
-
   @Query("SELECT DISTINCT i FROM Item i " +
       "LEFT JOIN FETCH i.itemOptions " +
-      "LEFT JOIN FETCH i.images " +
-      "LEFT JOIN FETCH i.reviews " +
+      "LEFT JOIN FETCH i.reviews " +        // reviews는 Item과 1:N이므로 괜찮음
       "WHERE i.id = :itemId")
   Optional<Item> findByIdWithFetch(@Param("itemId") Long itemId);
 
   @Query("SELECT DISTINCT i FROM Item i " +
       "LEFT JOIN FETCH i.itemOptions " +
-      "LEFT JOIN FETCH i.images " +
       "ORDER BY i.createdAt DESC")
   Page<Item> findTop4ByOrderByCreatedAtDescWithFetch(PageRequest pageRequest);
 }
