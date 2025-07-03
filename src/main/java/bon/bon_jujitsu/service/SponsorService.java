@@ -7,7 +7,6 @@ import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SponsorRequest;
-import bon.bon_jujitsu.dto.response.ImageResponse;
 import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
 import bon.bon_jujitsu.repository.PostImageRepository;
@@ -15,19 +14,26 @@ import bon.bon_jujitsu.repository.SponsorRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
-@Transactional
 @RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class SponsorService {
 
   private final SponsorRepository sponsorRepository;
@@ -35,14 +41,18 @@ public class SponsorService {
   private final PostImageService postImageService;
   private final PostImageRepository postImageRepository;
 
-  public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+  private static final String VIEWED_SPONSOR_PREFIX = "viewed_sponsor_";
+  private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
 
-    if (user.getBranchUsers().stream()
-        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
-      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 작성할 수 있습니다.");
-    }
+  /**
+   * 스폰서 게시물 생성
+   */
+  @CacheEvict(value = "sponsors", allEntries = true)
+  public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
+    User user = findUserById(userId);
+
+    // 권한 검증 (관장 또는 관리자만 작성 가능)
+    validateSponsorCreatePermission(user);
 
     Sponsor sponsor = Sponsor.builder()
         .title(request.title())
@@ -53,94 +63,163 @@ public class SponsorService {
 
     sponsorRepository.save(sponsor);
 
-    postImageService.uploadImage(sponsor.getId(), PostType.SPONSOR, images);
+    if (images != null && !images.isEmpty()) {
+      postImageService.uploadImage(sponsor.getId(), PostType.SPONSOR, images);
+    }
   }
 
+  /**
+   * 스폰서 게시물 목록 조회 (N+1 문제 해결)
+   */
   @Transactional(readOnly = true)
+  @Cacheable(value = "sponsors", key = "#page + '_' + #size + '_' + (#name != null ? #name : 'all')")
   public PageResponse<SponsorResponse> getSponsors(int page, int size, String name) {
     PageRequest pageRequest = PageRequest.of(page - 1, size);
 
-    Page<Sponsor> sponsors;
+    // N+1 문제 방지를 위한 fetch join 사용
+    Page<Sponsor> sponsors = (name != null && !name.isBlank())
+        ? sponsorRepository.findByUser_NameContainingIgnoreCaseWithUser(name, pageRequest)
+        : sponsorRepository.findAllWithUser(pageRequest);
 
-    if (name != null && !name.isBlank()) {
-      // 작성자 이름으로 필터링
-      sponsors = sponsorRepository.findByUser_NameContainingIgnoreCase(name, pageRequest);
-    } else {
-      // 전체 스폰서 조회
-      sponsors = sponsorRepository.findAll(pageRequest);
+    if (sponsors.isEmpty()) {
+      return PageResponse.fromPage(sponsors.map(sponsor -> null));
     }
 
-    Page<SponsorResponse> sponsorResponses = sponsors.map(sponsor -> {
-      List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId());
-      return SponsorResponse.fromEntity(sponsor, postImages);
-    });
+    // 이미지만 별도로 배치 로딩
+    Set<Long> sponsorIds = sponsors.getContent().stream()
+        .map(Sponsor::getId)
+        .collect(Collectors.toSet());
 
-    return PageResponse.fromPage(sponsorResponses);
+    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(sponsorIds);
+
+    // SponsorResponse 생성
+    return PageResponse.fromPage(sponsors.map(sponsor -> {
+      List<PostImage> images = imageMap.getOrDefault(sponsor.getId(), Collections.emptyList());
+      return SponsorResponse.fromEntity(sponsor, images);
+    }));
   }
 
+  /**
+   * 스폰서 게시물 상세 조회 (N+1 문제 해결)
+   */
+  @Transactional(readOnly = true)
+  @Cacheable(value = "sponsor", key = "#sponsorId")
   public SponsorResponse getSponsor(Long sponsorId, HttpServletRequest request) {
-    Sponsor sponsor = sponsorRepository.findById(sponsorId)
+    // N+1 문제 방지를 위한 fetch join 사용
+    Sponsor sponsor = sponsorRepository.findByIdWithUser(sponsorId)
         .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
 
-    HttpSession session = request.getSession();
-    String sessionKey = "viewed_sponsor_" + sponsorId;
+    // 세션 기반 조회수 증가 처리
+    handleViewCountIncrease(sponsor, sponsorId, request);
 
-    if (session.getAttribute(sessionKey) == null) {
-      sponsor.increaseViewCount(); // 처음 본 경우에만 조회수 증가
-      session.setAttribute(sessionKey, true);
-      session.setMaxInactiveInterval(60 * 60); // 1시간 유지
-    }
-
+    // 이미지 조회
     List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId());
 
     return SponsorResponse.fromEntity(sponsor, postImages);
   }
 
+  /**
+   * 스폰서 게시물 수정
+   */
+  @CacheEvict(value = {"sponsors", "sponsor"}, allEntries = true)
+  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId,
+      List<MultipartFile> images, List<Long> keepImageIds) {
+    User user = findUserById(userId);
+    Sponsor sponsor = findSponsorById(sponsorId);
 
-  public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId, List<MultipartFile> images, List<Long> keepImageIds) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
-
-    Sponsor sponsor = sponsorRepository.findById(sponsorId)
-        .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
-
-    if (user.getBranchUsers().stream()
-        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER) && !user.isAdmin()) {
-      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 수정할 수 있습니다.");
-    }
-
-    if (!sponsor.getUser().getId().equals(user.getId())) {
-      throw new IllegalArgumentException("본인이 작성한 스폰서만 수정할 수 있습니다.");
-    }
+    // 권한 검증
+    validateSponsorUpdatePermission(user, sponsor);
 
     sponsor.updateSponsor(update);
 
-    postImageService.updateImages(sponsor.getId(), PostType.SPONSOR, images, keepImageIds);
+    if (images != null || keepImageIds != null) {
+      postImageService.updateImages(sponsor.getId(), PostType.SPONSOR, images, keepImageIds);
+    }
   }
 
-
+  /**
+   * 스폰서 게시물 삭제
+   */
+  @CacheEvict(value = {"sponsors", "sponsor"}, allEntries = true)
   public void deleteSponsor(Long userId, Long sponsorId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("아이디를 찾을 수 없습니다."));
+    User user = findUserById(userId);
+    Sponsor sponsor = findSponsorById(sponsorId);
 
-    Sponsor sponsor = sponsorRepository.findById(sponsorId)
+    // 권한 검증
+    validateSponsorDeletePermission(user, sponsor);
+
+    // 소프트 삭제 실행
+    sponsor.softDelete();
+  }
+
+  // === Private Helper Methods ===
+
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+  }
+
+  private Sponsor findSponsorById(Long sponsorId) {
+    return sponsorRepository.findById(sponsorId)
         .orElseThrow(() -> new IllegalArgumentException("스폰서를 찾을 수 없습니다."));
+  }
 
-    // 관리자인 경우 - 모든 스폰서 삭제 가능
+  private boolean isOwnerOrAdmin(User user) {
+    return user.isAdmin() ||
+        user.getBranchUsers().stream()
+            .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER);
+  }
+
+  private void validateSponsorCreatePermission(User user) {
+    if (!isOwnerOrAdmin(user)) {
+      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 작성할 수 있습니다.");
+    }
+  }
+
+  private void validateSponsorUpdatePermission(User user, Sponsor sponsor) {
+    if (!isOwnerOrAdmin(user)) {
+      throw new IllegalArgumentException("스폰서는 관장이나 관리자만 수정할 수 있습니다.");
+    }
+
+    // 관리자가 아닌 경우 본인 글만 수정 가능
+    if (!user.isAdmin() && !sponsor.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 스폰서만 수정할 수 있습니다.");
+    }
+  }
+
+  private void validateSponsorDeletePermission(User user, Sponsor sponsor) {
     if (user.isAdmin()) {
-      // 관리자는 모든 스폰서 삭제 가능하므로 추가 검사 없이 진행
+      // 관리자는 모든 스폰서 삭제 가능
+      return;
     }
-    // 관장인 경우 - 본인이 작성한 스폰서만 삭제 가능
-    else if (user.getBranchUsers().stream().anyMatch(bu -> bu.getUserRole() == UserRole.OWNER)) {
-      if (!sponsor.getUser().getId().equals(user.getId())) {
-        throw new IllegalArgumentException("본인이 작성한 스폰서만 삭제할 수 있습니다.");
-      }
-    }
-    // 그 외 경우 - 삭제 권한 없음
-    else {
+
+    boolean isOwner = user.getBranchUsers().stream()
+        .anyMatch(bu -> bu.getUserRole() == UserRole.OWNER);
+
+    if (!isOwner) {
       throw new IllegalArgumentException("스폰서는 관장이나 관리자만 삭제할 수 있습니다.");
     }
 
-    sponsor.softDelete();
+    // 관장이지만 본인 글이 아닌 경우
+    if (!sponsor.getUser().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("본인이 작성한 스폰서만 삭제할 수 있습니다.");
+    }
+  }
+
+  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> sponsorIds) {
+    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.SPONSOR, sponsorIds);
+    return allImages.stream()
+        .collect(Collectors.groupingBy(PostImage::getPostId));
+  }
+
+  private void handleViewCountIncrease(Sponsor sponsor, Long sponsorId, HttpServletRequest request) {
+    HttpSession session = request.getSession();
+    String sessionKey = VIEWED_SPONSOR_PREFIX + sponsorId;
+
+    if (session.getAttribute(sessionKey) == null) {
+      sponsor.increaseViewCount();
+      session.setAttribute(sessionKey, true);
+      session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
+    }
   }
 }
