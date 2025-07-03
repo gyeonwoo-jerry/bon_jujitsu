@@ -4,6 +4,7 @@ import bon.bon_jujitsu.domain.Comment;
 import bon.bon_jujitsu.domain.CommentType;
 import bon.bon_jujitsu.domain.PostType;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   );
 
   boolean existsByCommentTypeAndTargetId(CommentType commentType, Long id);
+
+  @Query("SELECT DISTINCT c.targetId FROM Comment c WHERE c.commentType = 'QNA' AND c.targetId IN :qnaIds")
+  List<Long> findQnaIdsWithAnswers(@Param("qnaIds") Set<Long> qnaIds);
 }
