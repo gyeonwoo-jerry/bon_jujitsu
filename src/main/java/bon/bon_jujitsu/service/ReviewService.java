@@ -2,7 +2,6 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.Order;
-import bon.bon_jujitsu.domain.OrderItem;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.Review;
 import bon.bon_jujitsu.domain.User;
@@ -15,14 +14,10 @@ import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.ReviewRepository;
 import bon.bon_jujitsu.repository.UserRepository;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -30,9 +25,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReviewService {
 
   private final UserRepository userRepository;
@@ -41,30 +41,22 @@ public class ReviewService {
   private final OrderRepository orderRepository;
   private final ReviewImageService reviewImageService;
 
-  public void createReview(Long userId, ReviewRequest request, List<MultipartFile> images) {
-    User user = userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+  private static final int REVIEWABLE_MONTHS = 6;
+  private static final int MAX_REVIEW_DEPTH = 3;
 
-    Item item = itemRepository.findById(request.itemId()).orElseThrow(()-> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+  /**
+   * 리뷰 생성
+   */
+  @CacheEvict(value = {"reviews", "myReviews"}, allEntries = true)
+  public void createReview(Long userId, ReviewRequest request, List<MultipartFile> images) {
+    User user = findUserById(userId);
+    Item item = findItemById(request.itemId());
 
     // 구매 이력 확인 및 주문 찾기
-    Order order = orderRepository.findTopByUserIdAndOrderItems_Item_IdOrderByCreatedAtDesc(user.getId(), item.getId())
-        .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
-
-    // 상품을 받은사람 체크
-    if (order.getOrderStatus() != OrderStatus.COMPLETE) {
-      throw new IllegalArgumentException("주문이 완료된 경우에만 리뷰를 작성할 수 있습니다.");
-    }
+    Order order = validatePurchaseHistory(user.getId(), item.getId());
 
     // 부모 리뷰 확인
-    Review parentReview = null;
-    if (request.parentId() != null) {
-      parentReview = reviewRepository.findById(request.parentId())
-          .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
-
-      if (parentReview.getDepth() >= 3) {
-        throw new IllegalArgumentException("더 이상 대댓글을 작성할 수 없습니다.");
-      }
-    }
+    Review parentReview = validateParentReview(request.parentId());
 
     Review review = Review.builder()
         .content(request.content())
@@ -78,34 +70,191 @@ public class ReviewService {
 
     reviewRepository.save(review);
 
-    reviewImageService.uploadImage(review, images);
+    if (images != null && !images.isEmpty()) {
+      reviewImageService.uploadImage(review, images);
+    }
   }
 
+  /**
+   * 상품별 리뷰 목록 조회 (계층 구조)
+   */
   @Transactional(readOnly = true)
+  @Cacheable(value = "reviews", key = "#itemId + '_' + #pageRequest.pageNumber + '_' + #pageRequest.pageSize")
   public PageResponse<ReviewResponse> getReviews(Long itemId, PageRequest pageRequest) {
-    itemRepository.findById(itemId).orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+    findItemById(itemId); // 상품 존재 확인
 
     // 페이지네이션된 리뷰 조회
     Page<Review> reviews = reviewRepository.findAllByItem_Id(itemId, pageRequest);
 
     // Review → ReviewResponse 변환
     List<ReviewResponse> reviewResponses = reviews.getContent().stream()
-        .map(review -> new ReviewResponse(
-            review,
-            new ArrayList<>() // 대댓글 리스트 초기화
-        ))
+        .map(review -> new ReviewResponse(review, new ArrayList<>()))
         .collect(Collectors.toList());
 
     // 계층 구조로 변환
     List<ReviewResponse> reviewTree = buildReviewTree(reviewResponses);
 
-    // Page 형식으로 다시 변환 (트리 구조 적용 후)
+    // Page 형식으로 다시 변환
     Page<ReviewResponse> reviewPage = new PageImpl<>(reviewTree, pageRequest, reviews.getTotalElements());
 
     return PageResponse.fromPage(reviewPage);
   }
 
-  // 대댓글을 포함한 트리 구조로 변환하는 메서드
+  /**
+   * 내 리뷰 목록 조회 (N+1 문제 해결)
+   */
+  @Transactional(readOnly = true)
+  @Cacheable(value = "myReviews", key = "#userId + '_' + #pageRequest.pageNumber + '_' + #pageRequest.pageSize")
+  public PageResponse<ReviewResponse> getMyReviews(Long userId, PageRequest pageRequest) {
+    findUserById(userId); // 회원 존재 확인
+
+    // 부모 리뷰만 조회 (depth = 0인 리뷰)
+    Page<Review> parentReviews = reviewRepository.findAllByUserIdAndDepth(userId, 0, pageRequest);
+
+    if (parentReviews.isEmpty()) {
+      return PageResponse.fromPage(parentReviews.map(review -> null));
+    }
+
+    // N+1 문제 해결: 자식 리뷰들을 한 번에 조회
+    List<Long> parentReviewIds = parentReviews.getContent().stream()
+        .map(Review::getId)
+        .collect(Collectors.toList());
+
+    Map<Long, List<Review>> childReviewMap = loadChildReviewsInBatch(parentReviewIds);
+
+    // 페이지 변환
+    Page<ReviewResponse> reviewResponses = parentReviews.map(parentReview -> {
+      List<Review> children = childReviewMap.getOrDefault(parentReview.getId(), Collections.emptyList());
+
+      List<ReviewResponse> childResponses = children.stream()
+          .map(childReview -> new ReviewResponse(childReview, Collections.emptyList()))
+          .collect(Collectors.toList());
+
+      return new ReviewResponse(parentReview, childResponses);
+    });
+
+    return PageResponse.fromPage(reviewResponses);
+  }
+
+  /**
+   * 리뷰 수정
+   */
+  @CacheEvict(value = {"reviews", "myReviews"}, allEntries = true)
+  public void updateReview(Long userId, Long reviewId, ReviewUpdate request,
+      List<MultipartFile> images, List<Long> keepImageIds) {
+    Review review = findReviewById(reviewId);
+
+    // 권한 검증
+    validateUpdatePermission(userId, review);
+
+    // 부모 리뷰 수정 검증
+    validateParentReviewUpdate(review, request);
+
+    review.updateReview(request.content(), request.star());
+
+    if (images != null || keepImageIds != null) {
+      reviewImageService.updateImages(review, images, keepImageIds);
+    }
+  }
+
+  /**
+   * 리뷰 삭제
+   */
+  @CacheEvict(value = {"reviews", "myReviews"}, allEntries = true)
+  public void deleteReview(Long userId, Long reviewId) {
+    Review review = findReviewById(reviewId);
+
+    // 권한 검증
+    validateDeletePermission(userId, review);
+
+    // 소프트 삭제 실행
+    review.softDelete();
+  }
+
+  /**
+   * 리뷰 작성 가능한 주문 목록 조회
+   */
+  @Transactional(readOnly = true)
+  public List<ReviewableOrderResponse> getReviewableOrders(Long userId) {
+    findUserById(userId); // 사용자 존재 확인
+
+    LocalDateTime cutoffDate = LocalDateTime.now().minusMonths(REVIEWABLE_MONTHS);
+    List<Order> completedOrders = orderRepository
+        .findRecentCompletedOrdersByUserId(userId, OrderStatus.COMPLETE, cutoffDate);
+
+    return buildReviewableOrderResponses(completedOrders, userId);
+  }
+
+  // === Private Helper Methods ===
+
+  private User findUserById(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+  }
+
+  private Item findItemById(Long itemId) {
+    return itemRepository.findById(itemId)
+        .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+  }
+
+  private Review findReviewById(Long reviewId) {
+    return reviewRepository.findById(reviewId)
+        .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
+  }
+
+  private Order validatePurchaseHistory(Long userId, Long itemId) {
+    Order order = orderRepository.findTopByUserIdAndOrderItems_Item_IdOrderByCreatedAtDesc(userId, itemId)
+        .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
+
+    if (order.getOrderStatus() != OrderStatus.COMPLETE) {
+      throw new IllegalArgumentException("주문이 완료된 경우에만 리뷰를 작성할 수 있습니다.");
+    }
+
+    return order;
+  }
+
+  private Review validateParentReview(Long parentId) {
+    if (parentId == null) {
+      return null;
+    }
+
+    Review parentReview = findReviewById(parentId);
+
+    if (parentReview.getDepth() >= MAX_REVIEW_DEPTH) {
+      throw new IllegalArgumentException("더 이상 대댓글을 작성할 수 없습니다.");
+    }
+
+    return parentReview;
+  }
+
+  private void validateUpdatePermission(Long userId, Review review) {
+    if (!userId.equals(review.getUser().getId())) {
+      throw new IllegalArgumentException("리뷰를 수정할 권한이 없습니다.");
+    }
+  }
+
+  private void validateDeletePermission(Long userId, Review review) {
+    if (!userId.equals(review.getUser().getId())) {
+      throw new IllegalArgumentException("리뷰를 삭제할 권한이 없습니다.");
+    }
+  }
+
+  private void validateParentReviewUpdate(Review review, ReviewUpdate request) {
+    if (review.getParentReview() != null && request.parentId() != null) {
+      throw new IllegalArgumentException("부모 리뷰는 수정할 수 없습니다.");
+    }
+  }
+
+  private Map<Long, List<Review>> loadChildReviewsInBatch(List<Long> parentReviewIds) {
+    if (parentReviewIds.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    List<Review> allChildReviews = reviewRepository.findAllByParentReviewIdIn(parentReviewIds);
+    return allChildReviews.stream()
+        .collect(Collectors.groupingBy(review -> review.getParentReview().getId()));
+  }
+
   private List<ReviewResponse> buildReviewTree(List<ReviewResponse> reviews) {
     Map<Long, ReviewResponse> reviewMap = new HashMap<>();
     List<ReviewResponse> roots = new ArrayList<>();
@@ -120,106 +269,24 @@ public class ReviewService {
       if (review.parentId() != null) {
         ReviewResponse parent = reviewMap.get(review.parentId());
         if (parent != null) {
-          parent.childReviews().add(review); // 대댓글 추가
+          parent.childReviews().add(review);
         }
       } else {
-        roots.add(review); // 부모 리뷰면 루트에 추가
+        roots.add(review);
       }
     }
 
     return roots.isEmpty() ? reviews : roots;
   }
 
-  @Transactional(readOnly = true)
-  public PageResponse<ReviewResponse> getMyReviews(Long userId, PageRequest pageRequest) {
-    userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
-
-    // 1. 부모 리뷰만 조회 (depth = 0인 리뷰)
-    Page<Review> parentReviews = reviewRepository.findAllByUserIdAndDepth(userId, 0, pageRequest);
-
-    // 2. 해당 유저의 모든 부모 리뷰 ID 목록을 추출
-    List<Long> parentReviewIds = parentReviews.getContent().stream()
-        .map(Review::getId)
-        .collect(Collectors.toList());
-
-    // 3. 한 번의 쿼리로 모든 자식 리뷰 조회 (in 절 사용)
-    List<Review> allChildReviews = Collections.emptyList();
-    if (!parentReviewIds.isEmpty()) {
-      allChildReviews = reviewRepository.findAllByParentReviewIdIn(parentReviewIds);
-    }
-
-    // 4. 부모 ID를 키로 하는 자식 리뷰 맵 생성
-    Map<Long, List<Review>> childReviewMap = allChildReviews.stream()
-        .collect(Collectors.groupingBy(review -> review.getParentReview().getId()));
-
-    // 5. 페이지 변환
-    Page<ReviewResponse> reviewResponses = parentReviews.map(parentReview -> {
-      // 현재 부모 리뷰에 해당하는 자식 리뷰 목록 가져오기
-      List<Review> children = childReviewMap.getOrDefault(parentReview.getId(), Collections.emptyList());
-
-      // 자식 리뷰를 ReviewResponse로 변환
-      List<ReviewResponse> childResponses = children.stream()
-          .map(childReview -> new ReviewResponse(
-              childReview,
-              Collections.emptyList() // 손자 리뷰는 없다고 가정
-          ))
-          .collect(Collectors.toList());
-
-      // 부모 리뷰와 자식 리뷰 목록으로 ReviewResponse 생성
-      return new ReviewResponse(parentReview, childResponses);
-    });
-
-    return PageResponse.fromPage(reviewResponses);
-  }
-
-  public void updateReview(Long userId, Long reviewId, ReviewUpdate request, List<MultipartFile> images, List<Long> keepImageIds) {
-    Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
-
-    // 사용자 검증
-    if (!userId.equals(review.getUser().getId())) {
-      throw new IllegalArgumentException("리뷰를 수정할 권한이 없습니다.");
-    }
-
-    // 부모 리뷰 수정 불가
-    if (review.getParentReview() != null && request.parentId() != null) {
-      throw new IllegalArgumentException("부모 리뷰는 수정할 수 없습니다.");
-    }
-
-    review.updateReview(request.content(), request.star());
-
-    reviewImageService.updateImages(review, images, keepImageIds);
-  }
-
-
-  public void deleteReview(Long userId, Long reviewId) {
-
-  }
-
-  @Transactional(readOnly = true)
-  public List<ReviewableOrderResponse> getReviewableOrders(Long userId) {
-    // 사용자 존재 확인
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
-
-    // COMPLETE 상태의 주문들 조회 (최근 6개월 정도로 제한)
-    LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
-    List<Order> completedOrders = orderRepository
-        .findRecentCompletedOrdersByUserId(userId, OrderStatus.COMPLETE, sixMonthsAgo);
-
+  private List<ReviewableOrderResponse> buildReviewableOrderResponses(List<Order> completedOrders, Long userId) {
     List<ReviewableOrderResponse> reviewableItems = new ArrayList<>();
 
     for (Order order : completedOrders) {
-      for (OrderItem orderItem : order.getOrderItems()) {
-        // 해당 주문-상품에 대한 리뷰가 이미 있는지 확인
-        boolean hasReview = reviewRepository
-            .existsByOrderIdAndItemIdAndUserId(
-                order.getId(),
-                orderItem.getItem().getId(),
-                userId
-            );
+      order.getOrderItems().forEach(orderItem -> {
+        boolean hasReview = reviewRepository.existsByOrderIdAndItemIdAndUserId(
+            order.getId(), orderItem.getItem().getId(), userId);
 
-        // 리뷰가 없는 경우에만 추가
         if (!hasReview) {
           reviewableItems.add(ReviewableOrderResponse.builder()
               .orderId(order.getId())
@@ -230,7 +297,7 @@ public class ReviewService {
               .price(orderItem.getPrice())
               .build());
         }
-      }
+      });
     }
 
     // 최신 주문순으로 정렬
