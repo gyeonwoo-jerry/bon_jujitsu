@@ -48,8 +48,8 @@ public class Cart extends Timestamped {
       if (cartItem.getItem().getId().equals(item.getId()) &&
           cartItem.getItemOption().getId().equals(itemOption.getId())) {
         cartItem.addQuantity(quantity);
-        if (cartItem.getPrice() != item.getPrice()) {
-          cartItem.updatePrice(item.getPrice());
+        if (cartItem.getPrice() != item.getSale()) {
+          cartItem.updatePrice(item.getSale());
         }
         return;
       }
