@@ -96,13 +96,18 @@ public class CartService {
    */
   @CacheEvict(value = "userCart", key = "#userId")
   public void removeCartItem(Long userId, Long cartItemId) {
-    User user = findAndValidateUser(userId);
-    Cart cart = findUserCart(user);
+    findAndValidateUser(userId);
+    CartItem cartItem = findCartItemById(cartItemId);
 
-    cart.removeCartItem(cartItemId);
-    cartRepository.save(cart);
+    // 권한 검증: 해당 CartItem이 사용자의 것인지 확인
+    if (!cartItem.getCart().getUser().getId().equals(userId)) {
+      throw new IllegalArgumentException("해당 장바구니 아이템에 접근 권한이 없습니다.");
+    }
 
-    log.info("장바구니 아이템 삭제 완료: userId={}, itemId={}", userId, cartItemId);
+    // 직접 삭제
+    cartItemRepository.deleteById(cartItemId);
+
+    log.info("장바구니 아이템 삭제 완료: userId={}, cartItemId={}", userId, cartItemId);
   }
 
   /**

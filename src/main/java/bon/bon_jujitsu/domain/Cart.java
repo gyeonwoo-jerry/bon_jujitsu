@@ -71,11 +71,6 @@ public class Cart extends Timestamped {
     cartItems.removeIf(cartItem -> cartItem.getItem().getId().equals(itemId));
   }
 
-  // 특정 장바구니 아이템만 삭제
-  public void removeCartItem(Long cartItemId) {
-    cartItems.removeIf(cartItem -> cartItem.getId().equals(cartItemId));
-  }
-
   // 장바구니 비우기
   public void clear() {
     cartItems.clear();
