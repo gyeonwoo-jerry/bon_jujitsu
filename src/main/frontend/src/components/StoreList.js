@@ -473,16 +473,7 @@ const StoreItemList = () => {
                 </div>
                 <div className="btns">
                   <button
-                    className={`store-button add-to-cart-btn ${
-                      item?.amount <= 0 ? "disabled" : ""
-                    }`}
-                    disabled={item?.amount <= 0}
-                    onClick={(e) => addToCart(e, item)}
-                  >
-                    {item?.amount <= 0 ? "품절" : "장바구니 담기"}
-                  </button>
-                  <button
-                    className="store-button view-details-btn"
+                    className="store-button view-details-btn full-width"
                     onClick={(e) => {
                       e.stopPropagation(); // 상위 요소로 클릭 이벤트 전파 방지
                       handleItemClick(item.id);

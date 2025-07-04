@@ -1,3 +1,5 @@
+/* 기존 CSS에 추가할 스타일 */
+
 .store-header {
   margin-bottom: 20px;
 }
@@ -37,4 +39,184 @@
 
 .add-product-btn:hover {
   background-color: #303f9f;
-} 
+}
+
+/* 버튼 컨테이너 스타일 */
+.btns {
+  margin-top: 12px;
+  width: 100%;
+  padding: 0 16px 16px 16px; /* 카드 내부 패딩과 맞춤 */
+}
+
+/* 상세보기 버튼 스타일 */
+.store-button {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.view-details-btn {
+  background-color: #333;
+  color: white;
+}
+
+.view-details-btn:hover {
+  background-color: #555;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 전체 너비 클래스 - 더 명확하게 */
+.full-width {
+  width: 100% !important;
+  display: block;
+}
+
+/* 품절 상태 스타일 (필요시) */
+.sold-out-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.sold-out-overlay span {
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  border: 2px solid white;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+/* 아이템 카드 기본 스타일 */
+.item-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.item-image-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 75%; /* 4:3 비율 */
+  overflow: hidden;
+}
+
+.item-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.item-card:hover .item-image {
+  transform: scale(1.05);
+}
+
+.item-info {
+  padding: 16px 16px 0 16px; /* 하단 패딩 제거 */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #333;
+  line-height: 1.3;
+}
+
+.item-price-container {
+  margin: 8px 0;
+}
+
+.item-price, .sale-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e53935;
+}
+
+.original-price {
+  font-size: 14px;
+  color: #999;
+  text-decoration: line-through;
+  margin-right: 8px;
+}
+
+.item-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px; /* 버튼과의 간격 */
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 14px;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.review-count {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .store-filters {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .store-actions {
+    justify-content: space-between;
+  }
+
+  .btns {
+    gap: 6px;
+  }
+
+  .store-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
