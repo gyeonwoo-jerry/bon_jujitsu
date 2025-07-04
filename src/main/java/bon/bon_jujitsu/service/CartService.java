@@ -95,14 +95,14 @@ public class CartService {
    * 장바구니 아이템 삭제
    */
   @CacheEvict(value = "userCart", key = "#userId")
-  public void removeCartItem(Long userId, Long itemId) {
+  public void removeCartItem(Long userId, Long cartItemId) {
     User user = findAndValidateUser(userId);
     Cart cart = findUserCart(user);
 
-    cart.removeItem(itemId);
+    cart.removeCartItem(cartItemId);
     cartRepository.save(cart);
 
-    log.info("장바구니 아이템 삭제 완료: userId={}, itemId={}", userId, itemId);
+    log.info("장바구니 아이템 삭제 완료: userId={}, itemId={}", userId, cartItemId);
   }
 
   /**

@@ -50,12 +50,12 @@ public class CartController {
     return ApiResponse.success("카트 수정 성공", null);
   }
 
-  @DeleteMapping("/items/{itemId}")
+  @DeleteMapping("/items/{cartItemId}")
   public ApiResponse<Void> removeCartItem(
       @AuthenticationUserId Long userId,
-      @PathVariable Long itemId
+      @PathVariable Long cartItemId
   ) {
-    cartService.removeCartItem(userId, itemId);
+    cartService.removeCartItem(userId, cartItemId);
     return ApiResponse.success("카트 삭제 성공", null);
   }
 
