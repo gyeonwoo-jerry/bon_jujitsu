@@ -67,6 +67,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Page<User> findAllByBranchIdInAndIsDeletedFalseWithBranchUsers(@Param("branchIds") List<Long> branchIds, Pageable pageable);
 
   // 프로필 조회 시 관련 데이터 함께 조회
-  @Query("SELECT u FROM User u LEFT JOIN FETCH u.images LEFT JOIN FETCH u.branchUsers bu LEFT JOIN FETCH bu.branch WHERE u.id = :userId AND u.isDeleted = false")
-  Optional<User> findByIdWithDetailsAndIsDeletedFalse(@Param("userId") Long userId);
+  @Query("SELECT u FROM User u LEFT JOIN FETCH u.branchUsers bu LEFT JOIN FETCH bu.branch WHERE u.id = :userId AND u.isDeleted = false")
+  Optional<User> findByIdWithBranchUsersAndIsDeletedFalse(@Param("userId") Long userId);
 }

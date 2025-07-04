@@ -3,10 +3,12 @@ package bon.bon_jujitsu.dto.response;
 import bon.bon_jujitsu.domain.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import java.util.stream.Collectors;
 import lombok.Builder;
+import org.hibernate.Hibernate;
 
 @Builder
 public record UserResponse(
@@ -44,6 +46,22 @@ public record UserResponse(
             .build())
         .collect(Collectors.toList());
 
+    List<String> imageList;
+    try {
+      // 이미지가 로드되었는지 확인
+      if (Hibernate.isInitialized(user.getImages())) {
+        imageList = user.getImages().stream()
+            .map(UserImage::getImagePath)
+            .toList();
+      } else {
+        // 이미지가 로드되지 않았으면 빈 리스트 반환
+        imageList = Collections.emptyList();
+      }
+    } catch (Exception e) {
+      // 예외 발생시 빈 리스트 반환
+      imageList = Collections.emptyList();
+    }
+
     return UserResponse.builder()
         .id(user.getId())
         .name(user.getName())
@@ -56,7 +74,7 @@ public record UserResponse(
         .level(user.getLevel())
         .stripe(user.getStripe())
         .branchUsers(branchUserResponses)
-        .images(user.getImages().stream().map(UserImage::getImagePath).toList())
+        .images(imageList)
         .createdAt(user.getCreatedAt())
         .modifiedAT(user.getModifiedAt())
         .build();
