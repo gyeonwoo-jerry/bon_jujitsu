@@ -7,12 +7,13 @@ const StoreDetail = ({ itemId }) => {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
-  const [selectedOption, setSelectedOption] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [availableStock, setAvailableStock] = useState(0);
+
+  // 선택된 옵션들을 배열로 관리
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [selectedOptionId, setSelectedOptionId] = useState('');
 
   const navigate = useNavigate();
 
@@ -35,14 +36,6 @@ const StoreDetail = ({ itemId }) => {
       if (response.status === 200 && response.data.success) {
         const itemData = response.data.content;
         setItem(itemData);
-
-        // 첫 번째 옵션을 기본 선택으로 설정
-        if (itemData.options && itemData.options.length > 0) {
-          setSelectedOption(itemData.options[0]);
-          setAvailableStock(itemData.options[0].amount);
-        } else {
-          setAvailableStock(0);
-        }
       } else {
         throw new Error("상품 정보를 가져오는 데 실패했습니다.");
       }
@@ -74,11 +67,63 @@ const StoreDetail = ({ itemId }) => {
     checkUserRole();
   }, [fetchItemDetail]);
 
-  // 옵션 선택 핸들러
-  const handleOptionChange = (option) => {
-    setSelectedOption(option);
-    setAvailableStock(option.amount);
-    setQuantity(1); // 옵션 변경 시 수량 초기화
+  // 옵션 추가
+  const addOption = () => {
+    if (!selectedOptionId) {
+      alert("옵션을 선택해주세요.");
+      return;
+    }
+
+    const option = item.options.find(opt => opt.id.toString() === selectedOptionId);
+    if (!option) {
+      alert("유효하지 않은 옵션입니다.");
+      return;
+    }
+
+    if (option.amount <= 0) {
+      alert("재고가 없는 옵션입니다.");
+      return;
+    }
+
+    // 이미 선택된 옵션인지 확인
+    const existingOptionIndex = selectedOptions.findIndex(selected => selected.option.id === option.id);
+
+    if (existingOptionIndex !== -1) {
+      alert("이미 선택된 옵션입니다.");
+      return;
+    }
+
+    const newSelectedOption = {
+      option: option,
+      quantity: 1
+    };
+
+    setSelectedOptions(prev => [...prev, newSelectedOption]);
+    setSelectedOptionId(''); // 드롭다운 초기화
+  };
+
+  // 옵션 제거
+  const removeOption = (optionId) => {
+    setSelectedOptions(prev => prev.filter(selected => selected.option.id !== optionId));
+  };
+
+  // 수량 변경
+  const updateQuantity = (optionId, newQuantity) => {
+    if (newQuantity < 1) return;
+
+    const option = item.options.find(opt => opt.id === optionId);
+    if (newQuantity > option.amount) {
+      alert(`재고가 부족합니다. (최대 ${option.amount}개)`);
+      return;
+    }
+
+    setSelectedOptions(prev =>
+        prev.map(selected =>
+            selected.option.id === optionId
+                ? { ...selected, quantity: newQuantity }
+                : selected
+        )
+    );
   };
 
   // 할인율 계산
@@ -95,23 +140,12 @@ const StoreDetail = ({ itemId }) => {
 
   // 총 가격 계산
   const calculateTotalPrice = () => {
-    if (!item) return 0;
+    if (!item || selectedOptions.length === 0) return 0;
+
     const unitPrice = item.sale > 0 ? item.sale : item.price;
-    return unitPrice * quantity;
-  };
+    const totalQuantity = selectedOptions.reduce((sum, selected) => sum + selected.quantity, 0);
 
-  // 수량 증가
-  const increaseQuantity = () => {
-    if (quantity < availableStock) {
-      setQuantity(prev => prev + 1);
-    }
-  };
-
-  // 수량 감소
-  const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
+    return unitPrice * totalQuantity;
   };
 
   // 이미지 URL 처리
@@ -129,13 +163,8 @@ const StoreDetail = ({ itemId }) => {
 
   // 장바구니에 추가
   const addToCart = async () => {
-    if (!selectedOption) {
+    if (selectedOptions.length === 0) {
       alert("옵션을 선택해주세요.");
-      return;
-    }
-
-    if (availableStock <= 0) {
-      alert("재고가 부족합니다.");
       return;
     }
 
@@ -151,12 +180,10 @@ const StoreDetail = ({ itemId }) => {
       // 백엔드 CartRequest 구조에 맞게 수정
       const cartData = {
         itemId: item.id,
-        cartItems: [
-          {
-            quantity: quantity,
-            itemOptionId: selectedOption.id
-          }
-        ]
+        cartItems: selectedOptions.map(selected => ({
+          quantity: selected.quantity,
+          itemOptionId: selected.option.id
+        }))
       };
 
       console.log("장바구니 추가 요청 데이터:", cartData);
@@ -164,14 +191,19 @@ const StoreDetail = ({ itemId }) => {
       const response = await API.post('/carts', cartData);
 
       if (response.status === 200 || response.status === 201) {
-        const optionText = getOptionDisplayText(selectedOption);
+        const optionsText = selectedOptions.map(selected =>
+            `${getOptionDisplayText(selected.option)} ${selected.quantity}개`
+        ).join(', ');
 
         const shouldGoToCart = window.confirm(
-            `${item.name} (${optionText}) ${quantity}개가 장바구니에 추가되었습니다.\n\n장바구니 페이지로 이동하시겠습니까?`
+            `${item.name}\n(${optionsText})가 장바구니에 추가되었습니다.\n\n장바구니 페이지로 이동하시겠습니까?`
         );
 
         if (shouldGoToCart) {
           navigate("/mypage/cart");
+        } else {
+          // 장바구니에 추가 후 선택 옵션 초기화
+          setSelectedOptions([]);
         }
 
       } else {
@@ -196,28 +228,25 @@ const StoreDetail = ({ itemId }) => {
 
   // 바로 구매하기
   const buyNow = () => {
-    if (!item || !selectedOption) {
+    if (!item || selectedOptions.length === 0) {
       alert("옵션을 선택해주세요.");
       return;
     }
 
-    if (availableStock <= 0) {
-      alert("재고가 부족합니다.");
-      return;
-    }
-
-    const orderItem = {
+    const orderItems = selectedOptions.map(selected => ({
       id: item.id,
       name: item.name,
       price: item.sale > 0 ? item.sale : item.price,
       image: item.images && item.images.length > 0 ? item.images[0].url : null,
-      quantity: quantity,
-      option: selectedOption,
-      totalPrice: calculateTotalPrice(),
-    };
+      quantity: selected.quantity,
+      option: selected.option,
+      totalPrice: (item.sale > 0 ? item.sale : item.price) * selected.quantity,
+    }));
 
-    localStorage.setItem("tempOrderItems", JSON.stringify([orderItem]));
-    localStorage.setItem("tempOrderTotalPrice", calculateTotalPrice());
+    const totalPrice = calculateTotalPrice();
+
+    localStorage.setItem("tempOrderItems", JSON.stringify(orderItems));
+    localStorage.setItem("tempOrderTotalPrice", totalPrice);
 
     navigate("/order/new");
   };
@@ -352,11 +381,6 @@ const StoreDetail = ({ itemId }) => {
                 {item.sale > 0 && (
                     <span className="discount-badge">{discountRate}%</span>
                 )}
-                {availableStock <= 0 && (
-                    <div className="sold-out-overlay">
-                      <span>SOLD OUT</span>
-                    </div>
-                )}
               </div>
 
               {hasImages && item.images.length > 1 && (
@@ -422,56 +446,82 @@ const StoreDetail = ({ itemId }) => {
               {hasOptions && (
                   <div className="item-options">
                     <span className="options-label">옵션 선택</span>
-                    <div className="options-container">
-                      {item.options.map((option) => (
-                          <div
-                              key={option.id}
-                              className={`option-item ${
-                                  selectedOption?.id === option.id ? "selected" : ""
-                              } ${option.amount <= 0 ? "out-of-stock" : ""}`}
-                              onClick={() => option.amount > 0 && handleOptionChange(option)}
-                          >
-                            <div className="option-info">
-                        <span className="option-text">
-                          {getOptionDisplayText(option)}
-                        </span>
-                              <span className="option-stock">
-                          {option.amount > 0 ? `재고: ${option.amount}개` : "품절"}
-                        </span>
-                            </div>
-                          </div>
-                      ))}
+
+                    {/* 옵션 선택 드롭다운 */}
+                    <div className="option-select-container">
+                      <select
+                          value={selectedOptionId}
+                          onChange={(e) => setSelectedOptionId(e.target.value)}
+                          className="option-select"
+                      >
+                        <option value="">-- 옵션을 선택해주세요 --</option>
+                        {item.options.map((option) => (
+                            <option
+                                key={option.id}
+                                value={option.id}
+                                disabled={option.amount <= 0}
+                            >
+                              {getOptionDisplayText(option)}
+                              {option.amount <= 0 ? " (품절)" : ` (재고: ${option.amount}개)`}
+                            </option>
+                        ))}
+                      </select>
+                      <button
+                          className="add-option-btn"
+                          onClick={addOption}
+                          disabled={!selectedOptionId}
+                      >
+                        추가
+                      </button>
                     </div>
+
+                    {/* 선택된 옵션 목록 */}
+                    {selectedOptions.length > 0 && (
+                        <div className="selected-options">
+                          <h4 className="selected-options-title">선택된 옵션</h4>
+                          {selectedOptions.map((selected) => (
+                              <div key={selected.option.id} className="selected-option-item">
+                                <div className="option-info">
+                              <span className="option-name">
+                                {getOptionDisplayText(selected.option)}
+                              </span>
+                                  <span className="option-stock">
+                                재고: {selected.option.amount}개
+                              </span>
+                                </div>
+
+                                <div className="option-controls">
+                                  <div className="quantity-control">
+                                    <button
+                                        className="quantity-btn minus"
+                                        onClick={() => updateQuantity(selected.option.id, selected.quantity - 1)}
+                                        disabled={selected.quantity <= 1}
+                                    >
+                                      -
+                                    </button>
+                                    <span className="quantity-value">{selected.quantity}</span>
+                                    <button
+                                        className="quantity-btn plus"
+                                        onClick={() => updateQuantity(selected.option.id, selected.quantity + 1)}
+                                        disabled={selected.quantity >= selected.option.amount}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+
+                                  <button
+                                      className="remove-option-btn"
+                                      onClick={() => removeOption(selected.option.id)}
+                                  >
+                                    삭제
+                                  </button>
+                                </div>
+                              </div>
+                          ))}
+                        </div>
+                    )}
                   </div>
               )}
-
-              {/* 수량 선택 */}
-              <div className="item-quantity">
-                <span className="quantity-label">수량</span>
-                <div className="quantity-control">
-                  <button
-                      className="quantity-btn minus"
-                      onClick={decreaseQuantity}
-                      disabled={quantity <= 1}
-                  >
-                    -
-                  </button>
-                  <span className="quantity-value">{quantity}</span>
-                  <button
-                      className="quantity-btn plus"
-                      onClick={increaseQuantity}
-                      disabled={availableStock <= 0 || quantity >= availableStock}
-                  >
-                    +
-                  </button>
-                </div>
-                <span className="stock-info">
-                {selectedOption ?
-                    (availableStock > 0 ? `재고: ${availableStock}개` : "품절") :
-                    "옵션을 선택해주세요"
-                }
-              </span>
-              </div>
 
               {/* 총 가격 */}
               <div className="total-price-section">
@@ -486,14 +536,14 @@ const StoreDetail = ({ itemId }) => {
                 <button
                     className="add-to-cart-btn"
                     onClick={addToCart}
-                    disabled={availableStock <= 0 || !selectedOption}
+                    disabled={selectedOptions.length === 0}
                 >
                   장바구니
                 </button>
                 <button
                     className="buy-now-btn"
                     onClick={buyNow}
-                    disabled={availableStock <= 0 || !selectedOption}
+                    disabled={selectedOptions.length === 0}
                 >
                   바로 구매하기
                 </button>
