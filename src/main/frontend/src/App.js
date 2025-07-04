@@ -10,7 +10,7 @@ import LoadingIndicator from './utils/LoadingIndicator';
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import PostDetail from './components/PostDetail';
+import PostDetail from './pages/PostDetail';
 import Academy from './pages/academy';
 import IntroGreeting from './pages/introGreeting';
 import IntroJiujitsu from './pages/introJiujitsu';

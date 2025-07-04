@@ -77,28 +77,10 @@ export const usePostPermissions = (postType, post, branchId) => {
     return canEdit();
   };
 
-  // QnA 게시판 전용 버튼 노출 체크 함수
-  const shouldShowQnAButtons = () => {
-    if (!post) return false;
-
-    // 관리자는 항상 버튼 노출
-    if (isAdmin()) return true;
-
-    // 비회원 게시글인 경우
-    if (post.isGuestPost) {
-      // 로그인하지 않은 상태에서만 버튼 노출
-      return !isLoggedIn();
-    }
-
-    // 회원 게시글인 경우 - 본인이 작성한 글만 버튼 노출
-    return isAuthor();
-  };
-
   return {
     canWrite,
     canEdit,
     canDelete,
-    shouldShowQnAButtons,
     isLoggedIn,
     isAdmin,
     isAuthor

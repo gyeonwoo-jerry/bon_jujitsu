@@ -1,12 +1,13 @@
 import React from 'react';
 
-const ErrorMessage = ({ message, onRetry }) => {
+const ErrorMessage = ({ title, message, onBack }) => {
   return (
       <div className="error-message">
-        <p>{message}</p>
-        {onRetry && (
-            <button onClick={onRetry} className="retry-button">
-              다시 시도
+        <h3>{title}</h3>
+        {message && <p>{message}</p>}
+        {onBack && (
+            <button onClick={onBack} className="btn-secondary">
+              돌아가기
             </button>
         )}
       </div>

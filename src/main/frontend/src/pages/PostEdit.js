@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { POST_TYPE_CONFIGS, normalizeUrl } from '../configs/postTypeConfigs';
+import { usePostData } from '../hooks/usePostData';
 import { usePostPermissions } from '../hooks/usePostPermissions';
 import { usePostValidation } from '../hooks/usePostValidation';
 import API from '../utils/api';
@@ -15,10 +16,12 @@ const PostEdit = () => {
   const navigate = useNavigate();
   const config = POST_TYPE_CONFIGS[postType];
 
-  // 기존 데이터 상태
-  const [originalPost, setOriginalPost] = useState(null);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [dataError, setDataError] = useState('');
+  // 커스텀 훅으로 게시글 데이터 로드
+  const {
+    originalPost,
+    loading: dataLoading,
+    error: dataError
+  } = usePostData(postType, postId);
 
   const { canEdit } = usePostPermissions(postType, originalPost, branchId);
   const { validateForm } = usePostValidation(postType);
@@ -39,57 +42,6 @@ const PostEdit = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  // API 엔드포인트 결정
-  const getApiEndpoint = () => {
-    switch (postType) {
-      case 'notice': return '/notice';
-      case 'skill': return '/skill';
-      case 'news': return '/news';
-      case 'qna': return '/qna';
-      case 'sponsor': return '/sponsor';
-      case 'board':
-      default: return '/board';
-    }
-  };
-
-  // 기존 게시글 데이터 불러오기
-  useEffect(() => {
-    const fetchPostData = async () => {
-      if (!postId || !postType || !config) {
-        setDataLoading(false);
-        return;
-      }
-
-      try {
-        setDataLoading(true);
-        setDataError('');
-
-        const apiEndpoint = getApiEndpoint();
-        const response = await API.get(`${apiEndpoint}/${postId}`);
-
-        if (response.data.success) {
-          setOriginalPost(response.data.content);
-        } else {
-          throw new Error(response.data.message || '게시글을 불러올 수 없습니다.');
-        }
-      } catch (error) {
-        console.error('게시글 데이터 로드 실패:', error);
-
-        if (error.response?.status === 404) {
-          setDataError('존재하지 않는 게시글입니다.');
-        } else if (error.response?.status === 403) {
-          setDataError('게시글에 접근할 권한이 없습니다.');
-        } else {
-          setDataError('게시글을 불러오는데 실패했습니다.');
-        }
-      } finally {
-        setDataLoading(false);
-      }
-    };
-
-    fetchPostData();
-  }, [postId, postType, config]);
 
   // 원본 데이터로 폼 초기화
   useEffect(() => {
@@ -122,13 +74,24 @@ const PostEdit = () => {
   // 권한 체크
   useEffect(() => {
     if (originalPost) {
-      // QnA 비회원 게시글은 별도 처리 (비밀번호로 인증)
-      if (postType === 'qna' && (originalPost.guestName || originalPost.isGuestPost)) {
-        // QnA 비회원 게시글은 수정 페이지 접근 허용 (비밀번호 검증은 서버에서)
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const isLoggedIn = !!localStorage.getItem('token') || !!localStorage.getItem('accessToken');
+      const isAdmin = userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
+
+      // QnA 비회원 게시글 특별 처리
+      if (postType === 'qna' && originalPost.isGuestPost) {
+        // 관리자가 아닌 로그인한 일반 회원은 비회원 글 수정 불가
+        if (isLoggedIn && !isAdmin) {
+          alert('비회원이 작성한 글은 일반 회원이 수정할 수 없습니다.');
+          navigate(-1);
+          return;
+        }
+        // 비회원(미로그인)이거나 관리자인 경우 수정 페이지 접근 허용
+        // 비회원의 경우 비밀번호 검증은 서버에서 처리
         return;
       }
 
-      // 일반 게시글의 경우 권한 체크
+      // 일반 게시글의 경우 기존 권한 체크
       if (!canEdit()) {
         alert(`${config?.title || '게시글'} 수정 권한이 없습니다.`);
         navigate(-1);
@@ -138,15 +101,12 @@ const PostEdit = () => {
 
   // 성공 메시지
   const getSuccessMessage = () => {
-    switch (postType) {
-      case 'notice': return '공지사항이 성공적으로 수정되었습니다.';
-      case 'skill': return '스킬 게시물이 성공적으로 수정되었습니다.';
-      case 'news': return '뉴스 게시물이 성공적으로 수정되었습니다.';
-      case 'qna': return 'QnA가 성공적으로 수정되었습니다.';
-      case 'sponsor': return '제휴업체가 성공적으로 수정되었습니다.';
-      case 'board':
-      default: return '게시글이 성공적으로 수정되었습니다.';
-    }
+    return `${config.title}이 성공적으로 수정되었습니다.`;
+  };
+
+  // API 엔드포인트 결정
+  const getApiEndpoint = () => {
+    return config.apiEndpoint;
   };
 
   const handleSubmit = async (e) => {
