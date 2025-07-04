@@ -61,7 +61,7 @@ public class Cart extends Timestamped {
         .item(item)
         .itemOption(itemOption)
         .quantity(quantity)
-        .price(item.getPrice()) // 현재 상품 가격 저장
+        .price(item.getSale()) // 현재 상품 가격 저장
         .build();
     cartItems.add(cartItem);
   }
