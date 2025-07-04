@@ -6,6 +6,7 @@ import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.ItemOption;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
+import bon.bon_jujitsu.dto.request.CartItemRequest;
 import bon.bon_jujitsu.dto.request.CartRequest;
 import bon.bon_jujitsu.dto.response.CartResponse;
 import bon.bon_jujitsu.repository.CartItemRepository;
@@ -40,16 +41,41 @@ public class CartService {
   public void createCart(Long userId, CartRequest request) {
     User user = findAndValidateUser(userId);
     Item item = findItemById(request.itemId());
-    ItemOption itemOption = findItemOptionById(request.itemOptionId());
 
     // 사용자의 장바구니 조회 또는 생성
     Cart cart = findOrCreateCart(user);
 
-    // 장바구니에 상품 추가 (이미 있으면 수량 업데이트)
-    cart.addItem(item, itemOption, request.quantity());
+    // 각 옵션별로 장바구니에 추가
+    for (CartItemRequest cartItemRequest : request.cartItems()) {
+      ItemOption itemOption = findItemOptionById(cartItemRequest.itemOptionId());
+
+      // 재고 확인
+      if (itemOption.getAmount() < cartItemRequest.quantity()) {
+        throw new IllegalArgumentException(
+            String.format("재고가 부족합니다. 상품: %s, 옵션: %s/%s, 요청수량: %d, 재고: %d",
+                item.getName(),
+                itemOption.getSize(),
+                itemOption.getColor(),
+                cartItemRequest.quantity(),
+                itemOption.getAmount())
+        );
+      }
+
+      // 장바구니에 상품 추가 (이미 있으면 수량 업데이트)
+      cart.addItem(item, itemOption, cartItemRequest.quantity());
+
+      log.info("장바구니 상품 추가: userId={}, itemId={}, optionId={}, quantity={}",
+          userId, request.itemId(), cartItemRequest.itemOptionId(), cartItemRequest.quantity());
+    }
 
     cartRepository.save(cart);
-    log.info("장바구니 상품 추가 완료: userId={}, itemId={}, quantity={}", userId, request.itemId(), request.quantity());
+
+    int totalQuantity = request.cartItems().stream()
+        .mapToInt(CartItemRequest::quantity)
+        .sum();
+
+    log.info("장바구니 일괄 추가 완료: userId={}, itemId={}, totalQuantity={}",
+        userId, request.itemId(), totalQuantity);
   }
 
   /**
