@@ -75,7 +75,7 @@ const MyPageCart = () => {
   };
 
   // 장바구니 아이템 삭제
-  const removeItem = async (itemId) => {
+  const removeItem = async (cartItemId) => {
     if (!window.confirm("해당 상품을 장바구니에서 삭제하시겠습니까?")) {
       return;
     }
@@ -83,12 +83,12 @@ const MyPageCart = () => {
     try {
       setUpdateLoading(true);
 
-      await API.delete(`/carts/items/${itemId}`);
+      await API.delete(`/carts/items/${cartItemId}`);
 
       await fetchCart();
       setSelectedItems(prev => {
         const newSet = new Set(prev);
-        newSet.delete(itemId);
+        newSet.delete(cartItemId);
         return newSet;
       });
       setError("");
@@ -377,8 +377,8 @@ const MyPageCart = () => {
                         <div className="item-price">
                           {item.isPriceChanged ? (
                               <div className="price-comparison">
-                                <span className="old-price">₩{item.price?.toLocaleString()}</span>
-                                <span className="current-price">₩{item.currentPrice?.toLocaleString()}</span>
+                                <span className="old-price">₩{item.currentPrice?.toLocaleString()}</span>
+                                <span className="current-price">₩{item.price?.toLocaleString()}</span>
                               </div>
                           ) : (
                               <span className="price">₩{item.currentPrice?.toLocaleString()}</span>
@@ -412,7 +412,7 @@ const MyPageCart = () => {
                         <div className="item-actions">
                           <button
                               className="btn-outline btn-sm delete-btn"
-                              onClick={() => removeItem(item.itemId)}
+                              onClick={() => removeItem(item.id)}
                               disabled={updateLoading}
                           >
                             삭제
