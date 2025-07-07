@@ -19,6 +19,8 @@ const MyPageOrders = () => {
   // 모달 상태
   const [showCancelModal, setShowCancelModal] = useState(null);
   const [showReturnModal, setShowReturnModal] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(null);
+  const [orderDetail, setOrderDetail] = useState(null);
   const [cancelForm, setCancelForm] = useState({ reason: "", description: "" });
   const [returnForm, setReturnForm] = useState({ reason: "", description: "", images: [] });
 
@@ -82,14 +84,14 @@ const MyPageOrders = () => {
     return colorMap[status] || "gray";
   };
 
-  // 결제 방법 한글 표시
-  const getPayTypeLabel = (payType) => {
+  // 결제 방법 정보 (아이콘 포함)
+  const getPayTypeInfo = (payType) => {
     const payTypeMap = {
-      CARD: "카드결제",
-      CASH: "현금결제",
-      BANK_TRANSFER: "계좌이체"
+      CARD: { label: "카드결제", icon: "💳", color: "card" },
+      CASH: { label: "현금결제", icon: "💵", color: "cash" },
+      BANK_TRANSFER: { label: "계좌이체", icon: "🏦", color: "bank" }
     };
-    return payTypeMap[payType] || payType;
+    return payTypeMap[payType] || { label: payType, icon: "💰", color: "default" };
   };
 
   // 내 주문 조회
@@ -123,6 +125,73 @@ const MyPageOrders = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 주문 상세 조회 - getMyOrders API 활용
+  const fetchOrderDetail = async (orderId) => {
+    try {
+      setActionLoading(true);
+      setError(""); // 기존 에러 클리어
+
+      console.log("주문 상세 조회 시작:", orderId);
+
+      // 이미 로드된 orders에서 먼저 찾기
+      const existingOrder = orders.find(order => order.id === parseInt(orderId));
+      if (existingOrder) {
+        console.log("기존 데이터에서 주문 발견:", existingOrder);
+        setOrderDetail(existingOrder);
+        setShowDetailModal(orderId);
+        return;
+      }
+
+      // getMyOrders API를 활용해서 해당 주문이 포함된 페이지를 찾기
+      // 먼저 전체 주문을 조회 (상태 필터 없이)
+      const response = await API.get(`/orders/myself?page=1&size=100`);
+      console.log("전체 주문 목록 응답:", response.data);
+
+      if (response.data.success && response.data.content && response.data.content.list) {
+        const allOrders = response.data.content.list;
+        const targetOrder = allOrders.find(order => order.id === parseInt(orderId));
+
+        if (targetOrder) {
+          console.log("주문 상세 데이터 발견:", targetOrder);
+          setOrderDetail(targetOrder);
+          setShowDetailModal(orderId);
+        } else {
+          throw new Error("해당 주문을 찾을 수 없습니다.");
+        }
+      } else {
+        throw new Error("주문 목록을 가져오는데 실패했습니다.");
+      }
+
+    } catch (err) {
+      console.error("주문 상세 조회 실패:", err);
+      console.error("에러 상세:", {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message
+      });
+
+      let errorMessage = "주문 상세 정보를 불러오는데 실패했습니다.";
+
+      if (err.response?.status === 404) {
+        errorMessage = "해당 주문을 찾을 수 없습니다.";
+      } else if (err.response?.status === 403) {
+        errorMessage = "주문 정보에 접근할 권한이 없습니다.";
+      } else if (err.response?.status === 401) {
+        errorMessage = "로그인이 필요합니다.";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -286,6 +355,12 @@ const MyPageOrders = () => {
     });
   };
 
+  // 모달 닫기
+  const closeDetailModal = () => {
+    setShowDetailModal(null);
+    setOrderDetail(null);
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -359,99 +434,103 @@ const MyPageOrders = () => {
               <>
                 {/* 주문 목록 */}
                 <div className="orders-list">
-                  {orders.map((order) => (
-                      <div key={order.id} className="order-card">
-                        {/* 주문 헤더 */}
-                        <div className="order-header">
-                          <div className="order-info">
-                            <h4 className="order-id">주문번호: {order.id}</h4>
-                            <p className="order-date">{formatDate(order.createdAt)}</p>
-                          </div>
-                          <div className="order-status-section">
-                      <span className={`status-badge ${getStatusColor(order.orderStatus)}`}>
-                        {getStatusLabel(order.orderStatus)}
-                      </span>
-                          </div>
-                        </div>
+                  {orders.map((order) => {
+                    const payTypeInfo = getPayTypeInfo(order.payType);
 
-                        {/* 주문 상품 목록 */}
-                        <div className="order-items">
-                          {order.orderItems.map((item) => (
-                              <div key={item.id} className="order-item">
-                                <div className="item-info">
-                                  <h5 className="item-name">{item.itemName}</h5>
-                                  <div className="item-options">
-                                    {item.itemOption && (
-                                        <>
-                                          {item.itemOption.size && (
-                                              <span className="option-tag size-tag">
-                                    📏 사이즈: {item.itemOption.size}
-                                  </span>
-                                          )}
-                                          {item.itemOption.color && (
-                                              <span className="option-tag color-tag">
-                                    🎨 색상: {item.itemOption.color}
-                                  </span>
-                                          )}
-                                        </>
-                                    )}
+                    return (
+                        <div key={order.id} className="order-card">
+                          {/* 주문 헤더 */}
+                          <div className="order-header">
+                            <div className="order-info">
+                              <h4 className="order-id">주문번호: {order.id}</h4>
+                              <p className="order-date">{formatDate(order.createdAt)}</p>
+                            </div>
+                            <div className="order-status-section">
+                            <span className={`status-badge ${getStatusColor(order.orderStatus)}`}>
+                              {getStatusLabel(order.orderStatus)}
+                            </span>
+                            </div>
+                          </div>
+
+                          {/* 주문 상품 목록 */}
+                          <div className="order-items">
+                            {order.orderItems.map((item) => (
+                                <div key={item.id} className="order-item">
+                                  <div className="item-info">
+                                    <h5 className="item-name">{item.itemName}</h5>
+                                    <div className="item-options">
+                                      {item.itemOption && (
+                                          <>
+                                            {item.itemOption.size && (
+                                                <span className="option-tag size-tag">
+                                                📏 사이즈: {item.itemOption.size}
+                                              </span>
+                                            )}
+                                            {item.itemOption.color && (
+                                                <span className="option-tag color-tag">
+                                                🎨 색상: {item.itemOption.color}
+                                              </span>
+                                            )}
+                                          </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="item-details">
+                                    <p className="item-price">₩{item.price.toLocaleString()} × {item.quantity}개</p>
+                                    <p className="item-total">₩{item.totalPrice.toLocaleString()}</p>
                                   </div>
                                 </div>
-                                <div className="item-details">
-                                  <p className="item-price">₩{item.price.toLocaleString()} × {item.quantity}개</p>
-                                  <p className="item-total">₩{item.totalPrice.toLocaleString()}</p>
+                            ))}
+                          </div>
+
+                          {/* 주문 요약 */}
+                          <div className="order-summary">
+                            <div className="summary-info">
+                              <div className="summary-row">
+                                <span>총 주문금액</span>
+                                <span className="total-price">₩{order.totalPrice.toLocaleString()}</span>
+                              </div>
+                              <div className="summary-row">
+                                <span>결제방법</span>
+                                <div className={`payment-badge ${payTypeInfo.color}`}>
+                                  <span className="payment-icon">{payTypeInfo.icon}</span>
+                                  <span className="payment-label">{payTypeInfo.label}</span>
                                 </div>
                               </div>
-                          ))}
-                        </div>
+                            </div>
 
-                        {/* 주문 요약 */}
-                        <div className="order-summary">
-                          <div className="summary-info">
-                            <div className="summary-row">
-                              <span>총 주문금액</span>
-                              <span className="total-price">₩{order.totalPrice.toLocaleString()}</span>
-                            </div>
-                            <div className="summary-row">
-                              <span>결제방법</span>
-                              <span>{getPayTypeLabel(order.payType)}</span>
-                            </div>
-                            <div className="summary-row">
-                              <span>배송지</span>
-                              <span>{order.address} {order.addrDetail}</span>
+                            {/* 주문 액션 버튼 */}
+                            <div className="order-actions">
+                              {order.orderStatus === 'WAITING' && (
+                                  <button
+                                      className="btn-outline cancel-btn"
+                                      onClick={() => setShowCancelModal(order.id)}
+                                      disabled={actionLoading}
+                                  >
+                                    주문 취소
+                                  </button>
+                              )}
+                              {order.orderStatus === 'COMPLETE' && (
+                                  <button
+                                      className="btn-outline return-btn"
+                                      onClick={() => setShowReturnModal(order.id)}
+                                      disabled={actionLoading}
+                                  >
+                                    반품 신청
+                                  </button>
+                              )}
+                              <button
+                                  className="btn-primary detail-btn"
+                                  onClick={() => fetchOrderDetail(order.id)}
+                                  disabled={actionLoading}
+                              >
+                                상세보기
+                              </button>
                             </div>
                           </div>
-
-                          {/* 주문 액션 버튼 */}
-                          <div className="order-actions">
-                            {order.orderStatus === 'WAITING' && (
-                                <button
-                                    className="btn-outline cancel-btn"
-                                    onClick={() => setShowCancelModal(order.id)}
-                                    disabled={actionLoading}
-                                >
-                                  주문 취소
-                                </button>
-                            )}
-                            {order.orderStatus === 'COMPLETE' && (
-                                <button
-                                    className="btn-outline return-btn"
-                                    onClick={() => setShowReturnModal(order.id)}
-                                    disabled={actionLoading}
-                                >
-                                  반품 신청
-                                </button>
-                            )}
-                            <button
-                                className="btn-primary detail-btn"
-                                onClick={() => window.location.href = `/orders/${order.id}`}
-                            >
-                              상세보기
-                            </button>
-                          </div>
                         </div>
-                      </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* 페이지네이션 */}
@@ -495,6 +574,151 @@ const MyPageOrders = () => {
                 <div className="loading-overlay-content">
                   <div className="spinner"></div>
                   <p>처리 중...</p>
+                </div>
+              </div>
+          )}
+
+          {/* 주문 상세 모달 */}
+          {showDetailModal && orderDetail && (
+              <div className="modern-modal-overlay" onClick={closeDetailModal}>
+                <div className="modern-modal-content order-detail-modal" onClick={(e) => e.stopPropagation()}>
+                  {/* 모달 헤더 */}
+                  <div className="modern-modal-header order-detail-header">
+                    <div className="modal-title-section">
+                      <div className="modal-icon order-detail-icon">
+                        <span>📋</span>
+                      </div>
+                      <h3 className="modal-title">주문 상세 정보</h3>
+                    </div>
+                    <button
+                        className="modern-modal-close"
+                        onClick={closeDetailModal}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* 모달 바디 */}
+                  <div className="modern-modal-body">
+                    {/* 주문 기본 정보 */}
+                    <div className="order-detail-section">
+                      <h4 className="detail-section-title">📦 주문 정보</h4>
+                      <div className="detail-info-grid">
+                        <div className="detail-info-item">
+                          <span className="detail-label">주문번호</span>
+                          <span className="detail-value">{orderDetail.id}</span>
+                        </div>
+                        <div className="detail-info-item">
+                          <span className="detail-label">주문일시</span>
+                          <span className="detail-value">{formatDate(orderDetail.createdAt)}</span>
+                        </div>
+                        <div className="detail-info-item">
+                          <span className="detail-label">주문상태</span>
+                          <span className={`status-badge ${getStatusColor(orderDetail.orderStatus)}`}>
+                            {getStatusLabel(orderDetail.orderStatus)}
+                          </span>
+                        </div>
+                        <div className="detail-info-item">
+                          <span className="detail-label">결제방법</span>
+                          <div className={`payment-badge ${getPayTypeInfo(orderDetail.payType).color}`}>
+                            <span className="payment-icon">{getPayTypeInfo(orderDetail.payType).icon}</span>
+                            <span className="payment-label">{getPayTypeInfo(orderDetail.payType).label}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 주문 상품 목록 */}
+                    <div className="order-detail-section">
+                      <h4 className="detail-section-title">🛍️ 주문 상품</h4>
+                      <div className="detail-items-list">
+                        {orderDetail.orderItems.map((item) => (
+                            <div key={item.id} className="detail-order-item">
+                              <div className="detail-item-info">
+                                <h5 className="detail-item-name">{item.itemName}</h5>
+                                <div className="detail-item-options">
+                                  {item.itemOption && (
+                                      <>
+                                        {item.itemOption.size && (
+                                            <span className="option-tag size-tag">
+                                              📏 사이즈: {item.itemOption.size}
+                                            </span>
+                                        )}
+                                        {item.itemOption.color && (
+                                            <span className="option-tag color-tag">
+                                              🎨 색상: {item.itemOption.color}
+                                            </span>
+                                        )}
+                                      </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="detail-item-pricing">
+                                <div className="detail-item-price">₩{item.price.toLocaleString()} × {item.quantity}개</div>
+                                <div className="detail-item-total">₩{item.totalPrice.toLocaleString()}</div>
+                              </div>
+                            </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 배송 정보 */}
+                    <div className="order-detail-section">
+                      <h4 className="detail-section-title">🚚 배송 정보</h4>
+                      <div className="detail-info-grid">
+                        <div className="detail-info-item">
+                          <span className="detail-label">받는 분</span>
+                          <span className="detail-value">{orderDetail.name}</span>
+                        </div>
+                        <div className="detail-info-item">
+                          <span className="detail-label">연락처</span>
+                          <span className="detail-value">{orderDetail.phoneNum}</span>
+                        </div>
+                        <div className="detail-info-item full-width">
+                          <span className="detail-label">배송주소</span>
+                          <span className="detail-value">
+                            ({orderDetail.zipcode}) {orderDetail.address} {orderDetail.addrDetail}
+                          </span>
+                        </div>
+                        {orderDetail.requirement && (
+                            <div className="detail-info-item full-width">
+                              <span className="detail-label">배송메모</span>
+                              <span className="detail-value">{orderDetail.requirement}</span>
+                            </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 결제 정보 */}
+                    <div className="order-detail-section">
+                      <h4 className="detail-section-title">💰 결제 정보</h4>
+                      <div className="payment-summary">
+                        <div className="payment-summary-row">
+                          <span>상품금액</span>
+                          <span>₩{orderDetail.totalPrice.toLocaleString()}</span>
+                        </div>
+                        <div className="payment-summary-row">
+                          <span>배송비</span>
+                          <span className="free-shipping">무료</span>
+                        </div>
+                        <div className="payment-summary-divider"></div>
+                        <div className="payment-summary-row total">
+                          <span>총 결제금액</span>
+                          <span>₩{orderDetail.totalPrice.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 모달 푸터 */}
+                  <div className="modern-modal-footer">
+                    <button
+                        className="modern-btn modern-btn-outline"
+                        onClick={closeDetailModal}
+                    >
+                      닫기
+                    </button>
+                  </div>
                 </div>
               </div>
           )}
