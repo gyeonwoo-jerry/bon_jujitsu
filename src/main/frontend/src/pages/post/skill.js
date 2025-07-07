@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SubHeader from '../components/SubHeader';
-import { usePostList } from '../hooks/usePostList';
-import SearchSection from '../components/common/SearchSection';
-import PostCard from '../components/common/PostCard';
-import Pagination from '../components/common/Pagination';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import ErrorMessage from '../components/common/ErrorMessage';
-import '../styles/news.css';
-import '../styles/postList.css';
+import SubHeader from '../../components/SubHeader';
+import { usePostList } from '../../hooks/usePostList';
+import SearchSection from '../../components/common/SearchSection';
+import PostCard from '../../components/common/PostCard';
+import Pagination from '../../components/common/Pagination';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import '../../styles/skill.css';
+import '../../styles/postList.css';
 
-function News() {
+function Skill() {
   const [pageName, setPageName] = useState('');
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
-  const [canWriteNews, setCanWriteNews] = useState(false);
+  const [canWriteSkill, setCanWriteSkill] = useState(false);
   const navigate = useNavigate();
 
   // PostList 로직을 usePostList 훅으로 대체
@@ -34,44 +34,57 @@ function News() {
     clearSearch,
     navigate: postNavigate,
     fetchPosts
-  } = usePostList('/news', 12);
+  } = usePostList('/skill', 12);
 
   useEffect(() => {
-    const title = '뉴스';
+    const title = '기술';
     setPageName(title);
     document.title = title;
-    const descName = '본주짓수는 다양한 지역에서 활동하고 있습니다.';
+    const descName = '본주짓수의 기초 기술들을 배워 보세요.';
     setDescName(descName);
     const backgroundImage = '';
     setBackgroundImage(backgroundImage);
 
-    // 뉴스 작성 권한 확인 (관리자만)
-    const checkNewsWritePermission = () => {
+    // 스킬 작성 권한 확인 (PostWrite와 동일한 로직)
+    const checkSkillWritePermission = () => {
       try {
         const userInfoStr = localStorage.getItem('userInfo');
         if (!userInfoStr) {
-          setCanWriteNews(false);
+          setCanWriteSkill(false);
           return;
         }
 
         const userInfo = JSON.parse(userInfoStr);
-        console.log('뉴스 페이지 권한 확인:', userInfo);
+        console.log('스킬 페이지 권한 확인:', userInfo);
 
-        // 관리자만 뉴스 작성 가능
+        // 관리자는 스킬 작성 가능
         if (userInfo.isAdmin === true) {
-          console.log('✅ 관리자 권한으로 뉴스 작성 허용');
-          setCanWriteNews(true);
+          console.log('✅ 관리자 권한으로 스킬 작성 허용');
+          setCanWriteSkill(true);
+          return;
+        }
+
+        // 사용자의 지부 정보 확인 (어느 지부든 Owner 역할이 있으면 됨)
+        if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+          const hasOwnerRole = userInfo.branchRoles.some(branchRole => {
+            const role = branchRole.role;
+            console.log(`역할 확인: ${role}`);
+            return role === "OWNER";
+          });
+
+          console.log('✅ Owner 역할 보유 여부 (어느 지부든):', hasOwnerRole);
+          setCanWriteSkill(hasOwnerRole);
         } else {
-          console.log('❌ 관리자 아님');
-          setCanWriteNews(false);
+          console.log('❌ branchRoles 정보 없음');
+          setCanWriteSkill(false);
         }
       } catch (error) {
-        console.error('뉴스 작성 권한 확인 오류:', error);
-        setCanWriteNews(false);
+        console.error('스킬 작성 권한 확인 오류:', error);
+        setCanWriteSkill(false);
       }
     };
 
-    checkNewsWritePermission();
+    checkSkillWritePermission();
   }, []);
 
   const handleWriteClick = () => {
@@ -86,21 +99,21 @@ function News() {
       return;
     }
 
-    if (!canWriteNews) {
-      alert('뉴스 게시물은 관리자만 작성할 수 있습니다.');
+    if (!canWriteSkill) {
+      alert('스킬 게시물은 관장이나 관리자만 작성할 수 있습니다.');
       return;
     }
 
-    // PostWrite 통합 컴포넌트로 이동
-    navigate('/write/news');
+    // 새로운 PostWrite 스킬 라우트로 이동
+    navigate('/write/skill');
   };
 
   return (
-      <div className="news">
+      <div className="skill">
         <SubHeader pageName={pageName} descName={descName} backgroundImage={backgroundImage} />
-        <div className="news-container">
+        <div className="skill-container">
           <div className="inner">
-            <div className="section_title">BON <font className='thin small'>in</font> MEDIA</div>
+            <div className="section_title">BON <font className='thin small'>in</font> SKILL</div>
 
             {/* 기존 PostList 대신 직접 구현 */}
             <div className="post-list-container">
@@ -112,10 +125,10 @@ function News() {
                   onSearch={handleSearch}
                   totalElements={totalElements}
                   onClearSearch={clearSearch}
-                  placeholder="뉴스 검색..."
+                  placeholder="기술명으로 검색..."
               />
 
-              {loading && <LoadingSpinner message="뉴스를 불러오는 중..." />}
+              {loading && <LoadingSpinner message="기술 게시글을 불러오는 중..." />}
               {error && <ErrorMessage message={error} onRetry={fetchPosts} />}
 
               {posts.length > 0 ? (
@@ -125,9 +138,9 @@ function News() {
                           <PostCard
                               key={post.id}
                               post={post}
-                              type="news"
-                              onClick={() => postNavigate(`/detail/news/${post.id}`)}
-                              showRegion={false}
+                              type="skill"
+                              onClick={() => postNavigate(`/detail/skill/${post.id}`)}
+                              showRegion={true}
                           />
                       ))}
                     </div>
@@ -139,19 +152,19 @@ function News() {
                     />
 
                     <div className="total-info">
-                      전체 {totalElements}개의 뉴스 (페이지 {currentPage}/{totalPages})
+                      전체 {totalElements}개의 게시글 (페이지 {currentPage}/{totalPages})
                     </div>
                   </>
               ) : (
                   <div className="no-posts">
-                    <div className="no-posts-icon">📰</div>
-                    <p>뉴스가 없습니다.</p>
+                    <div className="no-posts-icon">🥋</div>
+                    <p>게시글이 없습니다.</p>
                     {searchQuery && <p>다른 검색어로 시도해보세요.</p>}
                   </div>
               )}
             </div>
 
-            {canWriteNews && (
+            {canWriteSkill && (
                 <button className="write-button" onClick={handleWriteClick}>
                   글쓰기
                 </button>
@@ -162,4 +175,4 @@ function News() {
   );
 }
 
-export default News;
+export default Skill;

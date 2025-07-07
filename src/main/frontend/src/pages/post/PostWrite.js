@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { POST_TYPE_CONFIGS, normalizeUrl } from '../configs/postTypeConfigs';
-import { usePostPermissions } from '../hooks/usePostPermissions';
-import { usePostValidation } from '../hooks/usePostValidation';
-import API from '../utils/api';
-import '../styles/postWrite.css';
+import { POST_TYPE_CONFIGS, normalizeUrl } from '../../configs/postTypeConfigs';
+import { usePostPermissions } from '../../hooks/usePostPermissions';
+import { usePostValidation } from '../../hooks/usePostValidation';
+import API from '../../utils/api';
+import '../../styles/postWrite.css';
 
-import QnaGuestFields from '../components/write/QnaGuestFields';
-import SponsorFields from '../components/write/SponsorFields';
-import ImageUpload from '../components/write/ImageUpload';
-import PostWriteHeader from '../components/write/PostWriteHeader';
+import QnaGuestFields from '../../components/write/QnaGuestFields';
+import SponsorFields from '../../components/write/SponsorFields';
+import ImageUpload from '../../components/write/ImageUpload';
+import PostWriteHeader from '../../components/write/PostWriteHeader';
 
 const PostWrite = () => {
   const { postType, branchId } = useParams();

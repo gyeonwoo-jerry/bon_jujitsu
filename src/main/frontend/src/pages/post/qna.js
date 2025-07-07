@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SubHeader from '../components/SubHeader';
-import { usePostList } from '../hooks/usePostList';
-import SearchSection from '../components/common/SearchSection';
-import Pagination from '../components/common/Pagination';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import ErrorMessage from '../components/common/ErrorMessage';
-import '../styles/qna.css';
-import '../styles/postList.css';
+import SubHeader from '../../components/SubHeader';
+import { usePostList } from '../../hooks/usePostList';
+import SearchSection from '../../components/common/SearchSection';
+import Pagination from '../../components/common/Pagination';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import '../../styles/qna.css';
+import '../../styles/postList.css';
 
 function Qna() {
   const [pageName, setPageName] = useState('');

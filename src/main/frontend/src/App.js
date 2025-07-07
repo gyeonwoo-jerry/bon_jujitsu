@@ -10,24 +10,22 @@ import LoadingIndicator from './utils/LoadingIndicator';
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import PostDetail from './pages/PostDetail';
+import PostDetail from './pages/post/PostDetail';
 import Academy from './pages/academy';
 import IntroGreeting from './pages/introGreeting';
 import IntroJiujitsu from './pages/introJiujitsu';
 import IntroLevel from './pages/introLevel';
 import Branches from './pages/branches';
 import BranchesDetail from './pages/branchesDetail';
-import Comunity from './pages/comunity';
 import Store from './pages/store';
 import StoreDetail from './pages/storeDetail';
-import Skill from './pages/skill';
-import News from './pages/news';
-import Qna from './pages/qna';
-import Sponsor from './pages/sponsor';
+import Skill from './pages/post/skill';
+import News from './pages/post/news';
+import Qna from './pages/post/qna';
+import Sponsor from './pages/post/sponsor';
 import Join from './pages/join';
 import Cart from './pages/cart';
 import Order from './pages/order';
-import StoreWritePage from './pages/storeWrite';
 import AdminMain from "./pages/admin/AdminMain";
 import MemberManagement from "./pages/admin/MemberManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
@@ -52,8 +50,8 @@ import './styles/response.css';
 import ProtectedRoute from "./components/ProtectedRoute";
 import useSessionCheck from "./hooks/useSessionCheck";
 import useAuthGuard from "./hooks/useAuthGuard";
-import PostWrite from "./pages/PostWrite";
-import PostEdit from "./pages/PostEdit";
+import PostWrite from "./pages/post/PostWrite";
+import PostEdit from "./pages/post/PostEdit";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
 function AppRoutes() {
@@ -84,14 +82,10 @@ function AppRoutes() {
           <Route path="/detail/:postType/:postId" element={<PostDetail />} />
           <Route path="/branches/:branchId/:postType/:postId/edit" element={<PostEdit />} />
           <Route path="/edit/:postType/:postId" element={<PostEdit />} />
-          <Route path="/comunity" element={<Comunity />} />
           <Route path="/store" element={<Store />} />
-          <Route path="/storeWrite" element={<StoreWritePage />} />
           <Route path="/storeDetail/:itemId" element={<StoreDetail />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/order" element={<Order />} />
-          <Route path="/order/new" element={<Order />} />
-          <Route path="/order/:id" element={<Order />} />
+          <Route path="/order/*" element={<Order />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
           <Route path="/qna" element={<Qna />} />

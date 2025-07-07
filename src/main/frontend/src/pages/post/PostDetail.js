@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { POST_TYPE_CONFIGS } from '../configs/postTypeConfigs';
-import { usePostData } from '../hooks/usePostData';
-import { usePostPermissions } from '../hooks/usePostPermissions';
-import API from '../utils/api';
-import '../styles/postDetail.css';
+import { POST_TYPE_CONFIGS } from '../../configs/postTypeConfigs';
+import { usePostData } from '../../hooks/usePostData';
+import { usePostPermissions } from '../../hooks/usePostPermissions';
+import API from '../../utils/api';
+import '../../styles/postDetail.css';
 
-import SubHeader from '../components/SubHeader';
-import PostDetailHeader from '../components/detail/PostDetailHeader';
-import PostDetailContent from '../components/detail/PostDetailContent';
-import PostDetailMeta from '../components/detail/PostDetailMeta';
-import Comment from '../components/Comment';
-import PasswordModal from '../components/modals/PasswordModal';
-import ImageModal from '../components/modals/ImageModal';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import ErrorMessage from '../components/common/ErrorMessage';
+import SubHeader from '../../components/SubHeader';
+import PostDetailHeader from '../../components/detail/PostDetailHeader';
+import PostDetailContent from '../../components/detail/PostDetailContent';
+import PostDetailMeta from '../../components/detail/PostDetailMeta';
+import Comment from '../../components/Comment';
+import PasswordModal from '../../components/modals/PasswordModal';
+import ImageModal from '../../components/modals/ImageModal';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
 
 const PostDetail = () => {
   const { postType, postId, branchId } = useParams();

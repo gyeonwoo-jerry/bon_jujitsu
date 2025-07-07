@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { POST_TYPE_CONFIGS, normalizeUrl } from '../configs/postTypeConfigs';
-import { usePostData } from '../hooks/usePostData';
-import { usePostPermissions } from '../hooks/usePostPermissions';
-import { usePostValidation } from '../hooks/usePostValidation';
-import API from '../utils/api';
-import '../styles/postWrite.css';
+import { POST_TYPE_CONFIGS, normalizeUrl } from '../../configs/postTypeConfigs';
+import { usePostData } from '../../hooks/usePostData';
+import { usePostPermissions } from '../../hooks/usePostPermissions';
+import { usePostValidation } from '../../hooks/usePostValidation';
+import API from '../../utils/api';
+import '../../styles/postWrite.css';
 
-import SponsorFields from '../components/write/SponsorFields';
-import ImageUploadEdit from '../components/write/ImageUploadEdit';
-import PostWriteHeader from '../components/write/PostWriteHeader';
+import SponsorFields from '../../components/write/SponsorFields';
+import ImageUploadEdit from '../../components/write/ImageUploadEdit';
+import PostWriteHeader from '../../components/write/PostWriteHeader';
 
 const PostEdit = () => {
   const { postType, postId, branchId } = useParams();

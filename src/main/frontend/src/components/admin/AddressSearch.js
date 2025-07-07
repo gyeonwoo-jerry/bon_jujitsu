@@ -1,4 +1,4 @@
-// AddressSearch.js - 수정된 버전
+// AddressSearch.js - 개선된 버전 (우편번호 포함)
 import React from 'react';
 import "../../styles/admin/admin.css";
 
@@ -45,6 +45,7 @@ const AddressSearch = ({ onAddressSelect, selectedAddress }) => {
       oncomplete: (data) => {
         let address = data.roadAddress || data.jibunAddress;
         let sido = data.sido || ''; // 시/도 정보 추출
+        let zonecode = data.zonecode || ''; // 우편번호 추출
 
         // 시/도 이름을 전체 이름으로 변환
         const fullSido = areaMapping[sido] || sido;
@@ -57,8 +58,8 @@ const AddressSearch = ({ onAddressSelect, selectedAddress }) => {
           fullAddress += ` (${data.buildingName})`;
         }
 
-        // 주소와 지역(전체 시/도 이름) 정보 반환
-        onAddressSelect(fullAddress, fullSido);
+        // 주소, 지역(전체 시/도 이름), 우편번호 정보 반환
+        onAddressSelect(fullAddress, fullSido, zonecode);
       }
     }).open();
   };
