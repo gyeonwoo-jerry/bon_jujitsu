@@ -12,6 +12,7 @@ import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.DirectOrderRequest;
 import bon.bon_jujitsu.dto.request.OrderCancelRequest;
 import bon.bon_jujitsu.dto.request.OrderRequest;
 import bon.bon_jujitsu.dto.request.OrderReturnRequest;
@@ -19,9 +20,12 @@ import bon.bon_jujitsu.dto.response.OrderResponse;
 import bon.bon_jujitsu.dto.update.OrderUpdate;
 import bon.bon_jujitsu.repository.CartItemRepository;
 import bon.bon_jujitsu.repository.CartRepository;
+import bon.bon_jujitsu.repository.ItemOptionRepository;
+import bon.bon_jujitsu.repository.ItemRepository;
 import bon.bon_jujitsu.repository.OrderActionRepository;
 import bon.bon_jujitsu.repository.OrderRepository;
 import bon.bon_jujitsu.repository.UserRepository;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +50,8 @@ public class OrderService {
   private final CartRepository cartRepository;
   private final OrderActionRepository orderActionRepository;
   private final OrderImageService orderImageService;
+  private final ItemRepository itemRepository;
+  private final ItemOptionRepository itemOptionRepository;
 
   @Transactional
   public void createOrder(Long userId, OrderRequest request) {
@@ -117,6 +123,78 @@ public class OrderService {
     }
 
     log.info("주문 생성 완료: 사용자 ID {}, 주문 ID {}", userId, order.getId());
+  }
+
+  @Transactional
+  public void createDirectOrder(Long userId, DirectOrderRequest request) {
+    User orderUser = getValidatedUser(userId);
+    validateUserCanOrder(orderUser);
+
+    List<DirectOrderRequest.DirectOrderItem> orderItems = request.orderItems();
+
+    if (orderItems.isEmpty()) {
+      throw new IllegalArgumentException("주문할 상품이 최소 한 개는 있어야 합니다.");
+    }
+
+    int totalCount = 0;
+    long totalPrice = 0;
+
+    Order order = Order.builder()
+        .name(request.name())
+        .address(request.address())
+        .zipcode(request.zipcode())
+        .addrDetail(request.addrDetail())
+        .phoneNum(request.phoneNum())
+        .requirement(request.requirement())
+        .user(orderUser)
+        .payType(request.payType())
+        .build();
+
+    for (DirectOrderRequest.DirectOrderItem orderItemRequest : orderItems) {
+      // 상품과 옵션 조회
+      Item item = itemRepository.findById(orderItemRequest.itemId())
+          .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다: " + orderItemRequest.itemId()));
+
+      ItemOption itemOption = itemOptionRepository.findById(orderItemRequest.itemOptionId())
+          .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다: " + orderItemRequest.itemOptionId()));
+
+      // 옵션이 해당 상품의 것인지 확인
+      if (!itemOption.getItem().getId().equals(item.getId())) {
+        throw new IllegalArgumentException("잘못된 상품 옵션입니다.");
+      }
+
+      // 재고 확인
+      if (itemOption.getAmount() < orderItemRequest.quantity()) {
+        throw new IllegalArgumentException("재고가 부족한 상품이 있습니다: " + item.getName() +
+            " (" + itemOption.getSize() + ", " + itemOption.getColor() + ")");
+      }
+
+      // 가격 계산 (할인가가 있으면 할인가, 없으면 정가)
+      int itemPrice = item.getSale() > 0 ? item.getSale() : item.getPrice();
+
+      OrderItem orderItem = OrderItem.builder()
+          .quantity(orderItemRequest.quantity())
+          .price(itemPrice)
+          .item(item)
+          .itemOption(itemOption)
+          .build();
+
+      order.addOrderItem(orderItem);
+
+      // 재고 차감
+      itemOption.decreaseAmount(orderItemRequest.quantity());
+
+      // 총 수량 및 가격 계산
+      totalCount += orderItemRequest.quantity();
+      totalPrice += (long) itemPrice * orderItemRequest.quantity();
+    }
+
+    // 총액 설정
+    order.updateTotalInfo(totalPrice, totalCount);
+
+    orderRepository.save(order);
+
+    log.info("직접 주문 생성 완료: 사용자 ID {}, 주문 ID {}", userId, order.getId());
   }
 
   @Transactional(readOnly = true)

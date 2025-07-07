@@ -3,6 +3,7 @@ package bon.bon_jujitsu.controller;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
+import bon.bon_jujitsu.dto.request.DirectOrderRequest;
 import bon.bon_jujitsu.dto.request.OrderCancelRequest;
 import bon.bon_jujitsu.dto.request.OrderRequest;
 import bon.bon_jujitsu.dto.request.OrderReturnRequest;
@@ -37,6 +38,15 @@ public class OrderController {
       @Valid @RequestBody OrderRequest request
   ) {
     orderService.createOrder(userId, request);
+    return ApiResponse.success("주문 완료", null);
+  }
+
+  @PostMapping("/orders/direct")
+  public ApiResponse<Void> createDirectOrder(
+      @AuthenticationUserId Long userId,
+      @Valid @RequestBody DirectOrderRequest request
+  ) {
+    orderService.createDirectOrder(userId, request);
     return ApiResponse.success("주문 완료", null);
   }
 
