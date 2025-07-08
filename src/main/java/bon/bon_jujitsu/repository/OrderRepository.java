@@ -1,24 +1,17 @@
 package bon.bon_jujitsu.repository;
 
-import bon.bon_jujitsu.domain.Item;
 import bon.bon_jujitsu.domain.Order;
 import bon.bon_jujitsu.domain.OrderStatus;
 import bon.bon_jujitsu.domain.User;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
-  Optional<Order> findTopByUserIdAndOrderItems_Item_IdOrderByCreatedAtDesc(Long userId, Long itemId);
-
   @Query("SELECT DISTINCT o FROM Order o " +
       "JOIN FETCH o.orderItems oi " +
       "JOIN FETCH oi.item " +
@@ -49,4 +42,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
   Page<Order> findAllByUserAndOrderStatusInWithItems(@Param("user") User user,
       @Param("statuses") List<OrderStatus> statuses,
       Pageable pageable);
+
+  @Query("SELECT DISTINCT o FROM Order o " +
+      "JOIN FETCH o.orderItems oi " +
+      "WHERE o.user.id = :userId " +
+      "AND oi.item.id = :itemId " +
+      "AND o.orderStatus = :status " +
+      "ORDER BY o.createdAt DESC")
+  List<Order> findCompletedOrdersByUserIdAndItemId(Long userId, Long itemId, OrderStatus orderStatus);
 }

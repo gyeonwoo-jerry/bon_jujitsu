@@ -52,8 +52,8 @@ public class ReviewService {
     User user = findUserById(userId);
     Item item = findItemById(request.itemId());
 
-    // 구매 이력 확인 및 주문 찾기
-    Order order = validatePurchaseHistory(user.getId(), item.getId());
+    // 구매 이력 확인 및 주문 찾기 - 수정된 부분
+    Order order = validatePurchaseHistoryForReview(user.getId(), item.getId());
 
     // 부모 리뷰 확인
     Review parentReview = validateParentReview(request.parentId());
@@ -202,15 +202,29 @@ public class ReviewService {
         .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
   }
 
-  private Order validatePurchaseHistory(Long userId, Long itemId) {
-    Order order = orderRepository.findTopByUserIdAndOrderItems_Item_IdOrderByCreatedAtDesc(userId, itemId)
-        .orElseThrow(() -> new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다."));
+  /**
+   * 리뷰 작성을 위한 구매 이력 검증 (수정된 메서드)
+   */
+  private Order validatePurchaseHistoryForReview(Long userId, Long itemId) {
+    // 1. 해당 상품에 대한 완료된 주문 찾기
+    List<Order> completedOrders = orderRepository
+        .findCompletedOrdersByUserIdAndItemId(userId, itemId, OrderStatus.COMPLETE);
 
-    if (order.getOrderStatus() != OrderStatus.COMPLETE) {
-      throw new IllegalArgumentException("주문이 완료된 경우에만 리뷰를 작성할 수 있습니다.");
+    if (completedOrders.isEmpty()) {
+      throw new IllegalArgumentException("상품을 구매한 사용자만 리뷰를 작성할 수 있습니다.");
     }
 
-    return order;
+    // 2. 아직 리뷰를 작성하지 않은 주문 찾기
+    for (Order order : completedOrders) {
+      boolean hasReview = reviewRepository.existsByOrderIdAndItemIdAndUserId(
+          order.getId(), itemId, userId);
+
+      if (!hasReview) {
+        return order; // 리뷰를 작성하지 않은 완료된 주문 반환
+      }
+    }
+
+    throw new IllegalArgumentException("이미 해당 상품에 대한 리뷰를 작성했습니다.");
   }
 
   private Review validateParentReview(Long parentId) {
