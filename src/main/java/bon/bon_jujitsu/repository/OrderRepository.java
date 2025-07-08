@@ -47,7 +47,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       "JOIN FETCH o.orderItems oi " +
       "WHERE o.user.id = :userId " +
       "AND oi.item.id = :itemId " +
-      "AND o.orderStatus = :status " +
+      "AND o.orderStatus = :orderStatus " +
       "ORDER BY o.createdAt DESC")
-  List<Order> findCompletedOrdersByUserIdAndItemId(Long userId, Long itemId, OrderStatus orderStatus);
+  List<Order> findCompletedOrdersByUserIdAndItemId(
+      @Param("userId") Long userId,
+      @Param("itemId") Long itemId,
+      @Param("orderStatus") OrderStatus orderStatus
+  );
 }
