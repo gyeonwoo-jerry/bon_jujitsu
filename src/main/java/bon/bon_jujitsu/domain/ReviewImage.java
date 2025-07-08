@@ -29,6 +29,9 @@ public class ReviewImage extends Timestamped {
   @Column(nullable = false)
   private String imagePath;
 
+  @Column(name = "original_image_path")
+  private String originalImagePath;
+
   @Column(nullable = false)
   private String originalFileName;
 
