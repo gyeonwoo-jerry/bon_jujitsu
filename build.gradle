@@ -33,6 +33,8 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // 리사이징처리
+    implementation 'net.coobird:thumbnailator:0.4.19'
 
     // json
     implementation 'org.json:json:20230227'
