@@ -43,18 +43,26 @@ public class BranchImageService {
         }
 
         try {
-            String uploads = filepath + "branch/";
+            String uploadsOriginal = filepath + "branch/original/";  // 원본 저장 폴더
+            String uploadsResized = filepath + "branch/resized/";    // 리사이징 저장 폴더
 
             for (MultipartFile image : images) {
                 String originalFileName = image.getOriginalFilename();
+                String uuid = UUID.randomUUID().toString().replace("-", "");
+                String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-                // 이미지 리사이징 후 저장
+                // 1. 원본 파일 저장
+                String originalPath = saveOriginalImage(image, originalFileName, uploadsOriginal, uuid, datePrefix);
+
+                // 2. 리사이징 파일 저장
                 byte[] resizedImageData = resizeImage(image);
-                String dbFilePath = saveResizedImage(resizedImageData, originalFileName, uploads);
+                String resizedPath = saveResizedImage(resizedImageData, originalFileName, uploadsResized, uuid, datePrefix);
 
+                // 3. DB에 저장 (프론트에서는 resizedPath 사용)
                 BranchImage branchImage = BranchImage.builder()
                     .branch(branch)
-                    .imagePath(dbFilePath)
+                    .imagePath(resizedPath)        // 프론트에서 사용할 리사이징된 파일 경로
+                    .originalImagePath(originalPath) // 원본 파일 경로 (별도 필드 필요)
                     .originalFileName(originalFileName)
                     .build();
 
@@ -63,6 +71,25 @@ public class BranchImageService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String saveOriginalImage(MultipartFile image, String originalFileName, String uploads, String uuid, String datePrefix) throws IOException {
+        // 원본 확장자 유지
+        String extension = "";
+        if (originalFileName != null && originalFileName.contains(".")) {
+            extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+        } else {
+            extension = ".jpg";
+        }
+
+        String fileName = datePrefix + "_" + uuid + "_original" + extension;
+        String filePath = uploads + fileName;
+
+        Path path = Paths.get(filePath);
+        Files.createDirectories(path.getParent());
+        Files.write(path, image.getBytes()); // 원본 그대로 저장
+
+        return filePath;
     }
 
     private byte[] resizeImage(MultipartFile image) throws IOException {
@@ -95,7 +122,6 @@ public class BranchImageService {
             extension = originalFileName.substring(originalFileName.lastIndexOf(".") + 1).toLowerCase();
         }
 
-        // 지원하는 포맷인지 확인
         switch (extension) {
             case "png":
                 return "png";
@@ -104,23 +130,20 @@ public class BranchImageService {
             case "gif":
                 return "gif";
             default:
-                return "jpg"; // 기본값
+                return "jpg";
         }
     }
 
-    private String saveResizedImage(byte[] imageData, String originalFileName, String uploads) throws IOException {
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-
+    private String saveResizedImage(byte[] imageData, String originalFileName, String uploads, String uuid, String datePrefix) throws IOException {
         // 원본 확장자 유지
         String extension = "";
         if (originalFileName != null && originalFileName.contains(".")) {
             extension = originalFileName.substring(originalFileName.lastIndexOf("."));
         } else {
-            extension = ".jpg"; // 기본값
+            extension = ".jpg";
         }
 
-        String fileName = datePrefix + "_" + uuid + extension;
+        String fileName = datePrefix + "_" + uuid + "_resized" + extension;
         String filePath = uploads + fileName;
 
         Path path = Paths.get(filePath);
@@ -139,7 +162,9 @@ public class BranchImageService {
             .collect(Collectors.toList());
 
         for (BranchImage image : toDelete) {
-            deletePhysicalFile(image.getImagePath(), image.getOriginalFileName());
+            // 원본과 리사이징 파일 모두 삭제
+            deletePhysicalFile(image.getImagePath());           // 리사이징 파일
+            deletePhysicalFile(image.getOriginalImagePath());   // 원본 파일
             branchImageRepository.delete(image);
         }
 
@@ -149,21 +174,11 @@ public class BranchImageService {
         }
     }
 
-    private void deletePhysicalFile(String dbDirPath, String originalFileName) {
+    private void deletePhysicalFile(String filePath) {
         try {
-            String extension = "";
-            if (originalFileName != null && originalFileName.contains(".")) {
-                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-            }
-
-            Path dirPath = Paths.get(dbDirPath);
-
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath,
-                "*_*" + extension)) {
-                for (Path entry : stream) {
-                    Files.deleteIfExists(entry);
-                    break;
-                }
+            if (filePath != null) {
+                Path path = Paths.get(filePath);
+                Files.deleteIfExists(path);
             }
         } catch (IOException e) {
             e.printStackTrace();
