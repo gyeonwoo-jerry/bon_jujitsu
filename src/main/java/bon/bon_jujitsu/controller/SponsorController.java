@@ -2,7 +2,6 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.SponsorRequest;
 import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
@@ -31,7 +30,7 @@ public class SponsorController {
   private final SponsorService sponsorService;
 
   @PostMapping("/sponsor")
-  public ApiResponse<Status> createSponsor(
+  public ApiResponse<Void> createSponsor(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SponsorRequest request,
       @RequestPart(value = "images", required = false) List<MultipartFile> images

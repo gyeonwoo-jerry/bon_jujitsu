@@ -2,7 +2,6 @@ package bon.bon_jujitsu.controller;
 
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
-import bon.bon_jujitsu.dto.common.Status;
 import bon.bon_jujitsu.dto.request.SkillRequest;
 import bon.bon_jujitsu.dto.response.SkillResponse;
 import bon.bon_jujitsu.dto.update.SkillUpdate;
@@ -70,7 +69,7 @@ public class SkillController {
   }
 
   @DeleteMapping("/skill/{skillId}")
-  private ApiResponse<Status> deleteNotice(
+  private ApiResponse<Void> deleteSkill(
       @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId
   ) {
