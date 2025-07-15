@@ -45,6 +45,9 @@ const MyPageMain = () => {
       case 'inquiries':
         window.location.href = '/mypage/inquiries';
         break;
+      case 'management':
+        window.location.href = '/admin/management';
+        break;
       default:
         break;
     }
@@ -88,6 +91,16 @@ const MyPageMain = () => {
       onClick: () => handleSummaryCardClick('inquiries'),
       loading: loading
     },
+    // OWNER 전용 요약 카드
+    ...(userRole === "OWNER" ? [{
+      label: "관리자 메뉴",
+      value: "관리하기",
+      description: "시스템 관리 및 설정",
+      color: "red",
+      icon: "⚙️",
+      onClick: () => handleSummaryCardClick('management'),
+      loading: loading
+    }] : [])
   ];
 
   // 모든 퀵링크 옵션
@@ -95,38 +108,67 @@ const MyPageMain = () => {
     {
       title: "주문/배송 내역",
       path: "/mypage/orders",
-      roles: ["USER", "COACH"],
+      roles: ["USER", "COACH", "OWNER"],
       icon: "📦",
       description: "주문 내역과 배송 상태를 확인하세요"
     },
     {
       title: "회원 정보 관리",
       path: "/mypage/profile/edit",
-      roles: ["USER", "COACH"],
+      roles: ["USER", "COACH", "OWNER"],
       icon: "👤",
       description: "개인정보와 계정 설정을 변경하세요"
     },
     {
       title: "리뷰 작성/관리",
       path: "/mypage/reviews",
-      roles: ["USER", "COACH"],
+      roles: ["USER", "COACH", "OWNER"],
       icon: "⭐",
       description: "구매한 상품의 리뷰를 작성하고 관리하세요"
     },
     {
       title: "1:1 문의 내역",
       path: "/mypage/inquiries",
-      roles: ["USER", "COACH"],
+      roles: ["USER", "COACH", "OWNER"],
       icon: "💬",
       description: "고객센터 문의 내역을 확인하세요"
     },
     {
       title: "장바구니",
       path: "/mypage/cart",
-      roles: ["USER", "COACH"],
+      roles: ["USER", "COACH", "OWNER"],
       icon: "🛒",
       description: "담아둔 상품을 확인하고 주문하세요"
     },
+    // OWNER 전용 퀵링크
+    {
+      title: "회원 관리",
+      path: "/admin/users",
+      roles: ["OWNER"],
+      icon: "👥",
+      description: "전체 회원 정보를 관리하세요"
+    },
+    {
+      title: "상품 관리",
+      path: "/admin/products",
+      roles: ["OWNER"],
+      icon: "📦",
+      description: "상품 등록 및 관리를 하세요"
+    },
+    {
+      title: "주문 관리",
+      path: "/admin/orders",
+      roles: ["OWNER"],
+      icon: "📋",
+      description: "전체 주문 내역을 관리하세요"
+    },
+    {
+      title: "시스템 설정",
+      path: "/admin/settings",
+      roles: ["OWNER"],
+      icon: "⚙️",
+      description: "시스템 전반적인 설정을 관리하세요"
+    }
   ];
 
   // 사용자 역할에 맞는 퀵링크만 필터링
@@ -171,6 +213,7 @@ const MyPageMain = () => {
             {userName}
             {userRole === "USER" && "님의 마이페이지"}
             {userRole === "COACH" && " 코치님의 마이페이지"}
+            {userRole === "OWNER" && " 관리자님의 마이페이지"}
           </div>
 
           {/* 환영 메시지 */}
@@ -274,6 +317,17 @@ const MyPageMain = () => {
                       />
                     </div>
                 )}
+                {userRole === "OWNER" && (
+                    <div className="benefit-item">
+                      <span className="benefit-icon">👑</span>
+                      <span className="benefit-text">관리자 권한 사용자</span>
+                      <MyPageStatusBadge
+                          status="error"
+                          text="OWNER"
+                          size="small"
+                      />
+                    </div>
+                )}
               </div>
             </div>
           </div>
@@ -313,6 +367,18 @@ const MyPageMain = () => {
                     뉴스 보기
                   </button>
                 </div>
+                {userRole === "OWNER" && (
+                    <div className="benefit-item">
+                      <span className="benefit-icon">📊</span>
+                      <span className="benefit-text">전체 통계 및 관리</span>
+                      <button
+                          onClick={() => window.location.href = '/admin/dashboard'}
+                          className="benefit-button"
+                      >
+                        관리자 대시보드
+                      </button>
+                    </div>
+                )}
               </div>
             </div>
           </div>

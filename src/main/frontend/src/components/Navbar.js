@@ -103,8 +103,8 @@ function Navbar() {
   // 관리자 페이지 접근 권한 확인 (ADMIN 또는 OWNER만 접근 가능)
   const canAccessAdminPage = userRole === "ADMIN" || userRole === "OWNER";
 
-  // MyPage 접근 권한 확인 (USER 또는 COACH만 접근 가능)
-  const canAccessMyPage = userRole === "USER" || userRole === "COACH";
+  // MyPage 접근 권한 확인 (USER, COACH, OWNER 모두 접근 가능)
+  const canAccessMyPage = userRole === "USER" || userRole === "COACH" || userRole === "OWNER";
 
   return (
       <nav className={`main_nav ${isFixed ? "fixed" : ""}`}>
@@ -163,7 +163,7 @@ function Navbar() {
                   </button>
               )}
 
-              {/* 일반회원(USER)과 코치(COACH)에게 MyPage 버튼 표시 */}
+              {/* 일반회원(USER), 코치(COACH), 관장님(OWNER)에게 MyPage 버튼 표시 */}
               {canAccessMyPage && (
                   <button
                       className="mypage_btn"

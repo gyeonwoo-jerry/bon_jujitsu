@@ -22,13 +22,15 @@ const MyPageHeader = () => {
     }
   }, []);
 
-  // 모든 마이페이지 메뉴 옵션
+  // 모든 마이페이지 메뉴 옵션 (OWNER 포함)
   const allMyPageLinks = [
-    { title: "주문/배송 내역", path: "/mypage/orders", roles: ["USER", "COACH"] },
-    { title: "회원 정보 관리", path: "/mypage/profile/edit", roles: ["USER", "COACH"] }, // 경로 수정
-    { title: "리뷰 작성/관리", path: "/mypage/reviews", roles: ["USER", "COACH"] },
-    { title: "1:1 문의", path: "/mypage/inquiries", roles: ["USER", "COACH"] },
-    { title: "장바구니", path: "/mypage/cart", roles: ["USER", "COACH"] },
+    { title: "주문/배송 내역", path: "/mypage/orders", roles: ["USER", "COACH", "OWNER"] },
+    { title: "회원 정보 관리", path: "/mypage/profile/edit", roles: ["USER", "COACH", "OWNER"] },
+    { title: "리뷰 작성/관리", path: "/mypage/reviews", roles: ["USER", "COACH", "OWNER"] },
+    { title: "1:1 문의", path: "/mypage/inquiries", roles: ["USER", "COACH", "OWNER"] },
+    { title: "장바구니", path: "/mypage/cart", roles: ["USER", "COACH", "OWNER"] },
+    // OWNER 전용 메뉴 (관리자 기능 바로가기)
+    { title: "관리자 메뉴", path: "/admin", roles: ["OWNER"] },
   ];
 
   // 사용자 역할에 맞는 메뉴만 필터링
@@ -46,18 +48,21 @@ const MyPageHeader = () => {
         {/* 사용자 정보 표시 */}
         <div className="user-info-section">
           <div className="user-avatar">
-                    <span className="avatar-text">
-                        {userName ? userName.charAt(0) : 'U'}
-                    </span>
+            <span className="avatar-text">
+              {userName ? userName.charAt(0) : 'U'}
+            </span>
           </div>
           <div className="user-details">
             <h2 className="user-name">
               {userName}
               {userRole === "USER" && "님"}
               {userRole === "COACH" && " 코치님"}
+              {userRole === "OWNER" && " 관장님"}
             </h2>
             <p className="user-role">
-              {userRole === "USER" ? "일반 회원" : "코치"}
+              {userRole === "USER" && "일반 회원"}
+              {userRole === "COACH" && "코치"}
+              {userRole === "OWNER" && "관장"}
             </p>
           </div>
         </div>
@@ -70,13 +75,14 @@ const MyPageHeader = () => {
                   to={link.path}
                   className={`nav-link ${isActive(link.path) ? 'active' : ''}`}
               >
-                        <span className="nav-icon">
-                          {link.title === "주문/배송 내역" && "📦"}
-                          {link.title === "회원 정보 관리" && "👤"}
-                          {link.title === "리뷰 작성/관리" && "⭐"}
-                          {link.title === "1:1 문의" && "💬"}
-                          {link.title === "장바구니" && "🛒"}
-                        </span>
+                <span className="nav-icon">
+                  {link.title === "주문/배송 내역" && "📦"}
+                  {link.title === "회원 정보 관리" && "👤"}
+                  {link.title === "리뷰 작성/관리" && "⭐"}
+                  {link.title === "1:1 문의" && "💬"}
+                  {link.title === "장바구니" && "🛒"}
+                  {link.title === "관리자 메뉴" && "⚙️"}
+                </span>
                 {link.title}
               </Link>
           ))}
