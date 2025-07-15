@@ -250,9 +250,12 @@ const BranchEdit = () => {
       formData.append('update', updateBlob);
 
       // 3. keepImageIds 필드 추가 (JSON 배열)
-      // 중요: 항상 keepImageIds 추가 (빈 배열이라도)
-      const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds || [])], { type: 'application/json' });
-      formData.append('keepImageIds', keepImageIdsBlob);
+      if (keepImageIds.length > 0) {
+        const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds)], {
+          type: 'application/json'
+        });
+        formData.append('keepImageIds', keepImageIdsBlob);
+      }
 
       // 4. 새 이미지가 있는 경우에만 추가
       if (branchData.images && branchData.images.length > 0) {

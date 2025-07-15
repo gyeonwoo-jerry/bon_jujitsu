@@ -62,6 +62,10 @@ public class Branch extends Timestamped {
     branchUpdate.area().ifPresent(area -> {
       if (!area.isBlank()) this.area = area;
     });
+
+    branchUpdate.content().ifPresent(content -> {
+      if (!content.isBlank()) this.content = content;
+    });
   }
 
   public void softDelete() {

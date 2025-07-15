@@ -139,35 +139,6 @@ const MyPageMain = () => {
       roles: ["USER", "COACH", "OWNER"],
       icon: "🛒",
       description: "담아둔 상품을 확인하고 주문하세요"
-    },
-    // OWNER 전용 퀵링크
-    {
-      title: "회원 관리",
-      path: "/admin/users",
-      roles: ["OWNER"],
-      icon: "👥",
-      description: "전체 회원 정보를 관리하세요"
-    },
-    {
-      title: "상품 관리",
-      path: "/admin/products",
-      roles: ["OWNER"],
-      icon: "📦",
-      description: "상품 등록 및 관리를 하세요"
-    },
-    {
-      title: "주문 관리",
-      path: "/admin/orders",
-      roles: ["OWNER"],
-      icon: "📋",
-      description: "전체 주문 내역을 관리하세요"
-    },
-    {
-      title: "시스템 설정",
-      path: "/admin/settings",
-      roles: ["OWNER"],
-      icon: "⚙️",
-      description: "시스템 전반적인 설정을 관리하세요"
     }
   ];
 
