@@ -1,161 +1,156 @@
-
-
 .branchDetail_container {
-    width: 100%;
-    height: 100%;
-    background-color: var(--white-color);
+  width: 100%;
+  height: 100%;
+  background-color: var(--white-color);
 }
 
 .branchDetail_container .inner {
-    width: 100%;
-    height: 100%;
-    padding: 0 50px;
+  width: 100%;
+  height: 100%;
+  padding: 0 50px;
 }
 
 .branchDetail_header {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    min-height: 450px;
-    border-radius: 35px;;
-    background-color: var(--black-color);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    display: flex;
-    align-items: end;
-    justify-content: center;
-    overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 450px;
+  border-radius: 35px;;
+  background-color: var(--black-color);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .branchDetail_header .branchInfo {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 100px;
-} 
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 100px;
+}
 
 .branchDetail_header .branchInfo .ownerInfo {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: center;
 }
 
 .branchDetail_header .branchInfo .ownerInfo .branchName {
-    font-size: 18px;
-    font-weight: 600;
-    padding: 8px 18px;
-    border-radius: 300px;
-    background-color: var(--white-color);
-    color: var(--black-color);
+  font-size: 18px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 300px;
+  background-color: var(--white-color);
+  color: var(--black-color);
 }
 
 .branchDetail_header .branchInfo .ownerInfo .ownerName {
-    font-size: 64px;
-    font-weight: 700;
-    color: var(--black-color);
-    margin: 14px 0 14px;
-}   
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--black-color);
+  margin: 14px 0 14px;
+}
 .branchDetail_header .branchInfo .ownerInfo .ownerName.white,
 .branchDetail_header .branchInfo .ownerInfo .branchAddress.white,
 .branchDetail_header .branchInfo .ownerInfo .branchPhone.white {
-    text-shadow: 0 0 6px rgba(0, 0, 0, .3);
+  text-shadow: 0 0 6px rgba(0, 0, 0, .3);
 }
 
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt {
-    position: relative;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--black-color);
-    margin-bottom: 24px;
-    margin-left: 6px;
-    padding: 6px 64px 6px 10px;
+  position: relative;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black-color);
+  margin-bottom: 24px;
+  margin-left: 6px;
+  padding: 6px 64px 6px 10px;
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt .grau {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.WHITE .grauLine {
-    background-color: var(--black-color);
+  background-color: var(--black-color);
 }
 
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt .grauLine {
-    width: 5px;
-    height: 28px;
-    background-color: var(--white-color);
+  width: 5px;
+  height: 28px;
+  background-color: var(--white-color);
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.WHITE {
-    color: var(--black-color);
-    background-color: var(--white-color);
+  color: var(--black-color);
+  background-color: var(--white-color);
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.BLUE {
-    color: var(--white-color);
-    background-color: var(--blue-color);
+  color: var(--white-color);
+  background-color: var(--blue-color);
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.PURPLE {
-    color: var(--white-color);
-    background-color: var(--purple-color);
+  color: var(--white-color);
+  background-color: var(--purple-color);
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.BROWN {
-    color: var(--white-color);
-    background-color: var(--brown-color);
+  color: var(--white-color);
+  background-color: var(--brown-color);
 }
 .branchDetail_header .branchInfo .ownerInfo .ownerBelt.BLACK {
-    color: var(--white-color);
-    background-color: var(--black-color);
+  color: var(--white-color);
+  background-color: var(--black-color);
 }
 
-
-
-
 .branchDetail_header .branchInfo .ownerInfo .branchAddress {
-    font-size: 18px;
-    font-weight: 400;
-    margin-left: 6px;
-    color: var(--black-color);
-    margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 400;
+  margin-left: 6px;
+  color: var(--black-color);
+  margin-bottom: 10px;
 }
 
 .branchDetail_header .branchInfo .ownerInfo .branchPhone {
-    font-size: 18px;
-    font-weight: 400;
-    margin-left: 6px;   
-    color: var(--black-color);
+  font-size: 18px;
+  font-weight: 400;
+  margin-left: 6px;
+  color: var(--black-color);
 }
 
 .branchDetail_header .branchInfo .ownerInfo .branchSns {
-    margin-top:24px;
-    padding-left: 6px;
+  margin-top:24px;
+  padding-left: 6px;
 }
 
 .branchDetail_header .branchInfo .ownerInfo .branchSns ul {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .branchDetail_header .branchInfo .ownerInfo .branchSns ul a {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    transition: all 0.3s;
-    
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition: all 0.3s;
+
 }
 .branchDetail_header .branchInfo .ownerInfo .branchSns ul a:hover {
-    transform: rotate(360deg);
-    background-color: var(--white-color);
-    
+  transform: rotate(360deg);
+  background-color: var(--white-color);
+
 }
 
 .branchDetail_header .branchInfo .ownerImage {
@@ -166,320 +161,318 @@
   margin-bottom: -5px;
 }
 .branchDetail_header .branchInfo .ownerImage img {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .branchDetail_content {
-    width: 100%;
-    height: 100%;
-    margin-top: 54px;
+  width: 100%;
+  height: 100%;
+  margin-top: 54px;
 }
 
 .branchDetail_content .branchDetail_content_inner {
-    width: 100%;
-    max-width: var(--branch-board-width);
-    height: 100%;
-    margin: 0 auto;
-}   
+  width: 100%;
+  max-width: var(--branch-board-width);
+  height: 100%;
+  margin: 0 auto;
+}
 .branchDetail_content .branch_title {
-    width: 100%;
-    height: 100%;
-    text-align: left;
-}       
+  width: 100%;
+  height: 100%;
+  text-align: left;
+}
 
 .branchDetail_content .branch_title .stit {
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--black-color);
-    
-}       
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--black-color);
+
+}
 .branchDetail_content .branch_title .btit {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--black-color);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--black-color);
 }
 
 .branchDetail_content .contents {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 50px;
-    margin: 0 auto;
-    gap: 50px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  margin: 0 auto;
+  gap: 50px;
 }
 
 .branchDetail_content .branchDetail_content_title {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    justify-content: start;
-    gap: 10px; 
-    
-}   
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+  gap: 10px;
+
+}
 
 .branchDetail_content .branchDetail_content_title p {
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--black-color);
-    text-align: left;
-    line-height: 1.54;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--black-color);
+  text-align: left;
+  line-height: 1.54;
 }
 
 .branchDetail_content .branchDetail_content_title .divider {
-    margin: 24px 0px;
-    width: 60px;
-    height: 1px;
-    display: inline-block;
-    background-color: var(--black-color);
+  margin: 24px 0px;
+  width: 60px;
+  height: 1px;
+  display: inline-block;
+  background-color: var(--black-color);
 }
 
 .branchDetail_content .branchDetail_content_title .content {
-    font-size: 16px;
-    text-align: left;
-    font-weight: 400;
-    color: var(--black-color);
-    line-height: 1.74;
+  font-size: 16px;
+  text-align: left;
+  font-weight: 400;
+  color: var(--black-color);
+  line-height: 1.74;
 }
 
 .branchDetail_content .branchDetail_content_title .btit {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--black-color);
-}   
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--black-color);
+}
 
 .branchDetail_content .branchDetail_content_title .stit {
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--white-color);
-    border-radius: 30px;
-    background-color: var(--black-color);
-    padding: 6px 14px;
-    margin-left: -4px;
-}   
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--white-color);
+  border-radius: 30px;
+  background-color: var(--black-color);
+  padding: 6px 14px;
+  margin-left: -4px;
+}
 
 .coaches {
-    width: 100%;
-    height: 100%;
-    padding: 50px;
-}   
+  width: 100%;
+  height: 100%;
+  padding: 50px;
+}
 
 .coaches .coaches_inner {
-    max-width: var(--branch-board-width);
-    width: 100%;
-    height: 100%;
-    margin: 0 auto;
-}       
+  max-width: var(--branch-board-width);
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+}
 
 .coaches .coaches_title {
-    width: 100%;
-    height: 100%;
-    text-align: left;
-}       
+  width: 100%;
+  height: 100%;
+  text-align: left;
+}
 
 .coaches .coaches_title .stit {
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--black-color);
-    
-}       
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--black-color);
+
+}
 .coaches .coaches_title .btit {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--black-color);
-}       
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--black-color);
+}
 
 .coaches .coaches_list {
-    width: 100%;
-    height: 100%;
-}   
+  width: 100%;
+  height: 100%;
+}
 
 .coaches .coaches_list ul {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 34px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 34px;
 }
 
 .coaches .coaches_list ul li {
-    width: 33.33%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
+  width: 33.33%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
 }
 
 .coaches .coaches_list ul li .thumnail {
-    width: 100%;
-    aspect-ratio: 1/1;
-    height: auto;
-    border-radius: 30px;
-    background-color: var(--gray-color);
+  width: 100%;
+  aspect-ratio: 1/1;
+  height: auto;
+  border-radius: 30px;
+  background-color: var(--gray-color);
 }
 
 .coaches .coaches_list ul li .thumnail img {
-    width: 100%;
-    height: 100%;
-}   
+  width: 100%;
+  height: 100%;
+}
 
 .coaches .coaches_list ul li .coach_info {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .coaches .coaches_list ul li .coach_info .coach_name {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--black-color);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--black-color);
 }
 
 .coaches .coaches_list ul li .coach_info .coach_belt {
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--black-color);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--black-color);
 }
 
+/* 수정된 branch_container - 공지사항만 표시 */
 .branch_container {
-    width: 100%;
-    height: 100%;
-    padding: 50px;
+  width: 100%;
+  height: 100%;
+  padding: 50px;
 }
 
-.branch_container .branch_inner {   
-    max-width: var(--branch-board-width);
-    width: 100%;
-    height: 100%;
-    margin: 0 auto;
+.branch_container .branch_inner {
+  max-width: var(--branch-board-width);
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
 }
 
 .branch_container .branch_board_title {
-    width: 100%;
-    height: 100%;
-    text-align: left;
+  width: 100%;
+  height: 100%;
+  text-align: left;
 }
 
 .branch_container .branch_board_title .stit {
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--black-color);
-}   
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--black-color);
+}
 
 .branch_container .branch_board_title .btit {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--black-color);
-}   
-
-.branch_container .branch_inner .content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: start;
-    justify-content: space-between;
-    gap: 50px;
-    margin-top: 50px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--black-color);
 }
-.branch_container .branch_inner .content .board_list {
-    width: 100%;
-    height: 100%;
+
+/* 수정된 content 섹션 - Notice만 표시하므로 flex에서 block으로 변경 */
+.branch_container .branch_inner .content {
+  width: 100%;
+  height: 100%;
+  margin-top: 50px;
+}
+
+.branch_container .branch_inner .content .notice_list {
+  width: 100%;
+  height: 100%;
 }
 
 .branchDetail_content .branchDetail_content_text {
-    width: 100%;
-    height: 100%;
-}    
-/* 기존 CSS 유지 */
+  width: 100%;
+  height: 100%;
+}
 
 /* 슬라이더 스타일 */
 .slide_images_container {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto 20px;
-    overflow: hidden;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .image-slider {
-    position: relative;
-  }
-  
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 20px;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-slider {
+  position: relative;
+}
+
+.slide_image {
+  position: relative;
+  height: 400px;
+  overflow: hidden;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f8f8;
+}
+
+.slide_image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.slide_image.no-image {
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 슬라이더 화살표 스타일 */
+.slick-prev, .slick-next {
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+}
+
+.slick-prev {
+  left: 10px;
+}
+
+.slick-next {
+  right: 10px;
+}
+
+.slick-prev:before, .slick-next:before {
+  font-size: 30px;
+  opacity: 0.8;
+}
+
+/* 슬라이더 인디케이터(dots) 스타일 */
+.slick-dots {
+  bottom: 15px;
+}
+
+.slick-dots li button:before {
+  font-size: 12px;
+  color: white;
+  opacity: 0.7;
+}
+
+.slick-dots li.slick-active button:before {
+  opacity: 1;
+  color: white;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
   .slide_image {
-    position: relative;
-    height: 400px;
-    overflow: hidden;
-    display: flex !important;
-    justify-content: center;
-    align-items: center;
-    background-color: #f8f8f8;
+    height: 300px;
   }
-  
-  .slide_image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  
-  .slide_image.no-image {
-    background-color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  /* 슬라이더 화살표 스타일 */
-  .slick-prev, .slick-next {
-    z-index: 1;
-    width: 40px;
-    height: 40px;
-  }
-  
-  .slick-prev {
-    left: 10px;
-  }
-  
-  .slick-next {
-    right: 10px;
-  }
-  
-  .slick-prev:before, .slick-next:before {
-    font-size: 30px;
-    opacity: 0.8;
-  }
-  
-  /* 슬라이더 인디케이터(dots) 스타일 */
-  .slick-dots {
-    bottom: 15px;
-  }
-  
-  .slick-dots li button:before {
-    font-size: 12px;
-    color: white;
-    opacity: 0.7;
-  }
-  
-  .slick-dots li.slick-active button:before {
-    opacity: 1;
-    color: white;
-  }
-  
-  /* 반응형 스타일 */
-  @media (max-width: 768px) {
-    .slide_image {
-      height: 300px;
-    }
-  } 
+}
