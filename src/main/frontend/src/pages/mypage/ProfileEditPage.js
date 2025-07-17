@@ -74,7 +74,7 @@ const ProfileEditPage = () => {
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
-  // 3단계 지부 선택 상태 (JoinForm과 동일)
+  // 3단계 지부 선택 상태
   const [areas, setAreas] = useState([]);
   const [regions, setRegions] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -87,13 +87,13 @@ const ProfileEditPage = () => {
   const [regionsLoading, setRegionsLoading] = useState(false);
   const [branchesLoading, setBranchesLoading] = useState(false);
 
-  // 폼 데이터 상태 (Optional 형태에 맞게 수정)
+  // 폼 데이터 상태
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phoneNum: '',
     address: '',
-    addressDetail: '', // 상세 주소 추가
+    addressDetail: '',
     birthday: '',
     gender: '',
     password: '',
@@ -108,14 +108,14 @@ const ProfileEditPage = () => {
     sns5: ''
   });
 
-  // 이미지 관련 상태
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [keepImageIds, setKeepImageIds] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
+  // 🎯 이미지 관련 상태 (ImageResponse 지원)
+  const [selectedImages, setSelectedImages] = useState([]); // 새로 추가할 이미지 파일들
+  const [keepImageIds, setKeepImageIds] = useState([]); // 유지할 기존 이미지 ID들
+  const [existingImages, setExistingImages] = useState([]); // 기존 이미지 정보 {id, url}
 
   useEffect(() => {
     loadUserProfile();
-    loadAreas(); // 광역 지역 로드
+    loadAreas();
   }, []);
 
   const loadUserProfile = async () => {
@@ -126,23 +126,33 @@ const ProfileEditPage = () => {
       const response = await API.get('/users/profile');
       console.log('API 응답:', response);
 
-      // API 응답에서 content 속성 사용
       if (response && response.data) {
-        console.log('응답 데이터:', response.data);
-
         const user = response.data.success ? response.data.content : response.data;
         console.log('사용자 데이터:', user);
 
         if (user && typeof user === 'object') {
           setUserInfo(user);
 
-          // 폼 데이터 초기화 - 안전한 접근
+          // 주소와 상세주소 분리
+          let mainAddress = user.address || '';
+          let detailAddress = '';
+
+          // 주소에 여러 단어가 있으면 마지막 부분을 상세주소로 분리
+          if (mainAddress.includes(' ')) {
+            const addressParts = mainAddress.split(' ');
+            if (addressParts.length > 3) { // 3개 이상의 주소 부분이 있으면
+              detailAddress = addressParts.slice(-1)[0]; // 마지막 부분을 상세주소로
+              mainAddress = addressParts.slice(0, -1).join(' '); // 나머지를 메인주소로
+            }
+          }
+
+          // 폼 데이터 초기화
           setFormData({
             name: user.name || '',
             email: user.email || '',
             phoneNum: user.phoneNum || '',
-            address: user.address || '',
-            addressDetail: user.addressDetail || '', // 상세 주소 초기화 추가
+            address: mainAddress,
+            addressDetail: detailAddress,
             birthday: user.birthday || '',
             gender: user.gender || '',
             password: '',
@@ -159,21 +169,32 @@ const ProfileEditPage = () => {
             sns5: user.sns5 || ''
           });
 
-          // 기존 이미지 처리
-          if (user.images && Array.isArray(user.images) && user.images.length > 0) {
-            const imageIds = user.images.map((img, index) => {
-              if (typeof img === 'object' && img.id) {
-                return img.id;
-              }
-              return index; // fallback to index
-            });
+          // 🎯 이미지 처리 부분 - ImageResponse 형태로 처리
+          console.log('사용자 이미지 데이터:', user.images);
 
+          if (user.images && Array.isArray(user.images) && user.images.length > 0) {
+            // ImageResponse 형태의 이미지 처리 { id, url }
+            const imageObjects = user.images.map(img => {
+              if (typeof img === 'object' && img.id && img.url) {
+                return {
+                  id: img.id,
+                  url: img.url
+                };
+              }
+              return null;
+            }).filter(img => img !== null);
+
+            setExistingImages(imageObjects);
+
+            // 모든 기존 이미지 ID를 유지 목록에 추가
+            const imageIds = imageObjects.map(img => img.id);
             setKeepImageIds(imageIds);
-            setPreviewImages(user.images.map((img, index) => ({
-              url: (typeof img === 'object') ? (img.imagePath || img.url) : img,
-              isExisting: true,
-              id: (typeof img === 'object') ? img.id : index
-            })));
+
+            console.log('처리된 이미지 객체:', imageObjects);
+            console.log('유지할 이미지 ID 목록:', imageIds);
+          } else {
+            setExistingImages([]);
+            setKeepImageIds([]);
           }
         } else {
           throw new Error('사용자 데이터가 올바르지 않습니다.');
@@ -183,21 +204,14 @@ const ProfileEditPage = () => {
       }
     } catch (error) {
       console.error('프로필 로드 오류:', error);
-      console.error('오류 상세:', error.response);
-
       const errorMessage = error.response?.data?.message || error.message || '프로필 정보를 불러오는데 실패했습니다.';
       showAlert('error', errorMessage);
-
-      // 개발 환경에서 더 자세한 정보 표시
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Full error object:', error);
-      }
     } finally {
       setLoading(false);
     }
   };
 
-  // 1단계: 광역 지역 목록 로드 (JoinForm과 동일)
+  // 1단계: 광역 지역 목록 로드
   const loadAreas = async () => {
     try {
       setAreasLoading(true);
@@ -212,7 +226,7 @@ const ProfileEditPage = () => {
     }
   };
 
-  // 2단계: 세부 지역 로드 (JoinForm과 동일)
+  // 2단계: 세부 지역 로드
   const fetchRegionsByArea = async (area) => {
     if (!area) {
       setRegions([]);
@@ -233,7 +247,7 @@ const ProfileEditPage = () => {
     }
   };
 
-  // 3단계: 지점 로드 (JoinForm과 동일)
+  // 3단계: 지점 로드
   const fetchBranchesByRegion = async (area, region) => {
     if (!area || !region) {
       setBranches([]);
@@ -254,7 +268,6 @@ const ProfileEditPage = () => {
       setBranches(response.data.content?.list || []);
     } catch (error) {
       console.error('지점 로드 실패:', error);
-      console.error('에러 상세:', error.response?.data);
       showAlert('warning', '지점 정보를 불러오는데 실패했습니다.');
       setBranches([]);
     } finally {
@@ -270,17 +283,17 @@ const ProfileEditPage = () => {
       setFormData(prev => ({
         ...prev,
         stripe: value,
-        level: 0 // 레벨 초기화
+        level: 0
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'number' ? parseInt(value) || 1 : value
+        [name]: type === 'number' ? parseInt(value) || 0 : value
       }));
     }
   };
 
-  // 주소 선택 핸들러 (AddressSearch 컴포넌트에서 호출)
+  // 주소 선택 핸들러
   const handleAddressSelect = (fullAddress, area) => {
     setFormData(prev => ({
       ...prev,
@@ -288,7 +301,7 @@ const ProfileEditPage = () => {
     }));
   };
 
-  // 광역 지역 변경 핸들러 (JoinForm과 동일)
+  // 광역 지역 변경 핸들러
   const handleAreaChange = (e) => {
     const area = e.target.value;
     console.log('🔍 선택된 광역 지역:', area);
@@ -297,26 +310,24 @@ const ProfileEditPage = () => {
     setSelectedRegion('');
     setRegions([]);
     setBranches([]);
-    // 지부 선택 초기화하지 않음 (기존 선택 유지)
 
     if (area) {
       fetchRegionsByArea(area);
     }
   };
 
-  // 세부 지역 변경 핸들러 (JoinForm과 동일)
+  // 세부 지역 변경 핸들러
   const handleRegionChange = (e) => {
     const region = e.target.value;
     setSelectedRegion(region);
     setBranches([]);
-    // 지부 선택 초기화하지 않음 (기존 선택 유지)
 
     if (region && selectedArea) {
       fetchBranchesByRegion(selectedArea, region);
     }
   };
 
-  // 지점 선택/해제 핸들러 (JoinForm과 동일)
+  // 지점 선택/해제 핸들러
   const handleBranchToggle = (branchId) => {
     setFormData(prev => ({
       ...prev,
@@ -327,114 +338,61 @@ const ProfileEditPage = () => {
   };
 
   const handleBranchRemove = (branchId) => {
-    console.log('=== 지부 삭제 시작 ===');
-    console.log('🗑️ 삭제할 지부 ID:', branchId);
-    console.log('🗑️ 삭제 전 branchIds:', formData.branchIds);
-
-    setFormData(prev => {
-      const newBranchIds = prev.branchIds.filter(id => id !== branchId);
-      console.log('🗑️ 삭제 후 branchIds:', newBranchIds);
-      return {
-        ...prev,
-        branchIds: newBranchIds
-      };
-    });
+    console.log('🗑️ 지부 삭제:', branchId);
+    setFormData(prev => ({
+      ...prev,
+      branchIds: prev.branchIds.filter(id => id !== branchId)
+    }));
   };
 
+  // 🎯 이미지 관련 핸들러들 (ImageResponse 지원)
   const handleImageChange = (e) => {
     const newFiles = Array.from(e.target.files);
-
     if (newFiles.length === 0) return;
 
-    // 기존 selectedImages와 새로운 파일들 합치기
-    const updatedSelectedImages = [...selectedImages, ...newFiles];
-    setSelectedImages(updatedSelectedImages);
+    // 총 이미지 개수 제한 체크
+    const existingCount = keepImageIds.length;
+    const currentNewCount = selectedImages.length;
+    const totalImages = existingCount + currentNewCount + newFiles.length;
 
-    // 새로운 미리보기 생성
-    const newPreviews = newFiles.map(file => ({
-      url: URL.createObjectURL(file),
-      isExisting: false,
-      file: file,
-      name: file.name // 파일명 추가
-    }));
+    if (totalImages > 10) {
+      alert(`프로필 이미지는 최대 10개까지 업로드할 수 있습니다. (현재: 기존 ${existingCount}개 + 신규 ${currentNewCount}개)`);
+      return;
+    }
 
-    // 기존 미리보기와 새로운 미리보기 합치기
-    const updatedPreviewImages = [...previewImages, ...newPreviews];
-    setPreviewImages(updatedPreviewImages);
+    // 새로운 파일들을 기존 selectedImages에 추가
+    setSelectedImages(prev => [...prev, ...newFiles]);
 
-    // 파일 input 초기화 (같은 파일을 다시 선택할 수 있도록)
+    // 파일 input 초기화
     e.target.value = '';
   };
 
-  const removeImage = (index) => {
-    const imageToRemove = previewImages[index];
-
-    if (imageToRemove.isExisting) {
-      // 기존 이미지인 경우 keepImageIds에서 제거
-      if (imageToRemove.id !== null && imageToRemove.id !== undefined) {
-        setKeepImageIds(prev => prev.filter(id => id !== imageToRemove.id));
-      } else {
-        // ID가 없는 경우 인덱스 기반으로 제거
-        const existingIndex = previewImages.slice(0, index).filter(img => img.isExisting).length;
-        setKeepImageIds(prev => prev.filter((_, i) => i !== existingIndex));
-      }
-    } else {
-      // 새로 추가된 이미지인 경우 selectedImages에서 제거
-      const newImageIndex = previewImages.slice(0, index).filter(img => !img.isExisting).length;
-      setSelectedImages(prev => prev.filter((_, i) => i !== newImageIndex));
-
-      // URL 해제 (메모리 누수 방지)
-      URL.revokeObjectURL(imageToRemove.url);
-    }
-
-    // previewImages에서 제거
-    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  // 기존 이미지 제거 핸들러
+  const handleRemoveExistingImage = (imageId) => {
+    console.log(`기존 이미지 ID ${imageId} 제거`);
+    setKeepImageIds(prev => prev.filter(id => id !== imageId));
   };
 
-  // 모든 이미지 삭제 핸들러 추가
+  // 새 이미지 제거 핸들러
+  const handleRemoveNewImage = (index) => {
+    console.log(`새 이미지 인덱스 ${index} 제거`);
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 모든 이미지 삭제 핸들러
   const removeAllImages = () => {
-    // 새로 추가된 이미지들의 URL 해제
-    previewImages.forEach(preview => {
-      if (!preview.isExisting) {
-        URL.revokeObjectURL(preview.url);
-      }
-    });
-
-    // 모든 상태 초기화
     setSelectedImages([]);
     setKeepImageIds([]);
-    setPreviewImages([]);
 
-    // 파일 input도 초기화
     const fileInput = document.getElementById('imageUpload');
     if (fileInput) fileInput.value = '';
   };
 
-// 기존 이미지만 삭제하는 핸들러 추가
-  const removeAllExistingImages = () => {
-    // 기존 이미지들만 필터링해서 제거
-    const newPreviewImages = previewImages.filter(img => !img.isExisting);
-    setPreviewImages(newPreviewImages);
-    setKeepImageIds([]);
-  };
-
-/// 새로 추가된 이미지만 삭제하는 핸들러 추가
-  const removeAllNewImages = () => {
-    // 새로 추가된 이미지들의 URL 해제
-    previewImages.forEach(preview => {
-      if (!preview.isExisting) {
-        URL.revokeObjectURL(preview.url);
-      }
-    });
-
-    // 기존 이미지들만 남기기
-    const existingPreviewImages = previewImages.filter(img => img.isExisting);
-    setPreviewImages(existingPreviewImages);
-    setSelectedImages([]);
-
-    // 파일 input 초기화
-    const fileInput = document.getElementById('imageUpload');
-    if (fileInput) fileInput.value = '';
+  // 모든 기존 이미지 복원 핸들러
+  const restoreAllExistingImages = () => {
+    const allImageIds = existingImages.map(img => img.id);
+    setKeepImageIds(allImageIds);
+    console.log('모든 기존 이미지 복원:', allImageIds);
   };
 
   const validateForm = () => {
@@ -483,10 +441,6 @@ const ProfileEditPage = () => {
     return true;
   };
 
-  // ProfileEditPage.js의 handleSubmit 함수를 다음과 같이 수정하세요:
-
-  // ProfileEditPage.js의 handleSubmit 함수 수정 부분
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -499,10 +453,10 @@ const ProfileEditPage = () => {
       // FormData 생성
       const formDataToSend = new FormData();
 
-      // ProfileUpdate 데이터 객체 생성 (Optional 제거됨)
+      // ProfileUpdate 데이터 객체 생성
       const updateData = {};
 
-      // 기본 정보 필드들 (Optional 방식 유지)
+      // 기본 정보 필드들
       if (formData.name?.trim()) updateData.name = formData.name.trim();
       if (formData.email?.trim()) updateData.email = formData.email.trim();
       if (formData.phoneNum?.trim()) updateData.phoneNum = formData.phoneNum.trim();
@@ -517,7 +471,7 @@ const ProfileEditPage = () => {
 
       if (formData.birthday) updateData.birthday = formData.birthday;
       if (formData.gender) updateData.gender = formData.gender;
-      if (formData.level && formData.level >= 0) updateData.level = formData.level;
+      if (formData.level >= 0) updateData.level = formData.level;
       if (formData.stripe) updateData.stripe = formData.stripe;
       if (formData.sns1?.trim()) updateData.sns1 = formData.sns1.trim();
       if (formData.sns2?.trim()) updateData.sns2 = formData.sns2.trim();
@@ -525,25 +479,15 @@ const ProfileEditPage = () => {
       if (formData.sns4?.trim()) updateData.sns4 = formData.sns4.trim();
       if (formData.sns5?.trim()) updateData.sns5 = formData.sns5.trim();
 
-      // 🔄 지부 변경사항 계산 (백엔드 변경에 맞춰 수정)
-      const currentIds = currentBranches.map(cb => cb.branchId); // 현재 소속 지부들
-      const newIds = formData.branchIds; // 새로 선택된 지부들
+      // 지부 변경사항 계산
+      const currentIds = userInfo?.branchUsers?.map(cb => cb.branchId) || [];
+      const newIds = formData.branchIds;
 
-      // 추가할 지부들: 새로 선택된 것 중 현재 소속되지 않은 것들
       const branchesToAdd = newIds.filter(id => !currentIds.includes(id));
-
-      // 제거할 지부들: 현재 소속된 것 중 새로 선택되지 않은 것들
       const branchesToRemove = currentIds.filter(id => !newIds.includes(id));
 
-      // 지부 변경사항 - Optional 제거, 빈 배열도 포함
-      // null 대신 빈 배열로 설정 (백엔드에서 null 체크하므로)
       updateData.branchesToAdd = branchesToAdd.length > 0 ? branchesToAdd : null;
       updateData.branchesToRemove = branchesToRemove.length > 0 ? branchesToRemove : null;
-
-      console.log('🔍 현재 지부들:', currentIds);
-      console.log('🔍 새로 선택된 지부들:', newIds);
-      console.log('🔍 추가할 지부들:', branchesToAdd);
-      console.log('🔍 제거할 지부들:', branchesToRemove);
 
       // 비밀번호가 입력된 경우에만 추가
       if (formData.password?.trim()) {
@@ -573,19 +517,7 @@ const ProfileEditPage = () => {
         formDataToSend.append('keepImageIds', keepImageIdsBlob);
       }
 
-      // FormData 내용 디버깅
-      console.log('🔍 FormData 내용:');
-      for (let [key, value] of formDataToSend.entries()) {
-        if (value instanceof Blob) {
-          // Blob인 경우 텍스트로 읽어서 출력
-          const text = await value.text();
-          console.log(`${key}:`, text);
-        } else {
-          console.log(`${key}:`, value);
-        }
-      }
-
-      // API 호출 (multipart/form-data)
+      // API 호출
       const response = await API.patch('/users/profile', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -594,29 +526,22 @@ const ProfileEditPage = () => {
 
       console.log('🔍 서버 응답:', response);
 
-      // 응답 처리
       const isSuccess = response.data?.success !== false;
 
       if (isSuccess) {
-        // 🎯 즉시 알럿 표시하고 확인을 누르면 마이페이지로 이동
         const userConfirmed = window.confirm('회원정보 수정이 완료되었습니다!\n\n확인을 누르면 마이페이지로 돌아갑니다.');
-
         if (userConfirmed) {
           window.location.href = '/mypage';
         }
-        // 사용자가 취소를 눌렀을 경우 현재 페이지에 그대로 남아있음
-
       } else {
         throw new Error(response.data?.message || '프로필 수정 실패');
       }
 
     } catch (error) {
       console.error('프로필 수정 오류:', error);
-      console.error('오류 상세:', error.response);
 
       let errorMessage = '프로필 수정 중 오류가 발생했습니다.';
 
-      // 주소 중복 에러 처리
       if (error.response?.data?.message?.includes('address') ||
           error.response?.data?.message?.includes('중복') ||
           error.response?.data?.message?.includes('Duplicate')) {
@@ -625,7 +550,6 @@ const ProfileEditPage = () => {
         errorMessage = error.response.data.message;
       }
 
-      // 오류 시에도 즉시 알럿 표시
       window.alert(errorMessage);
 
     } finally {
@@ -651,7 +575,7 @@ const ProfileEditPage = () => {
       formData.branchIds.includes(branch.id)
   );
 
-  // 현재 소속 지부 정보 (userInfo에서)
+  // 현재 소속 지부 정보
   const currentBranches = userInfo?.branchUsers || [];
 
   // 로딩 중일 때
@@ -809,8 +733,7 @@ const ProfileEditPage = () => {
                       onAddressSelect={handleAddressSelect}
                       selectedAddress={formData.address}
                   />
-                  <p className="input-help-text">* 주소를 변경하시려면 주소 검색 버튼을
-                    클릭하세요.</p>
+                  <p className="input-help-text">* 주소를 변경하시려면 주소 검색 버튼을 클릭하세요.</p>
                 </div>
               </div>
 
@@ -843,9 +766,6 @@ const ProfileEditPage = () => {
                     <option value="MALE">남성</option>
                     <option value="FEMALE">여성</option>
                   </select>
-                </div>
-                <div className="form-group">
-                  {/* 빈 공간 */}
                 </div>
               </div>
             </div>
@@ -935,7 +855,7 @@ const ProfileEditPage = () => {
               </div>
             </div>
 
-            {/* 3단계 지부 선택 섹션 (JoinForm과 동일) */}
+            {/* 3단계 지부 선택 섹션 */}
             <div className="branch-selection-section">
               <h3 className="section-title">지부 선택 *</h3>
               <p className="section-description">
@@ -973,8 +893,7 @@ const ProfileEditPage = () => {
                     </label>
                     {regionsLoading ? (
                         <div className="loading-container">
-                          <span
-                              className="loading-text">세부 지역 목록을 불러오는 중...</span>
+                          <span className="loading-text">세부 지역 목록을 불러오는 중...</span>
                         </div>
                     ) : regions.length === 0 ? (
                         <div className="empty-state">
@@ -988,8 +907,7 @@ const ProfileEditPage = () => {
                         >
                           <option value="">세부 지역을 선택하세요</option>
                           {regions.map(region => (
-                              <option key={region}
-                                      value={region}>{region}</option>
+                              <option key={region} value={region}>{region}</option>
                           ))}
                         </select>
                     )}
@@ -1019,21 +937,17 @@ const ProfileEditPage = () => {
                               <label key={branch.id} className="branch-card">
                                 <input
                                     type="checkbox"
-                                    checked={formData.branchIds.includes(
-                                        branch.id)}
-                                    onChange={() => handleBranchToggle(
-                                        branch.id)}
+                                    checked={formData.branchIds.includes(branch.id)}
+                                    onChange={() => handleBranchToggle(branch.id)}
                                     className="branch-card-checkbox"
                                 />
                                 <div className="branch-card-content">
                                   <div className="branch-name">
                                     {branch.area} {branch.region}점
                                   </div>
-                                  <div
-                                      className="branch-address">{branch.address}</div>
+                                  <div className="branch-address">{branch.address}</div>
                                   {branch.content && (
-                                      <div
-                                          className="branch-description">{branch.content}</div>
+                                      <div className="branch-description">{branch.content}</div>
                                   )}
                                 </div>
                               </label>
@@ -1048,73 +962,40 @@ const ProfileEditPage = () => {
                             {selectedBranches.length}개 지점 선택됨
                           </p>
                           <div className="summary-list">
-                            {selectedBranches.map(
-                                branch => `${branch.area} ${branch.region}점`).join(
-                                ', ')}
+                            {selectedBranches.map(branch => `${branch.area} ${branch.region}점`).join(', ')}
                           </div>
                         </div>
                     )}
                   </div>
               )}
 
-              {/* 현재 선택된 모든 지부 표시 - 간단 수정 버전 */}
+              {/* 현재 선택된 모든 지부 표시 */}
               {formData.branchIds.length > 0 && (
                   <div className="form-section">
-                    <label className="step-label">선택된 지부 목록
-                      ({formData.branchIds.length}개)</label>
+                    <label className="step-label">선택된 지부 목록 ({formData.branchIds.length}개)</label>
                     <div className="selected-all-branches">
                       {formData.branchIds.map(branchId => {
                         const branch = branches.find(b => b.id === branchId);
-                        const currentBranch = currentBranches.find(
-                            cb => cb.branchId === branchId);
+                        const currentBranch = currentBranches.find(cb => cb.branchId === branchId);
 
                         const displayName = branch
                             ? `${branch.area} ${branch.region}점`
-                            : (currentBranch ? currentBranch.region
-                                : `지부 ID: ${branchId}`);
+                            : (currentBranch ? currentBranch.region : `지부 ID: ${branchId}`);
 
                         return (
                             <div key={branchId} className="selected-branch-tag">
-                              <span
-                                  className="branch-tag-name">{displayName}</span>
+                              <span className="branch-tag-name">{displayName}</span>
                               <button
                                   type="button"
                                   onClick={() => handleBranchRemove(branchId)}
                                   className="branch-tag-remove"
                                   title="제거"
-                                  style={{
-                                    marginLeft: '8px',
-                                    padding: '2px 6px',
-                                    background: '#ef4444',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                  }}
                               >
                                 ✕
                               </button>
                             </div>
                         );
                       })}
-                    </div>
-
-                    {/* 실시간 상태 표시 */}
-                    <div style={{
-                      marginTop: '10px',
-                      padding: '8px',
-                      background: '#f0f9ff',
-                      border: '1px solid #0ea5e9',
-                      borderRadius: '4px',
-                      fontSize: '12px'
-                    }}>
-                      <strong>🔍 현재 상태:</strong><br/>
-                      - 선택된 지부 IDs: {JSON.stringify(formData.branchIds)}<br/>
-                      - 원래 지부 IDs: {JSON.stringify(
-                        currentBranches.map(cb => cb.branchId))}<br/>
-                      - 변경 여부: {JSON.stringify(formData.branchIds)
-                    !== JSON.stringify(currentBranches.map(cb => cb.branchId))
-                        ? '✅ 변경됨' : '❌ 변경 안됨'}
                     </div>
                   </div>
               )}
@@ -1195,14 +1076,15 @@ const ProfileEditPage = () => {
               </div>
             </div>
 
-            {/* 이미지 업로드 섹션 */}
+            {/* 🎯 이미지 업로드 섹션 (ImageResponse 지원) */}
             <div className="form-section">
               <h3 className="section-title">프로필 이미지</h3>
               <p className="section-description">
-                프로필 이미지를 업로드하세요. (최대 5MB, JPG/PNG 형식)
+                프로필 이미지를 업로드하세요. (최대 10개, 각각 5MB 이하, JPG/PNG 형식)
               </p>
 
               <div className="image-upload-section">
+                {/* 숨겨진 파일 input */}
                 <input
                     type="file"
                     id="imageUpload"
@@ -1212,60 +1094,174 @@ const ProfileEditPage = () => {
                     className="image-input"
                     style={{display: 'none'}}
                 />
-                <label htmlFor="imageUpload" className="image-upload-button">
-                  📷 이미지 추가하기
-                </label>
 
-                {/* 이미지 요약 정보 */}
-                {previewImages.length > 0 && (
-                    <div className="image-summary">
-          <span className="summary-text">
-            총 {previewImages.length}개 이미지
-            (기존: {previewImages.filter(img => img.isExisting).length}개,
-             새로 추가: {previewImages.filter(img => !img.isExisting).length}개)
-          </span>
-                    </div>
-                )}
+                {/* 이미지 관리 버튼들 */}
+                <div className="image-control-buttons">
+                  <label htmlFor="imageUpload" className="image-upload-button">
+                    📷 새 이미지 추가
+                  </label>
 
-                {/* 이미지 미리보기 그리드 */}
-                {previewImages.length > 0 && (
-                    <div className="image-preview-grid">
-                      {previewImages.map((image, index) => (
-                          <div key={index} className="image-preview-item">
-                            <img src={image.url} alt={`미리보기 ${index + 1}`}/>
-                            <button
-                                type="button"
-                                onClick={() => removeImage(index)}
-                                className="remove-image-button"
-                                title="이미지 삭제"
-                            >
-                              ✕
-                            </button>
-                            {image.isExisting && (
-                                <span className="existing-image-badge">기존</span>
-                            )}
-                            {!image.isExisting && (
-                                <span className="new-image-badge">새 이미지</span>
-                            )}
-                            {image.name && (
-                                <div className="image-name-overlay"
-                                     title={image.name}>
-                                  {image.name}
+                  <button
+                      type="button"
+                      onClick={restoreAllExistingImages}
+                      className="image-control-button restore-button"
+                      disabled={existingImages.length === 0}
+                  >
+                    🔄 기존 이미지 모두 복원
+                  </button>
+
+                  <button
+                      type="button"
+                      onClick={removeAllImages}
+                      className="image-control-button remove-all-button"
+                  >
+                    🗑️ 모든 이미지 삭제
+                  </button>
+                </div>
+
+                {/* 이미지 현황 요약 */}
+                <div className="image-summary">
+                  <div className="summary-stats">
+                    <span className="stat-item">
+                      <strong>기존 이미지:</strong> {keepImageIds.length}/{existingImages.length}개
+                    </span>
+                    <span className="stat-item">
+                      <strong>새 이미지:</strong> {selectedImages.length}개
+                    </span>
+                    <span className="stat-item total">
+                      <strong>총 이미지:</strong> {keepImageIds.length + selectedImages.length}개
+                    </span>
+                  </div>
+
+                  {(keepImageIds.length + selectedImages.length > 10) && (
+                      <div className="warning-message">
+                        ⚠️ 이미지는 최대 10개까지만 업로드할 수 있습니다!
+                      </div>
+                  )}
+                </div>
+
+                {/* 기존 이미지 관리 섹션 */}
+                {existingImages.length > 0 && (
+                    <div className="existing-images-section">
+                      <h4 className="subsection-title">
+                        기존 이미지 ({existingImages.length}개)
+                      </h4>
+                      <div className="image-grid">
+                        {existingImages.map((image, index) => (
+                            <div key={`existing-${image.id}`} className="image-item existing">
+                              <div className="image-wrapper">
+                                <img
+                                    src={image.url}
+                                    alt={`기존 이미지 ${index + 1}`}
+                                    onError={(e) => {
+                                      console.error('이미지 로드 실패:', image.url);
+                                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyngCDroZzrk5zsmKTrpJw8L3RleHQ+PC9zdmc+';
+                                    }}
+                                />
+
+                                {/* 이미지 상태 표시 */}
+                                <div className="image-status">
+                                  <span className="image-id-badge">ID: {image.id}</span>
+                                  {keepImageIds.includes(image.id) ? (
+                                      <span className="status-badge keep">유지</span>
+                                  ) : (
+                                      <span className="status-badge remove">삭제 예정</span>
+                                  )}
                                 </div>
-                            )}
-                          </div>
-                      ))}
+
+                                {/* 이미지 제어 버튼 */}
+                                <div className="image-controls">
+                                  {keepImageIds.includes(image.id) ? (
+                                      <button
+                                          type="button"
+                                          className="control-button remove-button"
+                                          onClick={() => handleRemoveExistingImage(image.id)}
+                                          title="이 이미지 삭제"
+                                      >
+                                        ✕
+                                      </button>
+                                  ) : (
+                                      <button
+                                          type="button"
+                                          className="control-button restore-button"
+                                          onClick={() => setKeepImageIds(prev => [...prev, image.id])}
+                                          title="이 이미지 복원"
+                                      >
+                                        ↩️
+                                      </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                        ))}
+                      </div>
                     </div>
                 )}
 
-                {/* 추가 업로드 안내 */}
-                {previewImages.length > 0 && (
-                    <div className="upload-help">
-                      <p className="help-text">
-                        💡 더 많은 이미지를 추가하려면 위의 "이미지 추가하기" 버튼을 다시 클릭하세요.
-                      </p>
+                {/* 새 이미지 섹션 */}
+                {selectedImages.length > 0 && (
+                    <div className="new-images-section">
+                      <h4 className="subsection-title">
+                        새로 추가할 이미지 ({selectedImages.length}개)
+                      </h4>
+                      <div className="image-grid">
+                        {selectedImages.map((file, index) => (
+                            <div key={`new-${index}`} className="image-item new">
+                              <div className="image-wrapper">
+                                <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`새 이미지 ${index + 1}`}
+                                />
+
+                                {/* 새 이미지 표시 */}
+                                <div className="image-status">
+                                  <span className="status-badge new">신규</span>
+                                </div>
+
+                                {/* 파일명 표시 */}
+                                <div className="image-filename" title={file.name}>
+                                  {file.name.length > 15 ? `${file.name.substring(0, 15)}...` : file.name}
+                                </div>
+
+                                {/* 제거 버튼 */}
+                                <div className="image-controls">
+                                  <button
+                                      type="button"
+                                      className="control-button remove-button"
+                                      onClick={() => handleRemoveNewImage(index)}
+                                      title="이 이미지 제거"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                        ))}
+                      </div>
                     </div>
                 )}
+
+                {/* 이미지가 없을 때 안내 */}
+                {existingImages.length === 0 && selectedImages.length === 0 && (
+                    <div className="no-images-placeholder">
+                      <div className="placeholder-content">
+                        <div className="placeholder-icon">📷</div>
+                        <p className="placeholder-text">등록된 프로필 이미지가 없습니다.</p>
+                        <p className="placeholder-subtext">위의 "새 이미지 추가" 버튼을 클릭하여 이미지를 업로드하세요.</p>
+                      </div>
+                    </div>
+                )}
+
+                {/* 업로드 안내 */}
+                <div className="upload-guidelines">
+                  <h5>📋 이미지 업로드 안내</h5>
+                  <ul className="guidelines-list">
+                    <li>지원 형식: JPG, PNG, GIF</li>
+                    <li>최대 파일 크기: 5MB</li>
+                    <li>최대 이미지 개수: 10개</li>
+                    <li>기존 이미지를 삭제하고 새로운 이미지를 추가할 수 있습니다</li>
+                  </ul>
+                </div>
               </div>
             </div>
 
