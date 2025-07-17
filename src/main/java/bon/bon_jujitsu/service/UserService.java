@@ -176,7 +176,7 @@ public class UserService {
   @Transactional(readOnly = true)
   @Cacheable(value = "userProfile", key = "#userId")
   public UserResponse getProfile(Long userId) {
-    User profile = userRepository.findByIdWithBranchUsersAndIsDeletedFalse(userId)
+    User profile = userRepository.findByIdWithBranchUsersAndImagesAndIsDeletedFalse(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
     return UserResponse.fromEntity(profile);
   }
