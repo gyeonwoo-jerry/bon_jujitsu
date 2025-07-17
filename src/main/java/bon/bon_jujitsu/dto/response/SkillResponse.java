@@ -15,7 +15,7 @@ public record SkillResponse(
     String content,
     String author,
     Long authorId,
-    List<MediaResponse> images,
+    List<MediaResponse> media,
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
@@ -25,8 +25,10 @@ public record SkillResponse(
     // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
     List<MediaResponse> mediaRespons = postMedia.stream()
         .map(postImage -> MediaResponse.builder()
-            .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getFilePath()) // 실제 이미지 경로 사용
+            .id(postImage.getId())
+            .url(postImage.getFilePath())
+            .originalFileName(postImage.getOriginalFileName())
+            .mediaType(postImage.getMediaType().name())
             .build())
         .collect(Collectors.toList());
 
@@ -57,7 +59,7 @@ public record SkillResponse(
         .content(skill.getContent())
         .author(authorName)
         .authorId(authorId)
-        .images(mediaRespons)
+        .media(mediaRespons)
         .viewCount(skill.getViewCount())
         .createdAt(skill.getCreatedAt())
         .modifiedAT(skill.getModifiedAt())

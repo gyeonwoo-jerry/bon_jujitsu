@@ -46,9 +46,4 @@ public class PostMedia extends Timestamped {
     public enum MediaType {
         IMAGE, VIDEO
     }
-
-    // 기존 PostImage와의 호환성을 위한 메서드
-    public String getImagePath() {
-        return this.filePath;
-    }
 }

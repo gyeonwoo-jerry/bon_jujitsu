@@ -16,7 +16,7 @@ public record SponsorResponse(
     String author,
     Long authorId,
     String url,
-    List<MediaResponse> images,
+    List<MediaResponse> media,
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
@@ -25,8 +25,10 @@ public record SponsorResponse(
     // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
     List<MediaResponse> mediaRespons = postMedia.stream()
         .map(postImage -> MediaResponse.builder()
-            .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getFilePath()) // 실제 이미지 경로 사용
+            .id(postImage.getId())
+            .url(postImage.getFilePath())
+            .originalFileName(postImage.getOriginalFileName())
+            .mediaType(postImage.getMediaType().name())
             .build())
         .collect(Collectors.toList());
 
@@ -57,7 +59,7 @@ public record SponsorResponse(
         .author(authorName)
         .authorId(authorId)
         .url(sponsor.getUrl())
-        .images(mediaRespons)
+        .media(mediaRespons)
         .viewCount(sponsor.getViewCount())
         .createdAt(sponsor.getCreatedAt())
         .modifiedAT(sponsor.getModifiedAt())

@@ -16,7 +16,7 @@ public record QnAResponse(
         String authorName,        // 작성자 이름 (회원은 닉네임, 비회원은 입력한 이름)
         Long authorId,
         boolean isGuestPost,     // 비회원 작성글 여부
-        List<MediaResponse> images,
+        List<MediaResponse> media,
         Long viewCount,
         boolean hasAnswer,
         LocalDateTime createdAt,
@@ -25,11 +25,13 @@ public record QnAResponse(
 
     public static QnAResponse from(QnA qna, List<PostMedia> postMedia, boolean hasAnswer) {
         List<MediaResponse> mediaRespons = postMedia.stream()
-                .map(postImage -> MediaResponse.builder()
-                        .id(postImage.getId())
-                        .url(postImage.getFilePath())
-                        .build())
-                .collect(Collectors.toList());
+            .map(postImage -> MediaResponse.builder()
+                .id(postImage.getId())
+                .url(postImage.getFilePath())
+                .originalFileName(postImage.getOriginalFileName())
+                .mediaType(postImage.getMediaType().name())
+                .build())
+            .collect(Collectors.toList());
 
         // 작성자 이름 결정
         String authorName;
@@ -56,7 +58,7 @@ public record QnAResponse(
                 .authorName(authorName)
                 .authorId(authorId)
                 .isGuestPost(isGuestPost)
-                .images(mediaRespons)
+                .media(mediaRespons)
                 .viewCount(qna.getViewCount())
                 .hasAnswer(hasAnswer)
                 .createdAt(qna.getCreatedAt())

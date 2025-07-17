@@ -14,12 +14,12 @@ public record NoticeResponse(
     String title,
     String content,
     String region,
-    String author,        // name -> author로 필드명 변경 (BoardResponse와 일치)
-    Long authorId,        // String -> Long으로 타입 변경
-    List<MediaResponse> images,
+    String author,
+    Long authorId,
+    List<MediaResponse> media,
     Long viewCount,
     LocalDateTime createdAt,
-    LocalDateTime modifiedAt  // modifiedAT -> modifiedAt으로 오타 수정
+    LocalDateTime modifiedAt
 ) {
 
   public static NoticeResponse fromEntity(Notice notice, List<PostMedia> postMedia) {
@@ -27,7 +27,9 @@ public record NoticeResponse(
     List<MediaResponse> mediaResponse = postMedia.stream()
         .map(postImage -> MediaResponse.builder()
             .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getFilePath()) // 실제 이미지 경로 사용
+            .url(postImage.getFilePath()) // ✅ getImagePath() 사용 (PostMedia에 정의된 메소드)
+            .originalFileName(postImage.getOriginalFileName())
+            .mediaType(postImage.getMediaType().name())
             .build())
         .collect(Collectors.toList());
 
@@ -65,7 +67,7 @@ public record NoticeResponse(
         .region(region)
         .author(authorName)     // name -> author로 변경
         .authorId(authorId)     // 추가된 필드
-        .images(mediaResponse)
+        .media(mediaResponse)
         .viewCount(notice.getViewCount())
         .createdAt(notice.getCreatedAt())
         .modifiedAt(notice.getModifiedAt())
