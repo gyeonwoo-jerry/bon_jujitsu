@@ -1,16 +1,15 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.News;
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
-import bon.bon_jujitsu.domain.UserRole;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.NewsRequest;
 import bon.bon_jujitsu.dto.response.NewsResponse;
 import bon.bon_jujitsu.dto.update.NewsUpdate;
 import bon.bon_jujitsu.repository.NewsRepository;
-import bon.bon_jujitsu.repository.PostImageRepository;
+import bon.bon_jujitsu.repository.PostMediaRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -36,14 +35,14 @@ public class NewsService {
 
   private final NewsRepository newsRepository;
   private final UserRepository userRepository;
-  private final PostImageService postImageService;
-  private final PostImageRepository postImageRepository;
+  private final PostMediaService postMediaService;
+  private final PostMediaRepository postMediaRepository;
 
   private static final String VIEWED_NEWS_PREFIX = "viewed_news_";
   private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
 
   @CacheEvict(value = "news", allEntries = true)
-  public void createNews(Long userId, NewsRequest request, List<MultipartFile> images) {
+  public void createNews(Long userId, NewsRequest request, List<MultipartFile> files) {
     User user = validateUser(userId);
     validateNewsPermission(user);
 
@@ -55,8 +54,8 @@ public class NewsService {
 
     newsRepository.save(news);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.uploadImage(news.getId(), PostType.NEWS, images);
+    if (files != null && !files.isEmpty()) {
+      postMediaService.uploadMedia(news.getId(), PostType.NEWS, files);
     }
   }
 
@@ -75,12 +74,12 @@ public class NewsService {
         .map(News::getId)
         .collect(Collectors.toSet());
 
-    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(newsIds);
+    Map<Long, List<PostMedia>> fileMap = loadMediaInBatch(newsIds);
 
     // NewsResponse 생성
     return PageResponse.fromPage(newsPage.map(news -> {
-      List<PostImage> images = imageMap.getOrDefault(news.getId(), Collections.emptyList());
-      return NewsResponse.fromEntity(news, images);
+      List<PostMedia> files = fileMap.getOrDefault(news.getId(), Collections.emptyList());
+      return NewsResponse.fromEntity(news, files);
     }));
   }
 
@@ -94,14 +93,14 @@ public class NewsService {
     handleViewCountIncrease(news, newsId, request);
 
     // 이미지 조회
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId());
+    List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.NEWS, news.getId());
 
-    return NewsResponse.fromEntity(news, postImages);
+    return NewsResponse.fromEntity(news, postMedia);
   }
 
   @CacheEvict(value = "news", allEntries = true)
   public void updateNews(NewsUpdate update, Long userId, Long newsId,
-      List<MultipartFile> images, List<Long> keepImageIds) {
+      List<MultipartFile> files , List<Long> keepMediaIds) {
     User user = validateUser(userId);
     News news = validateNews(newsId);
 
@@ -110,8 +109,8 @@ public class NewsService {
 
     news.updateNews(update);
 
-    if (images != null || keepImageIds != null) {
-      postImageService.updateImages(news.getId(), PostType.NEWS, images, keepImageIds);
+    if (files  != null || keepMediaIds != null) {
+      postMediaService.updateMedia(news.getId(), PostType.NEWS, files , keepMediaIds);
     }
   }
 
@@ -128,14 +127,14 @@ public class NewsService {
 
   // === Private Helper Methods ===
 
-  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> newsIds) {
+  private Map<Long, List<PostMedia>> loadMediaInBatch(Set<Long> newsIds) {
     if (newsIds.isEmpty()) {
       return Collections.emptyMap();
     }
 
-    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.NEWS, newsIds);
-    return allImages.stream()
-        .collect(Collectors.groupingBy(PostImage::getPostId));
+    List<PostMedia> allMedia  = postMediaRepository.findByPostTypeAndPostIdIn(PostType.NEWS, newsIds);
+    return allMedia .stream()
+        .collect(Collectors.groupingBy(PostMedia::getPostId));
   }
 
   private void handleViewCountIncrease(News news, Long newsId, HttpServletRequest request) {

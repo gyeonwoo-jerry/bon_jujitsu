@@ -1,7 +1,7 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Notice;
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import java.util.stream.Collectors;
 import lombok.Builder;
 
@@ -16,16 +16,16 @@ public record NoticeResponse(
     String region,
     String author,        // name -> author로 필드명 변경 (BoardResponse와 일치)
     Long authorId,        // String -> Long으로 타입 변경
-    List<ImageResponse> images,
+    List<MediaResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt  // modifiedAT -> modifiedAt으로 오타 수정
 ) {
 
-  public static NoticeResponse fromEntity(Notice notice, List<PostImage> postImages) {
-    // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
-    List<ImageResponse> imageResponses = postImages.stream()
-        .map(postImage -> ImageResponse.builder()
+  public static NoticeResponse fromEntity(Notice notice, List<PostMedia> postMedia) {
+    // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
+    List<MediaResponse> mediaRespons = postMedia.stream()
+        .map(postImage -> MediaResponse.builder()
             .id(postImage.getId()) // 실제 이미지 ID 사용
             .url(postImage.getImagePath()) // 실제 이미지 경로 사용
             .build())
@@ -65,7 +65,7 @@ public record NoticeResponse(
         .region(region)
         .author(authorName)     // name -> author로 변경
         .authorId(authorId)     // 추가된 필드
-        .images(imageResponses)
+        .images(mediaRespons)
         .viewCount(notice.getViewCount())
         .createdAt(notice.getCreatedAt())
         .modifiedAt(notice.getModifiedAt())

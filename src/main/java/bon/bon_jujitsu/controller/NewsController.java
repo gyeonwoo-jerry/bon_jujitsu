@@ -35,9 +35,9 @@ public class NewsController {
   public ApiResponse<Void> createNews(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid NewsRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "files", required = false) List<MultipartFile> files
   ) {
-    newsService.createNews(userId, request, images);
+    newsService.createNews(userId, request, files);
     return ApiResponse.success("뉴스 생성 완료", null);
   }
 
@@ -64,10 +64,10 @@ public class NewsController {
       @RequestPart("update") @Valid NewsUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("newsId") Long newsId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
-      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
+      @RequestPart(value = "keepfileIds", required = false) List<Long> keepfileIds
   ) {
-    newsService.updateNews(update, userId, newsId, images, keepImageIds);
+    newsService.updateNews(update, userId, newsId, files, keepfileIds );
     return ApiResponse.success("뉴스 수정 성공", null);
   }
 

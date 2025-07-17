@@ -1,6 +1,6 @@
 package bon.bon_jujitsu.service;
 
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.Sponsor;
 import bon.bon_jujitsu.domain.User;
@@ -9,7 +9,7 @@ import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SponsorRequest;
 import bon.bon_jujitsu.dto.response.SponsorResponse;
 import bon.bon_jujitsu.dto.update.SponsorUpdate;
-import bon.bon_jujitsu.repository.PostImageRepository;
+import bon.bon_jujitsu.repository.PostMediaRepository;
 import bon.bon_jujitsu.repository.SponsorRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,8 +38,8 @@ public class SponsorService {
 
   private final SponsorRepository sponsorRepository;
   private final UserRepository userRepository;
-  private final PostImageService postImageService;
-  private final PostImageRepository postImageRepository;
+  private final PostMediaService postMediaService;
+  private final PostMediaRepository postMediaRepository;
 
   private static final String VIEWED_SPONSOR_PREFIX = "viewed_sponsor_";
   private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
@@ -48,7 +48,7 @@ public class SponsorService {
    * 스폰서 게시물 생성
    */
   @CacheEvict(value = "sponsors", allEntries = true)
-  public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> images) {
+  public void createSponsor(Long userId, SponsorRequest request, List<MultipartFile> files) {
     User user = findUserById(userId);
 
     // 권한 검증 (관장 또는 관리자만 작성 가능)
@@ -63,8 +63,8 @@ public class SponsorService {
 
     sponsorRepository.save(sponsor);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.uploadImage(sponsor.getId(), PostType.SPONSOR, images);
+    if (files != null && !files.isEmpty()) {
+      postMediaService.uploadMedia(sponsor.getId(), PostType.SPONSOR, files);
     }
   }
 
@@ -90,12 +90,12 @@ public class SponsorService {
         .map(Sponsor::getId)
         .collect(Collectors.toSet());
 
-    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(sponsorIds);
+    Map<Long, List<PostMedia>> fileMap = loadFilesInBatch(sponsorIds);
 
     // SponsorResponse 생성
     return PageResponse.fromPage(sponsors.map(sponsor -> {
-      List<PostImage> images = imageMap.getOrDefault(sponsor.getId(), Collections.emptyList());
-      return SponsorResponse.fromEntity(sponsor, images);
+      List<PostMedia> files = fileMap.getOrDefault(sponsor.getId(), Collections.emptyList());
+      return SponsorResponse.fromEntity(sponsor, files);
     }));
   }
 
@@ -113,9 +113,9 @@ public class SponsorService {
     handleViewCountIncrease(sponsor, sponsorId, request);
 
     // 이미지 조회
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId());
+    List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.SPONSOR, sponsor.getId());
 
-    return SponsorResponse.fromEntity(sponsor, postImages);
+    return SponsorResponse.fromEntity(sponsor, postMedia);
   }
 
   /**
@@ -123,7 +123,7 @@ public class SponsorService {
    */
   @CacheEvict(value = {"sponsors", "sponsor"}, allEntries = true)
   public void updateSponsor(SponsorUpdate update, Long userId, Long sponsorId,
-      List<MultipartFile> images, List<Long> keepImageIds) {
+      List<MultipartFile> files, List<Long> keepfileIds) {
     User user = findUserById(userId);
     Sponsor sponsor = findSponsorById(sponsorId);
 
@@ -132,8 +132,8 @@ public class SponsorService {
 
     sponsor.updateSponsor(update);
 
-    if (images != null || keepImageIds != null) {
-      postImageService.updateImages(sponsor.getId(), PostType.SPONSOR, images, keepImageIds);
+    if (files != null || keepfileIds != null) {
+      postMediaService.updateMedia(sponsor.getId(), PostType.SPONSOR, files, keepfileIds);
     }
   }
 
@@ -206,10 +206,10 @@ public class SponsorService {
     }
   }
 
-  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> sponsorIds) {
-    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.SPONSOR, sponsorIds);
-    return allImages.stream()
-        .collect(Collectors.groupingBy(PostImage::getPostId));
+  private Map<Long, List<PostMedia>> loadFilesInBatch(Set<Long> sponsorIds) {
+    List<PostMedia> allFiles = postMediaRepository.findByPostTypeAndPostIdIn(PostType.SPONSOR, sponsorIds);
+    return allFiles.stream()
+        .collect(Collectors.groupingBy(PostMedia::getPostId));
   }
 
   private void handleViewCountIncrease(Sponsor sponsor, Long sponsorId, HttpServletRequest request) {

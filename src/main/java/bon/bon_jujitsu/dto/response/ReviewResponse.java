@@ -1,8 +1,6 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Review;
-import bon.bon_jujitsu.domain.ReviewImage;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +15,7 @@ public record ReviewResponse (
     String name,
     Long itemId,
     Long orderId,
-    List<String> images,
+    List<ImageResponse> images,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt,
     List<ReviewResponse> childReviews
@@ -37,7 +35,9 @@ public record ReviewResponse (
         review.getUser().getName(),
         review.getItem().getId(),
         review.getOrder() != null ? review.getOrder().getId() : null,
-        review.getImages().stream().map(ReviewImage::getImagePath).toList(),
+        review.getImages().stream()
+            .map(img -> new ImageResponse(img.getId(), img.getImagePath()))
+            .toList(),
         review.getCreatedAt(),
         review.getModifiedAt(),
         new ArrayList<>(childReviews) // 변경 가능한 리스트로 초기화

@@ -33,10 +33,10 @@ public class NoticeController {
   public ApiResponse<Void> createNotice(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") NoticeRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
       @PathVariable("branchId") Long branchId
   ) {
-    noticeService.createNotice(userId, request, images, branchId);
+    noticeService.createNotice(userId, request, files, branchId);
     return ApiResponse.success("공지사항 생성 완료", null);
   }
 
@@ -63,10 +63,10 @@ public class NoticeController {
       @Valid @RequestPart("update") NoticeUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("noticeId") Long noticeId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
-      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
+      @RequestPart(value = "keepfileIds", required = false) List<Long> keepfileIds
   ) {
-    noticeService.updateNotice(update, userId, noticeId, images, keepImageIds);
+    noticeService.updateNotice(update, userId, noticeId, files, keepfileIds);
     return ApiResponse.success("공지사항 수정 완료", null);
   }
 

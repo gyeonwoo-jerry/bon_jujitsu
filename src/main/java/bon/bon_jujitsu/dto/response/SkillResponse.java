@@ -1,6 +1,6 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.Skill;
 import java.util.stream.Collectors;
 import lombok.Builder;
@@ -15,16 +15,16 @@ public record SkillResponse(
     String content,
     String author,
     Long authorId,
-    List<ImageResponse> images,
+    List<MediaResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
 
-  public static SkillResponse fromEntity(Skill skill, List<PostImage> postImages) {
-    // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
-    List<ImageResponse> imageResponses = postImages.stream()
-        .map(postImage -> ImageResponse.builder()
+  public static SkillResponse fromEntity(Skill skill, List<PostMedia> postMedia) {
+    // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
+    List<MediaResponse> mediaRespons = postMedia.stream()
+        .map(postImage -> MediaResponse.builder()
             .id(postImage.getId()) // 실제 이미지 ID 사용
             .url(postImage.getImagePath()) // 실제 이미지 경로 사용
             .build())
@@ -57,7 +57,7 @@ public record SkillResponse(
         .content(skill.getContent())
         .author(authorName)
         .authorId(authorId)
-        .images(imageResponses)
+        .images(mediaRespons)
         .viewCount(skill.getViewCount())
         .createdAt(skill.getCreatedAt())
         .modifiedAT(skill.getModifiedAt())

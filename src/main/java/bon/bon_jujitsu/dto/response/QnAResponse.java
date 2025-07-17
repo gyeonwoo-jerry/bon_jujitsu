@@ -1,6 +1,6 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.QnA;
 import lombok.Builder;
 
@@ -16,16 +16,16 @@ public record QnAResponse(
         String authorName,        // 작성자 이름 (회원은 닉네임, 비회원은 입력한 이름)
         Long authorId,
         boolean isGuestPost,     // 비회원 작성글 여부
-        List<ImageResponse> images,
+        List<MediaResponse> images,
         Long viewCount,
         boolean hasAnswer,
         LocalDateTime createdAt,
         LocalDateTime modifiedAT
 ) {
 
-    public static QnAResponse from(QnA qna, List<PostImage> postImages, boolean hasAnswer) {
-        List<ImageResponse> imageResponses = postImages.stream()
-                .map(postImage -> ImageResponse.builder()
+    public static QnAResponse from(QnA qna, List<PostMedia> postMedia, boolean hasAnswer) {
+        List<MediaResponse> mediaRespons = postMedia.stream()
+                .map(postImage -> MediaResponse.builder()
                         .id(postImage.getId())
                         .url(postImage.getImagePath())
                         .build())
@@ -56,7 +56,7 @@ public record QnAResponse(
                 .authorName(authorName)
                 .authorId(authorId)
                 .isGuestPost(isGuestPost)
-                .images(imageResponses)
+                .images(mediaRespons)
                 .viewCount(qna.getViewCount())
                 .hasAnswer(hasAnswer)
                 .createdAt(qna.getCreatedAt())

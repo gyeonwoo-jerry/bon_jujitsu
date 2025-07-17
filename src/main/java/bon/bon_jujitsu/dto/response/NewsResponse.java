@@ -1,7 +1,7 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.News;
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import java.util.stream.Collectors;
 import lombok.Builder;
 
@@ -15,18 +15,20 @@ public record NewsResponse(
     String content,
     String author,
     Long authorId,
-    List<ImageResponse> images,
+    List<MediaResponse> media, // images → media로 변경
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
 
-  public static NewsResponse fromEntity(News news, List<PostImage> postImages) {
-    // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
-    List<ImageResponse> imageResponses = postImages.stream()
-        .map(postImage -> ImageResponse.builder()
-            .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getImagePath()) // 실제 이미지 경로 사용
+  public static NewsResponse fromEntity(News news, List<PostMedia> postMedia) {
+    // PostMedia 엔티티를 MediaResponse로 변환
+    List<MediaResponse> mediaResponses = postMedia.stream()
+        .map(media -> MediaResponse.builder()
+            .id(media.getId())
+            .url(media.getFilePath())
+            .originalFileName(media.getOriginalFileName())
+            .mediaType(media.getMediaType().name()) // IMAGE 또는 VIDEO
             .build())
         .collect(Collectors.toList());
 
@@ -56,7 +58,7 @@ public record NewsResponse(
         .content(news.getContent())
         .author(authorName)
         .authorId(authorId)
-        .images(imageResponses)
+        .media(mediaResponses) // images → media로 변경
         .viewCount(news.getViewCount())
         .createdAt(news.getCreatedAt())
         .modifiedAT(news.getModifiedAt())

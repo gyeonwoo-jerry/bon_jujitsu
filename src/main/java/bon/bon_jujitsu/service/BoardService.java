@@ -2,7 +2,7 @@ package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.domain.Board;
 import bon.bon_jujitsu.domain.Branch;
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.common.PageResponse;
@@ -12,7 +12,7 @@ import bon.bon_jujitsu.dto.update.BoardUpdate;
 import bon.bon_jujitsu.repository.BoardRepository;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.CommentRepository;
-import bon.bon_jujitsu.repository.PostImageRepository;
+import bon.bon_jujitsu.repository.PostMediaRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -41,8 +41,8 @@ public class BoardService {
   private final BoardRepository boardRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
-  private final PostImageService postImageService;
-  private final PostImageRepository postImageRepository;
+  private final PostMediaService postMediaService;
+  private final PostMediaRepository postMediaRepository;
   private final CommentRepository commentRepository;
 
   private static final String VIEWED_BOARD_PREFIX = "viewed_board_";
@@ -52,7 +52,7 @@ public class BoardService {
    * 게시글 생성
    */
   @CacheEvict(value = "boards", allEntries = true)
-  public void createBoard(Long userId, BoardRequest request, List<MultipartFile> images, Long branchId) {
+  public void createBoard(Long userId, BoardRequest request, List<MultipartFile> files, Long branchId) {
     User user = findUserById(userId);
     Branch branch = findBranchById(branchId);
 
@@ -67,8 +67,8 @@ public class BoardService {
 
     boardRepository.save(board);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.uploadImage(board.getId(), PostType.BOARD, images);
+    if (files != null && !files.isEmpty()) {
+      postMediaService.uploadMedia(board.getId(), PostType.BOARD, files);
     }
   }
 
@@ -88,12 +88,12 @@ public class BoardService {
         .map(Board::getId)
         .collect(Collectors.toSet());
 
-    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(boardIds);
+    Map<Long, List<PostMedia>> filesMap = loadfilesInBatch(boardIds);
 
     // BoardResponse 생성
     return PageResponse.fromPage(boards.map(board -> {
-      List<PostImage> images = imageMap.getOrDefault(board.getId(), Collections.emptyList());
-      return BoardResponse.fromEntity(board, images);
+      List<PostMedia> files = filesMap.getOrDefault(board.getId(), Collections.emptyList());
+      return BoardResponse.fromEntity(board, files);
     }));
   }
 
@@ -109,9 +109,9 @@ public class BoardService {
     handleViewCountIncrease(board, boardId, request);
 
     // 이미지 조회
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
+    List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.BOARD, board.getId());
 
-    return BoardResponse.fromEntity(board, postImages);
+    return BoardResponse.fromEntity(board, postMedia);
   }
 
   /**
@@ -119,16 +119,15 @@ public class BoardService {
    */
   @CacheEvict(value = {"boards", "board"}, allEntries = true)
   public void updateBoard(BoardUpdate request, Long userId, Long boardId,
-      List<MultipartFile> images, List<Long> keepImageIds) {
+      List<MultipartFile> files, List<Long> keepfileIds) {
     User user = findUserById(userId);
     Board board = findBoardById(boardId);
 
     validateUpdatePermission(user, board);
 
     board.updateBoard(request);
-
-    if (images != null || keepImageIds != null) {
-      postImageService.updateImages(board.getId(), PostType.BOARD, images, keepImageIds);
+    if (files != null || keepfileIds != null) {
+      postMediaService.updateMedia(board.getId(), PostType.BOARD, files, keepfileIds);
     }
   }
 
@@ -183,10 +182,10 @@ public class BoardService {
     }
   }
 
-  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> boardIds) {
-    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.BOARD, boardIds);
-    return allImages.stream()
-        .collect(Collectors.groupingBy(PostImage::getPostId));
+  private Map<Long, List<PostMedia>> loadfilesInBatch(Set<Long> boardIds) {
+    List<PostMedia> allfiles = postMediaRepository.findByPostTypeAndPostIdIn(PostType.BOARD, boardIds);
+    return allfiles.stream()
+        .collect(Collectors.groupingBy(PostMedia::getPostId));
   }
 
   private void handleViewCountIncrease(Board board, Long boardId, HttpServletRequest request) {

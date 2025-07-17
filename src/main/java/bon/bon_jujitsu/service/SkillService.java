@@ -5,7 +5,7 @@ import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SkillRequest;
 import bon.bon_jujitsu.dto.response.SkillResponse;
 import bon.bon_jujitsu.dto.update.SkillUpdate;
-import bon.bon_jujitsu.repository.PostImageRepository;
+import bon.bon_jujitsu.repository.PostMediaRepository;
 import bon.bon_jujitsu.repository.SkillRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,8 +35,8 @@ public class SkillService {
 
   private final SkillRepository skillRepository;
   private final UserRepository userRepository;
-  private final PostImageService postImageService;
-  private final PostImageRepository postImageRepository;
+  private final PostMediaService postMediaService;
+  private final PostMediaRepository postMediaRepository;
 
   private static final String VIEWED_SKILL_PREFIX = "viewed_skill_";
   private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
@@ -45,7 +45,7 @@ public class SkillService {
    * 스킬 게시물 생성
    */
   @CacheEvict(value = "skills", allEntries = true)
-  public void createSkill(Long userId, SkillRequest request, List<MultipartFile> images) {
+  public void createSkill(Long userId, SkillRequest request, List<MultipartFile> files) {
     User user = findUserById(userId);
 
     // 권한 검증 (관장 또는 관리자만 작성 가능)
@@ -59,8 +59,8 @@ public class SkillService {
 
     skillRepository.save(skill);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.uploadImage(skill.getId(), PostType.SKILL, images);
+    if (files != null && !files.isEmpty()) {
+      postMediaService.uploadMedia(skill.getId(), PostType.SKILL, files);
     }
   }
 
@@ -86,12 +86,12 @@ public class SkillService {
         .map(Skill::getId)
         .collect(Collectors.toSet());
 
-    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(skillIds);
+    Map<Long, List<PostMedia>> fileMap = loadFilesInBatch(skillIds);
 
     // SkillResponse 생성
     return PageResponse.fromPage(skills.map(skill -> {
-      List<PostImage> images = imageMap.getOrDefault(skill.getId(), Collections.emptyList());
-      return SkillResponse.fromEntity(skill, images);
+      List<PostMedia> files = fileMap.getOrDefault(skill.getId(), Collections.emptyList());
+      return SkillResponse.fromEntity(skill, files);
     }));
   }
 
@@ -109,9 +109,9 @@ public class SkillService {
     handleViewCountIncrease(skill, skillId, request);
 
     // 이미지 조회
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId());
+    List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.SKILL, skill.getId());
 
-    return SkillResponse.fromEntity(skill, postImages);
+    return SkillResponse.fromEntity(skill, postMedia);
   }
 
   /**
@@ -119,7 +119,7 @@ public class SkillService {
    */
   @CacheEvict(value = {"skills", "skill"}, allEntries = true)
   public void updateSkill(SkillUpdate update, Long userId, Long skillId,
-      List<MultipartFile> images, List<Long> keepImageIds) {
+      List<MultipartFile> files, List<Long> keepfileIds) {
     User user = findUserById(userId);
     Skill skill = findSkillById(skillId);
 
@@ -128,8 +128,8 @@ public class SkillService {
 
     skill.updateSkill(update);
 
-    if (images != null || keepImageIds != null) {
-      postImageService.updateImages(skill.getId(), PostType.SKILL, images, keepImageIds);
+    if (files != null || keepfileIds != null) {
+      postMediaService.updateMedia(skill.getId(), PostType.SKILL, files, keepfileIds);
     }
   }
 
@@ -210,10 +210,10 @@ public class SkillService {
     }
   }
 
-  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> skillIds) {
-    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.SKILL, skillIds);
-    return allImages.stream()
-        .collect(Collectors.groupingBy(PostImage::getPostId));
+  private Map<Long, List<PostMedia>> loadFilesInBatch(Set<Long> skillIds) {
+    List<PostMedia> allfiles = postMediaRepository.findByPostTypeAndPostIdIn(PostType.SKILL, skillIds);
+    return allfiles.stream()
+        .collect(Collectors.groupingBy(PostMedia::getPostId));
   }
 
   private void handleViewCountIncrease(Skill skill, Long skillId, HttpServletRequest request) {

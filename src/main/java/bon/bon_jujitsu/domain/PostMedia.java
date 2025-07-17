@@ -19,14 +19,14 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "post_image")
-public class PostImage extends Timestamped {
+@Table(name = "post_media") // 기존 post_image에서 확장
+public class PostMedia extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String imagePath;
+    private String filePath; // 기존 imagePath에서 이름 변경
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -37,4 +37,18 @@ public class PostImage extends Timestamped {
 
     @Column(nullable = false)
     private String originalFileName;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private MediaType mediaType; // 새로 추가: 이미지/동영상 구분
+
+    // MediaType enum
+    public enum MediaType {
+        IMAGE, VIDEO
+    }
+
+    // 기존 PostImage와의 호환성을 위한 메서드
+    public String getImagePath() {
+        return this.filePath;
+    }
 }

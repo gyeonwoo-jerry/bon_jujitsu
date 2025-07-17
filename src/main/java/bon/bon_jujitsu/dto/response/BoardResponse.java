@@ -1,7 +1,7 @@
 package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.Board;
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import java.util.stream.Collectors;
 import lombok.Builder;
 
@@ -16,16 +16,16 @@ public record BoardResponse(
     String region,
     String author,
     Long authorId,
-    List<ImageResponse> images,
+    List<MediaResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ) {
 
-  public static BoardResponse fromEntity(Board board, List<PostImage> postImages) {
-    // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
-    List<ImageResponse> imageResponses = postImages.stream()
-        .map(postImage -> ImageResponse.builder()
+  public static BoardResponse fromEntity(Board board, List<PostMedia> postMedia) {
+    // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
+    List<MediaResponse> mediaRespons = postMedia.stream()
+        .map(postImage -> MediaResponse.builder()
             .id(postImage.getId())
             .url(postImage.getImagePath())
             .build())
@@ -65,7 +65,7 @@ public record BoardResponse(
         .region(region)
         .author(authorName)
         .authorId(authorId)
-        .images(imageResponses)
+        .images(mediaRespons)
         .viewCount(board.getViewCount())
         .createdAt(board.getCreatedAt())
         .modifiedAt(board.getModifiedAt())

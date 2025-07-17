@@ -33,9 +33,9 @@ public class SkillController {
   public ApiResponse<Void> createSkill(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SkillRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "files", required = false) List<MultipartFile> files
   ) {
-    skillService.createSkill(userId, request, images);
+    skillService.createSkill(userId, request, files);
     return ApiResponse.success("기술 게시물 생성 완료", null);
   }
 
@@ -61,10 +61,10 @@ public class SkillController {
       @Valid @RequestPart("update") SkillUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("skillId") Long skillId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
-      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
+      @RequestPart(value = "keepfileIds", required = false) List<Long> keepfileIds
   ) {
-    skillService.updateSkill(update, userId, skillId, images, keepImageIds);
+    skillService.updateSkill(update, userId, skillId, files, keepfileIds);
     return ApiResponse.success("기술 게시물 수정 성공", null);
   }
 

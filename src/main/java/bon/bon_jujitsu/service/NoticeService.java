@@ -3,7 +3,7 @@ package bon.bon_jujitsu.service;
 import bon.bon_jujitsu.domain.Branch;
 import bon.bon_jujitsu.domain.BranchUser;
 import bon.bon_jujitsu.domain.Notice;
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.PostType;
 import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.domain.UserRole;
@@ -13,7 +13,7 @@ import bon.bon_jujitsu.dto.response.NoticeResponse;
 import bon.bon_jujitsu.dto.update.NoticeUpdate;
 import bon.bon_jujitsu.repository.BranchRepository;
 import bon.bon_jujitsu.repository.NoticeRepository;
-import bon.bon_jujitsu.repository.PostImageRepository;
+import bon.bon_jujitsu.repository.PostMediaRepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -41,8 +41,8 @@ public class NoticeService {
   private final NoticeRepository noticeRepository;
   private final BranchRepository branchRepository;
   private final UserRepository userRepository;
-  private final PostImageService postImageService;
-  private final PostImageRepository postImageRepository;
+  private final PostMediaService postMediaService;
+  private final PostMediaRepository postMediaRepository;
 
   private static final String VIEWED_NOTICE_PREFIX = "viewed_notice_";
   private static final int VIEW_SESSION_TIMEOUT = 60 * 60; // 1시간
@@ -50,7 +50,7 @@ public class NoticeService {
   /**
    * 공지사항 생성
    */
-  public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> images, Long branchId) {
+  public void createNotice(Long userId, NoticeRequest request, List<MultipartFile> files, Long branchId) {
     User user = findUserById(userId);
     Branch branch = findBranchById(branchId);
 
@@ -65,8 +65,8 @@ public class NoticeService {
 
     noticeRepository.save(notice);
 
-    if (images != null && !images.isEmpty()) {
-      postImageService.uploadImage(notice.getId(), PostType.NOTICE, images);
+    if (files != null && !files.isEmpty()) {
+      postMediaService.uploadMedia(notice.getId(), PostType.NOTICE, files);
     }
   }
 
@@ -85,12 +85,12 @@ public class NoticeService {
         .map(Notice::getId)
         .collect(Collectors.toSet());
 
-    Map<Long, List<PostImage>> imageMap = loadImagesInBatch(noticeIds);
+    Map<Long, List<PostMedia>> fileMap = loadfilesInBatch(noticeIds);
 
     // NoticeResponse 생성
     return PageResponse.fromPage(notices.map(notice -> {
-      List<PostImage> images = imageMap.getOrDefault(notice.getId(), Collections.emptyList());
-      return NoticeResponse.fromEntity(notice, images);
+      List<PostMedia> files = fileMap.getOrDefault(notice.getId(), Collections.emptyList());
+      return NoticeResponse.fromEntity(notice, files);
     }));
   }
 
@@ -106,16 +106,16 @@ public class NoticeService {
     handleViewCountIncrease(notice, noticeId, request);
 
     // 이미지 조회
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
+    List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
 
-    return NoticeResponse.fromEntity(notice, postImages);
+    return NoticeResponse.fromEntity(notice, postMedia);
   }
 
   /**
    * 공지사항 수정
    */
   public void updateNotice(NoticeUpdate update, Long userId, Long noticeId,
-      List<MultipartFile> images, List<Long> keepImageIds) {
+      List<MultipartFile> files, List<Long> keepfileIds) {
     User user = findUserById(userId);
     Notice notice = findNoticeById(noticeId);
 
@@ -123,8 +123,8 @@ public class NoticeService {
 
     notice.updateNotice(update);
 
-    if (images != null || keepImageIds != null) {
-      postImageService.updateImages(notice.getId(), PostType.NOTICE, images, keepImageIds);
+    if (files != null || keepfileIds != null) {
+      postMediaService.updateMedia(notice.getId(), PostType.NOTICE, files, keepfileIds);
     }
   }
 
@@ -150,9 +150,9 @@ public class NoticeService {
     Notice notice = noticeRepository.findTopByBranchOrderByCreatedAtDesc(branch)
         .orElseThrow(() -> new IllegalArgumentException("공지사항이 존재하지 않습니다."));
 
-    List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
+    List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.NOTICE, notice.getId());
 
-    return NoticeResponse.fromEntity(notice, postImages);
+    return NoticeResponse.fromEntity(notice, postMedia);
   }
 
   // === Private Helper Methods ===
@@ -232,10 +232,10 @@ public class NoticeService {
     }
   }
 
-  private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> noticeIds) {
-    List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.NOTICE, noticeIds);
-    return allImages.stream()
-        .collect(Collectors.groupingBy(PostImage::getPostId));
+  private Map<Long, List<PostMedia>> loadfilesInBatch(Set<Long> noticeIds) {
+    List<PostMedia> allfiles = postMediaRepository.findByPostTypeAndPostIdIn(PostType.NOTICE, noticeIds);
+    return allfiles.stream()
+        .collect(Collectors.groupingBy(PostMedia::getPostId));
   }
 
   private void handleViewCountIncrease(Notice notice, Long noticeId, HttpServletRequest request) {

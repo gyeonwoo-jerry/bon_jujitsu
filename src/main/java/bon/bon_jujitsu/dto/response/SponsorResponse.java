@@ -1,6 +1,6 @@
 package bon.bon_jujitsu.dto.response;
 
-import bon.bon_jujitsu.domain.PostImage;
+import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.Sponsor;
 
 import java.time.LocalDateTime;
@@ -16,15 +16,15 @@ public record SponsorResponse(
     String author,
     Long authorId,
     String url,
-    List<ImageResponse> images,
+    List<MediaResponse> images,
     Long viewCount,
     LocalDateTime createdAt,
     LocalDateTime modifiedAT
 ) {
-  public static SponsorResponse fromEntity(Sponsor sponsor, List<PostImage> postImages) {
-    // PostImage 엔티티를 직접 사용하여 ImageResponse 리스트 생성
-    List<ImageResponse> imageResponses = postImages.stream()
-        .map(postImage -> ImageResponse.builder()
+  public static SponsorResponse fromEntity(Sponsor sponsor, List<PostMedia> postMedia) {
+    // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
+    List<MediaResponse> mediaRespons = postMedia.stream()
+        .map(postImage -> MediaResponse.builder()
             .id(postImage.getId()) // 실제 이미지 ID 사용
             .url(postImage.getImagePath()) // 실제 이미지 경로 사용
             .build())
@@ -57,7 +57,7 @@ public record SponsorResponse(
         .author(authorName)
         .authorId(authorId)
         .url(sponsor.getUrl())
-        .images(imageResponses)
+        .images(mediaRespons)
         .viewCount(sponsor.getViewCount())
         .createdAt(sponsor.getCreatedAt())
         .modifiedAT(sponsor.getModifiedAt())

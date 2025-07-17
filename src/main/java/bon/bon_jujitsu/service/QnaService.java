@@ -1,18 +1,27 @@
 package bon.bon_jujitsu.service;
 
 import bon.bon_jujitsu.config.PasswordEncoder;
-import bon.bon_jujitsu.domain.*;
+import bon.bon_jujitsu.domain.CommentType;
+import bon.bon_jujitsu.domain.PostMedia;
+import bon.bon_jujitsu.domain.PostType;
+import bon.bon_jujitsu.domain.QnA;
+import bon.bon_jujitsu.domain.User;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.PasswordRequest;
 import bon.bon_jujitsu.dto.request.QnaRequest;
 import bon.bon_jujitsu.dto.response.QnAResponse;
 import bon.bon_jujitsu.dto.update.QnAUpdate;
 import bon.bon_jujitsu.repository.CommentRepository;
-import bon.bon_jujitsu.repository.PostImageRepository;
+import bon.bon_jujitsu.repository.PostMediaRepository;
 import bon.bon_jujitsu.repository.QnARepository;
 import bon.bon_jujitsu.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -24,12 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -37,8 +40,8 @@ import java.util.stream.Collectors;
 public class QnaService {
 
     private final QnARepository qnaRepository;
-    private final PostImageService postImageService;
-    private final PostImageRepository postImageRepository;
+    private final PostMediaService postMediaService;
+    private final PostMediaRepository postMediaRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
@@ -50,7 +53,7 @@ public class QnaService {
      * QnA 생성
      */
     @CacheEvict(value = "qnas", allEntries = true)
-    public void createQna(QnaRequest request, Long userId, List<MultipartFile> images) {
+    public void createQna(QnaRequest request, Long userId, List<MultipartFile> files) {
         QnA.QnABuilder qnaBuilder = QnA.builder()
             .title(request.title())
             .content(request.content());
@@ -69,8 +72,8 @@ public class QnaService {
         QnA qna = qnaBuilder.build();
         qnaRepository.save(qna);
 
-        if (images != null && !images.isEmpty()) {
-            postImageService.uploadImage(qna.getId(), PostType.QNA, images);
+        if (files != null && !files.isEmpty()) {
+            postMediaService.uploadMedia(qna.getId(), PostType.QNA, files);
         }
     }
 
@@ -94,14 +97,14 @@ public class QnaService {
             .map(QnA::getId)
             .collect(Collectors.toSet());
 
-        Map<Long, List<PostImage>> imageMap = loadImagesInBatch(qnaIds);
+        Map<Long, List<PostMedia>> fileMap = loadFilesInBatch(qnaIds);
         Set<Long> answeredQnaIds = loadAnsweredQnaIdsInBatch(qnaIds);
 
         // QnAResponse 생성
         return PageResponse.fromPage(qnaPage.map(qna -> {
-            List<PostImage> images = imageMap.getOrDefault(qna.getId(), Collections.emptyList());
+            List<PostMedia> files = fileMap.getOrDefault(qna.getId(), Collections.emptyList());
             boolean hasAnswer = answeredQnaIds.contains(qna.getId());
-            return QnAResponse.from(qna, images, hasAnswer);
+            return QnAResponse.from(qna, files, hasAnswer);
         }));
     }
 
@@ -119,17 +122,17 @@ public class QnaService {
         handleViewCountIncrease(qna, qnaId, request);
 
         // 이미지 조회
-        List<PostImage> postImages = postImageRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
+        List<PostMedia> postMedia = postMediaRepository.findByPostTypeAndPostId(PostType.QNA, qna.getId());
         boolean hasAnswer = commentRepository.existsByCommentTypeAndTargetId(CommentType.QNA, qna.getId());
 
-        return QnAResponse.from(qna, postImages, hasAnswer);
+        return QnAResponse.from(qna, postMedia, hasAnswer);
     }
 
     /**
      * QnA 수정
      */
     @CacheEvict(value = {"qnas", "qna"}, allEntries = true)
-    public void updateQnA(QnAUpdate update, Long userId, Long qnaId, List<MultipartFile> images, List<Long> keepImageIds) {
+    public void updateQnA(QnAUpdate update, Long userId, Long qnaId, List<MultipartFile> files, List<Long> keepfileIds) {
         QnA qna = findQnAById(qnaId);
 
         // 권한 검증
@@ -144,8 +147,8 @@ public class QnaService {
             );
         }
 
-        if (images != null || keepImageIds != null) {
-            postImageService.updateImages(qnaId, PostType.QNA, images, keepImageIds);
+        if (files != null || keepfileIds != null) {
+            postMediaService.updateMedia(qnaId, PostType.QNA, files, keepfileIds);
         }
     }
 
@@ -279,10 +282,10 @@ public class QnaService {
         }
     }
 
-    private Map<Long, List<PostImage>> loadImagesInBatch(Set<Long> qnaIds) {
-        List<PostImage> allImages = postImageRepository.findByPostTypeAndPostIdIn(PostType.QNA, qnaIds);
-        return allImages.stream()
-            .collect(Collectors.groupingBy(PostImage::getPostId));
+    private Map<Long, List<PostMedia>> loadFilesInBatch(Set<Long> qnaIds) {
+        List<PostMedia> allfiles = postMediaRepository.findByPostTypeAndPostIdIn(PostType.QNA, qnaIds);
+        return allfiles.stream()
+            .collect(Collectors.groupingBy(PostMedia::getPostId));
     }
 
     private Set<Long> loadAnsweredQnaIdsInBatch(Set<Long> qnaIds) {

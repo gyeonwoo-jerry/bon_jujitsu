@@ -28,9 +28,9 @@ public class QnAController {
     public ApiResponse<Void> createQnA(
         @Valid @RequestPart("request") QnaRequest request,
         @AuthenticationUserId(required = false) Long userId,
-        @RequestPart(value = "images", required = false)List<MultipartFile> images
+        @RequestPart(value = "files", required = false)List<MultipartFile> files
     ) {
-        qnaService.createQna(request, userId, images);
+        qnaService.createQna(request, userId, files);
         return ApiResponse.success("QnA 생성 완료", null);
     }
 
@@ -69,10 +69,10 @@ public class QnAController {
             @Valid @RequestPart("update") QnAUpdate update,
             @AuthenticationUserId(required = false) Long userId,
             @PathVariable("qnaId") Long qnaId,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
-            @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestPart(value = "keepfileIds", required = false) List<Long> keepfileIds
     ) {
-        qnaService.updateQnA(update, userId, qnaId, images, keepImageIds);
+        qnaService.updateQnA(update, userId, qnaId, files, keepfileIds);
         return ApiResponse.success("QNA 수정 성공", null);
     }
 

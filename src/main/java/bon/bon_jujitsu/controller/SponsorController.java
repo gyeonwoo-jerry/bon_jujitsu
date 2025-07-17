@@ -33,9 +33,9 @@ public class SponsorController {
   public ApiResponse<Void> createSponsor(
       @AuthenticationUserId Long userId,
       @Valid @RequestPart("request") SponsorRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images
+      @RequestPart(value = "files", required = false) List<MultipartFile> files
   ) {
-    sponsorService.createSponsor(userId, request, images);
+    sponsorService.createSponsor(userId, request, files);
     return ApiResponse.success("스폰서 생성 완료", null);
   }
 
@@ -61,10 +61,10 @@ public class SponsorController {
       @Valid @RequestPart("update") SponsorUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("sponsorId") Long sponsorId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
-      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
+      @RequestPart(value = "keepfileIds", required = false) List<Long> keepfileIds
   ) {
-    sponsorService.updateSponsor(update, userId, sponsorId, images, keepImageIds);
+    sponsorService.updateSponsor(update, userId, sponsorId, files, keepfileIds);
     return ApiResponse.success("스폰서 수정 성공", null);
   }
 

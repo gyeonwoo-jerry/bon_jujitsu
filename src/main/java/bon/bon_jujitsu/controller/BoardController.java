@@ -33,10 +33,10 @@ public class BoardController {
   public ApiResponse<Void> createBoard(
       @AuthenticationUserId Long userId,
       @RequestPart("request") @Valid BoardRequest request,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
       @PathVariable("branchId") Long branchId
   ) {
-    boardService.createBoard(userId, request, images, branchId);
+    boardService.createBoard(userId, request, files, branchId);
     return ApiResponse.success("게시판 생성 완료", null);
   }
 
@@ -64,10 +64,10 @@ public class BoardController {
       @RequestPart("update") @Valid BoardUpdate update,
       @AuthenticationUserId Long userId,
       @PathVariable("boardId") Long boardId,
-      @RequestPart(value = "images", required = false) List<MultipartFile> images,
-      @RequestPart(value = "keepImageIds", required = false) List<Long> keepImageIds
+      @RequestPart(value = "files", required = false) List<MultipartFile> files,
+      @RequestPart(value = "keepfileIds", required = false) List<Long> keepfileIds
   ) {
-    boardService.updateBoard(update,userId,boardId,images, keepImageIds);
+    boardService.updateBoard(update,userId,boardId,files, keepfileIds);
     return ApiResponse.success("게시판 수정 성공", null);
   }
 

@@ -68,10 +68,10 @@ public record BranchResponse (
    * 오류 발생 시 안전한 응답 생성
    */
   public static BranchResponse fromBranchOnly(Branch branch) {
-    List<ImageResponse> imageResponses = Collections.emptyList();
+    List<ImageResponse> mediaRespons = Collections.emptyList();
     try {
       if (branch.getImages() != null) {
-        imageResponses = createImageResponses(branch.getImages());
+        mediaRespons = createImageResponses(branch.getImages());
       }
     } catch (Exception e) {
       log.warn("Branch 이미지 처리 중 오류: branchId={}, error={}", branch.getId(), e.getMessage());
@@ -83,7 +83,7 @@ public record BranchResponse (
         branch.getAddress(),
         branch.getArea(),
         branch.getContent(),
-        imageResponses,
+        mediaRespons,
         branch.getCreatedAt(),
         branch.getModifiedAt(),
         null,
