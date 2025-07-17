@@ -49,38 +49,57 @@ public class PostMediaService {
     private static final long MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 
     public void uploadMedia(Long contentId, PostType postType, List<MultipartFile> files) {
+        log.info("uploadMedia 호출 - contentId: {}, postType: {}", contentId, postType);
+
         if (files == null || files.isEmpty()) {
+            log.info("파일이 없음");
             return;
         }
 
         try {
             String uploads = filepath + postType.name() + "/";
+            log.info("업로드 디렉토리: {}", uploads);
 
             for (MultipartFile file : files) {
-                // 파일 유효성 검사
-                validateFile(file);
+                log.info("파일 처리 시작: {}", file.getOriginalFilename());
 
-                String originalFileName = file.getOriginalFilename();
-                MediaType mediaType = determineMediaType(originalFileName);
-                String savedFilePath = saveFile(file, uploads, mediaType);
+                try {
+                    // 파일 유효성 검사
+                    validateFile(file);
+                    log.info("파일 유효성 검사 통과");
 
-                PostMedia postMedia = PostMedia.builder()
-                    .postId(contentId)
-                    .postType(postType)
-                    .filePath(savedFilePath)
-                    .originalFileName(originalFileName)
-                    .mediaType(mediaType)
-                    .build();
+                    String originalFileName = file.getOriginalFilename();
+                    MediaType mediaType = determineMediaType(originalFileName);
+                    log.info("미디어 타입: {}", mediaType);
 
-                postMediaRepository.save(postMedia);
+                    String savedFilePath = saveFile(file, uploads, mediaType);
+                    log.info("파일 저장 완료: {}", savedFilePath);
+
+                    PostMedia postMedia = PostMedia.builder()
+                        .postId(contentId)
+                        .postType(postType)
+                        .filePath(savedFilePath)
+                        .originalFileName(originalFileName)
+                        .mediaType(mediaType)
+                        .build();
+
+                    PostMedia saved = postMediaRepository.save(postMedia);
+                    log.info("PostMedia DB 저장 완료: id={}", saved.getId());
+
+                } catch (Exception e) {
+                    log.error("개별 파일 처리 실패: {}", file.getOriginalFilename(), e);
+                    throw e;
+                }
             }
-        } catch (IOException e) {
-            log.error("파일 업로드 실패", e);
+        } catch (Exception e) {
+            log.error("파일 업로드 전체 실패", e);
             throw new RuntimeException("파일 업로드에 실패했습니다.", e);
         }
     }
 
     private String saveFile(MultipartFile file, String uploads, MediaType mediaType) throws IOException {
+        log.info("saveFile 시작 - uploads: {}, mediaType: {}", uploads, mediaType);
+
         String originalFileName = file.getOriginalFilename();
         String uuid = UUID.randomUUID().toString().replace("-", "");
         String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -96,11 +115,23 @@ public class PostMediaService {
         String fileName = datePrefix + "_" + uuid + extension;
         String filePath = uploads + subdirectory + fileName;
 
-        Path path = Paths.get(filePath);
-        Files.createDirectories(path.getParent());
-        Files.write(path, file.getBytes());
+        log.info("생성된 파일 경로: {}", filePath);
 
-        return filePath;
+        try {
+            Path path = Paths.get(filePath);
+            log.info("디렉토리 생성 시작: {}", path.getParent());
+            Files.createDirectories(path.getParent());
+
+            log.info("파일 쓰기 시작: {}", path);
+            Files.write(path, file.getBytes());
+
+            log.info("파일 저장 성공: {}", filePath);
+            return filePath;
+
+        } catch (IOException e) {
+            log.error("파일 저장 실패: {}", filePath, e);
+            throw e;
+        }
     }
 
     public void updateMedia(Long postId, PostType postType, List<MultipartFile> newFiles, List<Long> keepMediaIds) {
@@ -127,8 +158,8 @@ public class PostMediaService {
             log.info("미디어 삭제 시작 - ID: {}, 경로: {}, 원본파일명: {}, 타입: {}",
                 media.getId(), media.getFilePath(), media.getOriginalFileName(), media.getMediaType());
 
-            // 물리적 파일 삭제
-            deletePhysicalFile(media.getFilePath(), media.getOriginalFileName());
+            // ✅ 수정된 물리적 파일 삭제
+            deletePhysicalFileWithCompatibility(media.getFilePath(), media.getOriginalFileName(), media.getMediaType());
             // 엔티티 삭제
             postMediaRepository.delete(media);
 
@@ -147,33 +178,61 @@ public class PostMediaService {
         log.info("=== 미디어 업데이트 완료 ===");
     }
 
-    private void deletePhysicalFile(String dbDirPath, String originalFileName) {
-        log.info("물리적 파일 삭제 시작 - dbDirPath: {}, originalFileName: {}", dbDirPath, originalFileName);
+    // ✅ 기존 데이터 호환성을 위한 삭제 메서드
+    private void deletePhysicalFileWithCompatibility(String filePath, String originalFileName, MediaType mediaType) {
+        log.info("물리적 파일 삭제 시작 - filePath: {}, originalFileName: {}, mediaType: {}", filePath, originalFileName, mediaType);
 
         try {
-            // 기존의 확장자 추출 로직 유지
+            // 1. 먼저 새로운 방식(실제 파일 경로)으로 삭제 시도
+            Path path = Paths.get(filePath);
+            if (Files.exists(path)) {
+                Files.delete(path);
+                log.info("새로운 방식으로 물리적 파일 삭제 완료: {}", filePath);
+                return;
+            }
+
+            // 2. 기존 방식(디렉토리 경로)으로 삭제 시도
+            if (filePath.endsWith("/")) {
+                log.info("기존 방식 디렉토리 경로 감지, 실제 파일 검색 시작: {}", filePath);
+                deleteOldFormatFile(filePath, originalFileName, mediaType);
+            } else {
+                log.warn("삭제할 파일이 존재하지 않음: {}", filePath);
+            }
+        } catch (IOException e) {
+            log.error("물리적 파일 삭제 실패 - filePath: {}", filePath, e);
+        }
+    }
+
+    // ✅ 기존 디렉토리 경로에서 실제 파일 찾아서 삭제
+    private void deleteOldFormatFile(String directoryPath, String originalFileName, MediaType mediaType) {
+        try {
+            // 확장자 추출
             String extension = "";
             if (originalFileName != null && originalFileName.contains(".")) {
                 extension = originalFileName.substring(originalFileName.lastIndexOf("."));
             }
 
-            // 디렉토리 경로에서 마지막에 저장된 파일 찾기
-            Path dirPath = Paths.get(dbDirPath);
-            log.info("디렉토리 경로: {}", dirPath);
+            // 미디어 타입별 하위 디렉토리
+            String subdirectory = mediaType == MediaType.VIDEO ? "videos/" : "images/";
+            String searchDirectory = directoryPath + subdirectory;
 
-            // 해당 디렉토리에서 날짜_UUID + 확장자 패턴의 파일 찾기
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath,
-                "*_*" + extension)) {
+            Path dirPath = Paths.get(searchDirectory);
+            if (!Files.exists(dirPath)) {
+                log.warn("검색 디렉토리가 존재하지 않음: {}", searchDirectory);
+                return;
+            }
+
+            // 날짜_UUID + 확장자 패턴의 파일 찾기
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath, "*_*" + extension)) {
                 for (Path entry : stream) {
-                    log.info("삭제할 물리적 파일: {}", entry);
-                    Files.deleteIfExists(entry);
-                    log.info("물리적 파일 삭제 완료: {}", entry);
+                    log.info("기존 방식으로 물리적 파일 삭제: {}", entry);
+                    Files.delete(entry);
+                    log.info("기존 방식으로 물리적 파일 삭제 완료: {}", entry);
                     break; // 첫 번째 매칭되는 파일만 삭제
                 }
             }
         } catch (IOException e) {
-            log.error("물리적 파일 삭제 실패 - dbDirPath: {}, originalFileName: {}", dbDirPath, originalFileName, e);
-            e.printStackTrace();
+            log.error("기존 방식 파일 삭제 실패 - directoryPath: {}, originalFileName: {}", directoryPath, originalFileName, e);
         }
     }
 
