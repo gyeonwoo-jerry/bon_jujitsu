@@ -21,7 +21,7 @@ import Store from './pages/store';
 import StoreDetail from './pages/storeDetail';
 import Skill from './pages/post/skill';
 import News from './pages/post/news';
-import Qna from './pages/post/qna';
+import Faq from './pages/post/faq';
 import Sponsor from './pages/post/sponsor';
 import Join from './pages/join';
 import Cart from './pages/cart';
@@ -88,7 +88,7 @@ function AppRoutes() {
           <Route path="/order/*" element={<Order />} />
           <Route path="/skill" element={<Skill />} />
           <Route path="/news" element={<News />} />
-          <Route path="/qna" element={<Qna />} />
+          <Route path="/faq" element={<Faq />} />
           <Route path="/sponsor" element={<Sponsor />} />
           <Route path="/join" element={<Join />} />
 

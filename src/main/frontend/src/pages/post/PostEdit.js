@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { POST_TYPE_CONFIGS, normalizeUrl } from '../../configs/postTypeConfigs';
-import { usePostData } from '../../hooks/usePostData';
-import { usePostPermissions } from '../../hooks/usePostPermissions';
-import { usePostValidation } from '../../hooks/usePostValidation';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {normalizeUrl, POST_TYPE_CONFIGS} from '../../configs/postTypeConfigs';
+import {usePostData} from '../../hooks/usePostData';
+import {usePostPermissions} from '../../hooks/usePostPermissions';
+import {usePostValidation} from '../../hooks/usePostValidation';
 import API from '../../utils/api';
 import '../../styles/postWrite.css';
 
@@ -29,10 +29,7 @@ const PostEdit = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    guestName: '',
-    guestPassword: '',
-    url: '',
-    isGuestPost: false
+    url: ''
   });
 
   // 이미지 관련 상태
@@ -46,15 +43,10 @@ const PostEdit = () => {
   // 원본 데이터로 폼 초기화
   useEffect(() => {
     if (originalPost) {
-      const isGuest = postType === 'qna' && originalPost.guestName;
-
       setFormData({
         title: originalPost.title || '',
         content: originalPost.content || '',
-        guestName: originalPost.guestName || '',
-        guestPassword: '', // 보안상 비워둠
-        url: originalPost.url || '',
-        isGuestPost: isGuest
+        url: originalPost.url || ''
       });
 
       // 기존 이미지 설정
@@ -73,31 +65,11 @@ const PostEdit = () => {
 
   // 권한 체크
   useEffect(() => {
-    if (originalPost) {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const isLoggedIn = !!localStorage.getItem('token') || !!localStorage.getItem('accessToken');
-      const isAdmin = userInfo.role === 'ADMIN' || userInfo.isAdmin === true;
-
-      // QnA 비회원 게시글 특별 처리
-      if (postType === 'qna' && originalPost.isGuestPost) {
-        // 관리자가 아닌 로그인한 일반 회원은 비회원 글 수정 불가
-        if (isLoggedIn && !isAdmin) {
-          alert('비회원이 작성한 글은 일반 회원이 수정할 수 없습니다.');
-          navigate(-1);
-          return;
-        }
-        // 비회원(미로그인)이거나 관리자인 경우 수정 페이지 접근 허용
-        // 비회원의 경우 비밀번호 검증은 서버에서 처리
-        return;
-      }
-
-      // 일반 게시글의 경우 기존 권한 체크
-      if (!canEdit()) {
-        alert(`${config?.title || '게시글'} 수정 권한이 없습니다.`);
-        navigate(-1);
-      }
+    if (originalPost && !canEdit()) {
+      alert(`${config?.title || '게시글'} 수정 권한이 없습니다.`);
+      navigate(-1);
     }
-  }, [originalPost, canEdit, config, navigate, postType]);
+  }, [originalPost, canEdit, config, navigate]);
 
   // 성공 메시지
   const getSuccessMessage = () => {
@@ -132,11 +104,6 @@ const PostEdit = () => {
         title: formData.title.trim(),
         content: formData.content.trim()
       };
-
-      // QnA 비회원 수정시 비밀번호 포함
-      if (postType === 'qna' && formData.isGuestPost && formData.guestPassword) {
-        updateData.guestPassword = formData.guestPassword;
-      }
 
       // 제휴업체 전용 데이터
       if (postType === 'sponsor' && formData.url?.trim()) {
@@ -277,40 +244,6 @@ const PostEdit = () => {
         )}
 
         <form onSubmit={handleSubmit} className="write-form">
-          {/* QnA 비회원 필드 */}
-          {postType === 'qna' && formData.isGuestPost && (
-              <div className="guest-info-section">
-                <div className="form-group">
-                  <label htmlFor="guestName">작성자명</label>
-                  <input
-                      type="text"
-                      id="guestName"
-                      name="guestName"
-                      value={formData.guestName}
-                      disabled={true}
-                      className="disabled-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="guestPassword">비밀번호 확인 *</label>
-                  <input
-                      type="password"
-                      id="guestPassword"
-                      name="guestPassword"
-                      value={formData.guestPassword}
-                      onChange={handleInputChange}
-                      placeholder="수정을 위해 기존 비밀번호를 입력해주세요"
-                      maxLength={20}
-                      required
-                      disabled={isSubmitting}
-                  />
-                  <div className="password-info">
-                    * 수정을 위해 기존 비밀번호를 입력해야 합니다.
-                  </div>
-                </div>
-              </div>
-          )}
-
           {/* 제휴업체 필드 */}
           {postType === 'sponsor' && (
               <SponsorFields
@@ -390,7 +323,7 @@ const getContentPlaceholder = (postType) => {
     case 'skill': return '스킬에 대한 상세한 내용을 입력해주세요';
     case 'news': return '뉴스 내용을 입력해주세요';
     case 'notice': return '공지사항 내용을 입력해주세요';
-    case 'qna': return '질문 내용을 입력해주세요';
+    case 'faq': return 'FAQ 내용을 입력해주세요';
     case 'sponsor': return '제휴업체에 대한 소개와 혜택 등을 입력해주세요';
     case 'board':
     default: return '내용을 입력해주세요';

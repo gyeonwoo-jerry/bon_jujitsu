@@ -17,11 +17,6 @@ export const usePostPermissions = (postType, post, branchId) => {
   const isAuthor = () => {
     if (!post) return false;
 
-    // QnA 비회원 작성의 경우는 작성자 확인 불가
-    if (postType === 'qna' && (post.guestName || post.isGuestPost)) {
-      return false;
-    }
-
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     return String(userInfo.id) === String(post.authorId);
   };
@@ -38,31 +33,51 @@ export const usePostPermissions = (postType, post, branchId) => {
   };
 
   const canWrite = () => {
+    // config가 없는 경우 기본값 처리
+    if (!config) {
+      console.error(`POST_TYPE_CONFIGS에서 "${postType}" 타입을 찾을 수 없습니다.`);
+      return false;
+    }
+
     const permissions = config.permissions;
 
+    // FAQ는 관리자만 작성 가능
+    if (postType === 'faq') {
+      return isAdmin();
+    }
+
+    // 권한 체크 로직 개선
+    // 1. 관리자 권한이 있고 관리자인 경우
     if (permissions.includes('ADMIN') && isAdmin()) return true;
+
+    // 2. 비회원 허용이고 비회원인 경우
     if (permissions.includes('GUEST') && config.allowGuest) return true;
+
+    // 3. 지부 소유자 권한이 있고 지부 소유자인 경우
     if (permissions.includes('BRANCH_OWNER') && isBranchOwner()) return true;
 
-    return isLoggedIn();
+    // 4. 작성자 권한이 있고 로그인한 경우
+    if (permissions.includes('AUTHOR') && isLoggedIn()) return true;
+
+    // 5. 지부 멤버 권한이 있고 로그인한 경우
+    if (permissions.includes('BRANCH_MEMBER') && isLoggedIn()) return true;
+
+    // 위 조건들에 해당하지 않으면 작성 불가
+    return false;
   };
 
   const canEdit = () => {
+    // config가 없는 경우 기본값 처리
+    if (!config) {
+      return false;
+    }
+
     // 관리자는 모든 글 수정 가능
     if (isAdmin()) return true;
 
-    // QnA 게시판 특별 처리
-    if (postType === 'qna') {
-      if (post && post.isGuestPost) {
-        // 비회원 게시글은 로그인한 일반 회원이 수정할 수 없음
-        if (isLoggedIn()) {
-          return false; // 로그인한 회원은 비회원 글 수정 불가
-        }
-        // 비회원(미로그인 상태)은 비밀번호 검증을 통해 수정 가능
-        return true;
-      }
-      // QnA 회원 게시글은 작성자만 수정 가능
-      return isAuthor();
+    // FAQ 게시판은 관리자만 수정 가능
+    if (postType === 'faq') {
+      return false; // 관리자가 아니면 수정 불가
     }
 
     // 다른 게시판들의 경우
@@ -77,28 +92,24 @@ export const usePostPermissions = (postType, post, branchId) => {
     return canEdit();
   };
 
-  // QnA 게시판 전용 버튼 노출 체크 함수
-  const shouldShowQnAButtons = () => {
+  // FAQ 게시판 전용 버튼 노출 체크 함수 (간소화)
+  const shouldShowFaqButtons = () => {
     if (!post) return false;
 
-    // 관리자는 항상 버튼 노출
-    if (isAdmin()) return true;
-
-    // 비회원 게시글인 경우
-    if (post.isGuestPost) {
-      // 로그인하지 않은 상태에서만 버튼 노출
-      return !isLoggedIn();
+    // FAQ는 관리자만 수정/삭제 가능
+    if (postType === 'faq') {
+      return isAdmin();
     }
 
-    // 회원 게시글인 경우 - 본인이 작성한 글만 버튼 노출
-    return isAuthor();
+    // 다른 게시판은 기존 로직 유지
+    return canEdit();
   };
 
   return {
     canWrite,
     canEdit,
     canDelete,
-    shouldShowQnAButtons,
+    shouldShowFaqButtons, // QnA에서 FAQ로 변경
     isLoggedIn,
     isAdmin,
     isAuthor

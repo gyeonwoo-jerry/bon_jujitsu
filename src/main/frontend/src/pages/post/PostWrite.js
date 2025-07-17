@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { POST_TYPE_CONFIGS, normalizeUrl } from '../../configs/postTypeConfigs';
-import { usePostPermissions } from '../../hooks/usePostPermissions';
-import { usePostValidation } from '../../hooks/usePostValidation';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {normalizeUrl, POST_TYPE_CONFIGS} from '../../configs/postTypeConfigs';
+import {usePostPermissions} from '../../hooks/usePostPermissions';
+import {usePostValidation} from '../../hooks/usePostValidation';
 import API from '../../utils/api';
 import '../../styles/postWrite.css';
-
-import QnaGuestFields from '../../components/write/QnaGuestFields';
 import SponsorFields from '../../components/write/SponsorFields';
 import ImageUpload from '../../components/write/ImageUpload';
 import PostWriteHeader from '../../components/write/PostWriteHeader';
@@ -22,10 +20,7 @@ const PostWrite = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    guestName: '',
-    guestPassword: '',
-    url: '',
-    isGuestPost: false
+    url: ''
   });
 
   const [images, setImages] = useState([]);
@@ -49,7 +44,7 @@ const PostWrite = () => {
         return '/skill';
       case 'news':
         return '/news';
-      case 'qna':
+      case 'faq':
         return '/qna';
       case 'sponsor':
         return '/sponsor';
@@ -68,8 +63,8 @@ const PostWrite = () => {
         return '스킬 게시물이 성공적으로 작성되었습니다.';
       case 'news':
         return '뉴스 게시물이 성공적으로 작성되었습니다.';
-      case 'qna':
-        return 'QnA가 성공적으로 작성되었습니다.';
+      case 'faq':
+        return 'FAQ가 성공적으로 작성되었습니다.';
       case 'sponsor':
         return '제휴업체가 성공적으로 등록되었습니다.';
       case 'board':
@@ -87,8 +82,8 @@ const PostWrite = () => {
       case 'news':
         navigate('/news');
         break;
-      case 'qna':
-        navigate('/qna');
+      case 'faq':
+        navigate('/faq');
         break;
       case 'sponsor':
         navigate('/sponsor');
@@ -127,12 +122,6 @@ const PostWrite = () => {
         content: formData.content.trim()
       };
 
-      // QnA 비회원 작성시 추가 데이터
-      if (postType === 'qna' && formData.isGuestPost) {
-        requestData.guestName = formData.guestName.trim();
-        requestData.guestPassword = formData.guestPassword;
-      }
-
       // 제휴업체 전용 데이터
       if (postType === 'sponsor' && formData.url?.trim()) {
         requestData.url = normalizeUrl(formData.url.trim());
@@ -158,7 +147,7 @@ const PostWrite = () => {
 
       // API 엔드포인트별 URL 설정 (기존 로직과 동일)
       // skill, news, qna, sponsor는 브랜치 ID 없음
-      const url = (['skill', 'news', 'qna', 'sponsor'].includes(postType))
+      const url = (['skill', 'news', 'faq', 'sponsor'].includes(postType))
           ? apiEndpoint
           : `${apiEndpoint}/${branchId}`;
 
@@ -237,15 +226,6 @@ const PostWrite = () => {
         )}
 
         <form onSubmit={handleSubmit} className="write-form">
-          {/* QnA 비회원 필드 */}
-          {postType === 'qna' && (
-              <QnaGuestFields
-                  formData={formData}
-                  onChange={handleInputChange}
-                  disabled={isSubmitting}
-              />
-          )}
-
           {/* 제휴업체 필드 */}
           {postType === 'sponsor' && (
               <SponsorFields
@@ -325,8 +305,8 @@ const getContentPlaceholder = (postType) => {
       return '뉴스 내용을 입력해주세요';
     case 'notice':
       return '공지사항 내용을 입력해주세요';
-    case 'qna':
-      return '질문 내용을 입력해주세요';
+    case 'faq':
+      return 'FAQ 내용을 입력해주세요';
     case 'sponsor':
       return '제휴업체에 대한 소개와 혜택 등을 입력해주세요';
     case 'board':
@@ -343,8 +323,8 @@ const getLoadingMessage = (postType) => {
       return '스킬 게시물을 작성하고 있습니다...';
     case 'news':
       return '뉴스 게시물을 작성하고 있습니다...';
-    case 'qna':
-      return 'QnA를 작성하고 있습니다...';
+    case 'faq':
+      return 'FAQ를 작성하고 있습니다...';
     case 'sponsor':
       return '제휴업체를 등록하고 있습니다...';
     case 'board':

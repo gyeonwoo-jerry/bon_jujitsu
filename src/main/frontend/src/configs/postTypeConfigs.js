@@ -13,20 +13,19 @@ export const POST_TYPE_CONFIGS = {
       contentMaxLength: 5000
     }
   },
-  qna: {
-    title: 'QnA',
-    apiEndpoint: '/qna',
-    allowGuest: true,
+  faq: {
+    title: 'FAQ', // QnA를 완전히 FAQ로 대체
+    apiEndpoint: '/qna', // API는 기존 qna 엔드포인트 사용
+    allowGuest: false,
     showRegion: false,
     showViewCount: false,
-    showComments: true,
-    adminOnlyComments: true,
-    permissions: ['ADMIN', 'AUTHOR', 'GUEST'],
-    customFields: ['guestName', 'guestPassword'],
+    showComments: false,
+    adminOnlyComments: false,
+    permissions: ['ADMIN'], // 관리자만 작성 가능
+    customFields: [],
     validation: {
       titleMaxLength: 100,
-      contentMaxLength: 5000,
-      guestPasswordMinLength: 4
+      contentMaxLength: 5000
     }
   },
   sponsor: {

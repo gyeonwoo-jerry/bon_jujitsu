@@ -135,7 +135,7 @@ function Navbar() {
             <Link to="/news">뉴스</Link>
           </li>
           <li>
-            <Link to="/qna">QnA</Link>
+            <Link to="/faq">FAQ</Link>
           </li>
           <li>
             <Link to="/sponsor">제휴업체</Link>

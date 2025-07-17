@@ -26,8 +26,9 @@ const PostDetailMeta = ({ post, postType, config }) => {
   };
 
   const getAuthorName = () => {
-    if (postType === 'qna') {
-      return post.authorName || post.guestName || post.author || '익명';
+    if (postType === 'faq') {
+      // FAQ는 관리자만 작성하므로 간소화
+      return post.authorName || post.author || '관리자';
     }
     return post.author;
   };
@@ -37,12 +38,9 @@ const PostDetailMeta = ({ post, postType, config }) => {
         <h1 className="board-title">{post.title}</h1>
         <div className="board-meta">
           <div className="board-meta-left">
-          <span className="author">
-            작성자: {getAuthorName()}
-            {postType === 'qna' && post.guestName && (
-                <span className="guest-badge">비회원</span>
-            )}
-          </span>
+            <span className="author">
+              작성자: {getAuthorName()}
+            </span>
             {post.region && <span className="region">지역: {post.region}</span>}
             <span className="post-type">{config.title}</span>
           </div>
