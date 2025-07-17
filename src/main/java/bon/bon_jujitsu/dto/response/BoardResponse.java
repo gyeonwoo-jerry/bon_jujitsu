@@ -27,7 +27,7 @@ public record BoardResponse(
     List<MediaResponse> mediaRespons = postMedia.stream()
         .map(postImage -> MediaResponse.builder()
             .id(postImage.getId())
-            .url(postImage.getImagePath())
+            .url(postImage.getFilePath())
             .build())
         .collect(Collectors.toList());
 

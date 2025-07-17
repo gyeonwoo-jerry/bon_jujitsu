@@ -26,7 +26,7 @@ public record SponsorResponse(
     List<MediaResponse> mediaRespons = postMedia.stream()
         .map(postImage -> MediaResponse.builder()
             .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getImagePath()) // 실제 이미지 경로 사용
+            .url(postImage.getFilePath()) // 실제 이미지 경로 사용
             .build())
         .collect(Collectors.toList());
 

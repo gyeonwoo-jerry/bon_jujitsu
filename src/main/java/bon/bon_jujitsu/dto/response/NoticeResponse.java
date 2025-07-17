@@ -24,10 +24,10 @@ public record NoticeResponse(
 
   public static NoticeResponse fromEntity(Notice notice, List<PostMedia> postMedia) {
     // PostMedia 엔티티를 직접 사용하여 MediaResponse 리스트 생성
-    List<MediaResponse> mediaRespons = postMedia.stream()
+    List<MediaResponse> mediaResponse = postMedia.stream()
         .map(postImage -> MediaResponse.builder()
             .id(postImage.getId()) // 실제 이미지 ID 사용
-            .url(postImage.getImagePath()) // 실제 이미지 경로 사용
+            .url(postImage.getFilePath()) // 실제 이미지 경로 사용
             .build())
         .collect(Collectors.toList());
 
@@ -65,7 +65,7 @@ public record NoticeResponse(
         .region(region)
         .author(authorName)     // name -> author로 변경
         .authorId(authorId)     // 추가된 필드
-        .images(mediaRespons)
+        .images(mediaResponse)
         .viewCount(notice.getViewCount())
         .createdAt(notice.getCreatedAt())
         .modifiedAt(notice.getModifiedAt())
