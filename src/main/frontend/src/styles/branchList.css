@@ -4,7 +4,6 @@
     background-color: #fff;
 }
 
-
 .branchList_container .inner {
     display: flex;
     flex-direction: column;
@@ -21,7 +20,7 @@
     font-weight: bold;
     color: #333;
     text-align: center;
-}   
+}
 
 .branchList_container .inner ul {
     width: 100%;
@@ -74,7 +73,7 @@
     left: 10px;
     right: 65px;
     top: 50%;
-    border-top: 1px dotted #ccc; /* 가로 점선 */
+    border-top: 1px dotted #ccc;
     z-index: 0;
 }
 
@@ -92,7 +91,7 @@
     font-size: 26px;
     font-weight: bold;
     letter-spacing: -0.24px;
-    color: var(--black-color);  
+    color: var(--black-color);
 }
 
 .branchList_container .inner ul li.branch_item .branch_item_title .branch_item_title_tit .gym_area {
@@ -134,7 +133,7 @@
     justify-content: start;
     color: var(--black-color);
     text-align: left;
-}   
+}
 
 .branchList_container .inner ul li.branch_item .branch_info .owner_name {
     display: flex;
@@ -206,37 +205,119 @@
     margin-top: 64px;
 }
 
-.branchList_container .tabs {
+/* 계층적 탭 스타일 */
+.branchList_container .hierarchical-tabs {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     margin-bottom: 44px;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
-.branchList_container .tabs button {
+.branchList_container .hierarchical-tabs .tab-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.branchList_container .hierarchical-tabs .main-tab {
     padding: 12px 24px;
-    border-radius: 0;
-    border: 1px solid #e0e0e0;
     border-radius: 35px;
-    background-color: var(--white-color);   
+    border: 1px solid #e0e0e0;
+    background-color: var(--white-color);
     color: var(--black-color);
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
 }
-.branchList_container .tabs button~button {
-    border-left: 0px;
-}
-.branchList_container .tabs button:hover {
+
+.branchList_container .hierarchical-tabs .main-tab:hover {
     background-color: #fe6c2e;
     border-color: transparent;
     color: var(--white-color);
 }
 
-.branchList_container .tabs button.active {
+.branchList_container .hierarchical-tabs .main-tab.active {
     background-color: var(--black-color);
     color: var(--white-color);
     border-color: transparent;
+}
+
+.branchList_container .hierarchical-tabs .dropdown-arrow {
+    transition: transform 0.3s ease;
+    font-size: 12px;
+}
+
+.branchList_container .hierarchical-tabs .dropdown-arrow.open {
+    transform: rotate(180deg);
+}
+
+.branchList_container .hierarchical-tabs .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--white-color);
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    margin-top: 5px;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.branchList_container .hierarchical-tabs .dropdown-item {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    background-color: var(--white-color);
+    color: var(--black-color);
+    text-align: left;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: block;
+    white-space: nowrap;
+}
+
+.branchList_container .hierarchical-tabs .dropdown-item:hover {
+    background-color: #fe6c2e;
+    color: var(--white-color);
+}
+
+.branchList_container .hierarchical-tabs .dropdown-item.active {
+    background-color: var(--black-color);
+    color: var(--white-color);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .branchList_container .hierarchical-tabs {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .branchList_container .hierarchical-tabs .tab-item {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .branchList_container .hierarchical-tabs .main-tab {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .branchList_container .hierarchical-tabs .dropdown-menu {
+        left: 0;
+        right: 0;
+        width: 100%;
+    }
 }
