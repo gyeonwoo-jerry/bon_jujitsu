@@ -176,8 +176,13 @@ public class UserService {
   @Transactional(readOnly = true)
   @Cacheable(value = "userProfile", key = "#userId")
   public UserResponse getProfile(Long userId) {
-    User profile = userRepository.findByIdWithBranchUsersAndImagesAndIsDeletedFalse(userId)
+    // 1단계: BranchUsers와 함께 User 조회
+    User profile = userRepository.findByIdWithBranchUsersAndIsDeletedFalse(userId)
         .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+    // 2단계: Images Lazy Loading 강제 초기화 (가장 간단)
+    profile.getImages().size(); // 이 한 줄이 images를 로딩함
+
     return UserResponse.fromEntity(profile);
   }
 

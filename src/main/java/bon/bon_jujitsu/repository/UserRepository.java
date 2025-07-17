@@ -66,10 +66,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   @Query("SELECT DISTINCT u FROM User u JOIN FETCH u.branchUsers bu JOIN FETCH bu.branch WHERE bu.branch.id IN :branchIds AND u.isDeleted = false ORDER BY u.createdAt DESC")
   Page<User> findAllByBranchIdInAndIsDeletedFalseWithBranchUsers(@Param("branchIds") List<Long> branchIds, Pageable pageable);
 
-  @Query("SELECT u FROM User u " +
-      "LEFT JOIN FETCH u.branchUsers bu " +
-      "LEFT JOIN FETCH bu.branch " +
-      "LEFT JOIN FETCH u.images " +  // ← 이 부분이 핵심!
-      "WHERE u.id = :userId AND u.isDeleted = false")
-  Optional<User> findByIdWithBranchUsersAndImagesAndIsDeletedFalse(@Param("userId") Long userId);
+  @Query("SELECT u FROM User u LEFT JOIN FETCH u.branchUsers bu LEFT JOIN FETCH bu.branch WHERE u.id = :userId AND u.isDeleted = false")
+  Optional<User> findByIdWithBranchUsersAndIsDeletedFalse(@Param("userId") Long userId);
 }
