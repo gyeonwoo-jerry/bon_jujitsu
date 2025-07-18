@@ -47,3 +47,6 @@ logging:
     org.springframework.transaction: DEBUG # Spring 트랜잭션 로그 디버그(DEBUG) 모드 활성화
 
 filepath: /data/uploads/bon/
+
+app:
+  base-url: http://bon-dev.ezylab.co.kr

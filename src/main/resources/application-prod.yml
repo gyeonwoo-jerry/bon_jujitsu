@@ -27,3 +27,6 @@ spring:
       max-request-size: 10MB
 
 filepath: /data/uploads/bon/
+
+app:
+  base-url: http://bon-dev.ezylab.co.kr

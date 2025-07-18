@@ -8,3 +8,6 @@ spring:
       matching-strategy: ant-path-matcher
 
 filepath: /data/uploads/bon/
+
+app:
+  base-url: http://bon-dev.ezylab.co.kr
