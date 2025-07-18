@@ -98,7 +98,6 @@ public class SkillService {
   /**
    * 스킬 게시물 상세 조회 (N+1 문제 해결)
    */
-  @Transactional(readOnly = true)
   @Cacheable(value = "skill", key = "#skillId")
   public SkillResponse getSkill(Long skillId, HttpServletRequest request) {
     // N+1 문제 방지를 위한 fetch join 사용
