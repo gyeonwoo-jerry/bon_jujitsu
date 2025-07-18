@@ -9,6 +9,7 @@ const BranchNoticeList = () => {
   const navigate = useNavigate();
 
   const [branchId, setBranchId] = useState(null);
+  const [branchInfo, setBranchInfo] = useState(null); // 지부 정보 상태 추가
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -68,6 +69,24 @@ const BranchNoticeList = () => {
     return false;
   };
 
+  // 지부 정보 가져오기
+  const fetchBranchInfo = useCallback(async () => {
+    if (!branchId) return;
+
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await API.get(`/branches/${branchId}`, { headers });
+
+      if (response.status === 200 && response.data.success) {
+        setBranchInfo(response.data.data);
+      }
+    } catch (error) {
+      console.warn('지부 정보를 불러오는 중 오류:', error);
+    }
+  }, [branchId]);
+
   // 글쓰기 권한 확인 및 상태 업데이트
   useEffect(() => {
     const checkWritePermission = () => {
@@ -79,6 +98,7 @@ const BranchNoticeList = () => {
 
     if (branchId) {
       checkWritePermission();
+      fetchBranchInfo();
     }
 
     // localStorage 변경 감지
@@ -91,7 +111,7 @@ const BranchNoticeList = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [branchId]);
+  }, [branchId, fetchBranchInfo]);
 
   // 글쓰기 버튼 클릭 핸들러
   const handleWriteClick = () => {
@@ -242,6 +262,24 @@ const BranchNoticeList = () => {
     return `/${url}`;
   };
 
+  // 지부 정보 표시 함수
+  const getBranchDisplayName = () => {
+    if (!branchInfo) return '지부 공지사항';
+
+    const region = branchInfo.region || '';
+    const area = branchInfo.area || '';
+
+    if (region && area) {
+      return `${region} ${area} 지부 공지사항`;
+    } else if (region) {
+      return `${region} 지부 공지사항`;
+    } else if (area) {
+      return `${area} 지부 공지사항`;
+    }
+
+    return '지부 공지사항';
+  };
+
   if (loading) {
     return (
         <div className="loading-container">
@@ -255,7 +293,7 @@ const BranchNoticeList = () => {
     return (
         <div className="branch-board-container">
           <div className="board-header">
-            <h1 className="board-title">지부 공지사항</h1>
+            <h1 className="board-title">{getBranchDisplayName()}</h1>
             <button
                 onClick={handleWriteClick}
                 disabled={!canWriteState}
@@ -291,7 +329,7 @@ const BranchNoticeList = () => {
   return (
       <div className="branch-board-container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1 className="board-title">지부 공지사항</h1>
+          <h1 className="board-title">{getBranchDisplayName()}</h1>
           <button
               onClick={handleWriteClick}
               disabled={!canWriteState}
@@ -335,7 +373,7 @@ const BranchNoticeList = () => {
                       {Array.isArray(post.images) && post.images.length > 0 ? (
                           <>
                             <img
-                                src={normalizeImageUrl(post.images[0].url)}
+                                src={normalizeImageUrl(post.media[0].url)}
                                 alt={`${post.title || "게시물"} 이미지`}
                                 className="post-thumbnail"
                             />
@@ -358,8 +396,8 @@ const BranchNoticeList = () => {
                 <td className="post-title">
                   {post.title || "제목 없음"}
                 </td>
-                <td className={`post-region ${!post.region ? "display_none" : ""}`}>
-                  {post.region || ""}
+                <td className={`post-region ${(!branchInfo?.region && !branchInfo?.area) ? "display_none" : ""}`}>
+                  {branchInfo?.region || branchInfo?.area || ""}
                 </td>
                 <td className="post-author">
                   {post?.owner?.name || post.author || post.name || "작성자 없음"}

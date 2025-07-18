@@ -72,6 +72,11 @@ export const usePostPermissions = (postType, post, branchId) => {
       return false;
     }
 
+    // 로그인하지 않은 경우 수정 불가
+    if (!isLoggedIn()) {
+      return false;
+    }
+
     // 관리자는 모든 글 수정 가능
     if (isAdmin()) return true;
 
@@ -80,9 +85,15 @@ export const usePostPermissions = (postType, post, branchId) => {
       return false; // 관리자가 아니면 수정 불가
     }
 
-    // 다른 게시판들의 경우
+    // Notice 게시판은 브런치 관장도 수정 가능
+    if (postType === 'notice') {
+      if (isAuthor()) return true;
+      if (config.permissions.includes('BRANCH_OWNER') && isBranchOwner()) return true;
+      return false;
+    }
+
+    // 나머지 게시판들은 작성자만 수정 가능 (브런치 관장 권한 제거)
     if (isAuthor()) return true;
-    if (config.permissions.includes('BRANCH_OWNER') && isBranchOwner()) return true;
 
     return false;
   };

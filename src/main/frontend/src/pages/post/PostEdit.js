@@ -8,7 +8,6 @@ import API from '../../utils/api';
 import '../../styles/postWrite.css';
 
 import SponsorFields from '../../components/write/SponsorFields';
-import ImageUploadEdit from '../../components/write/ImageUploadEdit';
 import PostWriteHeader from '../../components/write/PostWriteHeader';
 
 const PostEdit = () => {
@@ -40,6 +39,19 @@ const PostEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // 이미지 URL 정규화
+  const normalizeImageUrl = (url) => {
+    if (!url || typeof url !== 'string') {
+      return "/images/blank_img.png";
+    }
+
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+      return url;
+    }
+
+    return `/${url}`;
+  };
+
   // 원본 데이터로 폼 초기화
   useEffect(() => {
     if (originalPost) {
@@ -49,11 +61,11 @@ const PostEdit = () => {
         url: originalPost.url || ''
       });
 
-      // 기존 이미지 설정
-      if (originalPost.images && Array.isArray(originalPost.images)) {
-        const imageObjects = originalPost.images.map((img, index) => ({
+      // 기존 이미지 설정 (media 필드 사용)
+      if (originalPost.media && Array.isArray(originalPost.media)) {
+        const imageObjects = originalPost.media.map((img, index) => ({
           id: img.id || index,
-          url: img.url
+          url: normalizeImageUrl(img.url)
         }));
 
         setExistingImages(imageObjects);
@@ -110,7 +122,7 @@ const PostEdit = () => {
         updateData.url = normalizeUrl(formData.url.trim());
       }
 
-      // JSON 데이터를 Blob으로 변환 (기존 방식 유지)
+      // JSON 데이터를 Blob으로 변환
       const updateBlob = new Blob([JSON.stringify(updateData)], {
         type: 'application/json'
       });
@@ -118,7 +130,7 @@ const PostEdit = () => {
 
       // 새 이미지들 추가
       newImages.forEach(image => {
-        formDataToSend.append('images', image);
+        formDataToSend.append('files', image);
       });
 
       // 유지할 이미지 ID들 추가
@@ -126,7 +138,7 @@ const PostEdit = () => {
         const keepImageIdsBlob = new Blob([JSON.stringify(keepImageIds)], {
           type: 'application/json'
         });
-        formDataToSend.append('keepImageIds', keepImageIdsBlob);
+        formDataToSend.append('keepfileIds', keepImageIdsBlob);
       }
 
       const apiEndpoint = getApiEndpoint();
@@ -187,12 +199,43 @@ const PostEdit = () => {
     }
   };
 
-  const handleNewImagesChange = (images) => {
-    setNewImages(images);
+  // 기존 이미지 삭제
+  const handleExistingImageDelete = (imageId) => {
+    setKeepImageIds(prev => prev.filter(id => id !== imageId));
   };
 
-  const handleKeepImageIdsChange = (ids) => {
-    setKeepImageIds(ids);
+  // 새 이미지 추가
+  const handleNewImageAdd = (e) => {
+    const files = Array.from(e.target.files);
+    const totalImages = existingImages.length - (existingImages.length - keepImageIds.length) + newImages.length;
+
+    if (totalImages + files.length > 10) {
+      alert('최대 10개의 이미지만 업로드할 수 있습니다.');
+      return;
+    }
+
+    files.forEach(file => {
+      if (file.size > 10 * 1024 * 1024) { // 10MB
+        alert(`${file.name}은 10MB를 초과합니다.`);
+        return;
+      }
+    });
+
+    setNewImages(prev => [...prev, ...files]);
+    e.target.value = '';
+  };
+
+  // 새 이미지 삭제
+  const handleNewImageDelete = (index) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 이미지 미리보기 URL 생성
+  const getImagePreviewUrl = (file) => {
+    if (file instanceof File) {
+      return URL.createObjectURL(file);
+    }
+    return file;
   };
 
   // 로딩 상태
@@ -225,6 +268,8 @@ const PostEdit = () => {
   if (!config) {
     return <div className="write-container">잘못된 게시글 타입입니다.</div>;
   }
+
+  const totalImages = keepImageIds.length + newImages.length;
 
   return (
       <div className="write-container">
@@ -296,15 +341,98 @@ const PostEdit = () => {
             </div>
           </div>
 
-          <ImageUploadEdit
-              existingImages={existingImages}
-              newImages={newImages}
-              keepImageIds={keepImageIds}
-              onNewImagesChange={handleNewImagesChange}
-              onKeepImageIdsChange={handleKeepImageIdsChange}
-              maxImages={10}
-              disabled={isSubmitting}
-          />
+          {/* 이미지 업로드 섹션 */}
+          <div className="form-group">
+            <label>이미지 ({totalImages}/10)</label>
+
+            {/* 기존 이미지들 */}
+            {existingImages.length > 0 && (
+                <div className="image-section">
+                  <h4>기존 이미지</h4>
+                  <div className="image-grid">
+                    {existingImages.map((image) => (
+                        <div key={image.id} className="image-item">
+                          <img
+                              src={image.url}
+                              alt={`기존 이미지 ${image.id}`}
+                              className="image-preview"
+                              onError={(e) => {
+                                e.target.src = "/images/blank_img.png";
+                              }}
+                          />
+                          <button
+                              type="button"
+                              className={`image-delete-btn ${keepImageIds.includes(image.id) ? '' : 'deleted'}`}
+                              onClick={() => {
+                                if (keepImageIds.includes(image.id)) {
+                                  handleExistingImageDelete(image.id);
+                                } else {
+                                  setKeepImageIds(prev => [...prev, image.id]);
+                                }
+                              }}
+                              disabled={isSubmitting}
+                          >
+                            {keepImageIds.includes(image.id) ? '×' : '↺'}
+                          </button>
+                          {!keepImageIds.includes(image.id) && (
+                              <div className="image-deleted-overlay">삭제됨</div>
+                          )}
+                        </div>
+                    ))}
+                  </div>
+                </div>
+            )}
+
+            {/* 새 이미지들 */}
+            {newImages.length > 0 && (
+                <div className="image-section">
+                  <h4>새 이미지</h4>
+                  <div className="image-grid">
+                    {newImages.map((image, index) => (
+                        <div key={index} className="image-item">
+                          <img
+                              src={getImagePreviewUrl(image)}
+                              alt={`새 이미지 ${index}`}
+                              className="image-preview"
+                          />
+                          <button
+                              type="button"
+                              className="image-delete-btn"
+                              onClick={() => handleNewImageDelete(index)}
+                              disabled={isSubmitting}
+                          >
+                            ×
+                          </button>
+                        </div>
+                    ))}
+                  </div>
+                </div>
+            )}
+
+            {/* 이미지 추가 버튼 */}
+            {totalImages < 10 && (
+                <div className="image-upload-section">
+                  <input
+                      type="file"
+                      id="images"
+                      multiple
+                      accept="image/*"
+                      onChange={handleNewImageAdd}
+                      disabled={isSubmitting}
+                      style={{ display: 'none' }}
+                  />
+                  <label htmlFor="images" className="image-upload-btn">
+                    + 이미지 추가 ({totalImages}/10)
+                  </label>
+                </div>
+            )}
+
+            <div className="image-upload-info">
+              <p>• 최대 10개의 이미지를 업로드할 수 있습니다.</p>
+              <p>• 각 이미지는 10MB 이하여야 합니다.</p>
+              <p>• 지원 형식: JPG, PNG, GIF, WebP</p>
+            </div>
+          </div>
         </form>
 
         {isSubmitting && (

@@ -32,14 +32,76 @@ const PostDetail = () => {
   // UI 상태
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // 게시물 데이터 정규화 함수
+  const normalizePostData = (rawPost) => {
+    if (!rawPost) return null;
+
+    // 이미지/미디어 데이터 정규화
+    const normalizeMedia = (mediaData) => {
+      if (!mediaData || !Array.isArray(mediaData)) return [];
+
+      return mediaData.map(item => ({
+        id: item.id,
+        url: item.url || item.imagePath || item.filePath, // 다양한 URL 필드 대응
+        originalFileName: item.originalFileName || '',
+        mediaType: item.mediaType || 'IMAGE'
+      }));
+    };
+
+    // 작성자 정보 정규화
+    const normalizeAuthor = (authorData, authorName, authorId) => {
+      // 새로운 구조에서는 author, authorId 필드 직접 사용
+      if (authorName && authorId) {
+        return authorName; // 문자열로 반환
+      }
+
+      // 기존 구조 대응
+      if (authorData && typeof authorData === 'object') {
+        return authorData.name || '작성자 정보 없음';
+      }
+
+      return authorName || authorData || '작성자 정보 없음';
+    };
+
+    return {
+      ...rawPost,
+      // 이미지/미디어 정규화 (모든 Response가 media 필드 사용)
+      images: normalizeMedia(rawPost.media || []),
+      // 작성자 정보 정규화 (문자열로 처리)
+      author: normalizeAuthor(rawPost.author, rawPost.author, rawPost.authorId),
+      authorId: rawPost.authorId,
+      // QnA 특별 처리
+      authorName: rawPost.authorName || rawPost.author,
+      isGuestPost: rawPost.isGuestPost || false,
+      hasAnswer: rawPost.hasAnswer || false,
+      // 날짜 정규화
+      createdAt: rawPost.createdAt,
+      modifiedAt: rawPost.modifiedAt || rawPost.modifiedAT, // 오타 대응
+      // 기타 필드들
+      viewCount: rawPost.viewCount || 0,
+      region: rawPost.region || ''
+    };
+  };
+
+  // 정규화된 게시물 데이터
+  const normalizedPost = normalizePostData(post);
+
   // 수정 버튼 클릭 핸들러
   const handleEdit = () => {
-    // 직접 수정 페이지로 이동
     let editPath;
     switch (postType) {
       case 'notice':
       case 'board':
+        // 지부 게시물은 branchId가 필요
         editPath = `/branches/${branchId}/${postType}/${postId}/edit`;
+        break;
+      case 'skill':
+      case 'news':
+      case 'sponsor':
+      case 'faq':
+      case 'qna':
+        // 일반 게시물은 /edit/:postType/:postId 형태
+        editPath = `/edit/${postType}/${postId}`;
         break;
       default:
         editPath = `/edit/${postType}/${postId}`;
@@ -50,7 +112,6 @@ const PostDetail = () => {
 
   // 삭제 버튼 클릭 핸들러
   const handleDelete = () => {
-    // 직접 삭제 확인
     if (window.confirm('정말로 삭제하시겠습니까?')) {
       performDelete();
     }
@@ -59,8 +120,31 @@ const PostDetail = () => {
   // 실제 삭제 수행
   const performDelete = async () => {
     try {
-      const config = POST_TYPE_CONFIGS[postType];
-      const response = await API.delete(`${config.apiEndpoint}/${postId}`);
+      let deleteEndpoint;
+
+      // 새로운 API 엔드포인트에 맞춰 수정
+      switch (postType) {
+        case 'notice':
+          deleteEndpoint = `/notice/${postId}`;
+          break;
+        case 'news':
+          deleteEndpoint = `/news/${postId}`;
+          break;
+        case 'skill':
+          deleteEndpoint = `/skill/${postId}`;
+          break;
+        case 'sponsor':
+          deleteEndpoint = `/sponsor/${postId}`;
+          break;
+        case 'qna':
+          deleteEndpoint = `/qna/${postId}`;
+          break;
+        default:
+          deleteEndpoint = `/${postType}/${postId}`;
+          break;
+      }
+
+      const response = await API.delete(deleteEndpoint);
 
       if (response.data.success) {
         alert('게시글이 삭제되었습니다.');
@@ -80,10 +164,7 @@ const PostDetail = () => {
 
   // 다른 게시판의 수정/삭제 버튼 노출 조건
   const shouldShowButtons = () => {
-    if (postType === 'faq') {
-      return isAdmin(); // FAQ는 관리자만 수정/삭제 가능
-    }
-    // 다른 게시판들은 기존 권한 체크 로직 사용
+    // 이제 canEdit() 함수에서 각 타입별 권한을 모두 처리하므로
     return canEdit();
   };
 
@@ -111,6 +192,9 @@ const PostDetail = () => {
       case 'sponsor':
         navigate('/sponsor');
         break;
+      case 'qna':
+        navigate('/qna');
+        break;
       case 'notice':
       case 'board':
         navigate(`/branches/${branchId}`);
@@ -119,6 +203,19 @@ const PostDetail = () => {
         navigate('/');
         break;
     }
+  };
+
+  // 이미지 URL 정규화
+  const normalizeImageUrl = (url) => {
+    if (!url || typeof url !== 'string') {
+      return "/images/blank_img.png";
+    }
+
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+      return url;
+    }
+
+    return `/${url}`;
   };
 
   // 로딩 상태
@@ -131,7 +228,7 @@ const PostDetail = () => {
   }
 
   // 에러 상태
-  if (error || !post) {
+  if (error || !normalizedPost) {
     return (
         <div className="board-detail-container">
           <ErrorMessage
@@ -157,7 +254,7 @@ const PostDetail = () => {
   return (
       <>
         {/* SubHeader - 특정 타입에만 표시 */}
-        {(['skill', 'news', 'faq'].includes(postType)) && (
+        {(['skill', 'news', 'faq', 'sponsor', 'qna'].includes(postType)) && (
             <SubHeader
                 pageName={`${config.title} 상세`}
                 descName={`본주짓수 ${config.title}를 확인해보세요`}
@@ -168,7 +265,7 @@ const PostDetail = () => {
           {/* 헤더 (뒤로가기, 수정/삭제 버튼) */}
           <PostDetailHeader
               postType={postType}
-              post={post}
+              post={normalizedPost}
               canEdit={shouldShowButtons}
               onBack={handleBackToList}
               onEdit={handleEdit}
@@ -178,16 +275,17 @@ const PostDetail = () => {
           <div className="board-detail-content">
             {/* 메타 정보 (제목, 작성자, 날짜 등) */}
             <PostDetailMeta
-                post={post}
+                post={normalizedPost}
                 postType={postType}
                 config={config}
             />
 
             {/* 본문 내용 */}
             <PostDetailContent
-                post={post}
+                post={normalizedPost}
                 postType={postType}
                 onImageClick={openImageModal}
+                normalizeImageUrl={normalizeImageUrl}
             />
           </div>
 
@@ -203,7 +301,7 @@ const PostDetail = () => {
           {/* 이미지 확대 모달 */}
           {selectedImage && (
               <ImageModal
-                  imageUrl={selectedImage}
+                  imageUrl={normalizeImageUrl(selectedImage)}
                   onClose={closeImageModal}
               />
           )}

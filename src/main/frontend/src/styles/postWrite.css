@@ -365,6 +365,218 @@
     margin: 0;
 }
 
+/* ===================
+   이미지 관리 섹션 스타일
+   =================== */
+
+/* 이미지 섹션 컨테이너 */
+.image-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.image-section h4 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.image-section h4::before {
+    content: "📁";
+    font-size: 14px;
+}
+
+.image-section:nth-child(1) h4::before {
+    content: "📂";
+}
+
+.image-section:nth-child(2) h4::before {
+    content: "🆕";
+}
+
+/* 이미지 그리드 레이아웃 */
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+/* 개별 이미지 아이템 */
+.image-item {
+    position: relative;
+    aspect-ratio: 1;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.image-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.image-item.deleted {
+    border-color: #dc3545;
+    opacity: 0.7;
+}
+
+.image-item.deleted::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(220, 53, 69, 0.1);
+    z-index: 1;
+}
+
+/* 이미지 미리보기 */
+.image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 이미지 삭제/복원 버튼 */
+.image-delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.image-delete-btn:hover {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border-color: #dc3545;
+    transform: scale(1.1);
+}
+
+.image-delete-btn.deleted {
+    background: rgba(40, 167, 69, 0.9);
+    color: white;
+    border-color: #28a745;
+}
+
+.image-delete-btn.deleted:hover {
+    background: rgba(40, 167, 69, 1);
+    transform: scale(1.1);
+}
+
+/* 삭제된 이미지 오버레이 */
+.image-deleted-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 1;
+    border-radius: 6px;
+}
+
+/* 이미지 업로드 섹션 */
+.image-upload-section {
+    margin-bottom: 15px;
+}
+
+.image-upload-btn {
+    display: inline-block;
+    padding: 12px 20px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.image-upload-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+}
+
+.image-upload-btn:active {
+    transform: translateY(1px);
+}
+
+/* 이미지 업로드 정보 */
+.image-upload-info {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 10px;
+    padding: 10px;
+    background: #ffffff;
+    border-radius: 6px;
+    border-left: 4px solid #17a2b8;
+}
+
+.image-upload-info p {
+    margin: 2px 0;
+    line-height: 1.4;
+}
+
+.image-upload-info p:first-child {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* 이미지 카운터 */
+.image-counter {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: #007bff;
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.image-counter.full {
+    background: #dc3545;
+}
+
+.image-counter.warning {
+    background: #ffc107;
+    color: #212529;
+}
+
 /* 이미지 미리보기 개선 */
 .image-preview {
     position: relative;
@@ -541,6 +753,30 @@
     .preview-image {
         height: 100px;
     }
+
+    /* 이미지 관리 반응형 */
+    .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+    }
+
+    .image-section {
+        padding: 10px;
+    }
+
+    .image-section h4 {
+        font-size: 14px;
+    }
+
+    .image-upload-btn {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+
+    .image-upload-info {
+        font-size: 11px;
+        padding: 8px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -573,6 +809,26 @@
     .preview-image {
         height: 80px;
     }
+
+    /* 이미지 관리 모바일 반응형 */
+    .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+    }
+
+    .image-delete-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+    }
+
+    .image-section h4 {
+        font-size: 13px;
+    }
+
+    .image-upload-info p {
+        font-size: 10px;
+    }
 }
 
 /* QnA 특화 애니메이션 */
@@ -602,6 +858,39 @@
     }
 }
 
+/* 이미지 관리 애니메이션 */
+.image-section {
+    animation: slideDown 0.3s ease-out;
+}
+
+.image-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.image-deleted-overlay {
+    animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 /* QnA 전용 색상 테마 */
 .write-container.qna-write {
     border-top: 4px solid #17a2b8;
@@ -618,4 +907,25 @@
 
 .write-container.qna-write .submit-button:hover:not(:disabled) {
     background-color: #138496;
+}
+
+/* 상태별 색상 테마 */
+.image-counter.success {
+    background: #28a745;
+}
+
+.image-counter.info {
+    background: #17a2b8;
+}
+
+.image-upload-info.success {
+    border-left-color: #28a745;
+}
+
+.image-upload-info.warning {
+    border-left-color: #ffc107;
+}
+
+.image-upload-info.danger {
+    border-left-color: #dc3545;
 }

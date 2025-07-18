@@ -37,26 +37,39 @@ const PostDetailMeta = ({ post, postType, config }) => {
       <div className="board-header">
         <h1 className="board-title">{post.title}</h1>
         <div className="board-meta">
-          <div className="board-meta-left">
-            <span className="author">
-              작성자: {getAuthorName()}
-            </span>
-            {post.region && <span className="region">지역: {post.region}</span>}
-            <span className="post-type">{config.title}</span>
-          </div>
-          <div className="board-meta-right">
-            <span className="date">작성일: {formatDate(post.createdAt)}</span>
-            {config.showViewCount && (
-                <span className="views">조회수: {post.viewCount?.toLocaleString()}</span>
-            )}
-          </div>
-        </div>
-
-        {post.modifiedAt && post.modifiedAt !== post.createdAt && (
-            <div className="board-modified">
-              <small>마지막 수정: {formatDate(post.modifiedAt)}</small>
+          <div className="board-meta-row">
+            <div className="board-meta-left">
+              <div className="author">
+                <span>👤</span>
+                <span>{getAuthorName()}</span>
+              </div>
+              {post.region && (
+                  <div className="region">
+                    <span>📍</span>
+                    <span>{post.region}</span>
+                  </div>
+              )}
+              <div className="date">
+                <span>📅</span>
+                <span>{formatDate(post.createdAt)}</span>
+              </div>
             </div>
-        )}
+            <div className="board-meta-right">
+              {config.showViewCount && (
+                  <div className="views">
+                    <span>👁️</span>
+                    <span>{post.viewCount?.toLocaleString()}</span>
+                  </div>
+              )}
+            </div>
+          </div>
+
+          {post.modifiedAt && post.modifiedAt !== post.createdAt && (
+              <div className="board-modified-info">
+                마지막 수정: {formatDate(post.modifiedAt)}
+              </div>
+          )}
+        </div>
       </div>
   );
 };
