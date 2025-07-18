@@ -1,6 +1,69 @@
 import React from 'react';
 
-const PostDetailContent = ({ post, postType, onImageClick }) => {
+const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) => {
+  // 미디어 타입별 렌더링
+  const renderMedia = (media, index) => {
+    const normalizedUrl = normalizeImageUrl ? normalizeImageUrl(media.url) : media.url;
+
+    if (media.mediaType === 'VIDEO') {
+      return (
+          <div key={media.id || index} className="media-item video-item">
+            <div className="media-type-badge">
+              🎬 동영상
+            </div>
+            <video
+                src={normalizedUrl}
+                controls
+                className="board-video"
+                preload="metadata"
+            >
+              동영상을 재생할 수 없습니다.
+            </video>
+            {media.originalFileName && (
+                <div className="media-filename">{media.originalFileName}</div>
+            )}
+          </div>
+      );
+    } else {
+      // IMAGE 또는 기본값
+      return (
+          <div key={media.id || index} className="media-item image-item">
+            <div className="media-type-badge">
+              📷 이미지
+            </div>
+            <img
+                src={normalizedUrl}
+                alt={`첨부 이미지 ${index + 1}`}
+                onClick={() => onImageClick && onImageClick(media.url)}
+                className="board-image"
+                onError={(e) => {
+                  e.target.src = "/images/blank_img.png";
+                }}
+            />
+            {media.originalFileName && (
+                <div className="media-filename">{media.originalFileName}</div>
+            )}
+          </div>
+      );
+    }
+  };
+
+  // 미디어 개수 통계
+  const getMediaStats = () => {
+    if (!post.images || post.images.length === 0) return null;
+
+    const imageCount = post.images.filter(media => media.mediaType === 'IMAGE' || !media.mediaType).length;
+    const videoCount = post.images.filter(media => media.mediaType === 'VIDEO').length;
+
+    if (imageCount > 0 && videoCount > 0) {
+      return `첨부 미디어 (이미지 ${imageCount}개, 동영상 ${videoCount}개)`;
+    } else if (videoCount > 0) {
+      return `첨부 동영상 (${videoCount}개)`;
+    } else {
+      return `첨부 이미지 (${imageCount}개)`;
+    }
+  };
+
   return (
       <div className="board-content">
         <div className="content-text">
@@ -24,21 +87,12 @@ const PostDetailContent = ({ post, postType, onImageClick }) => {
             </div>
         )}
 
-        {/* 이미지 섹션 */}
+        {/* 미디어 섹션 (이미지 + 동영상) */}
         {post.images && post.images.length > 0 && (
-            <div className="board-images">
-              <h4>첨부 이미지</h4>
-              <div className="image-grid">
-                {post.images.map((image, index) => (
-                    <div key={image.id || index} className="image-item">
-                      <img
-                          src={image.url}
-                          alt={`첨부 이미지 ${index + 1}`}
-                          onClick={() => onImageClick(image.url)}
-                          className="board-image"
-                      />
-                    </div>
-                ))}
+            <div className="board-media">
+              <h4>{getMediaStats()}</h4>
+              <div className="media-grid">
+                {post.images.map((media, index) => renderMedia(media, index))}
               </div>
             </div>
         )}
