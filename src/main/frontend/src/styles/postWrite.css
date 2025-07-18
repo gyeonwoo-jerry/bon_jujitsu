@@ -1109,3 +1109,28 @@
     font-weight: bold;
     z-index: 3;
 }
+
+/* CKEditor 무료 버전 스타일 */
+.rich-text-editor .ck-editor {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.rich-text-editor .ck-editor__editable {
+    min-height: 400px;
+    padding: 20px;
+}
+
+.rich-text-editor .ck-editor__editable:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.editor-help-text {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+}

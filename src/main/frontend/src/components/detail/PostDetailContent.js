@@ -25,7 +25,6 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
           </div>
       );
     } else {
-      // IMAGE 또는 기본값
       return (
           <div key={media.id || index} className="media-item image-item">
             <div className="media-type-badge">
@@ -64,13 +63,26 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
     }
   };
 
+  // HTML 콘텐츠인지 확인하는 함수
+  const isHtmlContent = (content) => {
+    return content && content.includes('<') && content.includes('>');
+  };
+
   return (
       <div className="board-content">
-        <div className="content-text">
-          {post.content.split('\n').map((line, index) => (
-              <p key={index}>{line}</p>
-          ))}
-        </div>
+        {/* 콘텐츠 렌더링 */}
+        {isHtmlContent(post.content) ? (
+            <div
+                className="content-html"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+        ) : (
+            <div className="content-text">
+              {post.content.split('\n').map((line, index) => (
+                  <p key={index}>{line}</p>
+              ))}
+            </div>
+        )}
 
         {/* 제휴업체 특별 정보 표시 */}
         {postType === 'sponsor' && post.url && (

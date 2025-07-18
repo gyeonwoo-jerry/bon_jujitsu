@@ -4,6 +4,7 @@ import {normalizeUrl, POST_TYPE_CONFIGS} from '../../configs/postTypeConfigs';
 import {usePostData} from '../../hooks/usePostData';
 import {usePostPermissions} from '../../hooks/usePostPermissions';
 import {usePostValidation} from '../../hooks/usePostValidation';
+import RichTextEditor from '../../components/common/RichTextEditor';
 import API from '../../utils/api';
 import '../../styles/postWrite.css';
 
@@ -12,7 +13,7 @@ import MediaUploadEdit from '../../components/write/MediaUploadEdit';
 import PostWriteHeader from '../../components/write/PostWriteHeader';
 
 const PostEdit = () => {
-  const { postType, postId, branchId } = useParams();
+  const {postType, postId, branchId} = useParams();
   const navigate = useNavigate();
   const config = POST_TYPE_CONFIGS[postType];
 
@@ -23,8 +24,8 @@ const PostEdit = () => {
     error: dataError
   } = usePostData(postType, postId);
 
-  const { canEdit } = usePostPermissions(postType, originalPost, branchId);
-  const { validateForm } = usePostValidation(postType);
+  const {canEdit} = usePostPermissions(postType, originalPost, branchId);
+  const {validateForm} = usePostValidation(postType);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -46,7 +47,8 @@ const PostEdit = () => {
       return "/images/blank_img.png";
     }
 
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+    if (url.startsWith("http://") || url.startsWith("https://")
+        || url.startsWith("/")) {
       return url;
     }
 
@@ -104,7 +106,9 @@ const PostEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isSubmitting) return;
+    if (isSubmitting) {
+      return;
+    }
 
     // 폼 검증
     const validation = validateForm(formData);
@@ -150,11 +154,12 @@ const PostEdit = () => {
       }
 
       const apiEndpoint = getApiEndpoint();
-      const response = await API.patch(`${apiEndpoint}/${postId}`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await API.patch(`${apiEndpoint}/${postId}`,
+          formDataToSend, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
 
       if (response.data.success) {
         alert(getSuccessMessage());
@@ -183,18 +188,48 @@ const PostEdit = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const {name, value, type, checked} = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
 
+  // 에디터 사용 여부 결정
+  const shouldUseRichEditor = () => {
+    // 모든 게시글에서 리치 에디터 사용
+    return true;
+  };
+
+// 콘텐츠 길이 계산 함수
+  const getContentTextLength = (htmlContent) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+// 리치 에디터 콘텐츠 변경 핸들러
+  const handleContentChange = (content) => {
+    setFormData(prev => ({
+      ...prev,
+      content: content
+    }));
+  };
+
+// 콘텐츠 길이 계산 (리치 에디터용)
+  const getDisplayContentLength = () => {
+    if (shouldUseRichEditor()) {
+      return getContentTextLength(formData.content).length;
+    }
+    return formData.content.length;
+  };
+
   const handleCancel = () => {
     const hasChanges =
         formData.title !== originalPost?.title ||
         formData.content !== originalPost?.content ||
-        (postType === 'sponsor' && formData.url !== (originalPost?.url || '')) ||
+        (postType === 'sponsor' && formData.url !== (originalPost?.url || ''))
+        ||
         newMedia.length > 0 ||
         keepMediaIds.length !== existingMedia.length;
 
@@ -302,20 +337,40 @@ const PostEdit = () => {
 
           <div className="form-group">
             <label htmlFor="content">내용 *</label>
-            <textarea
-                id="content"
-                name="content"
-                value={formData.content}
-                onChange={handleInputChange}
-                placeholder={getContentPlaceholder(postType)}
-                maxLength={config.validation.contentMaxLength}
-                rows={15}
-                disabled={isSubmitting}
-                required
-            />
-            <div className="char-count">
-              {formData.content.length}/{config.validation.contentMaxLength}
-            </div>
+
+            {shouldUseRichEditor() ? (
+                // 리치 에디터 사용
+                <>
+                  <RichTextEditor
+                      value={formData.content}
+                      onChange={handleContentChange}
+                      placeholder={getContentPlaceholder(postType)}
+                      disabled={isSubmitting}
+                      height="500px"
+                  />
+                  <div className="char-count">
+                    {getDisplayContentLength()}/{config.validation.contentMaxLength} 글자
+                  </div>
+                </>
+            ) : (
+                // 기본 텍스트 에어리어 사용
+                <>
+      <textarea
+          id="content"
+          name="content"
+          value={formData.content}
+          onChange={handleInputChange}
+          placeholder={getContentPlaceholder(postType)}
+          maxLength={config.validation.contentMaxLength}
+          rows={15}
+          disabled={isSubmitting}
+          required
+      />
+                  <div className="char-count">
+                    {formData.content.length}/{config.validation.contentMaxLength}
+                  </div>
+                </>
+            )}
           </div>
 
           {/* 미디어 업로드 섹션 (새로운 컴포넌트 사용) */}
@@ -344,13 +399,19 @@ const PostEdit = () => {
 // 헬퍼 함수들
 const getContentPlaceholder = (postType) => {
   switch (postType) {
-    case 'skill': return '스킬에 대한 상세한 내용을 입력해주세요';
-    case 'news': return '뉴스 내용을 입력해주세요';
-    case 'notice': return '공지사항 내용을 입력해주세요';
-    case 'faq': return 'FAQ 내용을 입력해주세요';
-    case 'sponsor': return '제휴업체에 대한 소개와 혜택 등을 입력해주세요';
+    case 'skill':
+      return '스킬에 대한 상세한 내용을 입력해주세요';
+    case 'news':
+      return '뉴스 내용을 입력해주세요';
+    case 'notice':
+      return '공지사항 내용을 입력해주세요';
+    case 'faq':
+      return 'FAQ 내용을 입력해주세요';
+    case 'sponsor':
+      return '제휴업체에 대한 소개와 혜택 등을 입력해주세요';
     case 'board':
-    default: return '내용을 입력해주세요';
+    default:
+      return '내용을 입력해주세요';
   }
 };
 
