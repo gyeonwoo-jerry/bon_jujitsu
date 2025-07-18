@@ -242,13 +242,16 @@ public class NoticeService {
     HttpSession session = request.getSession();
     String sessionKey = VIEWED_NOTICE_PREFIX + noticeId;
 
-    // 동기화로 race condition 방지
-    synchronized (session) {
-      if (session.getAttribute(sessionKey) == null) {
-        notice.increaseViewCount();
-        session.setAttribute(sessionKey, true);
-        session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
-      }
+    Long lastViewTime = (Long) session.getAttribute(sessionKey);
+    long currentTime = System.currentTimeMillis();
+
+    // 5초(5000ms) 이내 중복 호출 방지
+    if (lastViewTime == null || (currentTime - lastViewTime) > 5000) {
+      notice.increaseViewCount();
+      session.setAttribute(sessionKey, currentTime);
+      session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
+    } else {
+      long timeDiff = currentTime - lastViewTime;
     }
   }
 }
