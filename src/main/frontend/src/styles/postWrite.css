@@ -929,3 +929,114 @@
 .image-upload-info.danger {
     border-left-color: #dc3545;
 }
+
+/* 미디어 업로드 스타일 */
+.media-upload-section {
+    margin-bottom: 1rem;
+}
+
+.media-upload-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.media-upload-button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.media-upload-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* 미디어 미리보기 컨테이너 */
+.media-preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.media-preview-item {
+    position: relative;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.media-type-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 2;
+}
+
+.preview-media {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+
+.media-remove-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.media-remove-button:hover {
+    background: rgba(255, 0, 0, 1);
+}
+
+.media-info {
+    padding: 8px;
+    background: white;
+}
+
+.media-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.media-size {
+    font-size: 11px;
+    color: #666;
+}
+
+.upload-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.upload-info p {
+    margin: 2px 0;
+}

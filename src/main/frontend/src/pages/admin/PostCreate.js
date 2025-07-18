@@ -144,7 +144,7 @@ const PostCreate = () => {
       // 이미지 파일들 추가
       if (images.length > 0) {
         images.forEach((image) => {
-          formData.append('images', image);
+          formData.append('files', image);
         });
       }
 

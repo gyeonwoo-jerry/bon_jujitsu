@@ -276,7 +276,7 @@ const PostEdit = () => {
 
       if (newImages && newImages.length > 0) {
         newImages.forEach(image => {
-          formData.append('images', image);
+          formData.append('files', image);
         });
       }
 

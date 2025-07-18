@@ -370,14 +370,14 @@ const BranchNoticeList = () => {
                 <td>
                   <div className="thumbnail">
                     <div className="post-images">
-                      {Array.isArray(post.images) && post.images.length > 0 ? (
+                      {Array.isArray(post.images) && post.media.length > 0 ? (
                           <>
                             <img
                                 src={normalizeImageUrl(post.media[0].url)}
                                 alt={`${post.title || "게시물"} 이미지`}
                                 className="post-thumbnail"
                             />
-                            {post.images.length > 1 && (
+                            {post.media.length > 1 && (
                                 <span className="image-count">
                             +{post.images.length - 1}
                           </span>

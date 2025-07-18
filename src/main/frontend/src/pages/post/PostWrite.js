@@ -6,7 +6,7 @@ import {usePostValidation} from '../../hooks/usePostValidation';
 import API from '../../utils/api';
 import '../../styles/postWrite.css';
 import SponsorFields from '../../components/write/SponsorFields';
-import ImageUpload from '../../components/write/ImageUpload';
+import MediaUpload from '../../components/write/MediaUpload'; // ImageUpload → MediaUpload
 import PostWriteHeader from '../../components/write/PostWriteHeader';
 
 const PostWrite = () => {
@@ -23,7 +23,7 @@ const PostWrite = () => {
     url: ''
   });
 
-  const [images, setImages] = useState([]);
+  const [media, setMedia] = useState([]); // images → media
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,7 +35,7 @@ const PostWrite = () => {
     }
   }, [canWrite, config]);
 
-  // API 엔드포인트 결정 (기존 로직과 동일)
+  // API 엔드포인트 결정
   const getApiEndpoint = () => {
     switch (postType) {
       case 'notice':
@@ -54,7 +54,7 @@ const PostWrite = () => {
     }
   };
 
-  // 성공 메시지 (기존 로직과 동일)
+  // 성공 메시지
   const getSuccessMessage = () => {
     switch (postType) {
       case 'notice':
@@ -73,7 +73,7 @@ const PostWrite = () => {
     }
   };
 
-  // 목록 페이지로 이동 (기존 로직과 동일)
+  // 목록 페이지로 이동
   const navigateToListPage = () => {
     switch (postType) {
       case 'skill':
@@ -98,6 +98,12 @@ const PostWrite = () => {
     }
   };
 
+  // 게시글 타입별 동영상 허용 여부
+  const shouldAllowVideo = () => {
+    // 모든 게시글에서 동영상 허용
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -116,7 +122,7 @@ const PostWrite = () => {
     try {
       const formDataToSend = new FormData();
 
-      // 요청 데이터 구성 (기존 로직과 동일)
+      // 요청 데이터 구성
       let requestData = {
         title: formData.title.trim(),
         content: formData.content.trim()
@@ -132,21 +138,29 @@ const PostWrite = () => {
         requestData.branchId = branchId;
       }
 
-      // JSON 데이터를 Blob으로 변환하여 추가 (기존 방식 유지)
+      // JSON 데이터를 Blob으로 변환하여 추가
       const requestBlob = new Blob([JSON.stringify(requestData)], {
         type: 'application/json'
       });
       formDataToSend.append('request', requestBlob);
 
-      // 이미지 파일들 추가
-      images.forEach(image => {
-        formDataToSend.append('images', image);
+      // 미디어 파일들 추가 (images → files로 통일)
+      console.log('=== 미디어 파일 전송 ===');
+      console.log('미디어 개수:', media.length);
+      media.forEach((file, index) => {
+        console.log(`파일 ${index}: ${file.name} (${file.type}, ${file.size} bytes)`);
+        formDataToSend.append('files', file);
       });
+
+      // FormData 내용 확인 (디버깅용)
+      console.log('=== FormData 내용 ===');
+      for (let pair of formDataToSend.entries()) {
+        console.log(`${pair[0]}:`, pair[1]);
+      }
 
       const apiEndpoint = getApiEndpoint();
 
-      // API 엔드포인트별 URL 설정 (기존 로직과 동일)
-      // skill, news, qna, sponsor는 브랜치 ID 없음
+      // API 엔드포인트별 URL 설정
       const url = (['skill', 'news', 'faq', 'sponsor'].includes(postType))
           ? apiEndpoint
           : `${apiEndpoint}/${branchId}`;
@@ -192,7 +206,7 @@ const PostWrite = () => {
   };
 
   const handleCancel = () => {
-    if (formData.title || formData.content || images.length > 0) {
+    if (formData.title || formData.content || media.length > 0) {
       if (window.confirm('작성 중인 내용이 있습니다. 정말 취소하시겠습니까?')) {
         navigateToListPage();
       }
@@ -201,8 +215,8 @@ const PostWrite = () => {
     }
   };
 
-  const handleImagesChange = (newImages) => {
-    setImages(newImages);
+  const handleMediaChange = (newMedia) => {
+    setMedia(newMedia);
   };
 
   if (!config) {
@@ -278,10 +292,12 @@ const PostWrite = () => {
             </div>
           </div>
 
-          <ImageUpload
-              images={images}
-              onImagesChange={handleImagesChange}
-              maxImages={10}
+          {/* 미디어 업로드 (이미지 + 동영상) */}
+          <MediaUpload
+              media={media}
+              onMediaChange={handleMediaChange}
+              maxMedia={10}
+              allowVideo={shouldAllowVideo()}
               disabled={isSubmitting}
           />
         </form>
