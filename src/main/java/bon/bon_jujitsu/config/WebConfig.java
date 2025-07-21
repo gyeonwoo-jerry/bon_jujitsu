@@ -27,6 +27,12 @@ public class WebConfig implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    registry.addResourceHandler("/data/uploads/**")
+        .addResourceLocations("file:/data/uploads/")
+        .setCachePeriod(3600)
+        .resourceChain(true)
+        .addResolver(new PathResourceResolver());
+
     // ✅ 추가: CKEditor 이미지만 추가
     registry.addResourceHandler("/uploads/editor/images/**")
         .addResourceLocations("file:" + filepath + "editor/images/")
