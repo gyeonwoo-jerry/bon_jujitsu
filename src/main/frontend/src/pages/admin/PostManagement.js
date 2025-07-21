@@ -20,12 +20,11 @@ const PostManagement = () => {
 
   // 게시판 카테고리 상태 (전체)
   const [allCategories] = useState([
-    { id: 'Board', name: 'Board', apiPath: '/board', needsBranch: true, needsAuthor: true },
     { id: 'Notice', name: 'Notice', apiPath: '/notice', needsBranch: true, needsAuthor: true },
     { id: 'News', name: 'News', apiPath: '/news', needsBranch: false, needsAuthor: false },
     { id: 'Skill', name: 'Skill', apiPath: '/skill', needsBranch: false, needsAuthor: false },
     { id: 'Sponsor', name: 'Sponsor', apiPath: '/sponsor', needsBranch: false, needsAuthor: false },
-    { id: 'QnA', name: 'QnA', apiPath: '/qna', needsBranch: false, needsAuthor: true } // QnA 추가
+    { id: 'QnA', name: 'FAQ', apiPath: '/qna', needsBranch: false, needsAuthor: true }
   ]);
 
   // 현재 사용자가 볼 수 있는 카테고리
@@ -179,7 +178,7 @@ const PostManagement = () => {
           // ADMIN인 경우 지부 region 목록 로드
           fetchRegions();
         } else if (role === "OWNER") {
-          // 관장은 Board, Notice만 접근 가능 (QnA는 ADMIN만)
+          // 관장은 Board, Notice만 접근 가능 (FAQ는 ADMIN만)
           filteredCategories = allCategories.filter(cat =>
               cat.id === 'Board' || cat.id === 'Notice'
           );
@@ -784,55 +783,51 @@ const PostManagement = () => {
 
   // 게시글 수정 페이지 이동 핸들러
   const handleEdit = (id) => {
-    navigate(`/admin/posts/edit/${selectedCategory.toLowerCase()}/${id}`);
+    // Notice는 지부 ID가 필요 - 기존 라우트 형태 사용
+    if (selectedCategory === 'Notice') {
+      if (userRole === "OWNER" && selectedOwnerBranch) {
+        navigate(`/branches/${selectedOwnerBranch}/notice/${id}/edit`);
+      } else if (userRole === "ADMIN" && selectedRegion) {
+        const selectedBranch = allBranches.find(branch => branch.region === selectedRegion);
+        if (selectedBranch) {
+          navigate(`/branches/${selectedBranch.id}/notice/${id}/edit`);
+        } else {
+          alert('선택된 지부 정보를 찾을 수 없습니다.');
+        }
+      } else {
+        alert('지부를 선택해주세요.');
+      }
+    } else {
+      // News, Skill, Sponsor, FAQ는 지부 ID 없이
+      switch(selectedCategory) {
+        case 'News':
+          navigate(`/edit/news/${id}`);
+          break;
+        case 'Skill':
+          navigate(`/edit/skill/${id}`);
+          break;
+        case 'Sponsor':
+          navigate(`/edit/sponsor/${id}`);
+          break;
+        case 'QnA': // FAQ
+          navigate(`/edit/faq/${id}`);
+          break;
+        default:
+          navigate(`/edit/notice/${id}`);
+          break;
+      }
+    }
   };
 
   const handleDetail = (id) => {
     let detailPath = '';
 
     switch(selectedCategory) {
-      case 'Board':
-        if (userRole === 'ADMIN' && selectedRegion === '') {
-          // 전체 브랜치 조회 상태인 경우 - 게시글의 region으로 브랜치 찾기
-          const targetPost = posts.find(post => post.id === id);
-
-          if (targetPost && targetPost.region) {
-            // 게시글의 region으로 해당 브랜치 찾기
-            const branch = allBranches.find(branch => branch.region === targetPost.region);
-            if (branch) {
-              detailPath = `/branches/${branch.id}/board/${id}`;
-            } else {
-              alert(`"${targetPost.region}" 지부 정보를 찾을 수 없습니다.`);
-              return;
-            }
-          } else {
-            alert('게시글의 지부 정보가 없어 상세 페이지로 이동할 수 없습니다.');
-            return;
-          }
-        } else if (userRole === 'ADMIN' && selectedRegion) {
-          // 특정 지부 선택한 경우
-          const selectedBranch = allBranches.find(branch => branch.region === selectedRegion);
-          if (selectedBranch) {
-            detailPath = `/branches/${selectedBranch.id}/board/${id}`;
-          } else {
-            alert('선택된 지부 정보를 찾을 수 없습니다.');
-            return;
-          }
-        } else if (userRole === 'OWNER' && selectedOwnerBranch) {
-          detailPath = `/branches/${selectedOwnerBranch}/board/${id}`;
-        } else {
-          alert('지부를 선택해주세요.');
-          return;
-        }
-        break;
-
       case 'Notice':
         if (userRole === 'ADMIN' && selectedRegion === '') {
-          // 전체 브랜치 조회 상태인 경우 - 게시글의 region으로 브랜치 찾기
+          // 전체 브랜치 조회 상태인 경우
           const targetPost = posts.find(post => post.id === id);
-
           if (targetPost && targetPost.region) {
-            // 게시글의 region으로 해당 브랜치 찾기
             const branch = allBranches.find(branch => branch.region === targetPost.region);
             if (branch) {
               detailPath = `/branches/${branch.id}/notice/${id}`;
@@ -873,7 +868,7 @@ const PostManagement = () => {
         break;
 
       case 'QnA':
-        detailPath = `/detail/qna/${id}`;
+        detailPath = `/detail/faq/${id}`;
         break;
 
       default:
@@ -882,7 +877,7 @@ const PostManagement = () => {
     }
 
     if (detailPath) {
-      console.log('이동할 경로:', detailPath); // 디버깅용
+      console.log('이동할 경로:', detailPath);
       window.open(detailPath, '_blank', 'noopener,noreferrer');
     } else {
       alert('상세 페이지 경로를 생성할 수 없습니다.');
@@ -891,17 +886,48 @@ const PostManagement = () => {
 
   // 등록하기 버튼 표시 여부 함수
   const shouldShowRegisterButton = () => {
-    // Board, Notice, QnA는 role에 상관없이 등록하기 버튼 숨김
-    if (selectedCategory === 'Board' || selectedCategory === 'Notice' || selectedCategory === 'QnA') {
+    // Notice는 role에 상관없이 등록하기 버튼 숨김
+    if (selectedCategory === 'Notice') {
       return false;
     }
-    // Sponsor, News, Skill은 항상 표시 (해당 카테고리에 접근 가능한 사용자만 볼 수 있으므로)
-    return selectedCategory === 'Sponsor' || selectedCategory === 'News' || selectedCategory === 'Skill';
+    // News, Skill, Sponsor, FAQ는 모두 표시
+    return true;
   };
 
   // 현재 카테고리 정보 가져오기
   const getCurrentCategoryInfo = () => {
     return allCategories.find(cat => cat.id === selectedCategory);
+  };
+
+  // 등록 URL 생성 함수 (여기에 추가!)
+  const getCreateUrl = () => {
+    const categoryPath = selectedCategory.toLowerCase();
+
+    // Board, Notice는 지부 ID가 필요
+    if (selectedCategory === 'Board' || selectedCategory === 'Notice') {
+      if (userRole === "OWNER" && selectedOwnerBranch) {
+        return `/write/${categoryPath === 'board' ? 'board' : 'notice'}/${selectedOwnerBranch}`;
+      } else if (userRole === "ADMIN" && selectedRegion) {
+        const selectedBranch = allBranches.find(branch => branch.region === selectedRegion);
+        if (selectedBranch) {
+          return `/write/${categoryPath === 'board' ? 'board' : 'notice'}/${selectedBranch.id}`;
+        }
+      }
+    }
+
+    // News, Skill, Sponsor, FAQ는 지부 ID 없이
+    switch(selectedCategory) {
+      case 'News':
+        return '/write/news';
+      case 'Skill':
+        return '/write/skill';
+      case 'Sponsor':
+        return '/write/sponsor';
+      case 'QnA': // FAQ
+        return '/write/faq';
+      default:
+        return '/write/board';
+    }
   };
 
   // OWNER의 지부 정보를 버튼으로 표시할지 결정하는 함수
@@ -1095,7 +1121,10 @@ const PostManagement = () => {
 
                     {posts.length > 0 && shouldShowRegisterButton() && (
                         <div className="action-buttons">
-                          <Link to={`/admin/posts/create?category=${selectedCategory.toLowerCase()}`} className="register-button">
+                          <Link
+                              to={getCreateUrl()}
+                              className="register-button"
+                          >
                             등록하기
                           </Link>
                         </div>

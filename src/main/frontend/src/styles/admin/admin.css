@@ -228,3 +228,30 @@
 .admin_contents .form-container .option-container  { display: flex; justify-content: start; align-items: start; gap: 15px; }
 .admin_contents .form-container .option-container .option-row { padding: 20px 15px; border-radius: 10px; border: 1px solid var(--gray-color);display: flex; flex-direction: column; justify-content: start; align-items: start; gap: 10px;}
 .admin_contents .form-container .option-container .option-item label { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+
+.admin_contents .action-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin_contents .action-buttons .register-button {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white-color);
+    background-color: var(--black-color);
+    text-decoration: none;
+    border: none;
+    display: inline-block;
+}
+
+.admin_contents .action-buttons .register-button:hover {
+    background-color: var(--point-color);
+    color: var(--white-color);
+}

@@ -36,8 +36,6 @@ import BranchManagement from "./pages/admin/BranchManagement";
 import BranchCreate from "./pages/admin/BranchCreate";
 import BranchEdit from "./pages/admin/BranchEdit";
 import PostManagement from "./pages/admin/PostManagement";
-import PostCreate from "./pages/admin/PostCreate";
-import AdminPostEdit from "./pages/admin/PostEdit";
 import MyPageMain from "./pages/mypage/MyPageMain";
 import ProfileEditPage from "./pages/mypage/ProfileEditPage";
 import MyPageCart from "./pages/mypage/MyPageCart";
@@ -103,8 +101,6 @@ function AppRoutes() {
           <Route path="/admin/branches/create" element={<ProtectedRoute><BranchCreate /></ProtectedRoute>} />
           <Route path="/admin/branches/edit/:branchId" element={<ProtectedRoute><BranchEdit /></ProtectedRoute>} />
           <Route path="/admin/posts" element={<ProtectedRoute><PostManagement /></ProtectedRoute>} />
-          <Route path="/admin/posts/create" element={<ProtectedRoute><PostCreate /></ProtectedRoute>} />
-          <Route path="/admin/posts/edit/:category/:id" element={<ProtectedRoute><AdminPostEdit /></ProtectedRoute>} />
 
           {/* 마이페이지 라우트 - 모두 ProtectedRoute로 보호 */}
           <Route path="/mypage" element={<ProtectedRoute><MyPageMain /></ProtectedRoute>} />
