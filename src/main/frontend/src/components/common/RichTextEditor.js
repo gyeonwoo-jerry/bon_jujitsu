@@ -10,9 +10,7 @@ const RichTextEditor = ({
   height = '400px'
 }) => {
 
-  // 무료 버전에서 사용 가능한 기본 설정
   const editorConfiguration = {
-    // 무료 버전 기본 툴바
     toolbar: [
       'heading',
       '|',
@@ -35,7 +33,6 @@ const RichTextEditor = ({
     ],
     placeholder,
 
-    // 제목 설정
     heading: {
       options: [
         { model: 'paragraph', title: '본문', class: 'ck-heading_paragraph' },
@@ -45,10 +42,15 @@ const RichTextEditor = ({
       ]
     },
 
-    // 이미지 업로드는 base64로 처리 (무료 버전)
-    // 실제 서버 업로드를 원한다면 백엔드 구현 필요
+    image: {
+      toolbar: [
+        'imageTextAlternative',
+        'imageStyle:inline',
+        'imageStyle:block',
+        'imageStyle:side'
+      ]
+    },
 
-    // 표 설정
     table: {
       contentToolbar: [
         'tableColumn',
@@ -57,12 +59,10 @@ const RichTextEditor = ({
       ]
     },
 
-    // 미디어 임베드 (YouTube, Vimeo 등)
     mediaEmbed: {
       previewsInData: true
     },
 
-    // 언어 설정 (한국어)
     language: 'ko'
   };
 
@@ -81,7 +81,7 @@ const RichTextEditor = ({
       });
     }
 
-    // 이미지 업로드 어댑터 설정 (base64 방식)
+    // ✅ Base64 업로드 어댑터 설정 (원래대로)
     editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
       return new Base64UploadAdapter(loader);
     };
@@ -107,7 +107,6 @@ const RichTextEditor = ({
             onError={handleEditorError}
         />
 
-        {/* 도움말 텍스트 */}
         <div className="editor-help-text">
           <small>
             💡 <strong>사용법:</strong>
@@ -119,7 +118,7 @@ const RichTextEditor = ({
   );
 };
 
-// Base64 이미지 업로드 어댑터 (무료 버전용)
+// ✅ Base64 이미지 업로드 어댑터 (원래대로)
 class Base64UploadAdapter {
   constructor(loader) {
     this.loader = loader;
@@ -144,9 +143,9 @@ class Base64UploadAdapter {
         reject(new Error('이미지 업로드가 중단되었습니다.'));
       };
 
-      // 파일 크기 체크 (10MB 제한)
-      if (file.size > 10 * 1024 * 1024) {
-        reject(new Error('이미지 크기는 10MB 이하여야 합니다.'));
+      // 파일 크기 체크 (3MB 제한) - Base64로 인한 용량 증가 고려
+      if (file.size > 3 * 1024 * 1024) {
+        reject(new Error('이미지 크기는 3MB 이하여야 합니다. (Base64 변환으로 용량이 증가합니다)'));
         return;
       }
 

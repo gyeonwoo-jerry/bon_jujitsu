@@ -117,12 +117,14 @@ const PostWrite = () => {
     return tempDiv.textContent || tempDiv.innerText || '';
   };
 
+  // PostWrite.js에서 handleSubmit 함수 수정
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (isSubmitting) return;
 
-    // 리치 에디터 사용 시 HTML 내용에서 실제 텍스트 추출하여 검증
+    // ✅ 리치 에디터 사용 시 텍스트 길이만 검증
     let contentForValidation = formData.content;
     if (shouldUseRichEditor()) {
       const textContent = getContentTextLength(formData.content);
@@ -130,11 +132,17 @@ const PostWrite = () => {
         setError('내용을 입력해주세요.');
         return;
       }
-      // 검증용 객체 생성
+
+      // ✅ 텍스트 길이만 검증 (Base64 이미지 제외)
+      if (textContent.length > config.validation.contentMaxLength) {
+        setError(`내용은 ${config.validation.contentMaxLength}자 이하로 입력해주세요. (현재: ${textContent.length}자)`);
+        return;
+      }
+
       contentForValidation = textContent;
     }
 
-    // 폼 검증
+    // 기본 폼 검증 (제목 등)
     const validation = validateForm({
       ...formData,
       content: contentForValidation
@@ -144,16 +152,24 @@ const PostWrite = () => {
       return;
     }
 
+    // ✅ 추가: HTML 콘텐츠 전체 크기 체크 (서버 전송 전)
+    const htmlContentSize = new Blob([formData.content]).size;
+    const maxHtmlSize = 50 * 1024 * 1024; // 50MB 제한
+
+    if (htmlContentSize > maxHtmlSize) {
+      setError(`이미지가 너무 많거나 큽니다. 전체 콘텐츠 크기를 줄여주세요. (현재: ${Math.round(htmlContentSize/1024/1024)}MB, 최대: ${Math.round(maxHtmlSize/1024/1024)}MB)`);
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 
     try {
       const formDataToSend = new FormData();
 
-      // 요청 데이터 구성
       let requestData = {
         title: formData.title.trim(),
-        content: formData.content.trim() // HTML 콘텐츠 그대로 전송
+        content: formData.content.trim() // ✅ HTML 콘텐츠 그대로 전송 (Base64 이미지 포함)
       };
 
       // 제휴업체 전용 데이터
@@ -161,28 +177,22 @@ const PostWrite = () => {
         requestData.url = normalizeUrl(formData.url.trim());
       }
 
-      // 브랜치 ID 추가 (지부 게시물인 경우)
+      // 브랜치 ID 추가
       if (branchId) {
         requestData.branchId = branchId;
       }
 
-      // JSON 데이터를 Blob으로 변환하여 추가
       const requestBlob = new Blob([JSON.stringify(requestData)], {
         type: 'application/json'
       });
       formDataToSend.append('request', requestBlob);
 
       // 미디어 파일들 추가
-      console.log('=== 미디어 파일 전송 ===');
-      console.log('미디어 개수:', media.length);
       media.forEach((file, index) => {
-        console.log(`파일 ${index}: ${file.name} (${file.type}, ${file.size} bytes)`);
         formDataToSend.append('files', file);
       });
 
       const apiEndpoint = getApiEndpoint();
-
-      // API 엔드포인트별 URL 설정
       const url = (['skill', 'news', 'faq', 'sponsor'].includes(postType))
           ? apiEndpoint
           : `${apiEndpoint}/${branchId}`;
@@ -209,7 +219,13 @@ const PostWrite = () => {
         } else if (error.response.status === 403) {
           setError('글 작성 권한이 없습니다.');
         } else {
-          setError(error.response.data?.message || '작성에 실패했습니다.');
+          // ✅ DB 용량 초과 에러 처리
+          const errorMessage = error.response.data?.message || '작성에 실패했습니다.';
+          if (errorMessage.includes('Data too long') || errorMessage.includes('content')) {
+            setError('콘텐츠가 너무 큽니다. 이미지 크기를 줄이거나 개수를 줄여주세요.');
+          } else {
+            setError(errorMessage);
+          }
         }
       } else {
         setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');

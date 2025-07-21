@@ -110,10 +110,40 @@ const PostEdit = () => {
       return;
     }
 
+    // ✅ 리치 에디터 사용 시 텍스트 길이만 검증
+    let contentForValidation = formData.content;
+    if (shouldUseRichEditor()) {
+      const textContent = getContentTextLength(formData.content);
+      if (!textContent.trim()) {
+        setError('내용을 입력해주세요.');
+        return;
+      }
+
+      // ✅ 텍스트 길이만 검증
+      if (textContent.length > config.validation.contentMaxLength) {
+        setError(`내용은 ${config.validation.contentMaxLength}자 이하로 입력해주세요. (현재: ${textContent.length}자)`);
+        return;
+      }
+
+      contentForValidation = textContent;
+    }
+
     // 폼 검증
-    const validation = validateForm(formData);
+    const validation = validateForm({
+      ...formData,
+      content: contentForValidation
+    });
     if (!validation.isValid) {
       setError(validation.error);
+      return;
+    }
+
+    // ✅ 추가: HTML 콘텐츠 전체 크기 체크
+    const htmlContentSize = new Blob([formData.content]).size;
+    const maxHtmlSize = 50 * 1024 * 1024; // 50MB 제한
+
+    if (htmlContentSize > maxHtmlSize) {
+      setError(`이미지가 너무 많거나 큽니다. 전체 콘텐츠 크기를 줄여주세요. (현재: ${Math.round(htmlContentSize/1024/1024)}MB, 최대: ${Math.round(maxHtmlSize/1024/1024)}MB)`);
       return;
     }
 
@@ -123,10 +153,9 @@ const PostEdit = () => {
     try {
       const formDataToSend = new FormData();
 
-      // 요청 데이터 구성
       let updateData = {
         title: formData.title.trim(),
-        content: formData.content.trim()
+        content: formData.content.trim() // ✅ HTML 콘텐츠 그대로 전송
       };
 
       // 제휴업체 전용 데이터
@@ -134,7 +163,6 @@ const PostEdit = () => {
         updateData.url = normalizeUrl(formData.url.trim());
       }
 
-      // JSON 데이터를 Blob으로 변환
       const updateBlob = new Blob([JSON.stringify(updateData)], {
         type: 'application/json'
       });
@@ -177,7 +205,13 @@ const PostEdit = () => {
         } else if (error.response.status === 403) {
           setError('수정 권한이 없습니다.');
         } else {
-          setError(error.response.data?.message || '수정에 실패했습니다.');
+          // ✅ DB 용량 초과 에러 처리
+          const errorMessage = error.response.data?.message || '수정에 실패했습니다.';
+          if (errorMessage.includes('Data too long') || errorMessage.includes('content')) {
+            setError('콘텐츠가 너무 큽니다. 이미지 크기를 줄이거나 개수를 줄여주세요.');
+          } else {
+            setError(errorMessage);
+          }
         }
       } else {
         setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
