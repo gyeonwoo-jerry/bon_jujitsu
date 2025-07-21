@@ -98,7 +98,6 @@ public class SkillService {
   /**
    * 스킬 게시물 상세 조회 (N+1 문제 해결)
    */
-  @Cacheable(value = "skill", key = "#skillId")
   public SkillResponse getSkill(Long skillId, HttpServletRequest request) {
     // N+1 문제 방지를 위한 fetch join 사용
     Skill skill = skillRepository.findByIdWithUser(skillId)
@@ -219,10 +218,16 @@ public class SkillService {
     HttpSession session = request.getSession();
     String sessionKey = VIEWED_SKILL_PREFIX + skillId;
 
-    if (session.getAttribute(sessionKey) == null) {
+    Long lastViewTime = (Long) session.getAttribute(sessionKey);
+    long currentTime = System.currentTimeMillis();
+
+    // 5초(5000ms) 이내 중복 호출 방지
+    if (lastViewTime == null || (currentTime - lastViewTime) > 5000) {
       skill.increaseViewCount();
-      session.setAttribute(sessionKey, true);
+      session.setAttribute(sessionKey, currentTime);
       session.setMaxInactiveInterval(VIEW_SESSION_TIMEOUT);
+    } else {
+      long timeDiff = currentTime - lastViewTime;
     }
   }
 }

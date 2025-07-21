@@ -102,7 +102,6 @@ public class SponsorService {
   /**
    * 스폰서 게시물 상세 조회 (N+1 문제 해결)
    */
-  @Cacheable(value = "sponsor", key = "#sponsorId")
   public SponsorResponse getSponsor(Long sponsorId, HttpServletRequest request) {
     // N+1 문제 방지를 위한 fetch join 사용
     Sponsor sponsor = sponsorRepository.findByIdWithUser(sponsorId)

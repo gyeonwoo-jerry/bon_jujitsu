@@ -81,7 +81,6 @@ public class QnaService {
      * QnA 목록 조회 (N+1 문제 해결)
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "qnas", key = "#page + '_' + #size")
     public PageResponse<QnAResponse> getQnAs(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 

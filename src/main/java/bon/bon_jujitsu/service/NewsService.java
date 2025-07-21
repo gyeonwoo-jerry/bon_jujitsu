@@ -83,7 +83,6 @@ public class NewsService {
     }));
   }
 
-  @Cacheable(value = "news", key = "#newsId")
   public NewsResponse getNews(Long newsId, HttpServletRequest request) {
     // N+1 문제 방지를 위한 fetch join 사용
     News news = newsRepository.findByIdWithFetch(newsId)
