@@ -9,7 +9,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Value;
-
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -19,60 +18,31 @@ public class WebConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/api/**")
-        .allowedOrigins(
-            "http://localhost:3000",
-            "http://bon-dev.ezylab.co.kr",
-            "https://bon-dev.ezylab.co.kr"
-        )
+        .allowedOrigins("http://localhost:3000")
         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
         .allowedHeaders("*")
         .allowCredentials(true);
   }
-
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    // ✅ 1순위: 기존 첨부파일 경로
+    // 업로드된 파일을 위한 정적 리소스 핸들러 추가
     registry.addResourceHandler("/data/uploads/**")
         .addResourceLocations("file:/data/uploads/")
-        .setCachePeriod(3600)
+        .setCachePeriod(3600) // 캐시 설정 (선택 사항)
         .resourceChain(true)
         .addResolver(new PathResourceResolver());
 
-    // ✅ 2순위: CKEditor 이미지 경로
-    registry.addResourceHandler("/uploads/editor/images/**")
-        .addResourceLocations("file:" + filepath + "editor/images/")
-        .setCachePeriod(3600)
-        .resourceChain(true)
-        .addResolver(new PathResourceResolver());
-
-    // ✅ 3순위: React SPA - API 경로 제외하고 처리
     registry.addResourceHandler("/**")
         .addResourceLocations("classpath:/static/")
         .resourceChain(true)
         .addResolver(new PathResourceResolver() {
           @Override
           protected Resource getResource(String resourcePath, Resource location) throws IOException {
-            // ✅ API 요청은 절대 처리하지 않음
-            if (resourcePath.startsWith("api/")) {
-              return null; // API는 컨트롤러가 처리하도록
-            }
-
-            // ✅ 파일 요청도 처리하지 않음
-            if (resourcePath.startsWith("data/") ||
-                resourcePath.startsWith("uploads/")) {
-              return null; // 파일은 다른 핸들러가 처리하도록
-            }
-
             Resource requestedResource = location.createRelative(resourcePath);
-
-            // 실제 파일이 존재하면 반환
-            if (requestedResource.exists() && requestedResource.isReadable()) {
-              return requestedResource;
-            }
-
-            // React SPA: 다른 모든 요청은 index.html로
-            return new ClassPathResource("/static/index.html");
+            return requestedResource.exists() && requestedResource.isReadable() ? requestedResource
+                : new ClassPathResource("/static/index.html");
           }
         });
   }
+
 }
