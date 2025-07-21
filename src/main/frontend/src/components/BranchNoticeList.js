@@ -77,7 +77,7 @@ const BranchNoticeList = () => {
       const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const response = await API.get(`/branches/${branchId}`, { headers });
+      const response = await API.get(`/branch/${branchId}`, { headers });
 
       if (response.status === 200 && response.data.success) {
         setBranchInfo(response.data.data);
