@@ -19,7 +19,11 @@ public class WebConfig implements WebMvcConfigurer {
   @Override
   public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/api/**")
-        .allowedOrigins("http://localhost:3000")
+        .allowedOrigins(
+            "http://localhost:3000",
+            "http://bon-dev.ezylab.co.kr",
+            "https://bon-dev.ezylab.co.kr"
+        )
         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
         .allowedHeaders("*")
         .allowCredentials(true);
@@ -41,28 +45,33 @@ public class WebConfig implements WebMvcConfigurer {
         .resourceChain(true)
         .addResolver(new PathResourceResolver());
 
-    // ✅ 3순위: 정적 리소스 (CSS, JS, 이미지 등)
-    registry.addResourceHandler("/static/**")
-        .addResourceLocations("classpath:/static/")
-        .setCachePeriod(3600);
-
-    // ✅ 마지막: React SPA 라우팅 (API, 파일 경로 제외)
+    // ✅ 3순위: React SPA - API 경로 제외하고 처리
     registry.addResourceHandler("/**")
         .addResourceLocations("classpath:/static/")
         .resourceChain(true)
         .addResolver(new PathResourceResolver() {
           @Override
           protected Resource getResource(String resourcePath, Resource location) throws IOException {
-            // API 요청이나 파일 요청은 제외
-            if (resourcePath.startsWith("api/") ||
-                resourcePath.startsWith("data/") ||
+            // ✅ API 요청은 절대 처리하지 않음
+            if (resourcePath.startsWith("api/")) {
+              return null; // API는 컨트롤러가 처리하도록
+            }
+
+            // ✅ 파일 요청도 처리하지 않음
+            if (resourcePath.startsWith("data/") ||
                 resourcePath.startsWith("uploads/")) {
-              return null; // 다른 핸들러가 처리하도록
+              return null; // 파일은 다른 핸들러가 처리하도록
             }
 
             Resource requestedResource = location.createRelative(resourcePath);
-            return requestedResource.exists() && requestedResource.isReadable() ? requestedResource
-                : new ClassPathResource("/static/index.html");
+
+            // 실제 파일이 존재하면 반환
+            if (requestedResource.exists() && requestedResource.isReadable()) {
+              return requestedResource;
+            }
+
+            // React SPA: 다른 모든 요청은 index.html로
+            return new ClassPathResource("/static/index.html");
           }
         });
   }
