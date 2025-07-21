@@ -139,7 +139,13 @@ function Skill() {
                               key={post.id}
                               post={post}
                               type="skill"
-                              onClick={() => postNavigate(`/detail/skill/${post.id}`)}
+                              onClick={() => {
+                                if (post?.id) {
+                                  postNavigate(`/detail/skill/${post.id}`);
+                                } else {
+                                  console.warn("⚠️ post.id가 undefined입니다!", post);
+                                }
+                              }}
                               showRegion={true}
                           />
                       ))}
