@@ -22,7 +22,6 @@ spring:
         - classpath:/public/
         - classpath:/resources/
         - classpath:/META-INF/resources/
-        - file:///uploads/images/
   jmx:
     enabled: false
   liveBeansView:
