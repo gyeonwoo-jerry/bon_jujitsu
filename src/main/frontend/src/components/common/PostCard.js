@@ -57,18 +57,27 @@ const PostCard = ({
   // API 응답에 맞게 이미지 데이터 처리
   const getImages = () => {
     // media 배열에서 IMAGE 타입만 필터링
-    if (post.media && Array.isArray(post.media)) {
+    if (post.media && Array.isArray(post.media) && post.media.length > 0) {
       return post.media.filter(item => item.mediaType === 'IMAGE');
     }
+
     // 기존 images 배열 지원 (하위 호환성)
     if (post.images && Array.isArray(post.images)) {
       return post.images;
     }
+
     return [];
   };
 
   const images = getImages();
   const hasImages = images.length > 0;
+
+  // 이미지 URL 생성 (서버 도메인 추가)
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080'}${url}`;
+  };
 
   return (
       <div className={getCardClassName()} onClick={onClick}>
@@ -76,7 +85,7 @@ const PostCard = ({
           {hasImages ? (
               <>
                 <img
-                    src={images[0].url}
+                    src={getImageUrl(images[0].url)}
                     alt={post.title}
                     onError={(e) => {
                       e.target.src = '/images/blank_img.png';
@@ -114,19 +123,15 @@ const PostCard = ({
             </div>
           </div>
 
-          {/* modifiedAT -> modifiedAt 오타 수정 */}
-          {post.modifiedAt && post.modifiedAt !== post.createdAt && (
+          {/* 수정 정보 표시 */}
+          {(post.modifiedAt && post.modifiedAt !== post.createdAt) ||
+          (post.modifiedAT && post.modifiedAT !== post.createdAt) ? (
               <div className="modified-info">
-                <small>✏️ 수정: {formatDate(post.modifiedAt)}</small>
+                <small>✏️ 수정: {formatDate(post.modifiedAt || post.modifiedAT)}</small>
               </div>
-          )}
-          {/* API 응답의 modifiedAT도 지원 */}
-          {post.modifiedAT && post.modifiedAT !== post.createdAt && (
-              <div className="modified-info">
-                <small>✏️ 수정: {formatDate(post.modifiedAT)}</small>
-              </div>
-          )}
+          ) : null}
 
+          {/* 스폰서 특별 정보 */}
           {type === 'sponsor' && post.url && (
               <div className="sponsor-info">
                 <span className="website">🌐 웹사이트</span>

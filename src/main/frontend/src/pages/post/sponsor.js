@@ -55,14 +55,11 @@ function Sponsor() {
         }
 
         const userInfo = JSON.parse(userInfoStr);
-        console.log('제휴업체 페이지 권한 확인:', userInfo);
 
         // 관리자만 제휴업체 등록 가능
         if (userInfo.isAdmin === true) {
-          console.log('✅ 관리자 권한으로 제휴업체 등록 허용');
           setCanWriteSponsor(true);
         } else {
-          console.log('❌ 관리자 아님');
           setCanWriteSponsor(false);
         }
       } catch (error) {
