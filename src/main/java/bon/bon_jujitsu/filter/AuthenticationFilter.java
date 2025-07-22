@@ -64,6 +64,8 @@ public class AuthenticationFilter implements Filter {
             requestUri.startsWith("/comunity") ||
             requestUri.startsWith("/store") ||
             requestUri.startsWith("/skill") ||
+            requestUri.startsWith("/write") ||
+            requestUri.startsWith("/edit") ||
             requestUri.startsWith("/news") ||
             requestUri.startsWith("/newsDetail/:id") ||
             requestUri.startsWith("/newsWrite") ||
@@ -76,6 +78,7 @@ public class AuthenticationFilter implements Filter {
             requestUri.startsWith("/storeDetail") ||
             requestUri.startsWith("/cart") ||
             requestUri.startsWith("/mypage") ||
+            requestUri.startsWith("/admin") ||
             requestUri.startsWith("/order") ||
             requestUri.startsWith("/api/comment") ||
             requestUri.startsWith("/storeWrite") ||

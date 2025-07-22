@@ -1,7 +1,6 @@
 // pages/AdminMain.js
 import React, { useEffect, useState } from "react";
 import SummaryCard from "../../components/admin/SummaryCard";
-import QuickLinkButton from "../../components/admin/QuickLinkButton";
 import AdminHeader from "../../components/admin/AdminHeader";
 import "../../styles/admin/admin.css";
 
@@ -55,13 +54,6 @@ const AdminMain = () => {
                             <SummaryCard key={idx} {...card} />
                         ))
                     }
-                </div>
-
-                <div className="quick-links">
-                    <div className="title">QUICK LINKS</div>
-                    {filteredQuickLinks.map((link, idx) => (
-                        <QuickLinkButton key={idx} title={link.title} path={link.path} />
-                    ))}
                 </div>
             </div>
         </div>
