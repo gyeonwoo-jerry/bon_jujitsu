@@ -22,6 +22,9 @@ spring:
         - classpath:/public/
         - classpath:/resources/
         - classpath:/META-INF/resources/
+        - file:/data/uploads/
+      cache:
+        period: 3600
   jmx:
     enabled: false
   liveBeansView:
