@@ -126,7 +126,7 @@ function News() {
                               key={post.id}
                               post={post}
                               type="news"
-                              onClick={() => postNavigate(`/detail/news/${post.id}`)}
+                              onClick={() => postNavigate(`/news/${post.id}`)}
                               showRegion={false}
                           />
                       ))}

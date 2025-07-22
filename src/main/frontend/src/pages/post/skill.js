@@ -141,9 +141,7 @@ function Skill() {
                               type="skill"
                               onClick={() => {
                                 if (post?.id) {
-                                  postNavigate(`/detail/skill/${post.id}`);
-                                } else {
-                                  console.warn("⚠️ post.id가 undefined입니다!", post);
+                                  postNavigate(`/skill/${post.id}`);
                                 }
                               }}
                               showRegion={true}

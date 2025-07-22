@@ -126,7 +126,7 @@ function Sponsor() {
                               key={post.id}
                               post={post}
                               type="sponsor"
-                              onClick={() => postNavigate(`/detail/sponsor/${post.id}`)}
+                              onClick={() => postNavigate(`/sponsor/${post.id}`)}
                               showRegion={true}
                           />
                       ))}
