@@ -779,3 +779,204 @@
         gap: 4px;
     }
 }
+
+/* 기존 postList.css에 추가할 스타일들 */
+
+/* 비디오 컨테이너 */
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 비디오 스타일 */
+.card-image video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.post-card:hover .card-image video,
+.skill-card:hover .card-image video,
+.news-card:hover .card-image video,
+.sponsor-card:hover .card-image video {
+    transform: scale(1.05);
+}
+
+/* 비디오 오버레이 */
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.video-container:hover .video-overlay {
+    opacity: 1;
+}
+
+.play-icon {
+    font-size: 2.5rem;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.video-container:hover .play-icon {
+    transform: scale(1);
+}
+
+/* 파일 아이콘 개선 */
+.file-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.file-icon span {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+}
+
+.file-info {
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.skill-card .file-info {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.news-card .file-info {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.sponsor-card .file-info {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 첨부파일 정보 개선 */
+.attachment-info {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+    font-size: 11px;
+}
+
+.skill-card .attachment-info {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.news-card .attachment-info {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sponsor-card .attachment-info {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.attachment-count {
+    color: #007bff;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.skill-card .attachment-count {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.news-card .attachment-count {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sponsor-card .attachment-count {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 이미지 에러 처리 */
+.card-image img:not([src]),
+.card-image img[src=""],
+.card-image img[src="/images/blank_img.png"] {
+    display: none;
+}
+
+/* 비디오 에러 처리 */
+.card-image video:not([src]),
+.card-image video[src=""] {
+    display: none;
+}
+
+/* 이미지 카운트 배지 개선 */
+.image-count-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 2;
+}
+
+/* 호버 효과 개선 */
+.post-card:hover .no-image span,
+.skill-card:hover .no-image span,
+.news-card:hover .no-image span,
+.sponsor-card:hover .no-image span {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* 반응형 개선 */
+@media (max-width: 576px) {
+    .play-icon {
+        font-size: 2rem;
+        width: 50px;
+        height: 50px;
+    }
+
+    .file-info {
+        font-size: 0.7rem;
+    }
+
+    .attachment-info {
+        font-size: 10px;
+    }
+
+    .image-count-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .file-icon span {
+        font-size: 2rem;
+    }
+}
