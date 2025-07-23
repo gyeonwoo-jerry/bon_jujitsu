@@ -3,7 +3,7 @@ import React from 'react';
 const SkillFormFields = ({ formData, onChange, disabled }) => {
   const positions = [
     { value: 'TOP', label: 'TOP' },
-    { value: 'GUARD', label: 'GUARD' }
+    { value: 'BOTTOM', label: 'BOTTOM' }
   ];
 
   const skillTypes = [

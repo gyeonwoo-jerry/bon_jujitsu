@@ -12,7 +12,7 @@ const SkillFilterSection = ({
   const positions = [
     { value: '', label: '전체 포지션' },
     { value: 'TOP', label: 'TOP' },
-    { value: 'GUARD', label: 'GUARD' }
+    { value: 'BOTTOM', label: 'BOTTOM' }
   ];
 
   const skillTypes = [
