@@ -137,6 +137,23 @@ const PostCard = ({
                 <span className="website">🌐 웹사이트</span>
               </div>
           )}
+
+          {/* ✅ 스킬 정보 추가 */}
+          {type === 'skill' && (
+              <div className="skill-info">
+                {post.position && (
+                    <span className="skill-badge position">
+        📍 {post.position}
+      </span>
+                )}
+                {post.skillType && (
+                    <span className="skill-badge skill-type">
+        🥋 {post.skillType}
+      </span>
+                )}
+              </div>
+          )}
+
         </div>
 
         <div className="card-overlay">

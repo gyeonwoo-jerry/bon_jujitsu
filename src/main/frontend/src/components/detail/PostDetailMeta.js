@@ -53,6 +53,26 @@ const PostDetailMeta = ({ post, postType, config }) => {
                 <span>📅</span>
                 <span>{formatDate(post.createdAt)}</span>
               </div>
+
+              {/* ✅ 스킬 정보 섹션 추가 */}
+              {postType === 'skill' && (
+                  <div className="skill-info-section">
+                    <div className="skill-details">
+                      {post.position && (
+                          <div className="skill-detail-item">
+                            <span>📍</span>
+                            <span>포지션: {post.position}</span>
+                          </div>
+                      )}
+                      {post.skillType && (
+                          <div className="skill-detail-item">
+                            <span>🥋</span>
+                            <span>기술: {post.skillType}</span>
+                          </div>
+                      )}
+                    </div>
+                  </div>
+              )}
             </div>
             <div className="board-meta-right">
               {config.showViewCount && (

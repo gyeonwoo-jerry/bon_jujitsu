@@ -9,6 +9,7 @@ import SponsorFields from '../../components/write/SponsorFields';
 import MediaUpload from '../../components/write/MediaUpload';
 import RichTextEditor from '../../components/common/RichTextEditor'; // 새로운 에디터
 import PostWriteHeader from '../../components/write/PostWriteHeader';
+import SkillFormFields from '../../components/write/SkillFormFields';
 
 const PostWrite = () => {
   const { postType, branchId } = useParams();
@@ -21,7 +22,9 @@ const PostWrite = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    url: ''
+    url: '',
+    position: '',
+    skillType: ''
   });
 
   const [media, setMedia] = useState([]);
@@ -177,6 +180,12 @@ const PostWrite = () => {
         requestData.url = normalizeUrl(formData.url.trim());
       }
 
+      // 스킬 전용 데이터 추가
+      if (postType === 'skill') {
+        requestData.position = formData.position;
+        requestData.skillType = formData.skillType;
+      }
+
       // 브랜치 ID 추가
       if (branchId) {
         requestData.branchId = branchId;
@@ -301,6 +310,15 @@ const PostWrite = () => {
           {/* 제휴업체 필드 */}
           {postType === 'sponsor' && (
               <SponsorFields
+                  formData={formData}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+              />
+          )}
+
+          {/* 스킬 전용 필드 */}
+          {postType === 'skill' && (
+              <SkillFormFields
                   formData={formData}
                   onChange={handleInputChange}
                   disabled={isSubmitting}

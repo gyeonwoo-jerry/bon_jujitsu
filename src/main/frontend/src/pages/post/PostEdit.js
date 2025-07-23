@@ -11,6 +11,7 @@ import '../../styles/postWrite.css';
 import SponsorFields from '../../components/write/SponsorFields';
 import MediaUploadEdit from '../../components/write/MediaUploadEdit';
 import PostWriteHeader from '../../components/write/PostWriteHeader';
+import SkillFormFields from '../../components/write/SkillFormFields';
 
 const PostEdit = () => {
   const {postType, postId, branchId} = useParams();
@@ -30,7 +31,9 @@ const PostEdit = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    url: ''
+    url: '',
+    position: '',
+    skillType: ''
   });
 
   // 미디어 관련 상태 (이미지 → 미디어로 변경)
@@ -66,7 +69,9 @@ const PostEdit = () => {
       setFormData({
         title: originalPost.title || '',
         content: originalPost.content || '',
-        url: originalPost.url || ''
+        url: originalPost.url || '',
+        position: originalPost.position || '',
+        skillType: originalPost.skillType || ''
       });
 
       // 기존 미디어 설정 (media 필드 사용)
@@ -161,6 +166,11 @@ const PostEdit = () => {
       // 제휴업체 전용 데이터
       if (postType === 'sponsor' && formData.url?.trim()) {
         updateData.url = normalizeUrl(formData.url.trim());
+      }
+
+      if (postType === 'skill') {
+        updateData.position = formData.position;
+        updateData.skillType = formData.skillType;
       }
 
       const updateBlob = new Blob([JSON.stringify(updateData)], {
@@ -262,8 +272,11 @@ const PostEdit = () => {
     const hasChanges =
         formData.title !== originalPost?.title ||
         formData.content !== originalPost?.content ||
-        (postType === 'sponsor' && formData.url !== (originalPost?.url || ''))
-        ||
+        (postType === 'sponsor' && formData.url !== (originalPost?.url || '')) ||
+        (postType === 'skill' && (
+            formData.position !== (originalPost?.position || '') ||
+            formData.skillType !== (originalPost?.skillType || '')
+        )) ||
         newMedia.length > 0 ||
         keepMediaIds.length !== existingMedia.length;
 
@@ -338,6 +351,15 @@ const PostEdit = () => {
           {/* 제휴업체 필드 */}
           {postType === 'sponsor' && (
               <SponsorFields
+                  formData={formData}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+              />
+          )}
+
+          {/* 스킬 전용 필드 */}
+          {postType === 'skill' && (
+              <SkillFormFields
                   formData={formData}
                   onChange={handleInputChange}
                   disabled={isSubmitting}

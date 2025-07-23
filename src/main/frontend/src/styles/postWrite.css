@@ -1134,3 +1134,12 @@
     font-size: 12px;
     color: #666;
 }
+
+.form-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 1rem;
+    width: 100%;
+}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubHeader from '../../components/SubHeader';
 import { usePostList } from '../../hooks/usePostList';
-import SearchSection from '../../components/common/SearchSection';
+import SkillFilterSection from '../../components/SkillFilterSection';
 import PostCard from '../../components/common/PostCard';
 import Pagination from '../../components/common/Pagination';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -15,9 +15,14 @@ function Skill() {
   const [descName, setDescName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
   const [canWriteSkill, setCanWriteSkill] = useState(false);
+
+  // 필터 상태
+  const [selectedPosition, setSelectedPosition] = useState('');
+  const [selectedSkillType, setSelectedSkillType] = useState('');
+
   const navigate = useNavigate();
 
-  // PostList 로직을 usePostList 훅으로 대체
+  // 기존 usePostList 훅 사용 (필터 파라미터 추가)
   const {
     posts,
     loading,
@@ -34,7 +39,10 @@ function Skill() {
     clearSearch,
     navigate: postNavigate,
     fetchPosts
-  } = usePostList('/skill', 12);
+  } = usePostList('/skill', 12, {
+    position: selectedPosition,
+    skillType: selectedSkillType
+  });
 
   useEffect(() => {
     const title = '기술';
@@ -45,50 +53,56 @@ function Skill() {
     const backgroundImage = '';
     setBackgroundImage(backgroundImage);
 
-    // 스킬 작성 권한 확인 (PostWrite와 동일한 로직)
-    const checkSkillWritePermission = () => {
-      try {
-        const userInfoStr = localStorage.getItem('userInfo');
-        if (!userInfoStr) {
-          setCanWriteSkill(false);
-          return;
-        }
-
-        const userInfo = JSON.parse(userInfoStr);
-        console.log('스킬 페이지 권한 확인:', userInfo);
-
-        // 관리자는 스킬 작성 가능
-        if (userInfo.isAdmin === true) {
-          console.log('✅ 관리자 권한으로 스킬 작성 허용');
-          setCanWriteSkill(true);
-          return;
-        }
-
-        // 사용자의 지부 정보 확인 (어느 지부든 Owner 역할이 있으면 됨)
-        if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
-          const hasOwnerRole = userInfo.branchRoles.some(branchRole => {
-            const role = branchRole.role;
-            console.log(`역할 확인: ${role}`);
-            return role === "OWNER";
-          });
-
-          console.log('✅ Owner 역할 보유 여부 (어느 지부든):', hasOwnerRole);
-          setCanWriteSkill(hasOwnerRole);
-        } else {
-          console.log('❌ branchRoles 정보 없음');
-          setCanWriteSkill(false);
-        }
-      } catch (error) {
-        console.error('스킬 작성 권한 확인 오류:', error);
-        setCanWriteSkill(false);
-      }
-    };
-
+    // 스킬 작성 권한 확인
     checkSkillWritePermission();
   }, []);
 
+  // 필터 변경시 페이지를 1로 리셋하고 데이터 재로딩
+  useEffect(() => {
+    if (fetchPosts) {
+      fetchPosts(1); // 첫 페이지로 리셋
+    }
+  }, [selectedPosition, selectedSkillType]);
+
+  const checkSkillWritePermission = () => {
+    try {
+      const userInfoStr = localStorage.getItem('userInfo');
+      if (!userInfoStr) {
+        setCanWriteSkill(false);
+        return;
+      }
+
+      const userInfo = JSON.parse(userInfoStr);
+      console.log('스킬 페이지 권한 확인:', userInfo);
+
+      // 관리자는 스킬 작성 가능
+      if (userInfo.isAdmin === true) {
+        console.log('✅ 관리자 권한으로 스킬 작성 허용');
+        setCanWriteSkill(true);
+        return;
+      }
+
+      // 사용자의 지부 정보 확인 (어느 지부든 Owner 역할이 있으면 됨)
+      if (userInfo.branchRoles && Array.isArray(userInfo.branchRoles)) {
+        const hasOwnerRole = userInfo.branchRoles.some(branchRole => {
+          const role = branchRole.role;
+          console.log(`역할 확인: ${role}`);
+          return role === "OWNER";
+        });
+
+        console.log('✅ Owner 역할 보유 여부 (어느 지부든):', hasOwnerRole);
+        setCanWriteSkill(hasOwnerRole);
+      } else {
+        console.log('❌ branchRoles 정보 없음');
+        setCanWriteSkill(false);
+      }
+    } catch (error) {
+      console.error('스킬 작성 권한 확인 오류:', error);
+      setCanWriteSkill(false);
+    }
+  };
+
   const handleWriteClick = () => {
-    // 로그인 상태 확인
     const token = localStorage.getItem('token');
     const accessToken = localStorage.getItem('accessToken');
     const isLoggedIn = !!(token || accessToken);
@@ -104,9 +118,23 @@ function Skill() {
       return;
     }
 
-    // 새로운 PostWrite 스킬 라우트로 이동
     navigate('/write/skill');
   };
+
+  const handlePositionChange = (position) => {
+    setSelectedPosition(position);
+  };
+
+  const handleSkillTypeChange = (skillType) => {
+    setSelectedSkillType(skillType);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedPosition('');
+    setSelectedSkillType('');
+  };
+
+  const isFiltered = selectedPosition !== '' || selectedSkillType !== '';
 
   return (
       <div className="skill">
@@ -115,17 +143,16 @@ function Skill() {
           <div className="inner">
             <div className="section_title">BON <font className='thin small'>in</font> SKILL</div>
 
-            {/* 기존 PostList 대신 직접 구현 */}
             <div className="post-list-container">
-              <SearchSection
-                  searchQuery={searchQuery}
-                  searchType={searchType}
-                  onSearchQueryChange={setSearchQuery}
-                  onSearchTypeChange={setSearchType}
-                  onSearch={handleSearch}
+              {/* 스킬 필터 섹션 */}
+              <SkillFilterSection
+                  selectedPosition={selectedPosition}
+                  selectedSkillType={selectedSkillType}
+                  onPositionChange={handlePositionChange}
+                  onSkillTypeChange={handleSkillTypeChange}
+                  onClearFilters={handleClearFilters}
                   totalElements={totalElements}
-                  onClearSearch={clearSearch}
-                  placeholder="기술명으로 검색..."
+                  isFiltered={isFiltered}
               />
 
               {loading && <LoadingSpinner message="기술 게시글을 불러오는 중..." />}
@@ -163,7 +190,7 @@ function Skill() {
                   <div className="no-posts">
                     <div className="no-posts-icon">🥋</div>
                     <p>게시글이 없습니다.</p>
-                    {searchQuery && <p>다른 검색어로 시도해보세요.</p>}
+                    {isFiltered && <p>다른 필터 조건으로 시도해보세요.</p>}
                   </div>
               )}
             </div>

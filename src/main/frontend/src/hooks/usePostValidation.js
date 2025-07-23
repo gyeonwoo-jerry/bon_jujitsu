@@ -51,6 +51,17 @@ export const usePostValidation = (postType) => {
       }
     }
 
+    // ✅ 스킬 전용 검증 추가
+    if (postType === 'skill') {
+      if (!formData.position) {
+        return { isValid: false, error: '포지션을 선택해주세요.' };
+      }
+
+      if (!formData.skillType) {
+        return { isValid: false, error: '기술 타입을 선택해주세요.' };
+      }
+    }
+
     // ✅ Sponsor URL 검증 개선 (빈 문자열 체크 추가)
     if (postType === 'sponsor' && formData.url && formData.url.trim()) {
       if (!isValidUrl(formData.url.trim())) {

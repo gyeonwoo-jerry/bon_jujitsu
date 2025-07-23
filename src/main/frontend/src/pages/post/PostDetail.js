@@ -77,6 +77,9 @@ const PostDetail = () => {
       // 날짜 정규화
       createdAt: rawPost.createdAt,
       modifiedAt: rawPost.modifiedAt || rawPost.modifiedAT, // 오타 대응
+      // ✅ 스킬 정보 추가
+      position: rawPost.position || '',
+      skillType: rawPost.skillType || '',
       // 기타 필드들
       viewCount: rawPost.viewCount || 0,
       region: rawPost.region || ''

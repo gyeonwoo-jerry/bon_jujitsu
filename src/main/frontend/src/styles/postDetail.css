@@ -614,3 +614,15 @@
     color: #fff;
     border-top-color: #555;
 }
+
+.skill-position,
+.skill-type {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    font-size: 14px;
+    opacity: 0.9;
+    color: inherit;
+    font-weight: inherit;
+}
