@@ -26,12 +26,20 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
       );
     } else {
       return (
-          <div key={media.id || index} className="media-item image-item image-full-container">
+          <div key={media.id || index} className="media-item image-item" style={{overflow: 'visible', width: 'auto', maxWidth: 'none'}}>
             <div className="media-type-badge">📷 이미지</div>
             <img
                 src={normalizedUrl}
                 alt={`첨부 이미지 ${index + 1}`}
-                className="board-image-original" // 새로운 클래스
+                style={{
+                  width: 'auto',
+                  height: 'auto',
+                  maxWidth: 'none',
+                  maxHeight: 'none',
+                  objectFit: 'none',
+                  display: 'block',
+                  margin: '0 auto'
+                }}
                 onError={(e) => {
                   e.target.src = "/images/blank_img.png";
                 }}
