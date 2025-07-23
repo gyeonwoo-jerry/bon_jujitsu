@@ -2,6 +2,8 @@ package bon.bon_jujitsu.dto.response;
 
 import bon.bon_jujitsu.domain.PostMedia;
 import bon.bon_jujitsu.domain.Skill;
+import bon.bon_jujitsu.domain.SkillPosition;
+import bon.bon_jujitsu.domain.SkillType;
 import java.util.stream.Collectors;
 import lombok.Builder;
 
@@ -13,6 +15,8 @@ public record SkillResponse(
     Long id,
     String title,
     String content,
+    SkillPosition position,
+    SkillType skillType,
     String author,
     Long authorId,
     List<MediaResponse> media,
@@ -57,6 +61,8 @@ public record SkillResponse(
         .id(skill.getId())
         .title(skill.getTitle())
         .content(skill.getContent())
+        .position(skill.getPosition())
+        .skillType(skill.getSkillType())
         .author(authorName)
         .authorId(authorId)
         .media(mediaRespons)

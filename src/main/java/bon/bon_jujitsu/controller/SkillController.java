@@ -1,5 +1,7 @@
 package bon.bon_jujitsu.controller;
 
+import bon.bon_jujitsu.domain.SkillPosition;
+import bon.bon_jujitsu.domain.SkillType;
 import bon.bon_jujitsu.dto.common.ApiResponse;
 import bon.bon_jujitsu.dto.common.PageResponse;
 import bon.bon_jujitsu.dto.request.SkillRequest;
@@ -43,9 +45,10 @@ public class SkillController {
   public ApiResponse<PageResponse<SkillResponse>> getSkills (
       @RequestParam(defaultValue = "0", name = "page") int page,
       @RequestParam(defaultValue = "10", name = "size") int size,
-      @RequestParam(required = false) String name
+      @RequestParam(required = false) SkillPosition position,
+      @RequestParam(required = false) SkillType skillType
   ) {
-    return ApiResponse.success("기술 게시물 목록 조회 성공", skillService.getSkills(page, size, name));
+    return ApiResponse.success("기술 게시물 목록 조회 성공", skillService.getSkills(page, size, position, skillType));
   }
 
   @GetMapping("/skill/{skillId}")

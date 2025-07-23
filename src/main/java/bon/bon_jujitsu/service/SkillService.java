@@ -54,6 +54,8 @@ public class SkillService {
     Skill skill = Skill.builder()
         .title(request.title())
         .content(request.content())
+        .position(request.position())
+        .skillType(request.skillType())
         .user(user)
         .build();
 
@@ -65,17 +67,29 @@ public class SkillService {
   }
 
   /**
-   * 스킬 게시물 목록 조회 (N+1 문제 해결)
+   * 스킬 게시물 목록 조회 (포지션, 기술타입별 필터링)
    */
   @Transactional(readOnly = true)
-  @Cacheable(value = "skills", key = "#page + '_' + #size + '_' + (#name != null ? #name : 'all')")
-  public PageResponse<SkillResponse> getSkills(int page, int size, String name) {
-    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+  public PageResponse<SkillResponse> getSkills(int page, int size,
+      SkillPosition position, SkillType skillType) {
 
-    // N+1 문제 방지를 위한 fetch join 사용
-    Page<Skill> skills = (name != null && !name.isBlank())
-        ? skillRepository.findByUser_NameContainingIgnoreCaseWithUser(name, pageRequest)
-        : skillRepository.findAllWithUser(pageRequest);
+    PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    Page<Skill> skills;
+
+    // 필터링 로직
+    if (position != null && skillType != null) {
+      // 포지션 + 기술타입 둘 다 필터링
+      skills = skillRepository.findByPositionAndSkillTypeWithUser(position, skillType, pageRequest);
+    } else if (position != null) {
+      // 포지션만 필터링
+      skills = skillRepository.findByPositionWithUser(position, pageRequest);
+    } else if (skillType != null) {
+      // 기술타입만 필터링
+      skills = skillRepository.findBySkillTypeWithUser(skillType, pageRequest);
+    } else {
+      // 전체 조회
+      skills = skillRepository.findAllWithUser(pageRequest);
+    }
 
     if (skills.isEmpty()) {
       return PageResponse.fromPage(skills.map(skill -> null));

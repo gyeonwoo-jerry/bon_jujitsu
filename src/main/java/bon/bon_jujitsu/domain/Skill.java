@@ -4,6 +4,8 @@ import bon.bon_jujitsu.common.Timestamped;
 import bon.bon_jujitsu.dto.update.SkillUpdate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,6 +38,14 @@ public class Skill extends Timestamped {
   @Column(nullable = false)
   private String content;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private SkillPosition position;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private SkillType skillType;
+
   @Builder.Default
   @Column(nullable = false)
   private boolean isDeleted = false;
@@ -55,6 +65,14 @@ public class Skill extends Timestamped {
 
     skillUpdate.content().ifPresent(content -> {
       if (!content.isBlank()) this.content = content;
+    });
+
+    skillUpdate.position().ifPresent(position -> {
+      this.position = position;
+    });
+
+    skillUpdate.skillType().ifPresent(skillType -> {
+      this.skillType = skillType;
     });
   }
 
