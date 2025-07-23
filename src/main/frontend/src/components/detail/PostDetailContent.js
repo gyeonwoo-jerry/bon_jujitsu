@@ -26,12 +26,12 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
       );
     } else {
       return (
-          <div key={media.id || index} className="media-item image-item">
+          <div key={media.id || index} className="media-item image-item image-full-container">
             <div className="media-type-badge">📷 이미지</div>
             <img
                 src={normalizedUrl}
                 alt={`첨부 이미지 ${index + 1}`}
-                className="board-image-full" // 새로운 클래스명
+                className="board-image-original" // 새로운 클래스
                 onError={(e) => {
                   e.target.src = "/images/blank_img.png";
                 }}

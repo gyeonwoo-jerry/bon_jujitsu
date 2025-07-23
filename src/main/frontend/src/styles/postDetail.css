@@ -636,3 +636,44 @@
     color: inherit;
     font-weight: inherit;
 }
+
+/* 원본 이미지 크기 그대로 표시 */
+.image-full-container {
+    width: auto !important;
+    max-width: none !important;
+    overflow: visible;
+}
+
+.board-image-original {
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: none !important; /* 원본 크기 유지 */
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 컨테이너도 제한 없애기 */
+.board-detail-container {
+    max-width: none !important; /* 800px 제한 제거 */
+    width: 100%;
+}
+
+.board-content {
+    max-width: none !important;
+    width: 100%;
+}
+
+/* 미디어 그리드도 제한 없애기 */
+.media-grid {
+    display: block; /* grid 대신 block으로 */
+    width: 100%;
+}
+
+.media-item.image-full-container {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
