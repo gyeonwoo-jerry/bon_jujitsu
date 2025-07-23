@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) => {
+  const [imageLoadInfo, setImageLoadInfo] = useState({});
+
+  // 이미지 로드 완료 시 크기 정보 저장
+  const handleImageLoad = (index, event) => {
+    const img = event.target;
+    const aspectRatio = img.naturalHeight / img.naturalWidth;
+
+    setImageLoadInfo(prev => ({
+      ...prev,
+      [index]: {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        aspectRatio: aspectRatio,
+        isVeryTall: aspectRatio > 2 // 세로가 가로의 2배 이상이면 매우 긴 이미지로 판단
+      }
+    }));
+  };
+
   // 미디어 타입별 렌더링
   const renderMedia = (media, index) => {
     const normalizedUrl = normalizeImageUrl ? normalizeImageUrl(media.url) : media.url;
+    const imageInfo = imageLoadInfo[index];
 
     if (media.mediaType === 'VIDEO') {
       return (
@@ -26,26 +45,30 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
       );
     } else {
       return (
-          <div key={media.id || index} className="media-item image-item" style={{overflow: 'visible', width: 'auto', maxWidth: 'none'}}>
+          <div key={media.id || index} className="media-item image-item">
             <div className="media-type-badge">📷 이미지</div>
             <img
                 src={normalizedUrl}
                 alt={`첨부 이미지 ${index + 1}`}
-                style={{
-                  width: 'auto',
-                  height: 'auto',
-                  maxWidth: 'none',
-                  maxHeight: 'none',
-                  objectFit: 'none',
-                  display: 'block',
-                  margin: '0 auto'
-                }}
+                className={`board-image-full ${imageInfo?.isVeryTall ? 'height-limited' : ''}`}
+                onLoad={(e) => handleImageLoad(index, e)}
                 onError={(e) => {
                   e.target.src = "/images/blank_img.png";
                 }}
+                onClick={() => onImageClick && onImageClick(normalizedUrl)}
+                style={{
+                  cursor: onImageClick ? 'pointer' : 'default'
+                }}
             />
             {media.originalFileName && (
-                <div className="media-filename">{media.originalFileName}</div>
+                <div className="media-filename">
+                  {media.originalFileName}
+                  {imageInfo && (
+                      <span className="image-dimensions">
+                      {` (${imageInfo.width} × ${imageInfo.height})`}
+                    </span>
+                  )}
+                </div>
             )}
           </div>
       );

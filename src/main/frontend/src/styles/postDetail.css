@@ -1,9 +1,10 @@
 /* PostDetail.css */
 
 .board-detail-container {
-    max-width: 100vw !important;
-    width: 100% !important;
-    padding: 20px 0 !important;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .board-detail-header {
@@ -67,9 +68,10 @@
 }
 
 .board-detail-content {
-    max-width: 100vw !important;
-    width: 100% !important;
-    margin: 0 !important;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
 }
 
 .board-header {
@@ -133,10 +135,7 @@
 }
 
 .board-content {
-    max-width: 100vw !important;
-    width: 100% !important;
-    padding: 40px 20px !important;
-    overflow-x: auto !important;
+    padding: 40px 30px;
 }
 
 .content-text {
@@ -558,18 +557,18 @@
 
 /* 미디어 그리드 (기존 image-grid 확장) */
 .media-grid {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    overflow-x: auto !important;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
 }
 
 .media-item {
-    width: 100% !important;
-    max-width: none !important;
-    display: block !important;
-    margin-bottom: 2rem !important;
-    text-align: center !important;
+    position: relative;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f8f9fa;
 }
 
 .media-type-badge {
@@ -638,61 +637,54 @@
     font-weight: inherit;
 }
 
-/* 원본 이미지 크기 그대로 표시 */
-.image-full-container {
-    width: auto !important;
-    max-width: none !important;
-    overflow: visible;
-}
-
-.board-image-original {
-    width: auto !important;
-    height: auto !important;
-    max-width: none !important;
-    max-height: none !important;
-    object-fit: none !important; /* 원본 크기 유지 */
+/* 기존 board-image-full 클래스 수정 */
+.board-image-full {
+    width: 100%;
+    height: auto; /* 원본 비율 유지 */
+    max-width: 100%;
+    object-fit: contain; /* 이미지 전체가 보이도록 */
     display: block;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer; /* 클릭 가능하다는 것을 표시 */
+    transition: all 0.2s ease;
+    background-color: #f8f9fa; /* 이미지 주변 여백에 배경색 */
 }
 
-/* 컨테이너도 제한 없애기 */
-.board-detail-container {
-    max-width: none !important; /* 800px 제한 제거 */
-    width: 100%;
+.board-image-full:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.board-content {
-    max-width: none !important;
-    width: 100%;
+/* 만약 이미지가 너무 길어서 높이 제한이 필요한 경우를 위한 옵션 클래스 */
+.board-image-full.height-limited {
+    max-height: 600px; /* 최대 높이 제한 */
 }
 
-/* 미디어 그리드도 제한 없애기 */
-.media-grid {
-    display: block; /* grid 대신 block으로 */
-    width: 100%;
-}
-
-.media-item.image-full-container {
-    width: 100%;
-    margin-bottom: 1rem;
-}
-
-.board-image,
-.board-image-original {
-    width: auto !important;
-    height: auto !important;
-    max-width: none !important;
-    max-height: none !important;
-    min-width: auto !important;
-    min-height: auto !important;
-    object-fit: none !important;
-    display: inline-block !important;
+/* 미디어 아이템 컨테이너도 함께 수정 */
+.media-item {
+    position: relative;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: #f8f9fa;
+    transition: transform 0.2s ease;
 }
 
-/* 가로 스크롤 허용 */
-body {
-    overflow-x: auto !important;
+.media-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+/* 이미지 아이템 특별 스타일 */
+.image-item {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px; /* 최소 높이 보장 */
+}
+
+.image-item .board-image-full {
+    flex: 1; /* 남은 공간을 모두 차지 */
+    min-height: 150px; /* 최소 높이 */
+}
+
