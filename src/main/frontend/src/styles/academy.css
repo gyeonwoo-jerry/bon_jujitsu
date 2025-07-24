@@ -179,16 +179,6 @@
   position: relative;
 }
 
-.highlight-box::before {
-  content: '💡';
-  position: absolute;
-  top: -10px;
-  left: 20px;
-  background: #fff;
-  padding: 0 10px;
-  font-size: 1.2rem;
-}
-
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .academy_content {
