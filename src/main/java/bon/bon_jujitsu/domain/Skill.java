@@ -59,13 +59,13 @@ public class Skill extends Timestamped {
   private User user;
 
   public void updateSkill(SkillUpdate skillUpdate) {
-    skillUpdate.title().ifPresent(title -> {
-      if (!title.isBlank()) this.title = title;
-    });
+    if (skillUpdate.title() != null && !skillUpdate.title().isBlank()) {
+      this.title = skillUpdate.title();
+    }
 
-    skillUpdate.content().ifPresent(content -> {
-      this.content = content;
-    });
+    if (skillUpdate.content() != null) {
+      this.content = skillUpdate.content();
+    }
 
     skillUpdate.position().ifPresent(position -> {
       this.position = position;

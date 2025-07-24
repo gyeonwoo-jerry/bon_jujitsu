@@ -5,8 +5,8 @@ import bon.bon_jujitsu.domain.SkillType;
 import java.util.Optional;
 
 public record SkillUpdate(
-    Optional<String> title,
-    Optional<String> content,
+    String title,
+    String content,
     Optional<SkillPosition> position,
     Optional<SkillType> skillType
 ) {
