@@ -7,11 +7,24 @@ function BranchList() {
   const [branches, setBranches] = useState([]);
   const [filteredBranches, setFilteredBranches] = useState([]);
   const [activeArea, setActiveArea] = useState("전체");
-  const [activeRegion, setActiveRegion] = useState(null);
-  const [openDropdown, setOpenDropdown] = useState(null); // 어떤 드롭다운이 열려있는지
+  const [activeCity, setActiveCity] = useState(null);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // 주소에서 시/군/구 추출하는 함수
+  const extractCityFromAddress = (address) => {
+    if (!address) return null;
+
+    // 주소 패턴: "경기도 안산시 상록구 반석로 78 2층"
+    const addressParts = address.split(' ');
+    if (addressParts.length >= 2) {
+      // 두 번째 부분이 시/군/구 정보 (예: "안산시", "화성시", "오산시")
+      return addressParts[1];
+    }
+    return null;
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -27,7 +40,10 @@ function BranchList() {
               branch !== undefined &&
               typeof branch === 'object' &&
               branch?.owner?.name
-          );
+          ).map(branch => ({
+            ...branch,
+            city: extractCityFromAddress(branch.address) // 시/군/구 정보 추가
+          }));
 
           setBranches(safeBranchData);
           setFilteredBranches(safeBranchData);
@@ -57,7 +73,7 @@ function BranchList() {
 
   const handleAreaClick = (area) => {
     setActiveArea(area);
-    setActiveRegion(null);
+    setActiveCity(null);
     setOpenDropdown(null);
 
     if (area === "전체") {
@@ -69,14 +85,22 @@ function BranchList() {
     }
   };
 
-  const handleRegionClick = (area, region) => {
+  const handleCityClick = (area, city) => {
     setActiveArea(area);
-    setActiveRegion(region);
+    setActiveCity(city);
     setOpenDropdown(null);
 
-    setFilteredBranches(branches.filter((branch) =>
-        branch && branch.area === area && branch.region === region && branch?.owner?.name
-    ));
+    if (area === "경기도") {
+      // 경기도는 시/군/구별로 필터링
+      setFilteredBranches(branches.filter((branch) =>
+          branch && branch.area === area && branch.city === city && branch?.owner?.name
+      ));
+    } else {
+      // 서울, 인천 등은 region별로 필터링
+      setFilteredBranches(branches.filter((branch) =>
+          branch && branch.area === area && branch.region === city && branch?.owner?.name
+      ));
+    }
   };
 
   const toggleDropdown = (area) => {
@@ -87,24 +111,49 @@ function BranchList() {
     }
   };
 
-  // 지역별로 그룹화된 데이터 생성
+  // 지역별로 그룹화된 데이터 생성 (경기도만 시/군/구 기준으로)
   const getAreaData = () => {
     const areaMap = new Map();
 
     branches.forEach(branch => {
-      if (branch && branch.area && branch.region) {
-        if (!areaMap.has(branch.area)) {
-          areaMap.set(branch.area, new Set());
+      if (!branch || !branch.area) return;
+
+      if (!areaMap.has(branch.area)) {
+        areaMap.set(branch.area, new Map());
+      }
+
+      // 경기도만 시/군/구별로 분류, 나머지는 지역(region)별로 분류
+      if (branch.area === "경기도" && branch.city) {
+        const cityMap = areaMap.get(branch.area);
+        if (!cityMap.has(branch.city)) {
+          cityMap.set(branch.city, []);
         }
-        areaMap.get(branch.area).add(branch.region);
+        cityMap.get(branch.city).push(branch);
+      } else if (branch.area !== "경기도" && branch.region) {
+        // 서울, 인천 등은 기존처럼 region별로 분류
+        const cityMap = areaMap.get(branch.area);
+        if (!cityMap.has(branch.region)) {
+          cityMap.set(branch.region, []);
+        }
+        cityMap.get(branch.region).push(branch);
       }
     });
 
     const result = [];
-    areaMap.forEach((regions, area) => {
+    areaMap.forEach((cityMap, area) => {
+      const cities = [];
+      cityMap.forEach((branchList, cityOrRegion) => {
+        cities.push({
+          city: cityOrRegion,
+          branches: branchList,
+          count: branchList.length
+        });
+      });
+
       result.push({
         area,
-        regions: Array.from(regions).sort()
+        cities: cities.sort((a, b) => a.city.localeCompare(b.city)),
+        totalCount: cities.reduce((sum, city) => sum + city.count, 0)
       });
     });
 
@@ -152,48 +201,64 @@ function BranchList() {
             </div>
 
             {/* 지역별 탭들 */}
-            {areaData.map(({ area, regions }) => (
+            {areaData.map(({ area, cities, totalCount }) => (
                 <div key={area} className="tab-item">
                   <button
-                      className={`main-tab ${activeArea === area && !activeRegion ? "active" : ""}`}
+                      className={`main-tab ${activeArea === area && !activeCity ? "active" : ""}`}
                       onClick={() => {
-                        if (regions.length > 1) {
+                        if (cities.length > 1) {
                           toggleDropdown(area);
                         } else {
                           handleAreaClick(area);
                         }
                       }}
                   >
-                    {area}
-                    {regions.length > 1 && (
+                    {area}{totalCount > 1 ? ` (${totalCount})` : ''}
+                    {cities.length > 1 && (
                         <span className={`dropdown-arrow ${openDropdown === area ? 'open' : ''}`}>
                     ▼
                   </span>
                     )}
                   </button>
 
-                  {/* 드롭다운 메뉴 (지역이 여러 개일 때만) */}
-                  {regions.length > 1 && openDropdown === area && (
+                  {/* 드롭다운 메뉴 (시/군이 여러 개일 때만) */}
+                  {cities.length > 1 && openDropdown === area && (
                       <div className="dropdown-menu">
                         <button
-                            className={`dropdown-item ${activeArea === area && !activeRegion ? "active" : ""}`}
+                            className={`dropdown-item ${activeArea === area && !activeCity ? "active" : ""}`}
                             onClick={() => handleAreaClick(area)}
                         >
-                          전체 {area}
+                          전체 {area}{totalCount > 1 ? ` (${totalCount})` : ''}
                         </button>
-                        {regions.map((region) => (
+                        {cities.map(({ city, count }) => (
                             <button
-                                key={region}
-                                className={`dropdown-item ${activeArea === area && activeRegion === region ? "active" : ""}`}
-                                onClick={() => handleRegionClick(area, region)}
+                                key={city}
+                                className={`dropdown-item ${activeArea === area && activeCity === city ? "active" : ""}`}
+                                onClick={() => handleCityClick(area, city)}
                             >
-                              {region}
+                              {city}{count > 1 ? ` (${count})` : ''}
                             </button>
                         ))}
                       </div>
                   )}
                 </div>
             ))}
+          </div>
+
+          {/* 현재 선택된 필터 표시 */}
+          <div className="filter-status">
+            {activeArea === "전체" ? (
+                <span>전체 지부{filteredBranches.length > 1 ? ` (${filteredBranches.length}개)` : ''}</span>
+            ) : activeCity ? (
+                <span>
+                  {activeArea === "경기도" ?
+                      `${activeArea} ${activeCity}${filteredBranches.length > 1 ? ` (${filteredBranches.length}개)` : ''}` :
+                      `${activeArea} ${activeCity}${filteredBranches.length > 1 ? ` (${filteredBranches.length}개)` : ''}`
+                  }
+                </span>
+            ) : (
+                <span>{activeArea} 전체{filteredBranches.length > 1 ? ` (${filteredBranches.length}개)` : ''}</span>
+            )}
           </div>
 
           {filteredBranches.length === 0 ? (
@@ -207,7 +272,12 @@ function BranchList() {
                       <div className="branch_item_title">
                         <div className="branch_item_title_tit">
                           <div className="gym_name">{branch?.region || "지역 정보 없음"}</div>
-                          <div className="gym_area">{branch?.area || "지역 정보 없음"}</div>
+                          <div className="gym_area">
+                            {branch?.area === "경기도" ?
+                                `${branch?.area} ${branch?.city}` :
+                                `${branch?.area}`
+                            }
+                          </div>
                         </div>
                         <button
                             className="branch_item_title_more"
