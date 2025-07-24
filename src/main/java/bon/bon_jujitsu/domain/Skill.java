@@ -64,7 +64,7 @@ public class Skill extends Timestamped {
     });
 
     skillUpdate.content().ifPresent(content -> {
-      if (!content.isBlank()) this.content = content;
+      this.content = content;
     });
 
     skillUpdate.position().ifPresent(position -> {
