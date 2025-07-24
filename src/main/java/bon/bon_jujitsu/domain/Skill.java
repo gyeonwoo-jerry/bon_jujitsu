@@ -35,7 +35,7 @@ public class Skill extends Timestamped {
   @Column(nullable = false)
   private String title;
 
-  @Column(nullable = false)
+  @Column
   private String content;
 
   @Enumerated(EnumType.STRING)

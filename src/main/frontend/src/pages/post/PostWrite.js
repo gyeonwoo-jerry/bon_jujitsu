@@ -37,6 +37,11 @@ const PostWrite = () => {
     return true;
   };
 
+  // content 필드가 필수인지 확인
+  const isContentRequired = () => {
+    return postType !== 'skill'; // 스킬 게시물은 content 선택사항
+  };
+
   // 권한 체크
   useEffect(() => {
     if (!canWrite()) {
@@ -120,8 +125,6 @@ const PostWrite = () => {
     return tempDiv.textContent || tempDiv.innerText || '';
   };
 
-  // PostWrite.js에서 handleSubmit 함수 수정
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -131,37 +134,46 @@ const PostWrite = () => {
     let contentForValidation = formData.content;
     if (shouldUseRichEditor()) {
       const textContent = getContentTextLength(formData.content);
-      if (!textContent.trim()) {
+
+      // ✅ 스킬 게시물이 아닌 경우에만 내용 필수 체크
+      if (isContentRequired() && !textContent.trim()) {
         setError('내용을 입력해주세요.');
         return;
       }
 
-      // ✅ 텍스트 길이만 검증 (Base64 이미지 제외)
+      // ✅ 텍스트 길이만 검증 (Base64 이미지 제외) - 내용이 있는 경우에만
       if (textContent.length > config.validation.contentMaxLength) {
         setError(`내용은 ${config.validation.contentMaxLength}자 이하로 입력해주세요. (현재: ${textContent.length}자)`);
         return;
       }
 
       contentForValidation = textContent;
+    } else if (isContentRequired() && !formData.content.trim()) {
+      setError('내용을 입력해주세요.');
+      return;
     }
 
     // 기본 폼 검증 (제목 등)
-    const validation = validateForm({
+    const validationData = {
       ...formData,
       content: contentForValidation
-    });
+    };
+
+    const validation = validateForm(validationData);
     if (!validation.isValid) {
       setError(validation.error);
       return;
     }
 
-    // ✅ 추가: HTML 콘텐츠 전체 크기 체크 (서버 전송 전)
-    const htmlContentSize = new Blob([formData.content]).size;
-    const maxHtmlSize = 50 * 1024 * 1024; // 50MB 제한
+    // ✅ 추가: HTML 콘텐츠 전체 크기 체크 (서버 전송 전) - 내용이 있는 경우에만
+    if (formData.content && formData.content.trim()) {
+      const htmlContentSize = new Blob([formData.content]).size;
+      const maxHtmlSize = 50 * 1024 * 1024; // 50MB 제한
 
-    if (htmlContentSize > maxHtmlSize) {
-      setError(`이미지가 너무 많거나 큽니다. 전체 콘텐츠 크기를 줄여주세요. (현재: ${Math.round(htmlContentSize/1024/1024)}MB, 최대: ${Math.round(maxHtmlSize/1024/1024)}MB)`);
-      return;
+      if (htmlContentSize > maxHtmlSize) {
+        setError(`이미지가 너무 많거나 큽니다. 전체 콘텐츠 크기를 줄여주세요. (현재: ${Math.round(htmlContentSize/1024/1024)}MB, 최대: ${Math.round(maxHtmlSize/1024/1024)}MB)`);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -171,9 +183,20 @@ const PostWrite = () => {
       const formDataToSend = new FormData();
 
       let requestData = {
-        title: formData.title.trim(),
-        content: formData.content.trim() // ✅ HTML 콘텐츠 그대로 전송 (Base64 이미지 포함)
+        title: formData.title.trim()
       };
+
+      // ✅ 스킬 게시물의 경우 content가 빈 값이면 전송하지 않음
+      if (postType === 'skill') {
+        const textContent = shouldUseRichEditor() ? getContentTextLength(formData.content) : formData.content;
+        if (textContent && textContent.trim()) {
+          requestData.content = formData.content.trim();
+        }
+        // content가 비어있으면 requestData에 포함하지 않음
+      } else {
+        // 다른 게시물 타입은 기존대로
+        requestData.content = formData.content.trim();
+      }
 
       // 제휴업체 전용 데이터
       if (postType === 'sponsor' && formData.url?.trim()) {
@@ -352,7 +375,9 @@ const PostWrite = () => {
 
           {/* 콘텐츠 입력 필드 */}
           <div className="form-group">
-            <label htmlFor="content">내용 *</label>
+            <label htmlFor="content">
+              내용 {isContentRequired() ? '*' : '(선택사항)'}
+            </label>
 
             {shouldUseRichEditor() ? (
                 // 리치 에디터 사용
@@ -380,7 +405,7 @@ const PostWrite = () => {
                     maxLength={config.validation.contentMaxLength}
                     rows={15}
                     disabled={isSubmitting}
-                    required
+                    required={isContentRequired()}
                 />
                   <div className="char-count">
                     {formData.content.length}/{config.validation.contentMaxLength}
@@ -413,7 +438,7 @@ const PostWrite = () => {
 const getContentPlaceholder = (postType) => {
   switch (postType) {
     case 'skill':
-      return '스킬에 대한 상세한 내용을 입력해주세요. 제목, 이미지, 표 등을 자유롭게 추가할 수 있습니다.';
+      return '스킬에 대한 추가 설명을 입력하세요 (선택사항). 이미지나 동영상만으로도 충분하다면 비워두셔도 됩니다.';
     case 'news':
       return '뉴스 내용을 입력해주세요. 다양한 서식과 미디어를 활용해보세요.';
     case 'notice':

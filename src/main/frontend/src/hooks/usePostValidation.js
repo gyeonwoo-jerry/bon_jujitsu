@@ -32,11 +32,15 @@ export const usePostValidation = (postType) => {
       return { isValid: false, error: `제목은 ${validation.titleMaxLength}자 이하로 입력해주세요.` };
     }
 
-    if (!formData.content.trim()) {
-      return { isValid: false, error: '내용을 입력해주세요.' };
+    // ✅ 스킬 게시물이 아닌 경우에만 content 필수 검증
+    if (postType !== 'skill') {
+      if (!formData.content.trim()) {
+        return { isValid: false, error: '내용을 입력해주세요.' };
+      }
     }
 
-    if (formData.content.length > validation.contentMaxLength) {
+    // ✅ content가 있는 경우에만 길이 검증 (스킬 포함 모든 게시물)
+    if (formData.content && formData.content.trim() && formData.content.length > validation.contentMaxLength) {
       return { isValid: false, error: `내용은 ${validation.contentMaxLength}자 이하로 입력해주세요.` };
     }
 
