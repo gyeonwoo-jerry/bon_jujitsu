@@ -108,7 +108,23 @@ const PostCard = ({
 
         <div className="card-content">
           <h3 className="card-title">{post.title}</h3>
-          {/* p 태그를 div로 변경 */}
+
+          {/* 스킬 정보 추가 */}
+          {type === 'skill' && (
+              <div className="skill-info">
+                {post.position && (
+                    <span className="skill-badge position">
+        📍 {post.position}
+      </span>
+                )}
+                {post.skillType && (
+                    <span className="skill-badge skill-type">
+        🥋 {post.skillType}
+      </span>
+                )}
+              </div>
+          )}
+
           <div className="card-description">
             {truncateText(post.content, maxContentLength)}
           </div>
@@ -140,23 +156,6 @@ const PostCard = ({
                 <span className="website">🌐 웹사이트</span>
               </div>
           )}
-
-          {/* 스킬 정보 추가 */}
-          {type === 'skill' && (
-              <div className="skill-info">
-                {post.position && (
-                    <span className="skill-badge position">
-        📍 {post.position}
-      </span>
-                )}
-                {post.skillType && (
-                    <span className="skill-badge skill-type">
-        🥋 {post.skillType}
-      </span>
-                )}
-              </div>
-          )}
-
         </div>
 
         <div className="card-overlay">
