@@ -60,16 +60,6 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
                   cursor: onImageClick ? 'pointer' : 'default'
                 }}
             />
-            {media.originalFileName && (
-                <div className="media-filename">
-                  {media.originalFileName}
-                  {imageInfo && (
-                      <span className="image-dimensions">
-                      {` (${imageInfo.width} × ${imageInfo.height})`}
-                    </span>
-                  )}
-                </div>
-            )}
           </div>
       );
     }

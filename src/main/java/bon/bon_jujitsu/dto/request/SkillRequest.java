@@ -8,12 +8,10 @@ import jakarta.validation.constraints.NotNull;
 public record SkillRequest(
     @NotBlank(message = "제목을 입력해주세요")
     String title,
-    @NotBlank(message = "내용을 입력해주세요")
     String content,
     @NotNull(message = "포지션을 선택해주세요.")
     SkillPosition position,
     @NotNull(message = "기술 타입을 선택해주세요.")
     SkillType skillType
 ) {
-
 }

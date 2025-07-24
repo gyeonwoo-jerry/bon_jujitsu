@@ -33,7 +33,9 @@ const PostCard = ({
 
   const truncateText = (text, maxLength = 100) => {
     if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    // HTML 태그 제거
+    const plainText = text.replace(/<[^>]*>/g, '');
+    return plainText.length > maxLength ? plainText.substring(0, maxLength) + '...' : plainText;
   };
 
   const getCardClassName = () => {
@@ -106,9 +108,10 @@ const PostCard = ({
 
         <div className="card-content">
           <h3 className="card-title">{post.title}</h3>
-          <p className="card-description">
+          {/* p 태그를 div로 변경 */}
+          <div className="card-description">
             {truncateText(post.content, maxContentLength)}
-          </p>
+          </div>
 
           <div className="card-meta">
             <div className="meta-left">
@@ -138,7 +141,7 @@ const PostCard = ({
               </div>
           )}
 
-          {/* ✅ 스킬 정보 추가 */}
+          {/* 스킬 정보 추가 */}
           {type === 'skill' && (
               <div className="skill-info">
                 {post.position && (
