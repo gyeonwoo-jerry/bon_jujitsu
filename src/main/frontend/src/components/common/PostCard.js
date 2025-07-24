@@ -74,11 +74,19 @@ const PostCard = ({
   const images = getImages();
   const hasImages = images.length > 0;
 
-  // 이미지 URL 생성 (서버 도메인 추가)
+  // 이미지 URL 생성 (PostDetail과 동일한 방식)
   const getImageUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080'}${url}`;
+    if (!url || typeof url !== 'string') {
+      return "/images/blank_img.png";
+    }
+
+    // 이미 완전한 URL이거나 /로 시작하는 경우 그대로 사용
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+      return url;
+    }
+
+    // 상대경로인 경우 /를 앞에 추가
+    return `/${url}`;
   };
 
   return (
@@ -90,7 +98,11 @@ const PostCard = ({
                     src={getImageUrl(images[0].url)}
                     alt={post.title}
                     onError={(e) => {
+                      console.error('이미지 로드 실패:', e.target.src);
                       e.target.src = '/images/blank_img.png';
+                    }}
+                    onLoad={() => {
+                      console.log('이미지 로드 성공:', getImageUrl(images[0].url));
                     }}
                 />
                 {images.length > 1 && (
