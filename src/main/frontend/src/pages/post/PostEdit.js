@@ -44,6 +44,11 @@ const PostEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // content 필드가 필수인지 확인
+  const isContentRequired = () => {
+    return postType !== 'skill'; // 스킬 게시물은 content 선택사항
+  };
+
   // 미디어 URL 정규화
   const normalizeMediaUrl = (url) => {
     if (!url || typeof url !== 'string') {
@@ -119,37 +124,46 @@ const PostEdit = () => {
     let contentForValidation = formData.content;
     if (shouldUseRichEditor()) {
       const textContent = getContentTextLength(formData.content);
-      if (!textContent.trim()) {
+
+      // ✅ 스킬 게시물이 아닌 경우에만 내용 필수 체크
+      if (isContentRequired() && !textContent.trim()) {
         setError('내용을 입력해주세요.');
         return;
       }
 
-      // ✅ 텍스트 길이만 검증
+      // ✅ 텍스트 길이만 검증 (내용이 있는 경우에만)
       if (textContent.length > config.validation.contentMaxLength) {
         setError(`내용은 ${config.validation.contentMaxLength}자 이하로 입력해주세요. (현재: ${textContent.length}자)`);
         return;
       }
 
       contentForValidation = textContent;
+    } else if (isContentRequired() && !formData.content.trim()) {
+      setError('내용을 입력해주세요.');
+      return;
     }
 
     // 폼 검증
-    const validation = validateForm({
+    const validationData = {
       ...formData,
       content: contentForValidation
-    });
+    };
+
+    const validation = validateForm(validationData);
     if (!validation.isValid) {
       setError(validation.error);
       return;
     }
 
-    // ✅ 추가: HTML 콘텐츠 전체 크기 체크
-    const htmlContentSize = new Blob([formData.content]).size;
-    const maxHtmlSize = 50 * 1024 * 1024; // 50MB 제한
+    // ✅ 추가: HTML 콘텐츠 전체 크기 체크 (내용이 있는 경우에만)
+    if (formData.content && formData.content.trim()) {
+      const htmlContentSize = new Blob([formData.content]).size;
+      const maxHtmlSize = 50 * 1024 * 1024; // 50MB 제한
 
-    if (htmlContentSize > maxHtmlSize) {
-      setError(`이미지가 너무 많거나 큽니다. 전체 콘텐츠 크기를 줄여주세요. (현재: ${Math.round(htmlContentSize/1024/1024)}MB, 최대: ${Math.round(maxHtmlSize/1024/1024)}MB)`);
-      return;
+      if (htmlContentSize > maxHtmlSize) {
+        setError(`이미지가 너무 많거나 큽니다. 전체 콘텐츠 크기를 줄여주세요. (현재: ${Math.round(htmlContentSize/1024/1024)}MB, 최대: ${Math.round(maxHtmlSize/1024/1024)}MB)`);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -159,9 +173,17 @@ const PostEdit = () => {
       const formDataToSend = new FormData();
 
       let updateData = {
-        title: formData.title.trim(),
-        content: formData.content.trim() // ✅ HTML 콘텐츠 그대로 전송
+        title: formData.title.trim()
       };
+
+      // ✅ 스킬 게시물의 경우 content 처리
+      if (postType === 'skill') {
+        const textContent = shouldUseRichEditor() ? getContentTextLength(formData.content) : formData.content;
+        updateData.content = textContent && textContent.trim() ? formData.content.trim() : "";
+      } else {
+        // 다른 게시물 타입은 기존대로
+        updateData.content = formData.content.trim();
+      }
 
       // 제휴업체 전용 데이터
       if (postType === 'sponsor' && formData.url?.trim()) {
@@ -201,7 +223,8 @@ const PostEdit = () => {
 
       if (response.data.success) {
         alert(getSuccessMessage());
-        navigate(-1);
+        // 캐시 무시하고 detail 페이지로 이동
+        window.location.href = window.location.href.replace('/edit', '');
       } else {
         throw new Error(response.data.message || '수정에 실패했습니다.');
       }
@@ -392,7 +415,9 @@ const PostEdit = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="content">내용 *</label>
+            <label htmlFor="content">
+              내용 {isContentRequired() ? '*' : '(선택사항)'}
+            </label>
 
             {shouldUseRichEditor() ? (
                 // 리치 에디터 사용
@@ -420,7 +445,7 @@ const PostEdit = () => {
           maxLength={config.validation.contentMaxLength}
           rows={15}
           disabled={isSubmitting}
-          required
+          required={isContentRequired()}
       />
                   <div className="char-count">
                     {formData.content.length}/{config.validation.contentMaxLength}
@@ -456,7 +481,7 @@ const PostEdit = () => {
 const getContentPlaceholder = (postType) => {
   switch (postType) {
     case 'skill':
-      return '스킬에 대한 상세한 내용을 입력해주세요';
+      return '스킬에 대한 추가 설명을 입력하세요 (선택사항). 이미지나 동영상만으로도 충분하다면 비워두셔도 됩니다.';
     case 'news':
       return '뉴스 내용을 입력해주세요';
     case 'notice':

@@ -60,6 +60,16 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
                   cursor: onImageClick ? 'pointer' : 'default'
                 }}
             />
+            {media.originalFileName && (
+                <div className="media-filename">
+                  {media.originalFileName}
+                  {imageInfo && (
+                      <span className="image-dimensions">
+                      {` (${imageInfo.width} × ${imageInfo.height})`}
+                    </span>
+                  )}
+                </div>
+            )}
           </div>
       );
     }
@@ -83,22 +93,28 @@ const PostDetailContent = ({ post, postType, onImageClick, normalizeImageUrl }) 
 
   // HTML 콘텐츠인지 확인하는 함수
   const isHtmlContent = (content) => {
-    return content && content.includes('<') && content.includes('>');
+    return content && typeof content === 'string' && content.includes('<') && content.includes('>');
   };
 
   return (
       <div className="board-content">
         {/* 콘텐츠 렌더링 */}
-        {isHtmlContent(post.content) ? (
+        {post.content && isHtmlContent(post.content) ? (
             <div
                 className="content-html"
                 dangerouslySetInnerHTML={{ __html: post.content }}
             />
-        ) : (
+        ) : post.content ? (
             <div className="content-text">
               {post.content.split('\n').map((line, index) => (
                   <p key={index}>{line}</p>
               ))}
+            </div>
+        ) : (
+            <div className="content-text">
+              <p style={{ color: '#999', fontStyle: 'italic' }}>
+                내용이 없습니다.
+              </p>
             </div>
         )}
 
