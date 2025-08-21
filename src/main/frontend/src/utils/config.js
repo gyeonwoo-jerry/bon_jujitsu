@@ -1,16 +1,16 @@
 // src/config/index.js
 const dev = {
-  apiUrl: "http://bon-dev.ezylab.co.kr",
+  apiUrl: "https://bon-dev.ezylab.co.kr",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
 const prod = {
-  apiUrl: "http://localhost:8080",
+  apiUrl: "https://localhost:8080",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
 const local = {
-  apiUrl: "http://bon-dev.ezylab.co.kr",
+  apiUrl: "https://bon-dev.ezylab.co.kr",
   addrKey : "U01TX0FVVEgyMDIzMTEyNzIwMTIyNTExNDMwOTM="
 };
 
