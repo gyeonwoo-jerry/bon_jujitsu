@@ -50,6 +50,7 @@ import useSessionCheck from "./hooks/useSessionCheck";
 import useAuthGuard from "./hooks/useAuthGuard";
 import PostWrite from "./pages/post/PostWrite";
 import PostEdit from "./pages/post/PostEdit";
+import MyPageInquiries from "./pages/mypage/MyPageInquiries";
 
 // 앱 내부 컴포넌트 (로딩 컨텍스트 사용)
 function AppRoutes() {
@@ -106,6 +107,7 @@ function AppRoutes() {
           <Route path="/mypage" element={<ProtectedRoute><MyPageMain /></ProtectedRoute>} />
           <Route path="/mypage/profile/edit" element={<ProtectedRoute><ProfileEditPage /></ProtectedRoute>} />
           <Route path="/mypage/cart" element={<ProtectedRoute><MyPageCart /></ProtectedRoute>} />
+          <Route path="/mypage/inquiries" element={<ProtectedRoute><MyPageInquiries /></ProtectedRoute>} />
           <Route path="/mypage/orders" element={<ProtectedRoute><MyPageOrders /></ProtectedRoute>} />
           <Route path="/mypage/reviews" element={<ProtectedRoute><MyPageReview /></ProtectedRoute>} />
         </Routes>

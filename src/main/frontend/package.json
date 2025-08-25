@@ -5,6 +5,7 @@
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.4.2",
     "@ckeditor/ckeditor5-react": "^11.0.0",
+    "@emailjs/browser": "^4.4.1",
     "axios": "^1.8.3",
     "bonbjj": "file:",
     "colorthief": "^2.6.0",
