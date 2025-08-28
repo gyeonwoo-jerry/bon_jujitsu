@@ -428,8 +428,8 @@ const ProfileEditPage = () => {
       return false;
     }
 
-    if (formData.password && formData.password.length < 8) {
-      showAlert('error', '비밀번호는 8자 이상이어야 합니다.');
+    if (formData.password && formData.password.length < 4) {
+      showAlert('error', '비밀번호는 4자 이상이어야 합니다.');
       return false;
     }
 
