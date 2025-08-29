@@ -137,7 +137,6 @@ public class PopupService {
                 throw new RuntimeException("이미지 업로드에 실패했습니다.");
             }
         }
-
         popup.updatePopup(popupUpdate);
         return popup;
     }
