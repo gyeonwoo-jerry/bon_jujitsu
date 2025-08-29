@@ -27,10 +27,8 @@ public class PopupController {
             @RequestPart("request") @Valid PopupRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
-        PopupResponse popup = PopupResponse.from(
-                popupService.createPopup(userId, request, image)
-        );
-        return ApiResponse.success("팝업 생성 완료", popup);
+        popupService.createPopup(userId, request, image);
+        return ApiResponse.success("팝업 생성 완료", null);
     }
 
     /**
@@ -79,10 +77,8 @@ public class PopupController {
             @RequestPart("update") @Valid PopupUpdate update,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
-        PopupResponse popup = PopupResponse.from(
-                popupService.updatePopup(userId, popupId, update, image)
-        );
-        return ApiResponse.success("팝업 수정 성공", popup);
+        popupService.updatePopup(userId, popupId, update, image);
+        return ApiResponse.success("팝업 수정 성공", null);
     }
 
     /**
